@@ -14,27 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pensionadministrator.controllers
+package base
 
-import play.api.http.Status
+import config.AppConfig
+import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Environment
+import play.api.inject.Injector
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import play.api.http.Status
-import play.api.test.FakeRequest
-import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.play.test.WithFakeApplication
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
+trait SpecBase extends PlaySpec with GuiceOneAppPerSuite with JsonFileReader {
+  def injector: Injector = app.injector
 
-class MicroserviceHelloWorldControllerSpec extends UnitSpec with WithFakeApplication{
+  def environment: Environment = injector.instanceOf[Environment]
 
-  val fakeRequest = FakeRequest("GET", "/")
+  def appConfig: AppConfig = injector.instanceOf[AppConfig]
 
-  "GET /" should {
-    "return 200" in {
-      val controller = new MicroserviceHelloWorld()
-      val result = controller.hello()(fakeRequest)
-      status(result) shouldBe Status.OK
-    }
-  }
-
+  def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 }

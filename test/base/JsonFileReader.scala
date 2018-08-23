@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pensionadministrator.controllers
+package base
 
-import javax.inject.Singleton
+import play.api.libs.json.{JsValue, Json}
 
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
-import play.api.mvc._
+import scala.io.Source
 
-import scala.concurrent.Future
+trait JsonFileReader {
 
-@Singleton()
-class MicroserviceHelloWorld extends BaseController {
-
-	def hello() = Action.async { implicit request =>
-		Future.successful(Ok("Hello world"))
-	}
+  def readJsonFromFile(filePath: String): JsValue = {
+    val path = Source.fromURL(getClass.getResource(filePath)).mkString
+    Json.parse(path)
+  }
 
 }
