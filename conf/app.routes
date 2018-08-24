@@ -1,1 +1,3 @@
 # microservice specific routes
+
+POST        /register-psa                               controllers.SchemeController.registerPSA
