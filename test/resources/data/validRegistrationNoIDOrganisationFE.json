@@ -1,0 +1,16 @@
+{
+  "acknowledgementReference": "12345678901234567890123456789012",
+  "organisation": {
+    "organisationName": "John"
+  },
+  "address": {
+    "addressLine1": "31 Myers Street",
+    "addressLine2": "Haddonfield",
+    "addressLine3": "Illinois",
+    "addressLine4": "USA",
+    "countryCode": "US"
+  },
+  "contactDetails": {
+    "phoneNumber": "01332752856"
+  }
+}

@@ -1,1 +1,5 @@
 # microservice specific routes
+
+POST        /register-with-no-id/organisation           @controllers.RegistrationController.registrationNoIdOrganisation
+POST        /register-with-id/individual                controllers.RegistrationController.registerWithIdIndividual
+POST        /register-with-id/organisation              controllers.RegistrationController.registerWithIdOrganisation
