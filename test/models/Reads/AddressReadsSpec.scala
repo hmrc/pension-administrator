@@ -24,7 +24,8 @@ class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with
   "A JSON Payload with an address" should {
     "Map correctly to an Address type" when {
 
-      val address = Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"), "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"),
+      val address = Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"),
+        "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"),
         "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))
 
       "We have common address elements" when {
@@ -59,7 +60,8 @@ class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with
         }
 
         "with a countryCode defined as `country`" in {
-          val result = (address - "countryCode" + ("country" -> JsString("GB"))).as[(String, Option[String], Option[String], Option[String], String)](Address.commonAddressElementsReads)
+          val result = (address - "countryCode" +
+            ("country" -> JsString("GB"))).as[(String, Option[String], Option[String], Option[String], String)](Address.commonAddressElementsReads)
 
           result._5 mustBe ukAddressSample.countryCode
         }
@@ -80,7 +82,8 @@ class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with
       }
 
       "we have a non UK address" when {
-        val address = Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"), "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"), "countryCode" -> JsString("IT"))
+        val address = Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"),
+          "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"), "countryCode" -> JsString("IT"))
 
         "with no postal code" in {
           val result = address.as[Address]
@@ -89,7 +92,7 @@ class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with
         }
 
         "with postal code" in {
-          val input = (address + ("postalCode" -> JsString("NE1")))
+          val input = address + ("postalCode" -> JsString("NE1"))
 
           val result = input.as[Address]
 
@@ -97,7 +100,7 @@ class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with
         }
 
         "with postal code defined as `postcode`" in {
-          val input = (address + ("postcode" -> JsString("NE1")))
+          val input = address + ("postcode" -> JsString("NE1"))
 
           val result = input.as[Address]
 
@@ -105,7 +108,7 @@ class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with
         }
 
         "with territory defined as country code" in {
-          val input = (address + ("countryCode" -> JsString("territory:IT")))
+          val input = address + ("countryCode" -> JsString("territory:IT"))
 
           val result = input.as[Address]
 
@@ -113,7 +116,7 @@ class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with
         }
 
         "with territory defined as country code with leading space" in {
-          val input = (address + ("countryCode" -> JsString("territory: IT")))
+          val input = address + ("countryCode" -> JsString("territory: IT"))
 
           val result = input.as[Address]
 

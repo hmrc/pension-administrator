@@ -16,50 +16,53 @@
 
 package connector
 
-import java.util.UUID.randomUUID
-
 import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
+import connector.helper.HeaderUtils
 import play.Logger
 import play.api.http.Status._
-import play.api.libs.json.{JsValue, Writes}
+import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.InvalidPayloadHandler
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Success, Try}
 
 @ImplementedBy(classOf[SchemeConnectorImpl])
 trait SchemeConnector {
-   def registerPSA(registerData: JsValue)(implicit
+  def registerPSA(registerData: JsValue)(implicit
                                          headerCarrier: HeaderCarrier,
                                          ec: ExecutionContext,
                                          request: RequestHeader): Future[Either[HttpException, JsValue]]
-
-  def getCorrelationId(requestId: Option[String]): String
 }
 
 class SchemeConnectorImpl @Inject()(
                                      http: HttpClient,
                                      config: AppConfig,
                                      auditService: AuditService,
-                                     invalidPayloadHandler: InvalidPayloadHandler
+                                     invalidPayloadHandler: InvalidPayloadHandler,
+                                     headerUtils: HeaderUtils
                                    ) extends SchemeConnector with HttpErrorFunctions {
 
-  def desHeader(implicit hc: HeaderCarrier): Seq[(String, String)] = {
-    val requestId = getCorrelationId(hc.requestId.map(_.value))
-
-    Seq("Environment" -> config.desEnvironment, "Authorization" -> config.authorization,
-      "Content-Type" -> "application/json", "CorrelationId" -> requestId)
+  implicit val rds: HttpReads[HttpResponse] = new HttpReads[HttpResponse] {
+    override def read(method: String, url: String, response: HttpResponse): HttpResponse = response
   }
 
-  def getCorrelationId(requestId: Option[String]): String = {
-    requestId.getOrElse {
-      Logger.error("No Request Id found while calling register with Id")
-      randomUUID.toString
-    }.replaceAll("(govuk-tax-|-)", "").slice(0, 32)
+  override def registerPSA(registerData: JsValue)(implicit
+                                                  headerCarrier: HeaderCarrier,
+                                                  ec: ExecutionContext,
+                                                  request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
+    val psaSchema = "/resources/schemas/psaSubscription.json"
+
+    val schemeAdminRegisterUrl = config.schemeAdminRegistrationUrl
+
+    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+
+    http.POST[JsValue, HttpResponse](schemeAdminRegisterUrl, registerData)(implicitly,
+      implicitly, hc, implicitly) map handleResponse andThen logFailures("register PSA", registerData, psaSchema)
   }
 
   //scalastyle:off cyclomatic.complexity
@@ -76,27 +79,12 @@ class SchemeConnectorImpl @Inject()(
       case status => throw new Exception(s"Subscription failed with status $status. Response body: '${response.body}'")
     }
   }
+
   //scalastyle:on cyclomatic.complexity
+
   private def logFailures(endpoint: String, data: JsValue, schemaPath: String): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
     case Success(Left(e: BadRequestException)) if e.message.contains("INVALID_PAYLOAD") =>
       invalidPayloadHandler.logFailures(schemaPath, data)
     case Success(Left(e: HttpResponse)) => Logger.warn(s"$endpoint received error response from DES", e)
-  }
-
-  override def registerPSA(registerData: JsValue)(implicit
-                                                  headerCarrier: HeaderCarrier,
-                                                  ec: ExecutionContext,
-                                                  request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-
-    implicit val rds: HttpReads[HttpResponse] = new HttpReads[HttpResponse] {
-      override def read(method: String, url: String, response: HttpResponse): HttpResponse = response
-    }
-
-    val psaSchema = "/resources/schemas/psaSubscription.json"
-    val schemeAdminRegisterUrl = config.schemeAdminRegistrationUrl
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = desHeader(implicitly[HeaderCarrier](headerCarrier)))
-
-    http.POST[JsValue, HttpResponse](schemeAdminRegisterUrl, registerData)(implicitly[Writes[JsValue]],
-      implicitly, implicitly[HeaderCarrier](hc), implicitly) map handleResponse andThen logFailures("register PSA", registerData, psaSchema)
   }
 }

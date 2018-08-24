@@ -17,13 +17,13 @@
 package models
 
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, Json, Reads}
+import play.api.libs.json.{JsPath, Json, OFormat, Reads}
 
 case class OrganisationDetailType(name: String, crnNumber: Option[String] = None,
                                   vatRegistrationNumber: Option[String] = None, payeReference: Option[String] = None) extends PSADetail
 
 object OrganisationDetailType {
-  implicit val formats = Json.format[OrganisationDetailType]
+  implicit val formats: OFormat[OrganisationDetailType] = Json.format[OrganisationDetailType]
 
   val companyDetailsReads: Reads[Option[(Option[String], Option[String])]] = (
     (JsPath \ "vatRegistrationNumber").readNullable[String] and

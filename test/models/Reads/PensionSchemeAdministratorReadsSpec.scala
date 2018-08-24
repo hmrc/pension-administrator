@@ -82,9 +82,11 @@ class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers wit
       }
 
       "We have a moreThanTenDirectors flag" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input + ("moreThanTenDirectors" -> JsBoolean(true)))(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result =
+          Json.fromJson[PensionSchemeAdministrator](input + ("moreThanTenDirectors" -> JsBoolean(true)))(PensionSchemeAdministrator.apiReads).asOpt.value
 
-        result.numberOfDirectorOrPartners.value.isMorethanTenDirectors mustEqual pensionSchemeAdministratorSample.numberOfDirectorOrPartners.value.isMorethanTenDirectors
+        result.numberOfDirectorOrPartners.value.isMorethanTenDirectors mustEqual
+          pensionSchemeAdministratorSample.numberOfDirectorOrPartners.value.isMorethanTenDirectors
       }
 
       "We don't have moreThanTenDirectors flag" in {
@@ -180,7 +182,8 @@ class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers wit
       "We have individual with Individual Contact Details" in {
         val expectedContactDetails = contactDetailsSample.copy(telephone = "11111")
         val individiualContactDetails = "individualContactDetails" -> Json.obj("phone" -> "11111", "email" -> "test@test.com")
-        val result = Json.fromJson[PensionSchemeAdministrator](input + individiualContactDetails - "contactDetails")(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result =
+          Json.fromJson[PensionSchemeAdministrator](input + individiualContactDetails - "contactDetails")(PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.correspondenceContactDetail.telephone mustBe expectedContactDetails.telephone
       }
@@ -199,7 +202,8 @@ class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers wit
       "We have an individual previous address" in {
         val expectedIndividualPreviousAddress = previousAddressDetailsSample.copy(isPreviousAddressLast12Month = false, None)
         val individualPreviousAddress = "individualAddressYears" -> JsString("over_a_year")
-        val result = Json.fromJson[PensionSchemeAdministrator](input + individualPreviousAddress - "companyAddressYears")(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result =
+          Json.fromJson[PensionSchemeAdministrator](input + individualPreviousAddress - "companyAddressYears")(PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.previousAddressDetail.isPreviousAddressLast12Month mustBe expectedIndividualPreviousAddress.isPreviousAddressLast12Month
       }
@@ -207,7 +211,8 @@ class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers wit
       "The user is not an existing PSA user" in {
         val result = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads).asOpt.value
 
-        result.pensionSchemeAdministratoridentifierStatus.isExistingPensionSchemaAdministrator mustBe pensionSchemeAdministratorSample.pensionSchemeAdministratoridentifierStatus.isExistingPensionSchemaAdministrator
+        result.pensionSchemeAdministratoridentifierStatus.isExistingPensionSchemaAdministrator mustBe
+          pensionSchemeAdministratorSample.pensionSchemeAdministratoridentifierStatus.isExistingPensionSchemaAdministrator
       }
 
       "The user is an existing PSA user with no previous reference" in {

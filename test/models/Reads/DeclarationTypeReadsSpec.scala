@@ -27,7 +27,8 @@ class DeclarationTypeReadsSpec extends WordSpec with MustMatchers with OptionVal
   "A JSON Payload containing a declaration" should {
     "Map correctly a Pension Scheme Administrator Declaration Type" when {
 
-      val declaration = Json.obj("declaration" -> JsBoolean(true), "declarationFitAndProper" -> JsBoolean(true), "declarationWorkingKnowledge" -> JsString("workingKnowledge"))
+      val declaration = Json.obj("declaration" -> JsBoolean(true), "declarationFitAndProper" -> JsBoolean(true),
+        "declarationWorkingKnowledge" -> JsString("workingKnowledge"))
 
       "We have a declaration field" when {
         "It is true then boxes 1,2,3 and 4 are true" in {
@@ -40,7 +41,8 @@ class DeclarationTypeReadsSpec extends WordSpec with MustMatchers with OptionVal
         }
 
         "It is false then boxes 1,2,3, and 4 will be false" in {
-          val result = (declaration + ("declaration" -> JsBoolean(false))).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+          val result = (declaration + ("declaration" ->
+            JsBoolean(false))).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box1 mustBe false
           result.box2 mustBe false
@@ -73,11 +75,13 @@ class DeclarationTypeReadsSpec extends WordSpec with MustMatchers with OptionVal
         "set as 'adviser' containing adviser details" in {
           val adviserDetails = "adviserDetails" -> Json.obj("name" -> JsString("John"), "phone" -> "07592113", "email" -> "test@test.com")
 
-          val adviserAddress = "adviserAddress" -> Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"), "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"),
+          val adviserAddress = "adviserAddress" -> Json.obj("addressLine1" -> JsString("line1"),
+            "addressLine2" -> JsString("line2"), "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"),
             "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))
 
           val workingKnowledge = "declarationWorkingKnowledge" -> JsString("adviser")
-          val result = (declaration + workingKnowledge + adviserDetails + adviserAddress).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+          val result = (declaration + workingKnowledge + adviserDetails + adviserAddress).as[PensionSchemeAdministratorDeclarationType](
+            PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box6.value mustBe true
           result.pensionAdvisorDetail.value mustBe pensionAdviserSample

@@ -31,7 +31,7 @@ case class DirectorOrPartnerDetailTypeItem(sequenceId: String, entityType: Strin
                                            previousAddressDetail: PreviousAddressDetails)
 
 object DirectorOrPartnerDetailTypeItem {
-  implicit val formats = Json.format[DirectorOrPartnerDetailTypeItem]
+  implicit val formats: OFormat[DirectorOrPartnerDetailTypeItem] = Json.format[DirectorOrPartnerDetailTypeItem]
 
   val psaSubmissionWrites: Writes[DirectorOrPartnerDetailTypeItem] = (
     (JsPath \ "sequenceId").write[String] and
@@ -102,7 +102,7 @@ object DirectorOrPartnerDetailTypeItem {
       JsPath.read(CorrespondenceCommonDetail.apiReads(personType))
     ) (
     (directorOrPartnerPersonalDetails, ninoDetails, utrDetails, previousAddress, addressCommonDetails) =>
-      DirectorOrPartnerDetailTypeItem(sequenceId = f"${index}%03d",
+      DirectorOrPartnerDetailTypeItem(sequenceId = f"$index%03d",
         entityType = personType.capitalize,
         title = None,
         firstName = directorOrPartnerPersonalDetails.firstName,

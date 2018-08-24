@@ -143,24 +143,6 @@ class SchemeConnectorSpec extends AsyncFlatSpec
         response.left.value.message should include("DUPLICATE_SUBMISSION")
     }
   }
-
-  "SchemeConnector getCorrelationId" should "return the correct CorrelationId when the request Id is more than 32 characters" in {
-    val requestId = Some("govuk-tax-4725c811-9251-4c06-9b8f-f1d84659b2dfe")
-    val result = connector.getCorrelationId(requestId)
-    result shouldBe "4725c81192514c069b8ff1d84659b2df"
-  }
-
-  it should "return the correct CorrelationId when the request Id is less than 32 characters" in {
-    val requestId = Some("govuk-tax-4725c811-9251-4c06-9b8f-f1")
-    val result = connector.getCorrelationId(requestId)
-    result shouldBe "4725c81192514c069b8ff1"
-  }
-
-  it should "return the correct CorrelationId when the request Id does not have gov-uk-tax or -" in {
-    val requestId = Some("4725c81192514c069b8ff1")
-    val result = connector.getCorrelationId(requestId)
-    result shouldBe "4725c81192514c069b8ff1"
-  }
 }
 
 object SchemeConnectorSpec extends JsonFileReader {

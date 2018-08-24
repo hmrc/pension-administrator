@@ -28,7 +28,7 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
 
     Seq(("Company", companyDetails), ("Partnership", partnershipDetails)).foreach { entityType =>
       val (orgType, orgData) = entityType
-      s"Map correctly to a ${orgType} OrganisationDetailType model" when {
+      s"Map correctly to a $orgType OrganisationDetailType model" when {
         val apiReads = if (orgType == "Company") OrganisationDetailType.CompanyApiReads else OrganisationDetailType.partnershipApiReads
 
         "We have a name" in {
@@ -84,7 +84,7 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
 }
 
 object OrganisationDetailTypeReadsSpec {
-  val companyDetails = Json.obj("companyDetails" -> Json.obj("vatRegistrationNumber" -> JsString("VAT11111"),
+  private val companyDetails = Json.obj("companyDetails" -> Json.obj("vatRegistrationNumber" -> JsString("VAT11111"),
     "payeEmployerReferenceNumber" -> JsString("PAYE11111")),
     "companyRegistrationNumber" -> JsString("CRN11111"), "businessDetails" -> Json.obj("companyName" -> JsString("Company Test")))
 
@@ -104,7 +104,7 @@ object OrganisationDetailTypeReadsSpec {
     }
   }
 
-  val partnershipDetails = Json.obj("partnershipVat" -> Json.obj("vat" -> JsString("VAT11111"), "hasVat" -> JsBoolean(true)),
+  private val partnershipDetails = Json.obj("partnershipVat" -> Json.obj("vat" -> JsString("VAT11111"), "hasVat" -> JsBoolean(true)),
     "partnershipPaye" -> Json.obj("paye" -> JsString("PAYE11111"), "hasPaye" -> JsBoolean(true)),
     "partnershipDetails" -> Json.obj("companyName" -> JsString("Company Test")))
 }

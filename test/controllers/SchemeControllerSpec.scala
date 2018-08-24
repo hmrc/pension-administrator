@@ -16,173 +16,145 @@
 
 package controllers
 
-import base.SpecBase
+import base.JsonFileReader
 import org.joda.time.LocalDate
-import org.mockito.Matchers
-import org.mockito.Matchers._
-import org.mockito.Mockito._
-import org.scalatest.BeforeAndAfter
-import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
-import org.scalatest.mockito.MockitoSugar
-import play.api.libs.json.{JsObject, JsValue, Json}
-import play.api.mvc.AnyContentAsJson
+import org.scalatest.{AsyncFlatSpec, MustMatchers}
+import play.api.http.Status.BAD_GATEWAY
+import play.api.libs.json.{JsResultException, JsValue, Json}
+import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import service.SchemeService
 import uk.gov.hmrc.http._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class SchemeControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfter with PatienceConfiguration {
-  val mockSchemeService: SchemeService = mock[SchemeService]
-  val schemeController = new SchemeController(mockSchemeService)
+class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMatchers {
 
-  before {
-    reset(mockSchemeService)
+  import SchemeControllerSpec._
+
+  private val validRequestData = readJsonFromFile("/data/validPsaRequest.json")
+
+  "registerPSA" should "return OK when service returns successfully" in {
+
+    val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
+
+    status(result) mustBe OK
+    contentAsJson(result) mustBe registerPsaResponseJson
   }
 
-  "registerPSA" should {
+  it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
 
-    def fakeRequest(data: JsValue): FakeRequest[AnyContentAsJson] = FakeRequest("POST", "/").withJsonBody(data)
+    fakeSchemeService.setRegisterPsaResponse(
+      Future.successful(Left(new BadRequestException("bad request")))
+    )
 
-    "returns OK when ETMP/DES returns successfully" in {
-      val validRequestData = readJsonFromFile("/data/validPsaRequest.json")
+    val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
-      val successResponse = Json.obj("processingDate" -> LocalDate.now, "formBundle" -> "1000000", "psaId" -> "A2000000")
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "bad request"
+  }
 
-      when(
-        mockSchemeService.registerPSA(
-          Matchers.eq(validRequestData)
-        )(any(), any(), any())
-      ).thenReturn(
-        Future.successful(Right(successResponse))
-      )
+  it should "return CONFLICT when service returns CONFLICT" in {
 
-      val result = schemeController.registerPSA(fakeRequest(validRequestData))
-      ScalaFutures.whenReady(result) { _ =>
-        status(result) mustBe OK
-        verify(mockSchemeService, times(1)).registerPSA(Matchers.any())(any(), any(), any())
-      }
-    }
+    fakeSchemeService.setRegisterPsaResponse(
+      Future.successful(Left(new ConflictException("conflict")))
+    )
 
-    "throw BadRequestException when ETMP/DES return bad request" in {
-      val validRequestData = readJsonFromFile("/data/validPsaRequest.json")
+    val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
-      when(
-        mockSchemeService.registerPSA(
-          Matchers.eq(validRequestData)
-        )(any(), any(), any())
-      ).thenReturn(
-        Future.failed(new BadRequestException("bad request"))
-      )
+    status(result) mustBe CONFLICT
+    contentAsString(result) mustBe "conflict"
+  }
 
-      val result = schemeController.registerPSA(fakeRequest(validRequestData))
+  it should "return NOT_FOUND when service returns NOT_FOUND" in {
 
-      ScalaFutures.whenReady(result.failed) { e =>
-        e mustBe a[BadRequestException]
-        verify(mockSchemeService, times(1)).registerPSA(Matchers.any())(any(), any(), any())
-      }
-    }
+    fakeSchemeService.setRegisterPsaResponse(
+      Future.successful(Left(new NotFoundException("not found")))
+    )
 
-    "throw BadRequestException when there is no data in the request" in {
-      val result = schemeController.registerPSA(FakeRequest("POST", "/"))
-      ScalaFutures.whenReady(result.failed) { e =>
-        e mustBe a[BadRequestException]
-        e.getMessage mustBe "Bad Request with no request body"
-        verify(mockSchemeService, never()).registerPSA(Matchers.any())(any(), any(), any())
-      }
-    }
+    val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
-    "throw ForbiddenException when DES/ETMP returns Upstream4xxResponse with status FORBIDDEN" in {
-      val invalidRequest = readJsonFromFile("/data/validPsaRequest.json")
-      val invalidBusinessPartner: JsObject = Json.obj(
-        "code" -> "INVALID_BUSINESS_PARTNER",
-        "reason" -> "Business partner already has active subscription for this regime."
-      )
+    status(result) mustBe NOT_FOUND
+    contentAsString(result) mustBe "not found"
+  }
 
-      when(
-        mockSchemeService.registerPSA(
-          Matchers.eq(invalidRequest)
-        )(any(), any(), any())
-      ).thenReturn(
-        Future.failed(Upstream4xxResponse(invalidBusinessPartner.toString(), FORBIDDEN, FORBIDDEN))
-      )
+  it should "return Forbidden when service return Forbidden" in {
 
-      val result = schemeController.registerPSA(fakeRequest(invalidRequest))
+    fakeSchemeService.setRegisterPsaResponse(
+      Future.successful(Left(new ForbiddenException("forbidden")))
+    )
 
-      ScalaFutures.whenReady(result.failed) { e =>
-        e mustBe a[ForbiddenException]
-        e.getMessage mustBe invalidBusinessPartner.toString()
-        verify(mockSchemeService, times(1)).registerPSA(Matchers.any())(any(), any(), any())
-      }
-    }
+    val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
-    "throw ConflictException when DES/ETMP returns Upstream4xxResponse with status CONFLICT" in {
-      val invalidRequest = readJsonFromFile("/data/validPsaRequest.json")
-      val duplicateSubmission: JsObject = Json.obj(
-        "code" -> "DUPLICATE_SUBMISSION",
-        "reason" -> "Duplicate submission acknowledgement reference from remote endpoint returned."
-      )
+    status(result) mustBe FORBIDDEN
+    contentAsString(result) mustBe "forbidden"
+  }
 
-      when(
-        mockSchemeService.registerPSA(
-          Matchers.eq(invalidRequest)
-        )(any(), any(), any())
-      ).thenReturn(
-        Future.failed(Upstream4xxResponse(duplicateSubmission.toString(), CONFLICT, CONFLICT))
-      )
+  it should "throw BadRequestException when no data recieved in the request" in {
 
-      val result = schemeController.registerPSA(fakeRequest(invalidRequest))
-
-      ScalaFutures.whenReady(result.failed) { e =>
-        e mustBe a[ConflictException]
-        e.getMessage mustBe duplicateSubmission.toString()
-        verify(mockSchemeService, times(1)).registerPSA(Matchers.any())(any(), any(), any())
-      }
-    }
-
-    "throw Upstream4XXResponse when DES/ETMP returns Upstream4xxResponse with status CONFLICT" in {
-      val invalidRequest = readJsonFromFile("/data/validPsaRequest.json")
-
-      when(
-        mockSchemeService.registerPSA(
-          Matchers.eq(invalidRequest)
-        )(any(), any(), any())
-      ).thenReturn(
-        Future.failed(Upstream4xxResponse("Precondition failed", PRECONDITION_FAILED, PRECONDITION_FAILED))
-      )
-
-      val result = schemeController.registerPSA(fakeRequest(invalidRequest))
-
-      ScalaFutures.whenReady(result.failed) { e =>
-        e mustBe a[Upstream4xxResponse]
-        e.getMessage mustBe "Precondition failed"
-        verify(mockSchemeService, times(1)).registerPSA(Matchers.any())(any(), any(), any())
-      }
-    }
-
-    "throw Upstream5xxResponse when DES/ETMP returns Upstream5xxResponse" in {
-      val invalidRequest = readJsonFromFile("/data/validPsaRequest.json")
-      val serverError: JsObject = Json.obj(
-        "code" -> "SERVER_ERROR",
-        "reason" -> "DES is currently experiencing problems that require live service intervention."
-      )
-
-      when(
-        mockSchemeService.registerPSA(
-          Matchers.eq(invalidRequest)
-        )(any(), any(), any())
-      ).thenReturn(
-        Future.failed(Upstream5xxResponse(serverError.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR))
-      )
-
-      val result = schemeController.registerPSA(fakeRequest(invalidRequest))
-
-      ScalaFutures.whenReady(result.failed) { e =>
-        e mustBe a[Upstream5xxResponse]
-        e.getMessage mustBe serverError.toString()
-        verify(mockSchemeService, times(1)).registerPSA(Matchers.any())(any(), any(), any())
-      }
+    recoverToSucceededIf[BadRequestException] {
+      controller.registerPSA(fakeRequest)
     }
   }
+
+  it should "throw BadRequestException when service throws JsResultException" in {
+
+    fakeSchemeService.setRegisterPsaResponse(Future.failed(JsResultException(Nil)))
+
+    recoverToSucceededIf[BadRequestException] {
+      controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
+    }
+  }
+
+  it should "throw Upstream5xxResponse when service throws Upstream5xxResponse" in {
+
+    fakeSchemeService.setRegisterPsaResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+
+    recoverToSucceededIf[Upstream5xxResponse] {
+      controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
+    }
+  }
+
+  it should "throw UpStream4xxResponse when service throws UpStream4xxResponse" in {
+
+    fakeSchemeService.setRegisterPsaResponse(Future.failed(Upstream4xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+
+    recoverToSucceededIf[Upstream4xxResponse] {
+      controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
+    }
+  }
+
+  it should "throw Exception when service throws any unknown Exception" in {
+
+    fakeSchemeService.setRegisterPsaResponse(Future.failed(new Exception("Unknown Exception")))
+
+    recoverToSucceededIf[Exception] {
+      controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
+    }
+  }
+}
+
+object SchemeControllerSpec {
+  def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
+
+  class FakeSchemeService extends SchemeService {
+
+    private var registerPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
+
+    def setRegisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.registerPsaResponse = response
+
+    override def registerPSA(json: JsValue)(implicit headerCarrier: HeaderCarrier,
+                                            ec: ExecutionContext,
+                                            request: RequestHeader): Future[Either[HttpException, JsValue]] = registerPsaResponse
+  }
+
+  val registerPsaResponseJson: JsValue =
+    Json.obj(
+      "processingDate" -> LocalDate.now,
+      "formBundle" -> "1121313",
+      "psaId" -> "A21999999"
+    )
+  val fakeSchemeService = new FakeSchemeService
+  val controller = new SchemeController(fakeSchemeService)
 }

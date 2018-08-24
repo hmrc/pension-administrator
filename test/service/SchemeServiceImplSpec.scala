@@ -26,7 +26,7 @@ import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, HttpResponse}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -170,8 +170,6 @@ class FakeSchemeConnector extends SchemeConnector {
                                                   headerCarrier: HeaderCarrier,
                                                   ec: ExecutionContext,
                                                   request: RequestHeader): Future[Either[HttpException, JsValue]] = registerPsaResponse
-
-  override def getCorrelationId(requestId: Option[String]): String = "4725c81192514c069b8ff1d84659b2df"
 }
 
 object FakeSchemeConnector {

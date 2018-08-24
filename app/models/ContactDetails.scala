@@ -23,7 +23,7 @@ import play.api.libs.json.{Json, Reads, _}
 case class ContactDetails(telephone: String, mobileNumber: Option[String] = None, fax: Option[String] = None, email: String)
 
 object ContactDetails {
-  implicit val formats = Json.format[ContactDetails]
+  implicit val formats: OFormat[ContactDetails] = Json.format[ContactDetails]
   val apiReads: Reads[ContactDetails] = (
     (JsPath \ "phone").read[String] and
       (JsPath \ "email").read[String]

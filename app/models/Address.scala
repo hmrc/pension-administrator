@@ -98,7 +98,11 @@ object InternationalAddress {
       (JsPath \ "countryCode").write[String] and
       (JsPath \ "postalCode").writeNullable[String] and
       (JsPath \ "addressType").write[String]
-    ) (internationalAddress => ((internationalAddress.addressLine1, internationalAddress.addressLine2, internationalAddress.addressLine3, internationalAddress.addressLine4),
+    ) (internationalAddress => ((
+    internationalAddress.addressLine1,
+    internationalAddress.addressLine2,
+    internationalAddress.addressLine3,
+    internationalAddress.addressLine4),
     internationalAddress.countryCode,
     internationalAddress.postalCode,
     "NON-UK"))

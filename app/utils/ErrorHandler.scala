@@ -38,22 +38,11 @@ trait ErrorHandler {
     case e: NotFoundException =>
       Future.failed(new NotFoundException(e.message))
     case e: Upstream4xxResponse =>
-      Future.failed(throwAppropriateException(e))
+      Future.failed(Upstream4xxResponse(e.message, e.upstreamResponseCode, e.reportAs))
     case e: Upstream5xxResponse =>
       Future.failed(Upstream5xxResponse(e.message, e.upstreamResponseCode, e.reportAs))
     case e: Exception =>
       Future.failed(new Exception(e.getMessage))
-  }
-
-  private def throwAppropriateException(e: Upstream4xxResponse): Exception = {
-    e.upstreamResponseCode match {
-      case FORBIDDEN if e.message.contains("INVALID_BUSINESS_PARTNER") =>
-        new ForbiddenException(e.message)
-      case CONFLICT if e.message.contains("DUPLICATE_SUBMISSION") =>
-        new ConflictException(e.message)
-      case _ =>
-        Upstream4xxResponse(e.message, e.upstreamResponseCode, e.reportAs)
-    }
   }
 
   protected def result(ex: HttpException): Result = {

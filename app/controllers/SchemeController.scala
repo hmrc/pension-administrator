@@ -18,14 +18,13 @@ package controllers
 
 import com.google.inject.Inject
 import play.api.Logger
-import play.api.libs.json._
 import play.api.mvc._
 import service.SchemeService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import utils.ErrorHandler
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class SchemeController @Inject()(schemeService: SchemeService) extends BaseController with ErrorHandler {
@@ -41,7 +40,7 @@ class SchemeController @Inject()(schemeService: SchemeService) extends BaseContr
             case Right(json) => Ok(json)
             case Left(e) => result(e)
           }
-        case _ => Future.failed(new BadRequestException("Bad Request with no request body"))
+        case _ => Future.failed(new BadRequestException("Bad Request with no request body returned for register PSA"))
       }
     } recoverWith recoverFromError
   }
