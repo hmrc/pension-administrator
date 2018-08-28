@@ -5,3 +5,4 @@ POST        /register-with-id/individual                controllers.Registration
 POST        /register-with-id/organisation              controllers.RegistrationController.registerWithIdOrganisation
 
 POST        /register-psa                               controllers.SchemeController.registerPSA
+
