@@ -49,7 +49,8 @@ class SchemeConnectorSpec extends AsyncFlatSpec
       bind[AuditService].toInstance(auditService),
       bind[LoggerLike].toInstance(logger)
     )
-  def connector: SchemeConnector = app.injector.instanceOf[SchemeConnector]
+
+  lazy val connector: SchemeConnector = injector.instanceOf[SchemeConnector]
 
   "SchemeConnector registerPSA" should "handle OK (200)" in {
     val successResponse = Json.obj(
