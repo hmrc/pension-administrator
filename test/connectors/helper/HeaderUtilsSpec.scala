@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package connector.helper
+package connectors.helper
 
 import config.AppConfig
 import org.scalatest.MustMatchers

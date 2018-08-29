@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package connector
+package connectors
 
 import audit.{AuditService, StubSuccessfulAuditService}
 import base.JsonFileReader

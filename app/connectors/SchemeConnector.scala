@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package connector
+package connectors
 
 import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
-import connector.helper.HeaderUtils
+import connectors.helper.HeaderUtils
 import play.Logger
 import play.api.http.Status._
 import play.api.libs.json.JsValue
@@ -27,6 +27,7 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.InvalidPayloadHandler
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
 
