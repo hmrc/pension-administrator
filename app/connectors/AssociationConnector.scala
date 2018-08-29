@@ -17,7 +17,7 @@
 import com.google.inject.{Inject, Singleton}
 import config.AppConfig
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{HttpReads, HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -25,6 +25,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class AssociationConnector@Inject()(httpClient: HttpClient, appConfig : AppConfig) {
 
+  implicit val rds: HttpReads[HttpResponse] = new HttpReads[HttpResponse] {
+    override def read(method: String, url: String, response: HttpResponse): HttpResponse = response
+  }
 
   def getPSAMinimalDetails(psaId : String)(implicit
                                            headerCarrier: HeaderCarrier,
@@ -32,7 +35,7 @@ class AssociationConnector@Inject()(httpClient: HttpClient, appConfig : AppConfi
 
     val getURL = appConfig.psaMinimalDetailsUrl.format(psaId)
 
-    httpClient.GET(getURL)
+    httpClient.GET[HttpResponse](getURL)
 
   }
 

@@ -18,8 +18,9 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.ConnectorBehaviours
 import org.scalatest._
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 import utils.WireMockHelper
+import play.api.test.Helpers._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class AssociationConnectorSpec extends AsyncFlatSpec
@@ -39,7 +40,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   lazy val connector = injector.instanceOf[AssociationConnector]
 
-  "AssociationConnector" should "handle OK (200) - all fields with individualDetails" in {
+  "AssociationConnector" should "return OK (200) - all fields with individualDetails" in {
 
     val individualDetails = """{
                      |	"processingDate": "2001-12-17T09:30:47Z",
@@ -63,12 +64,12 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.status shouldBe 200
+      response.status shouldBe OK
       response.body shouldBe Json.parse(individualDetails).toString()
     }
   }
 
-  "AssociationConnector" should "handle OK (200) - All fields with organisationOrPartnershipName" in {
+  it should "return OK (200) - All fields with organisationOrPartnershipName" in {
 
     val organisationOrPartnershipName = """{
                               |	"processingDate": "2009-12-17T09:30:47Z",
@@ -89,9 +90,90 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.status shouldBe 200
+      response.status shouldBe OK
       response.body shouldBe Json.parse(organisationOrPartnershipName).toString()
     }
   }
+
+  it should "return bad request - 400" in {
+
+    val errorReponse = """{
+                         |	"code": "INVALID_PSAID",
+                         |	"reason": "Submission has not passed validation. Invalid parameter PSAID."
+                         |}""".stripMargin
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsUrl))
+        .willReturn(
+          aResponse().withStatus(BAD_REQUEST).withBody(Json.parse(errorReponse).toString)
+        )
+    )
+
+    connector.getPSAMinimalDetails(psaId).map { response =>
+      response.status shouldBe BAD_REQUEST
+      response.body shouldBe Json.parse(errorReponse).toString()
+    }
+
+  }
+
+  it should "return Not Found - 404" in {
+
+    val errorResponse = """{
+                         |	"code": "NOT_FOUND",
+                         |	"reason": "The back end has indicated that there is no match found."
+                         |}""".stripMargin
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsUrl))
+        .willReturn(
+          aResponse().withStatus(NOT_FOUND).withBody(Json.parse(errorResponse).toString)
+        )
+    )
+
+    connector.getPSAMinimalDetails(psaId).map { response =>
+      response.status shouldBe NOT_FOUND
+      response.body shouldBe Json.parse(errorResponse).toString()
+    }
+
+  }
+
+  it should "return internal server error - 500" in {
+
+    val errorResponse = """{
+                          |	"code": "SERVER_ERROR",
+                          |	"reason": "DES is currently experiencing problems that require live service intervention."
+                          |}""".stripMargin
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsUrl))
+        .willReturn(
+          aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody(Json.parse(errorResponse).toString)
+        )
+    )
+
+    connector.getPSAMinimalDetails(psaId).map { response =>
+      response.status shouldBe INTERNAL_SERVER_ERROR
+      response.body shouldBe Json.parse(errorResponse).toString()
+    }
+   
+  }
+
+  it should "return server unavailable - 503" in {
+
+    val errorResponse = """{
+                          |	"code": "SERVICE_UNAVAILABLE",
+                          |	"reason": "Dependent systems are currently not responding."
+                          |}""".stripMargin
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsUrl))
+        .willReturn(
+          aResponse().withStatus(SERVICE_UNAVAILABLE).withBody(Json.parse(errorResponse).toString)
+        )
+    )
+
+    connector.getPSAMinimalDetails(psaId).map { response =>
+      response.status shouldBe SERVICE_UNAVAILABLE
+      response.body shouldBe Json.parse(errorResponse).toString()
+    }
+  }
+
+
 
 }
