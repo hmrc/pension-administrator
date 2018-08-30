@@ -18,7 +18,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.ConnectorBehaviours
 import org.scalatest._
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HttpException, HeaderCarrier}
 import utils.WireMockHelper
 import play.api.test.Helpers._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -64,8 +64,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.status shouldBe OK
-      response.body shouldBe Json.parse(individualDetails).toString()
+      response.right.value shouldBe Json.parse(individualDetails).toString()
     }
   }
 
@@ -90,8 +89,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.status shouldBe OK
-      response.body shouldBe Json.parse(organisationOrPartnershipName).toString()
+      response.right.value shouldBe Json.parse(organisationOrPartnershipName).toString()
     }
   }
 
@@ -109,8 +107,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.status shouldBe BAD_REQUEST
-      response.body shouldBe Json.parse(errorReponse).toString()
+      response.left.value shouldBe a[HttpException]
+      //response.body shouldBe Json.parse(errorReponse).toString()
     }
 
   }
@@ -129,8 +127,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.status shouldBe NOT_FOUND
-      response.body shouldBe Json.parse(errorResponse).toString()
+      response.left.value shouldBe a[HttpException]
     }
 
   }
@@ -149,8 +146,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.status shouldBe INTERNAL_SERVER_ERROR
-      response.body shouldBe Json.parse(errorResponse).toString()
+      response.left.value shouldBe a[HttpException]
     }
    
   }
@@ -169,8 +165,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.status shouldBe SERVICE_UNAVAILABLE
-      response.body shouldBe Json.parse(errorResponse).toString()
+      response.left.value shouldBe a[HttpException]
     }
   }
 
