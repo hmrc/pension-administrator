@@ -64,7 +64,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.right.value shouldBe Json.parse(individualDetails).toString()
+      response.right.value shouldBe Json.parse(individualDetails)
     }
   }
 
@@ -89,7 +89,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.right.value shouldBe Json.parse(organisationOrPartnershipName).toString()
+      response.right.value shouldBe Json.parse(organisationOrPartnershipName)
     }
   }
 

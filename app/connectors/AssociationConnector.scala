@@ -17,7 +17,6 @@
 import com.google.inject.{Inject, Singleton}
 import config.AppConfig
 import play.api.libs.json.JsValue
-import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{HttpException, HttpReads, HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
@@ -36,12 +35,13 @@ class AssociationConnector@Inject()(httpClient: HttpClient, appConfig : AppConfi
 
     val getURL = appConfig.psaMinimalDetailsUrl.format(psaId)
 
-    httpClient.GET(getURL) map{ result =>
+    httpClient.GET(getURL) map { result =>
       result.status match {
-      case 200 => Right(result.json)
-      case _ => Left(new HttpException("exception", 400))
-    }
+        case 200 => Right(result.json)
+        case _ => Left(new HttpException("exception", 400))
+      }
 
+    }
   }
 
 }
