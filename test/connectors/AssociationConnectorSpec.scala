@@ -18,7 +18,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.ConnectorBehaviours
 import org.scalatest._
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.{HttpException, HeaderCarrier}
+import uk.gov.hmrc.http._
 import utils.WireMockHelper
 import play.api.test.Helpers._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -93,22 +93,66 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should "return bad request - 400" in {
+  it should "return bad request - 400 if body contains INVALID_PSAID" in {
 
-    val errorReponse = """{
+    val errorResponse = """{
                          |	"code": "INVALID_PSAID",
                          |	"reason": "Submission has not passed validation. Invalid parameter PSAID."
                          |}""".stripMargin
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
-          aResponse().withStatus(BAD_REQUEST).withBody(Json.parse(errorReponse).toString)
+          aResponse().withStatus(BAD_REQUEST).withBody(Json.parse(errorResponse).toString)
         )
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.left.value shouldBe a[HttpException]
-      //response.body shouldBe Json.parse(errorReponse).toString()
+      response.left.value shouldBe a[BadRequestException]
+      response.left.value.message shouldBe Json.parse(errorResponse).toString()
+    }
+
+  }
+
+
+  it should "return bad request - 400 if body contains INVALID_CORRELATIONID" in {
+
+    val errorResponse = """{
+                         |	"code": "INVALID_CORRELATIONID",
+                         |	"reason": "Submission has not passed validation. Invalid header CorrelationId."
+                         |}""".stripMargin
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsUrl))
+        .willReturn(
+          aResponse().withStatus(BAD_REQUEST).withBody(Json.parse(errorResponse).toString)
+        )
+    )
+
+    connector.getPSAMinimalDetails(psaId).map { response =>
+      response.left.value shouldBe a[BadRequestException]
+      response.left.value.message shouldBe Json.parse(errorResponse).toString()
+    }
+
+  }
+
+
+  it should "throw upstream4xx - if any other 400" in {
+
+    val errorResponse = """{
+                         |	"code": "not valid",
+                         |	"reason": "any other exception message"
+                         |}""".stripMargin
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsUrl))
+        .willReturn(
+          aResponse().withStatus(BAD_REQUEST).withBody(Json.parse(errorResponse).toString)
+        )
+    )
+
+    recoverToExceptionIf[Upstream4xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
+      ex =>
+        ex.upstreamResponseCode shouldBe BAD_REQUEST
+        ex.message shouldBe Json.parse(errorResponse).toString
+        ex.reportAs shouldBe BAD_REQUEST
     }
 
   }
@@ -127,12 +171,35 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.left.value shouldBe a[HttpException]
+      response.left.value shouldBe a[NotFoundException]
+      response.left.value.message shouldBe Json.parse(errorResponse).toString()
     }
 
   }
 
-  it should "return internal server error - 500" in {
+  it should "throw Upstream4XX for server unavailable - 403" in {
+
+    val errorResponse = """{
+                          |	"code": "FORBIDDEN",
+                          |	"reason": "Dependent systems are currently not responding."
+                          |}""".stripMargin
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsUrl))
+        .willReturn(
+          aResponse().withStatus(FORBIDDEN).withBody(Json.parse(errorResponse).toString)
+        )
+    )
+
+    recoverToExceptionIf[Upstream4xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
+      ex =>
+        ex.upstreamResponseCode shouldBe FORBIDDEN
+        ex.message shouldBe Json.parse(errorResponse).toString
+        ex.reportAs shouldBe BAD_REQUEST
+    }
+
+  }
+
+  it should "throw Upstream5XX for internal server error - 500" in {
 
     val errorResponse = """{
                           |	"code": "SERVER_ERROR",
@@ -141,34 +208,37 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
-          aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody(Json.parse(errorResponse).toString)
+          serverError().withBody(Json.parse(errorResponse).toString)
         )
     )
 
-    connector.getPSAMinimalDetails(psaId).map { response =>
-      response.left.value shouldBe a[HttpException]
+    recoverToExceptionIf[Upstream5xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
+      ex =>
+        ex.upstreamResponseCode shouldBe INTERNAL_SERVER_ERROR
+        ex.message shouldBe Json.parse(errorResponse).toString
+        ex.reportAs shouldBe BAD_GATEWAY
     }
-   
+
   }
 
-  it should "return server unavailable - 503" in {
+  it should "throw exception for other runtime exception" in {
 
     val errorResponse = """{
-                          |	"code": "SERVICE_UNAVAILABLE",
-                          |	"reason": "Dependent systems are currently not responding."
+                          |	"code": "SERVER_ERROR",
+                          |	"reason": "DES is currently experiencing problems that require live service intervention."
                           |}""".stripMargin
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
-          aResponse().withStatus(SERVICE_UNAVAILABLE).withBody(Json.parse(errorResponse).toString)
+          noContent()
         )
     )
 
-    connector.getPSAMinimalDetails(psaId).map { response =>
-      response.left.value shouldBe a[HttpException]
+    recoverToExceptionIf[Exception] (connector.getPSAMinimalDetails(psaId)) map {
+      ex =>
+        ex.getMessage shouldBe s"PSA minimal details failed with status ${NO_CONTENT}. Response body: ''"
     }
+
   }
-
-
 
 }
