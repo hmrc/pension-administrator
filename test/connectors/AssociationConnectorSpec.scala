@@ -141,7 +141,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
-          aResponse().withStatus(BAD_REQUEST).withBody(Json.parse(errorResponse).toString)
+          badRequest().withBody(Json.parse(errorResponse).toString)
         )
     )
 
@@ -162,7 +162,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
-          aResponse().withStatus(BAD_REQUEST).withBody(Json.parse(errorResponse).toString)
+          badRequest().withBody(Json.parse(errorResponse).toString)
         )
     )
 
@@ -184,7 +184,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
-          aResponse().withStatus(NOT_FOUND).withBody(Json.parse(errorResponse).toString)
+          notFound().withBody(Json.parse(errorResponse).toString)
         )
     )
 
@@ -204,7 +204,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
-          aResponse().withStatus(FORBIDDEN).withBody(Json.parse(errorResponse).toString)
+          forbidden().withBody(Json.parse(errorResponse).toString)
         )
     )
 
