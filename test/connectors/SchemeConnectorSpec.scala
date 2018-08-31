@@ -148,7 +148,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
   "SchemeConnector getPSASubscriptionDetails" should "handle OK (200)" in {
 
        server.stubFor(
-         get(urlEqualTo(psaSubscriptionDetailsUrl+psaId))
+         get(urlEqualTo(psaSubscriptionDetailsUrl))
            .withHeader("Content-Type", equalTo("application/json"))
            .willReturn(
              ok(psaSubscriptionData.toString())
@@ -156,11 +156,58 @@ class SchemeConnectorSpec extends AsyncFlatSpec
            )
        )
        connector.getPSASubscriptionDetails(psaId).map { response =>
-         response.status shouldBe 200
-         response.body shouldBe psaSubscriptionData.toString()
-         server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl+psaId))).size() shouldBe 1
+         response.right.value shouldBe psaSubscriptionData
+         server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
        }
      }
+
+    it should "return 400 as http response for INVALID_PSAID" in {
+      server.stubFor(
+        get(urlEqualTo(psaSubscriptionDetailsUrl))
+          .withHeader("Content-Type", equalTo("application/json"))
+          .willReturn(
+            badRequest().withBody(invalidPSAIdResponse)
+          )
+      )
+      connector.getPSASubscriptionDetails(psaId).map { response =>
+        response.left.value.responseCode shouldBe Status.BAD_REQUEST
+        response.left.value.message shouldBe invalidPSAIdResponse
+        server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
+      }
+    }
+
+
+
+  it should "return 400 as http response for INVALID_CORRELATION_ID" in {
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          badRequest().withBody(invalidCorrelationIdResponse)
+        )
+    )
+    connector.getPSASubscriptionDetails(psaId).map { response =>
+      response.left.value.responseCode shouldBe Status.BAD_REQUEST
+      response.left.value.message shouldBe invalidCorrelationIdResponse
+      server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
+    }
+  }
+
+
+  it should "return 404 as http response for NOT_FOUND" in {
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          notFound().withBody(notFoundResponse)
+        )
+    )
+    connector.getPSASubscriptionDetails(psaId).map { response =>
+      response.left.value.responseCode shouldBe Status.NOT_FOUND
+      response.left.value.message shouldBe notFoundResponse
+      server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
+    }
+  }
 
 }
 
@@ -171,7 +218,15 @@ object SchemeConnectorSpec extends JsonFileReader {
   private val registerPsaData = readJsonFromFile("/data/validPsaRequest.json")
   private val psaSubscriptionData = readJsonFromFile("/data/validPSASubscriptionDetails.json")
   val registerPsaUrl = "/pension-online/subscription"
-  val psaSubscriptionDetailsUrl = "/pension-online/psa-subscription-details/"
+  val psaSubscriptionDetailsUrl = s"/pension-online/psa-subscription-details/${psaId}"
+
+  private val invalidPSAIdResponse =
+    Json.stringify(
+      Json.obj(
+        "code" -> "INVALID_PSAID",
+        "reason" -> "test-reason"
+      )
+    )
 
   private val invalidBusinessPartnerResponse =
     Json.stringify(
@@ -193,6 +248,14 @@ object SchemeConnectorSpec extends JsonFileReader {
     Json.stringify(
       Json.obj(
         "code" -> "DUPLICATE_SUBMISSION",
+        "reason" -> "test-reason"
+      )
+    )
+
+  private val notFoundResponse =
+    Json.stringify(
+      Json.obj(
+        "code" -> "NOT_FOUND",
         "reason" -> "test-reason"
       )
     )

@@ -42,7 +42,7 @@ trait SchemeConnector {
   def getPSASubscriptionDetails(psaId: String)(implicit
                                                headerCarrier: HeaderCarrier,
                                                ec: ExecutionContext,
-                                               request: RequestHeader): Future[HttpResponse]
+                                               request: RequestHeader): Future[Either[HttpException, JsValue]]
 }
 
 class SchemeConnectorImpl @Inject()(
@@ -98,13 +98,21 @@ class SchemeConnectorImpl @Inject()(
   override def getPSASubscriptionDetails(psaId: String)(implicit
                                                         headerCarrier: HeaderCarrier,
                                                         ec: ExecutionContext,
-                                                        request: RequestHeader): Future[HttpResponse] = {
+                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
     val getURL = config.psaSubscriptionDetailsUrl.format(psaId)
 
-    http.GET[HttpResponse](getURL)(implicitly,hc,implicitly)
+    http.GET[HttpResponse](getURL)(implicitly,hc,implicitly) map{ result =>
+      val badResponseSeq = Seq("INVALID_CORRELATION_ID", "INVALID_PAYLOAD")
+      result.status match{
+        case 200 => Right(result.json)
+        case 400 if(result.body.contains("INVALID_PSAID")) => Left(new BadRequestException(result.body))
+        case 400 if(result.body.contains("INVALID_CORRELATION_ID")) => Left(new BadRequestException(result.body))
+        case 404 => Left(new NotFoundException(result.body))
+      }
+    }
 
   }
 }

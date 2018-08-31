@@ -174,7 +174,7 @@ class FakeSchemeConnector extends SchemeConnector {
   override def getPSASubscriptionDetails(psaId: String)(implicit
                                                         headerCarrier: HeaderCarrier,
                                                         ec: ExecutionContext,
-                                                        request: RequestHeader): Future[HttpResponse] = Future(HttpResponse(200))
+                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = Future.successful(Right(Json.obj()))
 }
 
 object FakeSchemeConnector {
