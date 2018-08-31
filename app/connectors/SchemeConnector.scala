@@ -105,12 +105,11 @@ class SchemeConnectorImpl @Inject()(
     val getURL = config.psaSubscriptionDetailsUrl.format(psaId)
 
     http.GET[HttpResponse](getURL)(implicitly,hc,implicitly) map{ result =>
-      val badResponseSeq = Seq("INVALID_CORRELATION_ID", "INVALID_PAYLOAD")
+      val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATION_ID")
       result.status match{
-        case 200 => Right(result.json)
-        case 400 if(result.body.contains("INVALID_PSAID")) => Left(new BadRequestException(result.body))
-        case 400 if(result.body.contains("INVALID_CORRELATION_ID")) => Left(new BadRequestException(result.body))
-        case 404 => Left(new NotFoundException(result.body))
+        case OK => Right(result.json)
+        case BAD_REQUEST if badResponseSeq.exists(result.body.contains(_)) => Left(new BadRequestException(result.body))
+        case NOT_FOUND => Left(new NotFoundException(result.body))
       }
     }
 
