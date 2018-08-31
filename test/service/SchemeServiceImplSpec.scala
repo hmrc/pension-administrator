@@ -26,7 +26,7 @@ import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
+import uk.gov.hmrc.http.{HttpResponse, BadRequestException, HeaderCarrier, HttpException}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -170,6 +170,11 @@ class FakeSchemeConnector extends SchemeConnector {
                                                   headerCarrier: HeaderCarrier,
                                                   ec: ExecutionContext,
                                                   request: RequestHeader): Future[Either[HttpException, JsValue]] = registerPsaResponse
+
+  override def getPSASubscriptionDetails(psaId: String)(implicit
+                                                        headerCarrier: HeaderCarrier,
+                                                        ec: ExecutionContext,
+                                                        request: RequestHeader): Future[HttpResponse] = Future(HttpResponse(200))
 }
 
 object FakeSchemeConnector {

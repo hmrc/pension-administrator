@@ -22,8 +22,8 @@ import config.AppConfig
 import connectors.helper.HeaderUtils
 import play.Logger
 import play.api.http.Status._
-import play.api.libs.json.JsValue
-import play.api.mvc.RequestHeader
+import play.api.libs.json.{Json, JsValue}
+import play.api.mvc.{Result, RequestHeader}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.InvalidPayloadHandler
@@ -33,10 +33,16 @@ import scala.util.{Success, Try}
 
 @ImplementedBy(classOf[SchemeConnectorImpl])
 trait SchemeConnector {
+
   def registerPSA(registerData: JsValue)(implicit
                                          headerCarrier: HeaderCarrier,
                                          ec: ExecutionContext,
                                          request: RequestHeader): Future[Either[HttpException, JsValue]]
+
+  def getPSASubscriptionDetails(psaId: String)(implicit
+                                               headerCarrier: HeaderCarrier,
+                                               ec: ExecutionContext,
+                                               request: RequestHeader): Future[HttpResponse]
 }
 
 class SchemeConnectorImpl @Inject()(
@@ -87,5 +93,18 @@ class SchemeConnectorImpl @Inject()(
     case Success(Left(e: BadRequestException)) if e.message.contains("INVALID_PAYLOAD") =>
       invalidPayloadHandler.logFailures(schemaPath, data)
     case Success(Left(e: HttpResponse)) => Logger.warn(s"$endpoint received error response from DES", e)
+  }
+
+  override def getPSASubscriptionDetails(psaId: String)(implicit
+                                                        headerCarrier: HeaderCarrier,
+                                                        ec: ExecutionContext,
+                                                        request: RequestHeader): Future[HttpResponse] = {
+
+    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+
+    val getURL = config.psaSubscriptionDetailsUrl.format(psaId)
+
+    http.GET[HttpResponse](getURL)(implicitly,hc,implicitly)
+
   }
 }

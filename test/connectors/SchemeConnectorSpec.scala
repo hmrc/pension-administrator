@@ -144,6 +144,24 @@ class SchemeConnectorSpec extends AsyncFlatSpec
         response.left.value.message should include("DUPLICATE_SUBMISSION")
     }
   }
+
+  "SchemeConnector getPSASubscriptionDetails" should "handle OK (200)" in {
+
+       server.stubFor(
+         get(urlEqualTo(psaSubscriptionDetailsUrl+psaId))
+           .withHeader("Content-Type", equalTo("application/json"))
+           .willReturn(
+             ok(psaSubscriptionData.toString())
+               .withHeader("Content-Type", "application/json")
+           )
+       )
+       connector.getPSASubscriptionDetails(psaId).map { response =>
+         response.status shouldBe 200
+         response.body shouldBe psaSubscriptionData.toString()
+         server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl+psaId))).size() shouldBe 1
+       }
+     }
+
 }
 
 object SchemeConnectorSpec extends JsonFileReader {
@@ -151,7 +169,9 @@ object SchemeConnectorSpec extends JsonFileReader {
   private implicit val rh: RequestHeader = FakeRequest("", "")
   val psaId = "test"
   private val registerPsaData = readJsonFromFile("/data/validPsaRequest.json")
+  private val psaSubscriptionData = readJsonFromFile("/data/validPSASubscriptionDetails.json")
   val registerPsaUrl = "/pension-online/subscription"
+  val psaSubscriptionDetailsUrl = "/pension-online/psa-subscription-details/"
 
   private val invalidBusinessPartnerResponse =
     Json.stringify(
