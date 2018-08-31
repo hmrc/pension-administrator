@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-import akka.util.LineNumbers.Result
-import com.google.inject.{Inject, Singleton}
+import com.google.inject.{Singleton, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
+import play.Logger
 import play.api.http.Status._
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Success, Failure, Try}
 
 @Singleton
 class AssociationConnector@Inject()(httpClient: HttpClient,
@@ -43,26 +44,26 @@ class AssociationConnector@Inject()(httpClient: HttpClient,
     val getURL = appConfig.psaMinimalDetailsUrl.format(psaId)
 
     httpClient.GET(getURL)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
-      implicitly[ExecutionContext]) map handleResponse
+      implicitly) map handleResponse andThen logWarning("PSA minimal details")
 
   }
 
   private def handleResponse(response: HttpResponse): Either[HttpException, JsValue] = {
     val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATIONID")
     response.status match {
+      case OK => Right(response.json)
+      case BAD_REQUEST if badResponseSeq.exists(response.body.contains(_)) => Left(new BadRequestException(response.body))
       case NOT_FOUND => Left(new NotFoundException(response.body))
-      case status => handleCommonResponse(response, badResponseSeq)
+      case status if(is4xx(status)) => throw Upstream4xxResponse(response.body, status, BAD_REQUEST)
+      case status if(is5xx(status)) => throw Upstream5xxResponse(response.body, status, BAD_GATEWAY)
+      case status => throw new Exception(s"PSA minimal details failed with status $status. Response body: '${response.body}'")
+
     }
   }
 
-  private def handleCommonResponse(response: HttpResponse,  badResponseSeq: Seq[String]): Either[HttpException, JsValue] = {
-    response.status match {
-      case OK => Right(response.json)
-      case BAD_REQUEST if badResponseSeq.exists(response.body.contains(_)) => Left(new BadRequestException(response.body))
-      case status if is4xx(status) => throw Upstream4xxResponse(response.body, status, BAD_REQUEST, response.allHeaders)
-      case status if is5xx(status) => throw Upstream5xxResponse(response.body, status, BAD_GATEWAY)
-      case status => throw new Exception(s"PSA minimal details failed with status $status. Response body: '${response.body}'")
-    }
+  private def logWarning(endpoint: String): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+    case Success(Left(e: BadRequestException)) => Logger.warn(s"$endpoint received error response from DES", e)
+    case Failure(e) => Logger.error(s"$endpoint received error response from DES", e)
   }
 
 }

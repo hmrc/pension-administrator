@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
+import audit.{AuditService, StubSuccessfulAuditService}
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.ConnectorBehaviours
 import org.scalatest._
+import org.slf4j.event.Level
+import play.api.LoggerLike
+import play.api.inject.bind
+import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
 import uk.gov.hmrc.http._
-import utils.WireMockHelper
+import utils.{StubLogger, WireMockHelper}
 import play.api.test.Helpers._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class AssociationConnectorSpec extends AsyncFlatSpec
   with Matchers
@@ -31,12 +35,22 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   with EitherValues
   with ConnectorBehaviours {
 
-  override protected def portConfigKey: String = "microservice.services.des-hod.port"
-
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  val psaId = "A2123456"
-  val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/${psaId}"
+  val auditService = new StubSuccessfulAuditService()
+  val logger = new StubLogger()
+
+  private val psaId = "A2123456"
+  private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/${psaId}"
+
+  override protected def portConfigKey: String = "microservice.services.des-hod.port"
+
+  override protected def bindings: Seq[GuiceableModule] =
+    Seq(
+      bind[AuditService].toInstance(auditService),
+      bind[LoggerLike].toInstance(logger)
+    )
+
 
   lazy val connector = injector.instanceOf[AssociationConnector]
 
@@ -93,7 +107,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should "return bad request - 400 if body contains INVALID_PSAID" in {
+  it should "return bad request - 400 if body contains INVALID_PSAID and log the event as warn" in {
 
     val errorResponse = """{
                          |	"code": "INVALID_PSAID",
@@ -102,13 +116,17 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
-          aResponse().withStatus(BAD_REQUEST).withBody(Json.parse(errorResponse).toString)
+          badRequest().withBody(Json.parse(errorResponse).toString)
         )
     )
+
+    logger.reset()
 
     connector.getPSAMinimalDetails(psaId).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
+      logger.getLogEntries.size shouldBe 1
+      logger.getLogEntries.head.level shouldBe Level.WARN
     }
 
   }
