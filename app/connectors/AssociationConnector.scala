@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{ImplementedBy, Singleton, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import play.Logger
+import play.api.LoggerLike
 import play.api.http.Status._
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http._
@@ -26,10 +26,20 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Failure, Try}
 
+
+@ImplementedBy(classOf[AssociationConnectorImpl])
+trait AssociationConnector {
+
+  def getPSAMinimalDetails(psaId : String)(implicit
+                                           headerCarrier: HeaderCarrier,
+                                           ec: ExecutionContext): Future[Either[HttpException,JsValue]]
+}
+
 @Singleton
-class AssociationConnector@Inject()(httpClient: HttpClient,
+class AssociationConnectorImpl@Inject()(httpClient: HttpClient,
                                     appConfig : AppConfig,
-                                    headerUtils: HeaderUtils) extends HttpErrorFunctions{
+                                    logger : LoggerLike,
+                                    headerUtils: HeaderUtils) extends AssociationConnector with HttpErrorFunctions{
 
   implicit val rds: HttpReads[HttpResponse] = new HttpReads[HttpResponse] {
     override def read(method: String, url: String, response: HttpResponse): HttpResponse = response
@@ -44,7 +54,7 @@ class AssociationConnector@Inject()(httpClient: HttpClient,
     val getURL = appConfig.psaMinimalDetailsUrl.format(psaId)
 
     httpClient.GET(getURL)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
-      implicitly) map handleResponse andThen logWarning("PSA minimal details")
+      implicitly) map handleResponse andThen logWarningAndIssues("PSA minimal details")
 
   }
 
@@ -61,9 +71,9 @@ class AssociationConnector@Inject()(httpClient: HttpClient,
     }
   }
 
-  private def logWarning(endpoint: String): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
-    case Success(Left(e: BadRequestException)) => Logger.warn(s"$endpoint received error response from DES", e)
-    case Failure(e) => Logger.error(s"$endpoint received error response from DES", e)
+  private def logWarningAndIssues(endpoint: String): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+    case Success(Left(e: HttpException)) => logger.warn(s"$endpoint received error response from DES", e)
+    case Failure(e) => logger.error(s"$endpoint received error response from DES", e)
   }
 
 }

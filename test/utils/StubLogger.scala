@@ -117,7 +117,7 @@ class StubLogger(name: String = "Application") extends LoggerLike {
 
     override def warn(format: String, arg1: scala.Any, arg2: scala.Any): Unit = ???
 
-    override def warn(msg: String, t: Throwable): Unit = ???
+    override def warn(msg: String, t: Throwable): Unit = logEntries = logEntries :+ LogEntry(Level.WARN, msg)
 
     override def isWarnEnabled(marker: Marker): Boolean = false
 
@@ -141,7 +141,7 @@ class StubLogger(name: String = "Application") extends LoggerLike {
 
     override def error(format: String, arguments: AnyRef*): Unit = ???
 
-    override def error(msg: String, t: Throwable): Unit = ???
+    override def error(msg: String, t: Throwable): Unit  = logEntries = logEntries :+ LogEntry(Level.ERROR, msg)
 
     override def isErrorEnabled(marker: Marker): Boolean = false
 

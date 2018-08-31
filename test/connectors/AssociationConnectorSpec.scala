@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import audit.{AuditService, StubSuccessfulAuditService}
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.ConnectorBehaviours
 import org.scalatest._
@@ -36,10 +35,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   with ConnectorBehaviours {
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
-
-  val auditService = new StubSuccessfulAuditService()
-  val logger = new StubLogger()
-
+  private val logger = new StubLogger()
   private val psaId = "A2123456"
   private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/${psaId}"
 
@@ -47,7 +43,6 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
-      bind[AuditService].toInstance(auditService),
       bind[LoggerLike].toInstance(logger)
     )
 
@@ -132,7 +127,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   }
 
 
-  it should "return bad request - 400 if body contains INVALID_CORRELATIONID" in {
+  it should "return bad request - 400 if body contains INVALID_CORRELATIONID and log the event as warn" in {
 
     val errorResponse = """{
                          |	"code": "INVALID_CORRELATIONID",
@@ -145,15 +140,19 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
+    logger.reset()
+
     connector.getPSAMinimalDetails(psaId).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
+      logger.getLogEntries.size shouldBe 1
+      logger.getLogEntries.head.level shouldBe Level.WARN
     }
 
   }
 
 
-  it should "throw upstream4xx - if any other 400" in {
+  it should "throw upstream4xx - if any other 400 and log the event as error" in {
 
     val errorResponse = """{
                          |	"code": "not valid",
@@ -166,11 +165,15 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
+    logger.reset()
+
     recoverToExceptionIf[Upstream4xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
       ex =>
         ex.upstreamResponseCode shouldBe BAD_REQUEST
         ex.message shouldBe Json.parse(errorResponse).toString
         ex.reportAs shouldBe BAD_REQUEST
+        logger.getLogEntries.size shouldBe 1
+        logger.getLogEntries.head.level shouldBe Level.ERROR
     }
 
   }
@@ -211,13 +214,11 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     recoverToExceptionIf[Upstream4xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
       ex =>
         ex.upstreamResponseCode shouldBe FORBIDDEN
-        ex.message shouldBe Json.parse(errorResponse).toString
-        ex.reportAs shouldBe BAD_REQUEST
     }
 
   }
 
-  it should "throw Upstream5XX for internal server error - 500" in {
+  it should "throw Upstream5XX for internal server error - 500 and log the event as error" in {
 
     val errorResponse = """{
                           |	"code": "SERVER_ERROR",
@@ -230,16 +231,20 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
+    logger.reset()
+
     recoverToExceptionIf[Upstream5xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
       ex =>
         ex.upstreamResponseCode shouldBe INTERNAL_SERVER_ERROR
         ex.message shouldBe Json.parse(errorResponse).toString
         ex.reportAs shouldBe BAD_GATEWAY
+        logger.getLogEntries.size shouldBe 1
+        logger.getLogEntries.head.level shouldBe Level.ERROR
     }
 
   }
 
-  it should "throw exception for other runtime exception" in {
+  it should "throw exception for other runtime exception and log the event as error" in {
 
     val errorResponse = """{
                           |	"code": "SERVER_ERROR",
@@ -252,9 +257,13 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
+    logger.reset()
+
     recoverToExceptionIf[Exception] (connector.getPSAMinimalDetails(psaId)) map {
       ex =>
         ex.getMessage shouldBe s"PSA minimal details failed with status ${NO_CONTENT}. Response body: ''"
+        logger.getLogEntries.size shouldBe 1
+        logger.getLogEntries.head.level shouldBe Level.ERROR
     }
 
   }
