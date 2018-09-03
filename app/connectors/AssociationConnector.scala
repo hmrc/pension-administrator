@@ -60,7 +60,7 @@ class AssociationConnectorImpl@Inject()(httpClient: HttpClient,
     val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATIONID")
     response.status match {
       case OK => Right(response.json)
-      case status => Left(handleErrorResponse("PSA minimal details", url, response, badResponseSeq))
+      case _ => Left(handleErrorResponse("PSA minimal details", url, response, badResponseSeq))
     }
   }
 
