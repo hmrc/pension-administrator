@@ -170,7 +170,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     recoverToExceptionIf[Upstream4xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
       ex =>
         ex.upstreamResponseCode shouldBe BAD_REQUEST
-        ex.message shouldBe Json.parse(errorResponse).toString
+        ex.getMessage should startWith("PSA minimal details")
+        ex.message should include(Json.parse(errorResponse).toString)
         ex.reportAs shouldBe BAD_REQUEST
         logger.getLogEntries.size shouldBe 1
         logger.getLogEntries.head.level shouldBe Level.ERROR
@@ -236,7 +237,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     recoverToExceptionIf[Upstream5xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
       ex =>
         ex.upstreamResponseCode shouldBe INTERNAL_SERVER_ERROR
-        ex.message shouldBe Json.parse(errorResponse).toString
+        ex.getMessage should startWith("PSA minimal details")
+        ex.message should include(Json.parse(errorResponse).toString)
         ex.reportAs shouldBe BAD_GATEWAY
         logger.getLogEntries.size shouldBe 1
         logger.getLogEntries.head.level shouldBe Level.ERROR
@@ -261,11 +263,11 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[Exception] (connector.getPSAMinimalDetails(psaId)) map {
       ex =>
-        ex.getMessage shouldBe s"PSA minimal details failed with status ${NO_CONTENT}. Response body: ''"
+        ex.getMessage should startWith("PSA minimal details")
+        ex.getMessage should include("failed with status")
         logger.getLogEntries.size shouldBe 1
         logger.getLogEntries.head.level shouldBe Level.ERROR
     }
 
   }
-
 }

@@ -26,7 +26,7 @@ import play.api.libs.json.{Json, JsValue}
 import play.api.mvc.{Result, RequestHeader}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import utils.InvalidPayloadHandler
+import utils.{HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
@@ -51,11 +51,7 @@ class SchemeConnectorImpl @Inject()(
                                      auditService: AuditService,
                                      invalidPayloadHandler: InvalidPayloadHandler,
                                      headerUtils: HeaderUtils
-                                   ) extends SchemeConnector with HttpErrorFunctions {
-
-  implicit val rds: HttpReads[HttpResponse] = new HttpReads[HttpResponse] {
-    override def read(method: String, url: String, response: HttpResponse): HttpResponse = response
-  }
+                                   ) extends SchemeConnector with HttpResponseHelper {
 
   override def registerPSA(registerData: JsValue)(implicit
                                                   headerCarrier: HeaderCarrier,
@@ -69,25 +65,18 @@ class SchemeConnectorImpl @Inject()(
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
     http.POST[JsValue, HttpResponse](schemeAdminRegisterUrl, registerData)(implicitly,
-      implicitly, hc, implicitly) map handleResponse andThen logFailures("register PSA", registerData, psaSchema)
+      implicitly, hc, implicitly) map { handleResponse(_, schemeAdminRegisterUrl) } andThen logFailures("register PSA", registerData, psaSchema)
   }
 
-  //scalastyle:off cyclomatic.complexity
-  private def handleResponse(response: HttpResponse): Either[HttpException, JsValue] = {
+  private def handleResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
     val badResponseSeq = Seq("INVALID_CORRELATION_ID", "INVALID_PAYLOAD")
     response.status match {
       case OK => Right(response.json)
-      case BAD_REQUEST if badResponseSeq.exists(response.body.contains(_)) => Left(new BadRequestException(response.body))
       case CONFLICT if response.body.contains("DUPLICATE_SUBMISSION") => Left(new ConflictException(response.body))
-      case NOT_FOUND => Left(new NotFoundException(response.body))
       case FORBIDDEN if response.body.contains("INVALID_BUSINESS_PARTNER") => Left(new ForbiddenException(response.body))
-      case status if is4xx(status) => throw Upstream4xxResponse(response.body, status, BAD_REQUEST, response.allHeaders)
-      case status if is5xx(status) => throw Upstream5xxResponse(response.body, status, BAD_GATEWAY)
-      case status => throw new Exception(s"Subscription failed with status $status. Response body: '${response.body}'")
+      case status => Left(handleErrorResponse("Subscription", url, response, badResponseSeq))
     }
   }
-
-  //scalastyle:on cyclomatic.complexity
 
   private def logFailures(endpoint: String, data: JsValue, schemaPath: String): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
     case Success(Left(e: BadRequestException)) if e.message.contains("INVALID_PAYLOAD") =>
