@@ -19,7 +19,7 @@ package service
 import audit.{AuditService, SchemeAuditService}
 import com.google.inject.Inject
 import config.AppConfig
-import connector.SchemeConnector
+import connectors.SchemeConnector
 import models.PensionSchemeAdministrator
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json}

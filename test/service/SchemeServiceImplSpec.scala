@@ -18,7 +18,7 @@ package service
 
 import audit.{PSASubscription, StubSuccessfulAuditService}
 import base.SpecBase
-import connector.SchemeConnector
+import connectors.SchemeConnector
 import models.PensionSchemeAdministrator
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
