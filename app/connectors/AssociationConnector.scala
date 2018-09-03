@@ -38,9 +38,8 @@ trait AssociationConnector {
 
 @Singleton
 class AssociationConnectorImpl@Inject()(httpClient: HttpClient,
-                                    appConfig : AppConfig,
-                                    logger : LoggerLike,
-                                    headerUtils: HeaderUtils) extends AssociationConnector with HttpResponseHelper with ErrorHandler{
+                                        appConfig : AppConfig,
+                                        headerUtils: HeaderUtils) extends AssociationConnector with HttpResponseHelper with ErrorHandler{
 
 
   def getPSAMinimalDetails(psaId : String)(implicit
