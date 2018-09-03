@@ -26,7 +26,7 @@ import uk.gov.hmrc.http._
 
 import scala.concurrent.Future
 import scala.util.matching.Regex
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 trait ErrorHandler {
 
@@ -59,7 +59,8 @@ trait ErrorHandler {
   }
 
   protected def logWarning(endpoint: String): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
-    case Success(Left(e: HttpResponse)) => Logger.warn(s"$endpoint received error response from DES", e)
+    case Success(Left(e: HttpException)) => Logger.warn(s"$endpoint received error response from DES", e)
+    case Failure(e) => Logger.error(s"$endpoint received error response from DES", e)
   }
 
 

@@ -20,6 +20,7 @@ import audit.testdoubles.StubSuccessfulAuditService
 import audit.{AuditService, PSARegistration}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
+import connectors.helper.ConnectorBehaviours
 import models._
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.inject.bind
@@ -32,14 +33,14 @@ import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import utils.WireMockHelper
 
-class RegistrationConnectorSpec extends AsyncFlatSpec
+class RegistrationConnectorPostSpec extends AsyncFlatSpec
   with JsonFileReader
   with Matchers
   with WireMockHelper
   with EitherValues
   with ConnectorBehaviours {
 
-  import RegistrationConnectorSpec._
+  import RegistrationConnectorPostSpec._
 
   override def beforeEach(): Unit = {
     auditService.reset()
@@ -105,7 +106,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should behave like errorHandlerForApiFailures(
+  it should behave like errorHandlerForPostApiFailures(
     connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual),
     registerIndividualWithIdUrl
   )
@@ -239,7 +240,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should behave like errorHandlerForApiFailures(
+  it should behave like errorHandlerForPostApiFailures(
     connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation),
     registerOrganisationWithIdUrl
   )
@@ -368,7 +369,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should behave like errorHandlerForApiFailures(
+  it should behave like errorHandlerForPostApiFailures(
     connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant),
     registerOrganisationWithoutIdUrl
   )
@@ -446,7 +447,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
 }
 
-object RegistrationConnectorSpec {
+object RegistrationConnectorPostSpec {
 
   val testNino: String = "AB123456C"
   val testUtr: String = "1234567890"

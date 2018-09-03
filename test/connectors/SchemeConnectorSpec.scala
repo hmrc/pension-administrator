@@ -19,11 +19,12 @@ package connectors
 import audit.{AuditService, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
+import connectors.helper.{ConnectorBehaviours}
 import org.joda.time.LocalDate
 import org.scalatest._
 import org.slf4j.event.Level
 import play.api.LoggerLike
-import play.api.http.Status
+import play.api.http.Status._
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
@@ -38,7 +39,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
   with OptionValues
   with RecoverMethods
   with EitherValues
-  with ConnectorBehaviours {
+  with ConnectorBehaviours{
 
   import SchemeConnectorSpec._
 
@@ -123,17 +124,12 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should behave like errorHandlerForApiFailures(
-    connector.registerPSA(registerPsaData),
-    registerPsaUrl
-  )
-
   it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
     server.stubFor(
       post(urlEqualTo(registerPsaUrl))
         .willReturn(
           aResponse()
-            .withStatus(Status.CONFLICT)
+            .withStatus(CONFLICT)
             .withHeader("Content-Type", "application/json")
             .withBody(duplicateSubmissionResponse)
         )
@@ -144,6 +140,11 @@ class SchemeConnectorSpec extends AsyncFlatSpec
         response.left.value.message should include("DUPLICATE_SUBMISSION")
     }
   }
+
+  it should behave like errorHandlerForPostApiFailures(
+    connector.registerPSA(registerPsaData),
+    registerPsaUrl
+  )
 
   "SchemeConnector getPSASubscriptionDetails" should "handle OK (200)" in {
 
@@ -161,53 +162,10 @@ class SchemeConnectorSpec extends AsyncFlatSpec
        }
      }
 
-    it should "return 400 as http response for INVALID_PSAID" in {
-      server.stubFor(
-        get(urlEqualTo(psaSubscriptionDetailsUrl))
-          .withHeader("Content-Type", equalTo("application/json"))
-          .willReturn(
-            badRequest().withBody(invalidPSAIdResponse)
-          )
-      )
-      connector.getPSASubscriptionDetails(psaId).map { response =>
-        response.left.value.responseCode shouldBe Status.BAD_REQUEST
-        response.left.value.message shouldBe invalidPSAIdResponse
-        server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
-      }
-    }
-
-
-
-  it should "return 400 as http response for INVALID_CORRELATION_ID" in {
-    server.stubFor(
-      get(urlEqualTo(psaSubscriptionDetailsUrl))
-        .withHeader("Content-Type", equalTo("application/json"))
-        .willReturn(
-          badRequest().withBody(invalidCorrelationIdResponse)
-        )
-    )
-    connector.getPSASubscriptionDetails(psaId).map { response =>
-      response.left.value.responseCode shouldBe Status.BAD_REQUEST
-      response.left.value.message shouldBe invalidCorrelationIdResponse
-      server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
-    }
-  }
-
-
-  it should "return 404 as http response for NOT_FOUND" in {
-    server.stubFor(
-      get(urlEqualTo(psaSubscriptionDetailsUrl))
-        .withHeader("Content-Type", equalTo("application/json"))
-        .willReturn(
-          notFound().withBody(notFoundResponse)
-        )
-    )
-    connector.getPSASubscriptionDetails(psaId).map { response =>
-      response.left.value.responseCode shouldBe Status.NOT_FOUND
-      response.left.value.message shouldBe notFoundResponse
-      server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
-    }
-  }
+  it should behave like errorHandlerForGetApiFailures(
+    connector.getPSASubscriptionDetails(psaId),
+    psaSubscriptionDetailsUrl
+  )
 
 }
 
