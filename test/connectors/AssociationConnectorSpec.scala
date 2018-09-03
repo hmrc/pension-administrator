@@ -17,14 +17,13 @@
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.ConnectorBehaviours
 import org.scalatest._
-import org.slf4j.event.Level
 import play.api.LoggerLike
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.http._
 import utils.{StubLogger, WireMockHelper}
-import play.api.test.Helpers._
 
 class AssociationConnectorSpec extends AsyncFlatSpec
   with Matchers
@@ -49,20 +48,9 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   lazy val connector = injector.instanceOf[AssociationConnector]
 
-  "AssociationConnector" should "return OK (200) - all fields with individualDetails" in {
+  "AssociationConnector" should "return OK (200) with a JSON payload" in {
 
-    val individualDetails = """{
-                     |	"processingDate": "2001-12-17T09:30:47Z",
-                     |	"psaMinimalDetails": {
-                     |		"individualDetails": {
-                     |			"firstName": "abcdefghjffgfg",
-                     |			"middleName": "dfgfdgdfgfdgd",
-                     |			"lastName": "sfdsfsdgdfgdfg"
-                     |		}
-                     |	},
-                     |	"email": "aaa@email.com",
-                     |	"psaSuspensionFlag": true
-                     |}""".stripMargin
+    val individualDetails = """{"processingDate": "2001-12-17T09:30:47Z"}""".stripMargin
 
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
@@ -77,32 +65,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should "return OK (200) - All fields with organisationOrPartnershipName" in {
-
-    val organisationOrPartnershipName = """{
-                              |	"processingDate": "2009-12-17T09:30:47Z",
-                              |	"psaMinimalDetails": {
-                              |		"organisationOrPartnershipName": "a"
-                              |	},
-                              |	"email": "bbb@email.com",
-                              |	"psaSuspensionFlag": true
-                              |}
-                              |""".stripMargin
-
-    server.stubFor(
-      get(urlEqualTo(psaMinimalDetailsUrl))
-        .willReturn(
-          ok(Json.parse(organisationOrPartnershipName).toString())
-            .withHeader("Content-Type", "application/json")
-        )
-    )
-
-    connector.getPSAMinimalDetails(psaId).map { response =>
-      response.right.value shouldBe Json.parse(organisationOrPartnershipName)
-    }
-  }
-
-  it should "return bad request - 400 if body contains INVALID_PSAID and log the event as warn" in {
+  it should "return bad request - 400 if body contains INVALID_PSAID" in {
 
     val errorResponse = """{
                          |	"code": "INVALID_PSAID",
@@ -115,19 +78,14 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    logger.reset()
-
     connector.getPSAMinimalDetails(psaId).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
-      logger.getLogEntries.size shouldBe 1
-      logger.getLogEntries.head.level shouldBe Level.WARN
     }
-
   }
 
 
-  it should "return bad request - 400 if body contains INVALID_CORRELATIONID and log the event as warn" in {
+  it should "return bad request - 400 if body contains INVALID_CORRELATIONID" in {
 
     val errorResponse = """{
                          |	"code": "INVALID_CORRELATIONID",
@@ -140,13 +98,9 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    logger.reset()
-
     connector.getPSAMinimalDetails(psaId).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
-      logger.getLogEntries.size shouldBe 1
-      logger.getLogEntries.head.level shouldBe Level.WARN
     }
 
   }
@@ -165,16 +119,11 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    logger.reset()
-
     recoverToExceptionIf[Upstream4xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
       ex =>
         ex.upstreamResponseCode shouldBe BAD_REQUEST
         ex.getMessage should startWith("PSA minimal details")
         ex.message should include(Json.parse(errorResponse).toString)
-        ex.reportAs shouldBe BAD_REQUEST
-        logger.getLogEntries.size shouldBe 1
-        logger.getLogEntries.head.level shouldBe Level.ERROR
     }
 
   }
@@ -219,7 +168,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   }
 
-  it should "throw Upstream5XX for internal server error - 500 and log the event as error" in {
+  it should "throw Upstream5XX for internal server error - 500" in {
 
     val errorResponse = """{
                           |	"code": "SERVER_ERROR",
@@ -232,26 +181,17 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    logger.reset()
-
     recoverToExceptionIf[Upstream5xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
       ex =>
         ex.upstreamResponseCode shouldBe INTERNAL_SERVER_ERROR
         ex.getMessage should startWith("PSA minimal details")
         ex.message should include(Json.parse(errorResponse).toString)
         ex.reportAs shouldBe BAD_GATEWAY
-        logger.getLogEntries.size shouldBe 1
-        logger.getLogEntries.head.level shouldBe Level.ERROR
     }
-
   }
 
-  it should "throw exception for other runtime exception and log the event as error" in {
+  it should "throw exception for other runtime exception" in {
 
-    val errorResponse = """{
-                          |	"code": "SERVER_ERROR",
-                          |	"reason": "DES is currently experiencing problems that require live service intervention."
-                          |}""".stripMargin
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
@@ -259,15 +199,10 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    logger.reset()
-
     recoverToExceptionIf[Exception] (connector.getPSAMinimalDetails(psaId)) map {
       ex =>
         ex.getMessage should startWith("PSA minimal details")
         ex.getMessage should include("failed with status")
-        logger.getLogEntries.size shouldBe 1
-        logger.getLogEntries.head.level shouldBe Level.ERROR
     }
-
   }
 }
