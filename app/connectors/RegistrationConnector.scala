@@ -26,7 +26,7 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import utils.ErrorHandler
+import utils.{HttpResponseHelper, ErrorHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,17 +34,13 @@ class RegistrationConnectorImpl @Inject()(
                                            http: HttpClient,
                                            config: AppConfig,
                                            auditService: AuditService
-                                         ) extends RegistrationConnector with HttpErrorFunctions with ErrorHandler with RegistrationAuditService {
+                                         ) extends RegistrationConnector with HttpResponseHelper with ErrorHandler with RegistrationAuditService {
 
   private val desHeader = Seq(
     "Environment" -> config.desEnvironment,
     "Authorization" -> config.authorization,
     "Content-Type" -> "application/json"
   )
-
-  implicit val rds: HttpReads[HttpResponse] = new HttpReads[HttpResponse] {
-    override def read(method: String, url: String, response: HttpResponse): HttpResponse = response
-  }
 
   override def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)
                                        (implicit hc: HeaderCarrier,
@@ -57,7 +53,7 @@ class RegistrationConnectorImpl @Inject()(
     Logger.debug(s"[Pensions-Scheme-Header-Carrier]-${desHeader.toString()}")
 
     http.POST(registerWithIdUrl, registerData, desHeader)(implicitly, implicitly[HttpReads[HttpResponse]], HeaderCarrier(), implicitly) map
-      handleResponse andThen sendPSARegistrationEvent(
+      { handleResponse(_, registerWithIdUrl) } andThen sendPSARegistrationEvent(
         withId = true, user, "Individual", registerData, withIdIsUk
       )(auditService.sendEvent) andThen logWarning("registerWithIdIndividual")
 
@@ -72,7 +68,7 @@ class RegistrationConnectorImpl @Inject()(
     val psaType: String = organisationPsaType(registerData)
 
     http.POST(registerWithIdUrl, registerData, desHeader)(implicitly, implicitly[HttpReads[HttpResponse]], HeaderCarrier(), implicitly) map
-      handleResponse andThen sendPSARegistrationEvent(
+      { handleResponse(_, registerWithIdUrl) } andThen sendPSARegistrationEvent(
         withId = true, user, psaType, registerData, withIdIsUk
       )(auditService.sendEvent) andThen logWarning("registerWithIdOrganisation")
 
@@ -87,26 +83,22 @@ class RegistrationConnectorImpl @Inject()(
     val schemeAdminRegisterUrl = config.registerWithoutIdOrganisationUrl
 
     http.POST(schemeAdminRegisterUrl, registerData)(OrganisationRegistrant.apiWrites, implicitly[HttpReads[HttpResponse]], implicitly, implicitly) map
-      handleResponse andThen sendPSARegistrationEvent(
+      { handleResponse(_, schemeAdminRegisterUrl)} andThen sendPSARegistrationEvent(
         withId = false, user, "Organisation", Json.toJson(registerData), noIdIsUk(registerData)
       )(auditService.sendEvent) andThen logWarning("registrationNoIdOrganisation")
 
   }
-  //scalastyle:off cyclomatic.complexity
-  private def handleResponse(response: HttpResponse): Either[HttpException, JsValue] = {
+
+  private def handleResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
     val badResponseSeq = Seq("INVALID_NINO", "INVALID_PAYLOAD", "INVALID_UTR")
     response.status match {
       case OK => Right(response.json)
-      case BAD_REQUEST if badResponseSeq.exists(response.body.contains(_)) => Left(new BadRequestException(response.body))
-      case NOT_FOUND => Left(new NotFoundException(response.body))
       case CONFLICT => Left(new ConflictException(response.body))
       case FORBIDDEN if response.body.contains("INVALID_SUBMISSION") => Left(new ForbiddenException(response.body))
-      case status if is4xx(status) => throw Upstream4xxResponse(response.body, status, BAD_REQUEST, response.allHeaders)
-      case status if is5xx(status) => throw Upstream5xxResponse(response.body, status, BAD_GATEWAY)
-      case status => throw new Exception(s"Business Partner Matching fail with status $status. Response body: '${response.body}'")
+      case status => Left(handleErrorResponse("Business Partner Matching", url, response, badResponseSeq))
     }
   }
-  //scalastyle:on cyclomatic.complexity
+
 }
 
 @ImplementedBy(classOf[RegistrationConnectorImpl])

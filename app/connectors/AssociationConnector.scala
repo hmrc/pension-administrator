@@ -22,6 +22,7 @@ import play.api.http.Status._
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import utils.HttpResponseHelper
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Failure, Try}
@@ -39,11 +40,8 @@ trait AssociationConnector {
 class AssociationConnectorImpl@Inject()(httpClient: HttpClient,
                                     appConfig : AppConfig,
                                     logger : LoggerLike,
-                                    headerUtils: HeaderUtils) extends AssociationConnector with HttpErrorFunctions{
+                                    headerUtils: HeaderUtils) extends AssociationConnector with HttpResponseHelper{
 
-  implicit val rds: HttpReads[HttpResponse] = new HttpReads[HttpResponse] {
-    override def read(method: String, url: String, response: HttpResponse): HttpResponse = response
-  }
 
   def getPSAMinimalDetails(psaId : String)(implicit
                                            headerCarrier: HeaderCarrier,
@@ -54,20 +52,15 @@ class AssociationConnectorImpl@Inject()(httpClient: HttpClient,
     val getURL = appConfig.psaMinimalDetailsUrl.format(psaId)
 
     httpClient.GET(getURL)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
-      implicitly) map handleResponse andThen logWarningAndIssues("PSA minimal details")
+      implicitly) map { handleResponse(_, getURL) } andThen logWarningAndIssues("PSA minimal details")
 
   }
 
-  private def handleResponse(response: HttpResponse): Either[HttpException, JsValue] = {
+  private def handleResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
     val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATIONID")
     response.status match {
       case OK => Right(response.json)
-      case BAD_REQUEST if badResponseSeq.exists(response.body.contains(_)) => Left(new BadRequestException(response.body))
-      case NOT_FOUND => Left(new NotFoundException(response.body))
-      case status if(is4xx(status)) => throw Upstream4xxResponse(response.body, status, BAD_REQUEST)
-      case status if(is5xx(status)) => throw Upstream5xxResponse(response.body, status, BAD_GATEWAY)
-      case status => throw new Exception(s"PSA minimal details failed with status $status. Response body: '${response.body}'")
-
+      case status => Left(handleErrorResponse("PSA minimal details", url, response, badResponseSeq))
     }
   }
 
