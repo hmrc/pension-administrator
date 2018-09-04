@@ -1,0 +1,432 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "04CC -  API#1445 Post Create PSA Association  Request Schema v1.0.0",
+  "description": "04CC -  API#1445 Post Create PSA Association Request Schema v1.0.0",
+  "type": "object",
+  "properties": {
+    "psaAssociationDetails": {
+      "$ref": "#/definitions/psaAssociationDetailsType"
+    }
+  },
+  "required": [
+    "psaAssociationDetails"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "psaAssociationDetailsType": {
+      "type": "object",
+      "properties": {
+        "psaAssociationIDsDetails": {
+          "$ref": "#/definitions/psaAssociationIDsDetailsType"
+        },
+        "declarationDetails": {
+          "$ref": "#/definitions/declarationDetailsType"
+        }
+      },
+      "required": [
+        "psaAssociationIDsDetails",
+        "declarationDetails"
+      ],
+      "additionalProperties": false
+    },
+    "psaAssociationIDsDetailsType": {
+      "type": "object",
+      "properties": {
+        "inviteePSAID": {
+          "type": "string",
+          "pattern": "^A[0-9]{7}$"
+        },
+        "inviterPSAID": {
+          "type": "string",
+          "pattern": "^A[0-9]{7}$"
+        }
+      },
+      "required": [
+        "inviteePSAID",
+        "inviterPSAID"
+      ],
+      "additionalProperties": false
+    },
+    "declarationDetailsType": {
+      "type": "object",
+      "properties": {
+        "box1": {
+          "type": "boolean"
+        },
+        "box2": {
+          "type": "boolean"
+        },
+        "box3": {
+          "type": "boolean"
+        },
+        "box4": {
+          "type": "boolean"
+        },
+        "box5": {
+          "type": "boolean"
+        },
+        "box6": {
+          "type": "boolean"
+        },
+        "pensionAdviserDetails": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[a-zA-Z &?*()_À-ÿ '‘’—–‐-]{1,255}$"
+            },
+            "addressDetails": {
+              "$ref": "#/definitions/addressType"
+            },
+            "contactDetails": {
+              "$ref": "#/definitions/contactDetailsType"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "addressDetails",
+            "contactDetails"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "box1",
+        "box2",
+        "box3",
+        "box4"
+      ]
+    },
+    "addressType": {
+      "type": "object",
+      "properties": {
+        "nonUKAddress": {
+          "type": "boolean"
+        },
+        "line1": {
+          "$ref": "#/definitions/AddressLineType"
+        },
+        "line2": {
+          "$ref": "#/definitions/AddressLineType"
+        },
+        "line3": {
+          "$ref": "#/definitions/AddressLineType"
+        },
+        "line4": {
+          "$ref": "#/definitions/AddressLineType"
+        },
+        "postalCode": {
+          "description": "This is    populated if   the address supplied is    a   UK address.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10
+        },
+        "countryCode": {
+          "$ref": "#/definitions/countryCodes"
+        }
+      },
+      "required": [
+        "nonUKAddress",
+        "line1",
+        "line2",
+        "countryCode"
+      ],
+      "additionalProperties": false
+    },
+    "AddressLineType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 35,
+      "pattern": "^[A-Za-z0-9 &!'‘’\"“”(),./—–‐-]{1,35}$"
+    },
+    "contactDetailsType": {
+      "type": "object",
+      "properties": {
+        "telephone": {
+          "type": "string",
+          "pattern": "^[0-9 ()+--]{1,24}$"
+        },
+        "mobileNumber": {
+          "type": "string",
+          "pattern": "^[0-9 ()+--]{1,24}$"
+        },
+        "fax": {
+          "type": "string",
+          "pattern": "^[0-9 ()+--]{1,24}$"
+        },
+        "email": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 132,
+          "format": "email"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "email"
+      ]
+    },
+    "countryCodes": {
+      "type": "string",
+      "description": "Country code iso 3166-1 alpha-2",
+      "enum": [
+        "AD",
+        "AE",
+        "AF",
+        "AG",
+        "AI",
+        "AL",
+        "AM",
+        "AN",
+        "AO",
+        "AQ",
+        "AR",
+        "AS",
+        "AT",
+        "AU",
+        "AW",
+        "AX",
+        "AZ",
+        "BA",
+        "BB",
+        "BD",
+        "BE",
+        "BF",
+        "BG",
+        "BH",
+        "BI",
+        "BJ",
+        "BL",
+        "BM",
+        "BN",
+        "BO",
+        "BQ",
+        "BR",
+        "BS",
+        "BT",
+        "BV",
+        "BW",
+        "BY",
+        "BZ",
+        "CA",
+        "CC",
+        "CD",
+        "CF",
+        "CG",
+        "CH",
+        "CI",
+        "CK",
+        "CL",
+        "CM",
+        "CN",
+        "CO",
+        "CR",
+        "CS",
+        "CU",
+        "CV",
+        "CW",
+        "CX",
+        "CY",
+        "CZ",
+        "DE",
+        "DJ",
+        "DK",
+        "DM",
+        "DO",
+        "DZ",
+        "EC",
+        "EE",
+        "EG",
+        "EH",
+        "ER",
+        "ES",
+        "ET",
+        "EU",
+        "FI",
+        "FJ",
+        "FK",
+        "FM",
+        "FO",
+        "FR",
+        "GA",
+        "GB",
+        "GD",
+        "GE",
+        "GF",
+        "GG",
+        "GH",
+        "GI",
+        "GL",
+        "GM",
+        "GN",
+        "GP",
+        "GQ",
+        "GR",
+        "GS",
+        "GT",
+        "GU",
+        "GW",
+        "GY",
+        "HK",
+        "HM",
+        "HN",
+        "HR",
+        "HT",
+        "HU",
+        "ID",
+        "IE",
+        "IL",
+        "IM",
+        "IN",
+        "IO",
+        "IQ",
+        "IR",
+        "IS",
+        "IT",
+        "JE",
+        "JM",
+        "JO",
+        "JP",
+        "KE",
+        "KG",
+        "KH",
+        "KI",
+        "KM",
+        "KN",
+        "KP",
+        "KR",
+        "KW",
+        "KY",
+        "KZ",
+        "LA",
+        "LB",
+        "LC",
+        "LI",
+        "LK",
+        "LR",
+        "LS",
+        "LT",
+        "LU",
+        "LV",
+        "LY",
+        "MA",
+        "MC",
+        "MD",
+        "ME",
+        "MF",
+        "MG",
+        "MH",
+        "MK",
+        "ML",
+        "MM",
+        "MN",
+        "MO",
+        "MP",
+        "MQ",
+        "MR",
+        "MS",
+        "MT",
+        "MU",
+        "MV",
+        "MW",
+        "MX",
+        "MY",
+        "MZ",
+        "NA",
+        "NC",
+        "NE",
+        "NF",
+        "NG",
+        "NI",
+        "NL",
+        "NO",
+        "NP",
+        "NR",
+        "NT",
+        "NU",
+        "NZ",
+        "OM",
+        "PA",
+        "PE",
+        "PF",
+        "PG",
+        "PH",
+        "PK",
+        "PL",
+        "PM",
+        "PN",
+        "PR",
+        "PS",
+        "PT",
+        "PW",
+        "PY",
+        "QA",
+        "RE",
+        "RO",
+        "RS",
+        "RU",
+        "RW",
+        "SA",
+        "SB",
+        "SC",
+        "SD",
+        "SE",
+        "SG",
+        "SH",
+        "SI",
+        "SJ",
+        "SK",
+        "SL",
+        "SM",
+        "SN",
+        "SO",
+        "SR",
+        "SS",
+        "ST",
+        "SV",
+        "SX",
+        "SY",
+        "SZ",
+        "TC",
+        "TD",
+        "TF",
+        "TG",
+        "TH",
+        "TJ",
+        "TK",
+        "TL",
+        "TM",
+        "TN",
+        "TO",
+        "TP",
+        "TR",
+        "TT",
+        "TV",
+        "TW",
+        "TZ",
+        "UA",
+        "UG",
+        "UM",
+        "UN",
+        "US",
+        "UY",
+        "UZ",
+        "VA",
+        "VC",
+        "VE",
+        "VG",
+        "VI",
+        "VN",
+        "VU",
+        "WF",
+        "WS",
+        "YE",
+        "YT",
+        "ZA",
+        "ZM",
+        "ZW"
+      ]
+    }
+  }
+}
