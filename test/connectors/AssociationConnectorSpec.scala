@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
+package connectors
+
 import com.github.tomakehurst.wiremock.client.WireMock._
-import connectors.helper.{ConnectorBehaviours}
+import connectors.helper.ConnectorBehaviours
 import org.scalatest._
-import play.api.LoggerLike
-import play.api.inject.bind
-import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
-import play.api.test.Helpers._
 import uk.gov.hmrc.http._
-import utils.{StubLogger, WireMockHelper}
+import utils.WireMockHelper
 
 class AssociationConnectorSpec extends AsyncFlatSpec
   with Matchers
@@ -34,17 +32,10 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   with ConnectorBehaviours {
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
-  private val logger = new StubLogger()
   private val psaId = "A2123456"
-  private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/${psaId}"
+  private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/$psaId"
 
   override protected def portConfigKey: String = "microservice.services.des-hod.port"
-
-  override protected def bindings: Seq[GuiceableModule] =
-    Seq(
-      bind[LoggerLike].toInstance(logger)
-    )
-
 
   lazy val connector = injector.instanceOf[AssociationConnector]
 

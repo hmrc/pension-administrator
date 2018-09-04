@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package connectors
 
 import com.google.inject.{ImplementedBy, Singleton, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import play.api.LoggerLike
 import play.api.http.Status._
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http._
@@ -25,7 +25,6 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Success, Failure, Try}
 
 
 @ImplementedBy(classOf[AssociationConnectorImpl])

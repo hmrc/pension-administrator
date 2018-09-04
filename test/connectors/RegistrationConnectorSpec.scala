@@ -33,14 +33,14 @@ import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import utils.WireMockHelper
 
-class RegistrationConnectorPostSpec extends AsyncFlatSpec
+class RegistrationConnectorSpec extends AsyncFlatSpec
   with JsonFileReader
   with Matchers
   with WireMockHelper
   with EitherValues
   with ConnectorBehaviours {
 
-  import RegistrationConnectorPostSpec._
+  import RegistrationConnectorSpec._
 
   override def beforeEach(): Unit = {
     auditService.reset()
@@ -447,7 +447,7 @@ class RegistrationConnectorPostSpec extends AsyncFlatSpec
 
 }
 
-object RegistrationConnectorPostSpec {
+object RegistrationConnectorSpec {
 
   val testNino: String = "AB123456C"
   val testUtr: String = "1234567890"
