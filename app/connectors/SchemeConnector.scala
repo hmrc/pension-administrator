@@ -64,8 +64,8 @@ class SchemeConnectorImpl @Inject()(
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
-    http.POST[JsValue, HttpResponse](schemeAdminRegisterUrl, registerData)(implicitly,
-      implicitly, hc, implicitly) map { handlePostResponse(_, schemeAdminRegisterUrl) } andThen logFailures("register PSA", registerData, psaSchema)
+    http.POST[JsValue, HttpResponse](schemeAdminRegisterUrl, registerData)(implicitly, implicitly, hc, implicitly) map {
+      handlePostResponse(_, schemeAdminRegisterUrl) } andThen logFailures("register PSA", registerData, psaSchema)
   }
 
   override def getPSASubscriptionDetails(psaId: String)(implicit
@@ -85,22 +85,27 @@ class SchemeConnectorImpl @Inject()(
 
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
+
     val badResponseSeq = Seq("INVALID_CORRELATION_ID", "INVALID_PAYLOAD")
+
     response.status match {
       case OK => Right(response.json)
       case CONFLICT if response.body.contains("DUPLICATE_SUBMISSION") => Left(new ConflictException(response.body))
       case FORBIDDEN if response.body.contains("INVALID_BUSINESS_PARTNER") => Left(new ForbiddenException(response.body))
       case status => Left(handleErrorResponse("Subscription", url, response, badResponseSeq))
     }
+
   }
 
   private def handleGetResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
+
     val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATION_ID")
 
     response.status match {
       case OK => Right(response.json)
       case status => Left(handleErrorResponse("PSA Subscription details", url, response, badResponseSeq))
     }
+
   }
 
   private def logFailures(endpoint: String, data: JsValue, schemaPath: String): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
