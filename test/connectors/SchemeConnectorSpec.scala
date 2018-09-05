@@ -19,11 +19,12 @@ package connectors
 import audit.{AuditService, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
+import connectors.helper.{ConnectorBehaviours}
 import org.joda.time.LocalDate
 import org.scalatest._
 import org.slf4j.event.Level
 import play.api.LoggerLike
-import play.api.http.Status
+import play.api.http.Status._
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
@@ -38,7 +39,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
   with OptionValues
   with RecoverMethods
   with EitherValues
-  with ConnectorBehaviours {
+  with ConnectorBehaviours{
 
   import SchemeConnectorSpec._
 
@@ -123,17 +124,12 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should behave like errorHandlerForApiFailures(
-    connector.registerPSA(registerPsaData),
-    registerPsaUrl
-  )
-
   it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
     server.stubFor(
       post(urlEqualTo(registerPsaUrl))
         .willReturn(
           aResponse()
-            .withStatus(Status.CONFLICT)
+            .withStatus(CONFLICT)
             .withHeader("Content-Type", "application/json")
             .withBody(duplicateSubmissionResponse)
         )
@@ -144,6 +140,33 @@ class SchemeConnectorSpec extends AsyncFlatSpec
         response.left.value.message should include("DUPLICATE_SUBMISSION")
     }
   }
+
+  it should behave like errorHandlerForPostApiFailures(
+    connector.registerPSA(registerPsaData),
+    registerPsaUrl
+  )
+
+  "SchemeConnector getPSASubscriptionDetails" should "handle OK (200)" in {
+
+       server.stubFor(
+         get(urlEqualTo(psaSubscriptionDetailsUrl))
+           .withHeader("Content-Type", equalTo("application/json"))
+           .willReturn(
+             ok(psaSubscriptionData.toString())
+               .withHeader("Content-Type", "application/json")
+           )
+       )
+       connector.getPSASubscriptionDetails(psaId).map { response =>
+         response.right.value shouldBe psaSubscriptionData
+         server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
+       }
+     }
+
+  it should behave like errorHandlerForGetApiFailures(
+    connector.getPSASubscriptionDetails(psaId),
+    psaSubscriptionDetailsUrl
+  )
+
 }
 
 object SchemeConnectorSpec extends JsonFileReader {
@@ -151,7 +174,17 @@ object SchemeConnectorSpec extends JsonFileReader {
   private implicit val rh: RequestHeader = FakeRequest("", "")
   val psaId = "test"
   private val registerPsaData = readJsonFromFile("/data/validPsaRequest.json")
+  private val psaSubscriptionData = readJsonFromFile("/data/validPSASubscriptionDetails.json")
   val registerPsaUrl = "/pension-online/subscription"
+  val psaSubscriptionDetailsUrl = s"/pension-online/psa-subscription-details/${psaId}"
+
+  private val invalidPSAIdResponse =
+    Json.stringify(
+      Json.obj(
+        "code" -> "INVALID_PSAID",
+        "reason" -> "test-reason"
+      )
+    )
 
   private val invalidBusinessPartnerResponse =
     Json.stringify(
@@ -173,6 +206,14 @@ object SchemeConnectorSpec extends JsonFileReader {
     Json.stringify(
       Json.obj(
         "code" -> "DUPLICATE_SUBMISSION",
+        "reason" -> "test-reason"
+      )
+    )
+
+  private val notFoundResponse =
+    Json.stringify(
+      Json.obj(
+        "code" -> "NOT_FOUND",
         "reason" -> "test-reason"
       )
     )

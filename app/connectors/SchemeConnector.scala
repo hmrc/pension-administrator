@@ -22,21 +22,27 @@ import config.AppConfig
 import connectors.helper.HeaderUtils
 import play.Logger
 import play.api.http.Status._
-import play.api.libs.json.JsValue
-import play.api.mvc.RequestHeader
+import play.api.libs.json.{Json, JsValue}
+import play.api.mvc.{Result, RequestHeader}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import utils.{HttpResponseHelper, InvalidPayloadHandler}
+import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
 
 @ImplementedBy(classOf[SchemeConnectorImpl])
 trait SchemeConnector {
+
   def registerPSA(registerData: JsValue)(implicit
                                          headerCarrier: HeaderCarrier,
                                          ec: ExecutionContext,
                                          request: RequestHeader): Future[Either[HttpException, JsValue]]
+
+  def getPSASubscriptionDetails(psaId: String)(implicit
+                                               headerCarrier: HeaderCarrier,
+                                               ec: ExecutionContext,
+                                               request: RequestHeader): Future[Either[HttpException, JsValue]]
 }
 
 class SchemeConnectorImpl @Inject()(
@@ -45,7 +51,7 @@ class SchemeConnectorImpl @Inject()(
                                      auditService: AuditService,
                                      invalidPayloadHandler: InvalidPayloadHandler,
                                      headerUtils: HeaderUtils
-                                   ) extends SchemeConnector with HttpResponseHelper {
+                                   ) extends SchemeConnector with HttpResponseHelper with ErrorHandler {
 
   override def registerPSA(registerData: JsValue)(implicit
                                                   headerCarrier: HeaderCarrier,
@@ -58,18 +64,48 @@ class SchemeConnectorImpl @Inject()(
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
-    http.POST[JsValue, HttpResponse](schemeAdminRegisterUrl, registerData)(implicitly,
-      implicitly, hc, implicitly) map { handleResponse(_, schemeAdminRegisterUrl) } andThen logFailures("register PSA", registerData, psaSchema)
+    http.POST[JsValue, HttpResponse](schemeAdminRegisterUrl, registerData)(implicitly, implicitly, hc, implicitly) map {
+      handlePostResponse(_, schemeAdminRegisterUrl) } andThen logFailures("register PSA", registerData, psaSchema)
   }
 
-  private def handleResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
+  override def getPSASubscriptionDetails(psaId: String)(implicit
+                                                        headerCarrier: HeaderCarrier,
+                                                        ec: ExecutionContext,
+                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
+    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+
+    val subscriptionDetailsUrl = config.psaSubscriptionDetailsUrl.format(psaId)
+
+    http.GET[HttpResponse](subscriptionDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
+      implicitly) map { handleGetResponse(_, subscriptionDetailsUrl) } andThen logWarning("PSA subscription details")
+
+  }
+
+
+
+  private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
+
     val badResponseSeq = Seq("INVALID_CORRELATION_ID", "INVALID_PAYLOAD")
+
     response.status match {
       case OK => Right(response.json)
       case CONFLICT if response.body.contains("DUPLICATE_SUBMISSION") => Left(new ConflictException(response.body))
       case FORBIDDEN if response.body.contains("INVALID_BUSINESS_PARTNER") => Left(new ForbiddenException(response.body))
       case status => Left(handleErrorResponse("Subscription", url, response, badResponseSeq))
     }
+
+  }
+
+  private def handleGetResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
+
+    val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATION_ID")
+
+    response.status match {
+      case OK => Right(response.json)
+      case status => Left(handleErrorResponse("PSA Subscription details", url, response, badResponseSeq))
+    }
+
   }
 
   private def logFailures(endpoint: String, data: JsValue, schemaPath: String): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
@@ -77,4 +113,5 @@ class SchemeConnectorImpl @Inject()(
       invalidPayloadHandler.logFailures(schemaPath, data)
     case Success(Left(e: HttpResponse)) => Logger.warn(s"$endpoint received error response from DES", e)
   }
+
 }

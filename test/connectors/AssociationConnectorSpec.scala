@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
+package connectors
+
 import com.github.tomakehurst.wiremock.client.WireMock._
-import connectors.ConnectorBehaviours
+import connectors.helper.ConnectorBehaviours
 import org.scalatest._
-import play.api.LoggerLike
-import play.api.inject.bind
-import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
-import play.api.test.Helpers._
 import uk.gov.hmrc.http._
-import utils.{StubLogger, WireMockHelper}
+import utils.WireMockHelper
 
 class AssociationConnectorSpec extends AsyncFlatSpec
   with Matchers
@@ -34,17 +32,10 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   with ConnectorBehaviours {
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
-  private val logger = new StubLogger()
   private val psaId = "A2123456"
-  private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/${psaId}"
+  private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/$psaId"
 
   override protected def portConfigKey: String = "microservice.services.des-hod.port"
-
-  override protected def bindings: Seq[GuiceableModule] =
-    Seq(
-      bind[LoggerLike].toInstance(logger)
-    )
-
 
   lazy val connector = injector.instanceOf[AssociationConnector]
 
@@ -105,104 +96,9 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   }
 
+  it should behave like errorHandlerForGetApiFailures(
+    connector.getPSAMinimalDetails(psaId),
+    psaMinimalDetailsUrl
+  )
 
-  it should "throw upstream4xx - if any other 400 and log the event as error" in {
-
-    val errorResponse = """{
-                         |	"code": "not valid",
-                         |	"reason": "any other exception message"
-                         |}""".stripMargin
-    server.stubFor(
-      get(urlEqualTo(psaMinimalDetailsUrl))
-        .willReturn(
-          badRequest().withBody(Json.parse(errorResponse).toString)
-        )
-    )
-
-    recoverToExceptionIf[Upstream4xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
-      ex =>
-        ex.upstreamResponseCode shouldBe BAD_REQUEST
-        ex.getMessage should startWith("PSA minimal details")
-        ex.message should include(Json.parse(errorResponse).toString)
-    }
-
-  }
-
-  it should "return Not Found - 404" in {
-
-    val errorResponse = """{
-                         |	"code": "NOT_FOUND",
-                         |	"reason": "The back end has indicated that there is no match found."
-                         |}""".stripMargin
-    server.stubFor(
-      get(urlEqualTo(psaMinimalDetailsUrl))
-        .willReturn(
-          notFound().withBody(Json.parse(errorResponse).toString)
-        )
-    )
-
-    connector.getPSAMinimalDetails(psaId).map { response =>
-      response.left.value shouldBe a[NotFoundException]
-      response.left.value.message shouldBe Json.parse(errorResponse).toString()
-    }
-
-  }
-
-  it should "throw Upstream4XX for server unavailable - 403" in {
-
-    val errorResponse = """{
-                          |	"code": "FORBIDDEN",
-                          |	"reason": "Dependent systems are currently not responding."
-                          |}""".stripMargin
-    server.stubFor(
-      get(urlEqualTo(psaMinimalDetailsUrl))
-        .willReturn(
-          forbidden().withBody(Json.parse(errorResponse).toString)
-        )
-    )
-
-    recoverToExceptionIf[Upstream4xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
-      ex =>
-        ex.upstreamResponseCode shouldBe FORBIDDEN
-    }
-
-  }
-
-  it should "throw Upstream5XX for internal server error - 500" in {
-
-    val errorResponse = """{
-                          |	"code": "SERVER_ERROR",
-                          |	"reason": "DES is currently experiencing problems that require live service intervention."
-                          |}""".stripMargin
-    server.stubFor(
-      get(urlEqualTo(psaMinimalDetailsUrl))
-        .willReturn(
-          serverError().withBody(Json.parse(errorResponse).toString)
-        )
-    )
-
-    recoverToExceptionIf[Upstream5xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
-      ex =>
-        ex.upstreamResponseCode shouldBe INTERNAL_SERVER_ERROR
-        ex.getMessage should startWith("PSA minimal details")
-        ex.message should include(Json.parse(errorResponse).toString)
-        ex.reportAs shouldBe BAD_GATEWAY
-    }
-  }
-
-  it should "throw exception for other runtime exception" in {
-
-    server.stubFor(
-      get(urlEqualTo(psaMinimalDetailsUrl))
-        .willReturn(
-          noContent()
-        )
-    )
-
-    recoverToExceptionIf[Exception] (connector.getPSAMinimalDetails(psaId)) map {
-      ex =>
-        ex.getMessage should startWith("PSA minimal details")
-        ex.getMessage should include("failed with status")
-    }
-  }
 }

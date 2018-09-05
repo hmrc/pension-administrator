@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package connectors
 
 import com.google.inject.{ImplementedBy, Singleton, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import play.api.LoggerLike
 import play.api.http.Status._
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import utils.HttpResponseHelper
+import utils.{ErrorHandler, HttpResponseHelper}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Success, Failure, Try}
 
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
@@ -38,9 +37,8 @@ trait AssociationConnector {
 
 @Singleton
 class AssociationConnectorImpl@Inject()(httpClient: HttpClient,
-                                    appConfig : AppConfig,
-                                    logger : LoggerLike,
-                                    headerUtils: HeaderUtils) extends AssociationConnector with HttpResponseHelper{
+                                        appConfig : AppConfig,
+                                        headerUtils: HeaderUtils) extends AssociationConnector with HttpResponseHelper with ErrorHandler{
 
 
   def getPSAMinimalDetails(psaId : String)(implicit
@@ -49,10 +47,10 @@ class AssociationConnectorImpl@Inject()(httpClient: HttpClient,
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
-    val getURL = appConfig.psaMinimalDetailsUrl.format(psaId)
+    val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(psaId)
 
-    httpClient.GET(getURL)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
-      implicitly) map { handleResponse(_, getURL) } andThen logWarningAndIssues("PSA minimal details")
+    httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
+      implicitly) map { handleResponse(_, minimalDetailsUrl) } andThen logWarning("PSA minimal details")
 
   }
 
@@ -62,11 +60,6 @@ class AssociationConnectorImpl@Inject()(httpClient: HttpClient,
       case OK => Right(response.json)
       case _ => Left(handleErrorResponse("PSA minimal details", url, response, badResponseSeq))
     }
-  }
-
-  private def logWarningAndIssues(endpoint: String): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
-    case Success(Left(e: HttpException)) => logger.warn(s"$endpoint received error response from DES", e)
-    case Failure(e) => logger.error(s"$endpoint received error response from DES", e)
   }
 
 }
