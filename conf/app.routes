@@ -6,3 +6,4 @@ POST        /register-with-id/organisation              controllers.Registration
 
 POST        /register-psa                               controllers.SchemeController.registerPSA
 
+POST        /email-response/*id                         controllers.EmailResponseController.retrieveStatus(id: String)
