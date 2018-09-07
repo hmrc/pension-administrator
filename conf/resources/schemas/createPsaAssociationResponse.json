@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "API#1445 PODS Create PSA Association Response Schema v1.0.0",
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "#/definitions/successResponse"
+    },
+    {
+      "$ref": "#/definitions/failureResponse"
+    }
+  ],
+  "definitions": {
+    "successResponse": {
+      "type": "object",
+      "properties": {
+        "processingDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date the message was processed"
+        },
+        "formBundleNumber": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "processingDate"
+      ],
+      "additionalProperties": false
+    },
+    "failureResponse": {
+      "type": "object",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/failureResponseElement"
+        },
+        {
+          "$ref": "#/definitions/failureResponseArray"
+        }
+      ]
+    },
+    "failureResponseArray": {
+      "type": "object",
+      "properties": {
+        "failures": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/failureResponseElement"
+          }
+        }
+      },
+      "required": [
+        "failures"
+      ],
+      "additionalProperties": false
+    },
+    "failureResponseElement": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "INVALID_PSTR",
+            "INVALID_PAYLOAD",
+            "INVALID_CORRELATION_ID",
+            "NOT_FOUND",
+            "INVALID_INVITEE_PSAID",
+            "INVALID_INVITER_PSAID",
+            "ACTIVE_RELATIONSHIP_EXISTS",
+            "SERVICE_UNAVAILABLE",
+            "SERVER_ERROR"
+          ],
+          "description": "Keys for all the errors returned. Custom per API"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "description": "A simple description for the failure"
+        }
+      },
+      "required": [
+        "code",
+        "reason"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
