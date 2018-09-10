@@ -27,13 +27,15 @@ object MicroServiceBuild extends Build with MicroService {
   private val mockitoAllVersion = "1.10.19"
   private val wireMockVersion = "2.15.0"
   private val scalacheckVersion = "1.14.0"
+  private val domainVersion = "5.1.0"
 
   val compile = Seq(
     "uk.gov.hmrc" %% "play-reactivemongo" % "6.2.0",
     ws,
     "uk.gov.hmrc" %% "bootstrap-play-25" % "3.0.0",
     "com.networknt" % "json-schema-validator" % "0.1.19",
-    "com.josephpconley" %% "play-jsonpath" % "2.5.0"
+    "com.josephpconley" %% "play-jsonpath" % "2.5.0",
+    "uk.gov.hmrc" %% "domain" % domainVersion
   )
 
   def test(scope: String = "test,it") = Seq(
