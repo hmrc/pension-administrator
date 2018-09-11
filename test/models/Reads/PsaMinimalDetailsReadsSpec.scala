@@ -16,20 +16,47 @@
 
 package models.Reads
 
-import models.{PSAMinimalDetails, PSAMinimalDetailsObject, Samples}
-import org.joda.time.DateTime
+import models.{PSAMinimalDetails, Samples}
+import java.time.LocalDate
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
 
 class PsaMinimalDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
 
   "A payload containing psa minimal details" should {
+
+    "transform to a valid individual details" when {
+      /*"we have firstName" in {
+        val individualDetailsPayload = Json.parse(
+          """
+            |"individualDetails": {
+            |			"firstName": "abcdefghjffgfg",
+            |			"middleName": "dfgfdgdfgfdgd",
+            |			"lastName": "sfdsfsdgdfgdfg"
+            |		}
+          """.stripMargin
+        )
+
+        val output = individualDetailsPayload.as[PSAIndividualDetails]
+        output.firstName mustBe ""
+      }*/
+    }
+
     "transform to a valid PSA Minimal Details Model" when {
+
       "we have a processing date" in {
         val output = outputPayload.as[PSAMinimalDetails](PSAMinimalDetails.customReads)
+        output.processingDate mustBe LocalDate.parse("2001-12-17")
+      }
 
-        output.processingDate mustBe DateTime.parse("2001-12-17T09:30:47Z")
+      "we have an email" in {
+        val output = outputPayload.as[PSAMinimalDetails](PSAMinimalDetails.customReads)
+        output.email mustBe "aaa@email.com"
+      }
+
+      "we have psaSuspensionFlag" in {
+        val output = outputPayload.as[PSAMinimalDetails](PSAMinimalDetails.customReads)
+        output.isPsaSuspended mustBe true
       }
     }
   }

@@ -16,24 +16,24 @@
 
 package models
 
-import org.joda.time.DateTime
+import java.time.LocalDate
 import play.api.libs.json.{JsPath, Json, Reads}
 import play.api.libs.functional.syntax._
 
 case class PSAMinimalDetails(
-                              processingDate: DateTime,
+                              processingDate: LocalDate,
                               email: String,
-                              psaSuspensionFlag: Boolean,
+                              isPsaSuspended: Boolean,
                               psaMinimalDetails: PSAMinimalDetailsObject
                             )
 
 object PSAMinimalDetails {
-
   val customReads : Reads[PSAMinimalDetails] = (
-    (JsPath \ "processingDate").read[String] map DateTime.parse and
-      (JsPath \ "_").readNullable[String]
-    )((date, _) =>
-    PSAMinimalDetails(date, "", true, PSAMinimalDetailsObject(None, None))
+    (JsPath \ "processingDate").read[LocalDate] and
+      (JsPath \ "email").read[String] and
+      (JsPath \ "psaSuspensionFlag").read[Boolean]
+    )((date, email, isPsaSuspended) =>
+    PSAMinimalDetails(date, email, isPsaSuspended, PSAMinimalDetailsObject(None, None))
   )
 }
 
