@@ -19,22 +19,21 @@ package connectors
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.{AcceptedInvitation, Address, InternationalAddress, UkAddress}
+import models._
 import play.api.{Logger, LoggerLike}
 import play.api.http.Status._
 import play.api.libs.json._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
-
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
 
-  def getPSAMinimalDetails(psaId : String)(implicit
-                                           headerCarrier: HeaderCarrier,
-                                           ec: ExecutionContext): Future[Either[HttpException,JsValue]]
+  def getPSAMinimalDetails(psaId: String)(implicit
+                                          headerCarrier: HeaderCarrier,
+                                          ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]]
 
   def acceptInvitation(invitation: AcceptedInvitation)
                       (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Unit]]
@@ -50,23 +49,30 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   import AssociationConnectorImpl._
 
-  def getPSAMinimalDetails(psaId : String)(implicit
-    headerCarrier: HeaderCarrier,
-    ec: ExecutionContext): Future[Either[HttpException,JsValue]] = {
+  def getPSAMinimalDetails(psaId: String)(implicit
+                                          headerCarrier: HeaderCarrier,
+                                          ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
     val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(psaId)
 
     httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
-      implicitly) map { handleResponse(_, minimalDetailsUrl) } andThen logWarning("PSA minimal details")
+      implicitly) map {
+      handleResponse(_, minimalDetailsUrl)
+    } andThen logWarning("PSA minimal details")
 
   }
 
-  private def handleResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
+  private def handleResponse(response: HttpResponse, url: String): Either[HttpException, PSAMinimalDetails] = {
     val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATIONID")
     response.status match {
-      case OK => Right(response.json)
+      case OK =>
+        response.json.validate[PSAMinimalDetails].fold(
+          _ => Left(new BadRequestException("INVALID PAYLOAD")),
+          value =>
+            Right(value)
+        )
       case _ => Left(handleErrorResponse("PSA minimal details", url, response, badResponseSeq))
     }
   }
@@ -183,5 +189,4 @@ object AssociationConnectorImpl {
       )
     }
   }
-
 }

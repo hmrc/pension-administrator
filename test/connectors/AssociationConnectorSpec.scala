@@ -37,115 +37,11 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   with EitherValues
   with ConnectorBehaviours {
 
+  import AssociationConnectorSpec._
+
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private val logger = new StubLogger()
-  private val psaId = "A2123456"
-  private val psaIdInvitee = "A2123456"
   private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/$psaId"
-  private val ukAddress = UkAddress(
-    addressLine1 = "address line 1",
-    addressLine2 = Some("address line 2"),
-    addressLine3 = Some("address line 3"),
-    addressLine4 = Some("address line 4"), countryCode = "GB", postalCode = "ZZ11ZZ"
-  )
-  private val internationalAddress = InternationalAddress(
-    addressLine1 = "address line 1",
-    addressLine2 = Some("address line 2"),
-    addressLine3 = Some("address line 3"),
-    addressLine4 = Some("address line 4"), countryCode = "FR", postalCode = Some("ZZ11ZZ")
-  )
-  private val pensionAdvisorName = "pension advisor 1"
-  private val contactDetails = ContactDetails(telephone = "9999999", mobileNumber = None, fax = None, email = "aaa@aaa.com")
-  private val pensionAdvisorDetailUK = PensionAdvisorDetail(name=pensionAdvisorName, addressDetail = ukAddress, contactDetail = contactDetails)
-  private val pensionAdvisorDetailInternational = PensionAdvisorDetail(
-    name=pensionAdvisorName, addressDetail = internationalAddress, contactDetail = contactDetails)
-  private val pstr = "scheme"
-
-  private val psaAssociationDetailsjsonUKAddress = s"""{
-               |   "psaAssociationDetails":{
-               |      "psaAssociationIDsDetails":{
-               |         "inviteePSAID":"$psaIdInvitee",
-               |         "inviterPSAID":"$psaId"
-               |      },
-               |      "declarationDetails":{
-               |         "box1":true,
-               |         "box2":true,
-               |         "box3":true,
-               |         "box4":true,
-               |         "box6":true,
-               |         "pensionAdviserDetails":{
-               |            "name":"$pensionAdvisorName",
-               |            "addressDetails":{
-               |               "nonUKAddress":false,
-               |               "line1":"${ukAddress.addressLine1}",
-               |               "line2":"${ukAddress.addressLine2.value}",
-               |               "line3":"${ukAddress.addressLine3.value}",
-               |               "line4":"${ukAddress.addressLine4.value}",
-               |               "postalCode":"${ukAddress.postalCode}",
-               |               "countryCode":"${ukAddress.countryCode}"
-               |            },
-               |            "contactDetails":{
-               |               "telephone":"${contactDetails.telephone}",
-               |               "email":"${contactDetails.email}"
-               |            }
-               |         }
-               |      }
-               |   }
-               |}""".stripMargin
-
-  private val psaAssociationDetailsjsonInternationalAddress = s"""{
-                                                      |   "psaAssociationDetails":{
-                                                      |      "psaAssociationIDsDetails":{
-                                                      |         "inviteePSAID":"$psaIdInvitee",
-                                                      |         "inviterPSAID":"$psaId"
-                                                      |      },
-                                                      |      "declarationDetails":{
-                                                      |         "box1":true,
-                                                      |         "box2":true,
-                                                      |         "box3":true,
-                                                      |         "box4":true,
-                                                      |         "box6":true,
-                                                      |         "pensionAdviserDetails":{
-                                                      |            "name":"$pensionAdvisorName",
-                                                      |            "addressDetails":{
-                                                      |               "nonUKAddress":true,
-                                                      |               "line1":"${internationalAddress.addressLine1}",
-                                                      |               "line2":"${internationalAddress.addressLine2.value}",
-                                                      |               "line3":"${internationalAddress.addressLine3.value}",
-                                                      |               "line4":"${internationalAddress.addressLine4.value}",
-                                                      |               "postalCode":"${internationalAddress.postalCode.value}",
-                                                      |               "countryCode":"${internationalAddress.countryCode}"
-                                                      |            },
-                                                      |            "contactDetails":{
-                                                      |               "telephone":"${contactDetails.telephone}",
-                                                      |               "email":"${contactDetails.email}"
-                                                      |            }
-                                                      |         }
-                                                      |      }
-                                                      |   }
-                                                      |}""".stripMargin
-
-  private val psaAssociationDetailsjsonNoAdvisor = s"""{
-                                                      |   "psaAssociationDetails":{
-                                                      |      "psaAssociationIDsDetails":{
-                                                      |         "inviteePSAID":"$psaIdInvitee",
-                                                      |         "inviterPSAID":"$psaId"
-                                                      |      },
-                                                      |      "declarationDetails":{
-                                                      |         "box1":true,
-                                                      |         "box2":true,
-                                                      |         "box3":true,
-                                                      |         "box4":true,
-                                                      |         "box5":true
-                                                      |      }
-                                                      |   }
-                                                      |}""".stripMargin
-
-  private val successResponseJson = """{
-    |	"processingDate": "2001-12-17T09:30:47Z",
-    |	"formBundleNumber": "12345678912"
-    |}""".stripMargin
-
   private val acceptInvitationUrl = s"/pension-online/psa-association/pstr/$pstr"
 
   override protected def portConfigKey: String = "microservice.services.des-hod.port"
@@ -158,7 +54,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   private lazy val connector = injector.instanceOf[AssociationConnector]
   private lazy val config = injector.instanceOf[AppConfig]
 
-  private def stubServer(responseJson:String, status:Int) = {
+  private def stubServer(responseJson: String, status: Int) = {
     server.stubFor(
       post(urlEqualTo(acceptInvitationUrl))
         .willReturn(
@@ -172,27 +68,26 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   "AssociationConnector" should "return OK (200) with a JSON payload" in {
 
-    val individualDetails = """{"processingDate": "2001-12-17T09:30:47Z"}""".stripMargin
-
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
-          ok(Json.parse(individualDetails).toString())
+          ok(psaMinimunIndividualDetailPayload.toString())
             .withHeader("Content-Type", "application/json")
         )
     )
 
     connector.getPSAMinimalDetails(psaId).map { response =>
-      response.right.value shouldBe Json.parse(individualDetails)
+      response.right.value shouldBe psaMinimalDetailsIndividualUser
     }
   }
 
   it should "return bad request - 400 if body contains INVALID_PSAID" in {
 
-    val errorResponse = """{
-                         |	"code": "INVALID_PSAID",
-                         |	"reason": "Submission has not passed validation. Invalid parameter PSAID."
-                         |}""".stripMargin
+    val errorResponse =
+      """{
+        |	"code": "INVALID_PSAID",
+        |	"reason": "Submission has not passed validation. Invalid parameter PSAID."
+        |}""".stripMargin
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
@@ -208,10 +103,11 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   it should "return bad request - 400 if body contains INVALID_CORRELATIONID" in {
 
-    val errorResponse = """{
-                         |	"code": "INVALID_CORRELATIONID",
-                         |	"reason": "Submission has not passed validation. Invalid header CorrelationId."
-                         |}""".stripMargin
+    val errorResponse =
+      """{
+        |	"code": "INVALID_CORRELATIONID",
+        |	"reason": "Submission has not passed validation. Invalid header CorrelationId."
+        |}""".stripMargin
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
@@ -233,10 +129,11 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   it should "throw Upstream5XX for internal server error - 500" in {
 
-    val errorResponse = """{
-                          |	"code": "SERVER_ERROR",
-                          |	"reason": "DES is currently experiencing problems that require live service intervention."
-                          |}""".stripMargin
+    val errorResponse =
+      """{
+        |	"code": "SERVER_ERROR",
+        |	"reason": "DES is currently experiencing problems that require live service intervention."
+        |}""".stripMargin
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
@@ -244,7 +141,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Upstream5xxResponse] (connector.getPSAMinimalDetails(psaId)) map {
+    recoverToExceptionIf[Upstream5xxResponse](connector.getPSAMinimalDetails(psaId)) map {
       ex =>
         ex.upstreamResponseCode shouldBe INTERNAL_SERVER_ERROR
         ex.getMessage should startWith("PSA minimal details")
@@ -262,7 +159,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Exception] (connector.getPSAMinimalDetails(psaId)) map {
+    recoverToExceptionIf[Exception](connector.getPSAMinimalDetails(psaId)) map {
       ex =>
         ex.getMessage should startWith("PSA minimal details")
         ex.getMessage should include("failed with status")
@@ -284,10 +181,10 @@ class AssociationConnectorSpec extends AsyncFlatSpec
             .withBody(successResponseJson)
         )
     )
-    val acceptedInvitation = AcceptedInvitation( pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
       pensionAdvisorDetail = Some(pensionAdvisorDetailUK))
 
-    connector.acceptInvitation(acceptedInvitation).map ( _.isRight shouldBe true )
+    connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
   }
 
   it should "correctly submit and handle a valid request for a UK address" in {
@@ -302,10 +199,10 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    val acceptedInvitation = AcceptedInvitation( pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
       pensionAdvisorDetail = Some(pensionAdvisorDetailUK))
 
-    connector.acceptInvitation(acceptedInvitation).map ( _.isRight shouldBe true )
+    connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
   }
 
   it should "correctly submit and handle a valid request for a non-UK address" in {
@@ -320,10 +217,10 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    val acceptedInvitation = AcceptedInvitation( pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
       pensionAdvisorDetail = Some(pensionAdvisorDetailInternational))
 
-    connector.acceptInvitation(acceptedInvitation).map ( _.isRight shouldBe true )
+    connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
   }
 
   it should "correctly submit and handle a valid request where there is no advisor" in {
@@ -338,19 +235,19 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    val acceptedInvitation = AcceptedInvitation( pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
       pensionAdvisorDetail = None)
 
-    connector.acceptInvitation(acceptedInvitation).map ( _.isRight shouldBe true )
+    connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
   }
 
   it should "return ConflictException for a 403 active relationship exists response" in {
     stubServer("""{ "code":"ACTIVE_RELATIONSHIP_EXISTS"}""", FORBIDDEN)
-    val acceptedInvitation = AcceptedInvitation( pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
       pensionAdvisorDetail = None)
 
     connector.acceptInvitation(acceptedInvitation).collect {
-      case Left(_:ConflictException) => succeed
+      case Left(_: ConflictException) => succeed
     }
   }
 
@@ -363,27 +260,27 @@ class AssociationConnectorSpec extends AsyncFlatSpec
             .withHeader("Content-Type", "application/json")
         )
     )
-    val acceptedInvitation = AcceptedInvitation( pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
       pensionAdvisorDetail = None)
 
     connector.acceptInvitation(acceptedInvitation).collect {
-      case Left(_:NotFoundException) => succeed
+      case Left(_: NotFoundException) => succeed
     }
   }
 
   it should "return bad request exception for a 404 invalid payload response" in {
     stubServer("""{ "code":"INVALID_PAYLOAD"}""", BAD_REQUEST)
-    val acceptedInvitation = AcceptedInvitation( pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
       pensionAdvisorDetail = None)
 
     connector.acceptInvitation(acceptedInvitation).collect {
-      case Left(_:BadRequestException) => succeed
+      case Left(_: BadRequestException) => succeed
     }
   }
 
   it should "log validation failures for a 404 invalid payload response" in {
     stubServer("""{ "code":"INVALID_PAYLOAD"}""", BAD_REQUEST)
-    val acceptedInvitation = AcceptedInvitation( pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
       pensionAdvisorDetail = None)
 
     logger.reset()
@@ -395,21 +292,159 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   it should "return BadRequestException for 403 INVALID_INVITER_PSAID responses" in {
     stubServer("""{ "code":"INVALID_INVITER_PSAID"}""", FORBIDDEN)
-    val acceptedInvitation = AcceptedInvitation( pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
       pensionAdvisorDetail = None)
 
     connector.acceptInvitation(acceptedInvitation).collect {
-      case Left(e :BadRequestException) if e.message.contains("INVALID_INVITER_PSAID") => succeed
+      case Left(e: BadRequestException) if e.message.contains("INVALID_INVITER_PSAID") => succeed
     }
   }
 
   it should "return BadRequestException for 403 INVALID_INVITEE_PSAID responses" in {
     stubServer("""{ "code":"INVALID_INVITEE_PSAID"}""", FORBIDDEN)
-    val acceptedInvitation = AcceptedInvitation( pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
       pensionAdvisorDetail = None)
 
     connector.acceptInvitation(acceptedInvitation).collect {
-      case Left(e :BadRequestException) if e.message.contains("INVALID_INVITEE_PSAID") => succeed
+      case Left(e: BadRequestException) if e.message.contains("INVALID_INVITEE_PSAID") => succeed
     }
   }
+}
+
+object AssociationConnectorSpec extends OptionValues {
+
+  private val psaIdInvitee = "A2123456"
+  private val psaId = "A2123456"
+  private val ukAddress = UkAddress(
+    addressLine1 = "address line 1",
+    addressLine2 = Some("address line 2"),
+    addressLine3 = Some("address line 3"),
+    addressLine4 = Some("address line 4"), countryCode = "GB", postalCode = "ZZ11ZZ"
+  )
+  private val internationalAddress = InternationalAddress(
+    addressLine1 = "address line 1",
+    addressLine2 = Some("address line 2"),
+    addressLine3 = Some("address line 3"),
+    addressLine4 = Some("address line 4"), countryCode = "FR", postalCode = Some("ZZ11ZZ")
+  )
+  private val pensionAdvisorName = "pension advisor 1"
+  private val contactDetails = ContactDetails(telephone = "9999999", mobileNumber = None, fax = None, email = "aaa@aaa.com")
+  private val pensionAdvisorDetailUK = PensionAdvisorDetail(name = pensionAdvisorName, addressDetail = ukAddress, contactDetail = contactDetails)
+  private val pensionAdvisorDetailInternational = PensionAdvisorDetail(
+    name = pensionAdvisorName, addressDetail = internationalAddress, contactDetail = contactDetails)
+  private val pstr = "scheme"
+
+  private val psaAssociationDetailsjsonUKAddress =
+    s"""{
+       |   "psaAssociationDetails":{
+       |      "psaAssociationIDsDetails":{
+       |         "inviteePSAID":"$psaIdInvitee",
+       |         "inviterPSAID":"$psaId"
+       |      },
+       |      "declarationDetails":{
+       |         "box1":true,
+       |         "box2":true,
+       |         "box3":true,
+       |         "box4":true,
+       |         "box6":true,
+       |         "pensionAdviserDetails":{
+       |            "name":"$pensionAdvisorName",
+       |            "addressDetails":{
+       |               "nonUKAddress":false,
+       |               "line1":"${ukAddress.addressLine1}",
+       |               "line2":"${ukAddress.addressLine2.value}",
+       |               "line3":"${ukAddress.addressLine3.value}",
+       |               "line4":"${ukAddress.addressLine4.value}",
+       |               "postalCode":"${ukAddress.postalCode}",
+       |               "countryCode":"${ukAddress.countryCode}"
+       |            },
+       |            "contactDetails":{
+       |               "telephone":"${contactDetails.telephone}",
+       |               "email":"${contactDetails.email}"
+       |            }
+       |         }
+       |      }
+       |   }
+       |}""".stripMargin
+
+  private val psaAssociationDetailsjsonInternationalAddress =
+    s"""{
+       |   "psaAssociationDetails":{
+       |      "psaAssociationIDsDetails":{
+       |         "inviteePSAID":"$psaIdInvitee",
+       |         "inviterPSAID":"$psaId"
+       |      },
+       |      "declarationDetails":{
+       |         "box1":true,
+       |         "box2":true,
+       |         "box3":true,
+       |         "box4":true,
+       |         "box6":true,
+       |         "pensionAdviserDetails":{
+       |            "name":"$pensionAdvisorName",
+       |            "addressDetails":{
+       |               "nonUKAddress":true,
+       |               "line1":"${internationalAddress.addressLine1}",
+       |               "line2":"${internationalAddress.addressLine2.value}",
+       |               "line3":"${internationalAddress.addressLine3.value}",
+       |               "line4":"${internationalAddress.addressLine4.value}",
+       |               "postalCode":"${internationalAddress.postalCode.value}",
+       |               "countryCode":"${internationalAddress.countryCode}"
+       |            },
+       |            "contactDetails":{
+       |               "telephone":"${contactDetails.telephone}",
+       |               "email":"${contactDetails.email}"
+       |            }
+       |         }
+       |      }
+       |   }
+       |}""".stripMargin
+
+  private val psaAssociationDetailsjsonNoAdvisor =
+    s"""{
+       |   "psaAssociationDetails":{
+       |      "psaAssociationIDsDetails":{
+       |         "inviteePSAID":"$psaIdInvitee",
+       |         "inviterPSAID":"$psaId"
+       |      },
+       |      "declarationDetails":{
+       |         "box1":true,
+       |         "box2":true,
+       |         "box3":true,
+       |         "box4":true,
+       |         "box5":true
+       |      }
+       |   }
+       |}""".stripMargin
+
+  private val successResponseJson =
+    """{
+      |	"processingDate": "2001-12-17T09:30:47Z",
+      |	"formBundleNumber": "12345678912"
+      |}""".stripMargin
+
+  private val psaMinimunIndividualDetailPayload = Json.parse(
+    """{
+      |	"processingDate": "2001-12-17T09:30:47Z",
+      |	"psaMinimalDetails": {
+      |		"individualDetails": {
+      |			"firstName": "testFirst",
+      |			"middleName": "testMiddle",
+      |			"lastName": "testLast"
+      |		}
+      |	},
+      |	"email": "test@email.com",
+      |	"psaSuspensionFlag": true
+      |}""".stripMargin)
+
+  val psaMinimalDetailsIndividualUser = PSAMinimalDetails(
+    "test@email.com",
+    isPsaSuspended = true,
+    None,
+    Some(IndividualDetails(
+      "testFirst",
+      Some("testMiddle"),
+      "testLast"
+    ))
+  )
 }

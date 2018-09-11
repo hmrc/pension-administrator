@@ -16,46 +16,39 @@
 
 package models
 
-import java.time.LocalDate
-import play.api.libs.json.{JsPath, Json, Reads}
 import play.api.libs.functional.syntax._
+import play.api.libs.json.{JsPath, Reads}
 
 case class PSAMinimalDetails(
-                              processingDate: LocalDate,
                               email: String,
                               isPsaSuspended: Boolean,
-                              psaMinimalDetails: PSAMinimalDetailsObject
+                              organisationName: Option[String],
+                              individualDetails: Option[IndividualDetails]
                             )
 
 object PSAMinimalDetails {
-  val customReads : Reads[PSAMinimalDetails] = (
-    (JsPath \ "processingDate").read[LocalDate] and
-      (JsPath \ "email").read[String] and
-      (JsPath \ "psaSuspensionFlag").read[Boolean]
-    )((date, email, isPsaSuspended) =>
-    PSAMinimalDetails(date, email, isPsaSuspended, PSAMinimalDetailsObject(None, None))
+  implicit val psaMinimalDetailsReads: Reads[PSAMinimalDetails] = (
+    (JsPath \ "email").read[String] and
+      (JsPath \ "psaSuspensionFlag").read[Boolean] and
+      (JsPath \ "psaMinimalDetails" \ "individualDetails").readNullable[IndividualDetails](IndividualDetails.individualDetailReads) and
+      (JsPath \ "psaMinimalDetails" \ "organisationOrPartnershipName").readNullable[String]
+    ) ((email, isPsaSuspended, indvDetails, orgName) =>
+    PSAMinimalDetails(email, isPsaSuspended, orgName, indvDetails)
   )
 }
 
-case class PSAMinimalDetailsObject(
-                                    organisationDetails: Option[PSAOrganisationDetails],
-                                    individualDetails: Option[PSAIndividualDetails]
-                                  )
+case class IndividualDetails(
+                              firstName: String,
+                              middleName: Option[String],
+                              lastName: String
+                            )
 
-case class PSAOrganisationDetails(
-                                   organisationOrPartnershipName: String
-                                 )
-
-object PSAOrganisationDetails {
-  implicit val formats = Json.format[PSAOrganisationDetails]
-}
-
-case class PSAIndividualDetails(
-                                 firstName: String,
-                                 middleName: Option[String],
-                                 lastName: String
-                               )
-
-object PSAIndividualDetails {
-  implicit val formats = Json.format[PSAIndividualDetails]
+object IndividualDetails {
+  val individualDetailReads: Reads[IndividualDetails] = (
+    (JsPath \ "firstName").read[String] and
+      (JsPath \ "middleName").readNullable[String] and
+      (JsPath \ "lastName").read[String]
+    ) ((firstName, middleName, lastName) =>
+    IndividualDetails(firstName, middleName, lastName)
+  )
 }
