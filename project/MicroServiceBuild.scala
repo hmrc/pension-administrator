@@ -28,6 +28,7 @@ object MicroServiceBuild extends Build with MicroService {
   private val wireMockVersion = "2.18.0"
   private val scalacheckVersion = "1.14.0"
   private val domainVersion = "5.2.0"
+  private val scalacheckGenRegexp = "0.1.1"
 
   val compile = Seq(
     "uk.gov.hmrc" %% "play-reactivemongo" % "6.2.0",
@@ -46,7 +47,8 @@ object MicroServiceBuild extends Build with MicroService {
     "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
     "org.scalatestplus.play" %% "scalatestplus-play" % scalaTestPlusPlayVersion % scope,
     "org.mockito" % "mockito-all" % mockitoAllVersion % scope,
-    "com.github.tomakehurst" % "wiremock" % wireMockVersion % scope
-
+    "com.github.tomakehurst" % "wiremock" % wireMockVersion % scope,
+    "wolfendale" %% "scalacheck-gen-regexp" % scalacheckGenRegexp % scope
   )
+
 }
