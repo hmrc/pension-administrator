@@ -18,7 +18,7 @@ package service
 
 import base.{JsonFileReader, SpecBase}
 import connectors.AssociationConnector
-import models.PensionSchemeAdministrator
+import models.AcceptedInvitation
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
@@ -78,6 +78,7 @@ class FakeAssociationConnector extends AssociationConnector {
                                            ec: ExecutionContext): Future[Either[HttpException,JsValue]] =
     Future.successful(Right(inviteeMinimalPsaDetails))
 
+  override def acceptInvitation(invitation: AcceptedInvitation)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Unit]] = ???
 }
 
 object FakeAssociationConnector extends JsonFileReader {
