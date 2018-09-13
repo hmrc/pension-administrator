@@ -51,8 +51,7 @@ object Address {
     (JsPath \ "line1").write[String] and
       (JsPath \ "line2").writeNullable[String] and
       (JsPath \ "line3").writeNullable[String] and
-      (JsPath \ "line4").writeNullable[String]) (elements => (elements._1.replace("&", "and"), elements._2.map(c => c.replace("&", "and")),
-    elements._3.map(c => c.replace("&", "and")), elements._4.map(c => c.replace("&", "and"))))
+      (JsPath \ "line4").writeNullable[String]) (elements => (elements._1, elements._2, elements._3, elements._4))
 
   private def getCountryOrTerritoryCode(countryCode: String) = {
     if (countryCode.contains("territory")) countryCode.split(":").last.trim() else countryCode
