@@ -17,7 +17,7 @@
 package repositories
 
 import com.google.inject.Inject
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import play.api.Configuration
 import play.modules.reactivemongo.ReactiveMongoComponent
 import utils.DateUtils
@@ -27,7 +27,7 @@ class InvitationsCacheRepository @Inject()(
                                         component: ReactiveMongoComponent
                                       ) extends PensionAdministratorCacheRepository(
   config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
-  Some(DateUtils.thirtyDaysAheadInSeconds(DateTime.now())),
+  Some(DateUtils.thirtyDaysAheadInSeconds(DateTime.now(DateTimeZone.UTC))),
   component
 )
 
