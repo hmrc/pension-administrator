@@ -26,7 +26,8 @@ class InvitationsCacheRepository @Inject()(
                                         config: Configuration,
                                         component: ReactiveMongoComponent
                                       ) extends PensionAdministratorCacheRepository(
+  // scalastyle:off magic.number
   config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
-  Some(DateUtils.secondsFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), 30)),
+  Some(DateUtils.secondsFromDateToMidnightOnDay(startDateTime = DateTime.now(DateTimeZone.UTC), daysAhead = 30)),
   component
 )
