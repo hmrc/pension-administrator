@@ -20,6 +20,7 @@ import org.joda.time.DateTime
 import org.scalatest.{Matchers, WordSpec}
 
 class DateUtilsSpec extends WordSpec with Matchers{
+  // scalastyle:off magic.number
   "thirtyDaysFromNowInSeconds" should {
     "respond correctly for a date at 1 second after midnight" in {
       DateUtils.secondsFromDateToMidnightOnDay(DateTime.parse("2018-01-04T00:00:01Z"), 30) shouldBe 2678399
