@@ -17,17 +17,14 @@
 package repositories
 
 import com.google.inject.Inject
-import org.joda.time.{DateTime, DateTimeZone}
 import play.api.Configuration
 import play.modules.reactivemongo.ReactiveMongoComponent
-import utils.DateUtils
 
 class InvitationsCacheRepository @Inject()(
                                         config: Configuration,
                                         component: ReactiveMongoComponent
                                       ) extends PensionAdministratorCacheRepository(
-  // scalastyle:off magic.number
   config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
-  Some(DateUtils.secondsFromDateToMidnightOnDay(startDateTime = DateTime.now(DateTimeZone.UTC), daysAhead = 30)),
+  Some(0),
   component
 )

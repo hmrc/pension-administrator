@@ -23,13 +23,17 @@ class DateUtilsSpec extends WordSpec with Matchers{
   // scalastyle:off magic.number
   "thirtyDaysFromNowInSeconds" should {
     "respond correctly for a date at 1 second after midnight" in {
-      DateUtils.secondsFromDateToMidnightOnDay(DateTime.parse("2018-01-04T00:00:01Z"), 30) shouldBe 2678399
+      val result = DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.parse("2018-01-04T00:00:01Z"), 30).toString
+      result shouldBe "2018-02-04T00:00:00.000Z"
     }
     "respond correctly for a date around the middle of the day" in {
-      DateUtils.secondsFromDateToMidnightOnDay(DateTime.parse("2018-01-04T12:30:01Z"), 30) shouldBe 2633399
+      val result = DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.parse("2018-01-04T12:30:01Z"), 30).toString
+      result shouldBe "2018-02-04T00:00:00.000Z"
     }
     "respond correctly for a date at 1 second to midnight" in {
-      DateUtils.secondsFromDateToMidnightOnDay(DateTime.parse("2018-01-04T23:59:59Z"), 30) shouldBe 2592001
+      val result = DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.parse("2018-01-04T23:59:59Z"), 30).toString
+      result shouldBe "2018-02-04T00:00:00.000Z"
     }
   }
+  // scalastyle:on magic.number
 }
