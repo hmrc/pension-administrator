@@ -6,6 +6,13 @@ POST        /register-with-id/organisation              controllers.Registration
 
 POST        /register-psa                               controllers.SchemeController.registerPSA
 
+GET         /journey-cache/manage-pensions/:id                      controllers.ManagePensionsCacheController.get(id: String)
+POST        /journey-cache/manage-pensions/:id                      controllers.ManagePensionsCacheController.save(id: String)
+DELETE      /journey-cache/manage-pensions/:id                      controllers.ManagePensionsCacheController.remove(id: String)
+
 POST        /email-response/*id                         controllers.EmailResponseController.retrieveStatus(id: String)
 POST        /invite                               controllers.InvitationController.invite
 
+GET         /journey-cache/invitations/:id                      controllers.InvitationsCacheController.get(id: String)
+POST        /journey-cache/invitations/:id                      controllers.InvitationsCacheController.save(id: String)
+DELETE      /journey-cache/invitations/:id                      controllers.InvitationsCacheController.remove(id: String)

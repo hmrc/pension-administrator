@@ -23,8 +23,6 @@ import play.api.http.Status._
 import play.api.libs.json.{Json, JsValue}
 import uk.gov.hmrc.http._
 
-// scalastyle:off magic.number
-
 class HttpResponseHelperSpec extends FlatSpec with Matchers with GeneratorDrivenPropertyChecks {
 
   import HttpResponseHelperSpec._
@@ -48,8 +46,9 @@ class HttpResponseHelperSpec extends FlatSpec with Matchers with GeneratorDriven
   }
 
   it should "transform any other 4xx into Upstream4xxResponse" in {
+    // scalastyle:off magic.number
     val userErrors = for (n <- Gen.choose(400, 499) suchThat (n => n != 400 && n != 404)) yield n
-
+    // scalastyle:on magic.number
     forAll(userErrors) {
       userError =>
         val ex = the[Upstream4xxResponse] thrownBy fixture()(responseFor(userError))
