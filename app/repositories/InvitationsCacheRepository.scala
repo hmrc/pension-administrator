@@ -27,8 +27,6 @@ class InvitationsCacheRepository @Inject()(
                                         component: ReactiveMongoComponent
                                       ) extends PensionAdministratorCacheRepository(
   config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
-  Some(DateUtils.thirtyDaysAheadInSeconds(DateTime.now(DateTimeZone.UTC))),
+  Some(DateUtils.secondsFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), 30)),
   component
 )
-
-

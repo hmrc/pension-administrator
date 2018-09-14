@@ -19,8 +19,8 @@ package utils
 import org.joda.time.DateTime
 
 object DateUtils {
-    def thirtyDaysAheadInSeconds(currentDateTime: DateTime): Int = {
-      val expiryTime: DateTime = currentDateTime.toLocalDate.plusDays(31).toDateTimeAtStartOfDay()
-      ((expiryTime.getMillis - currentDateTime.getMillis) / 1000).toInt
+    def secondsFromDateToMidnightOnDay(startDateTime: DateTime, daysAhead:Int): Int = {
+      val expiryTime: DateTime = startDateTime.toLocalDate.plusDays(daysAhead + 1).toDateTimeAtStartOfDay()
+      ((expiryTime.getMillis - startDateTime.getMillis) / 1000).toInt
     }
 }
