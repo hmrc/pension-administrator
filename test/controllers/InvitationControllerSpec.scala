@@ -17,7 +17,7 @@
 package controllers
 
 import base.JsonFileReader
-import models.PSAMinimalDetails
+import models.{IndividualDetails, PSAMinimalDetails}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.libs.json._
@@ -38,7 +38,7 @@ class InvitationControllerSpec extends AsyncFlatSpec with MustMatchers  {
       val result = controller.invite()(fakeRequest.withJsonBody(invitation))
 
       status(result) mustBe OK
-      contentAsJson(result) mustBe invitePsaValidResponse
+      contentAsJson(result) mustBe Json.toJson(response)
     }
 
     it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
@@ -104,17 +104,16 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar{
 
   private val inviteePsaId = "A2000001"
   private val invitation = readJsonFromFile("/data/validInvitation.json")
-  val invitePsaValidResponse = Json.toJson(readJsonFromFile("/data/validMinimalPsaDetails.json"))
+
+  val response = PSAMinimalDetails("aaa@email.com",true,None,Some(IndividualDetails("John",Some("Doe"),"Doe")))
 
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
   class FakeInvitationService extends InvitationService {
 
-    private var invitePsaResponse: Future[Either[HttpException, PSAMinimalDetails]] = Future.successful(Right(invitePsaValidResponse.as[PSAMinimalDetails]))
+    private var invitePsaResponse: Future[Either[HttpException, PSAMinimalDetails]] = Future.successful(Right(response))
 
     def setInvitePsaResponse(response: Future[Either[HttpException, PSAMinimalDetails]]): Unit = this.invitePsaResponse = response
-
-
 
     def invitePSA(jsValue: JsValue)
                  (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] =
