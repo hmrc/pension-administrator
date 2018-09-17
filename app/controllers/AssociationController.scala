@@ -17,32 +17,29 @@
 package controllers
 
 import com.google.inject.Inject
+import connectors.AssociationConnector
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
-import service.InvitationService
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import utils.ErrorHandler
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class InvitationController @Inject()(invitationService: InvitationService
-                                    )extends BaseController with ErrorHandler {
-
-  def invite(): Action[AnyContent] = Action.async {
+class AssociationController @Inject()(
+                                       associationConnector: AssociationConnector
+                                     ) extends BaseController with ErrorHandler {
+  def getMinimalDetails: Action[AnyContent] = Action.async {
     implicit request =>
-      val invitationDetails = request.body.asJson
-
-      invitationDetails match {
-        case Some(jsValue) =>
-          invitationService.invitePSA(jsValue).map {
-            case Right(details) => Ok(Json.toJson(details))
+      val psaId = request.headers.get("psaId")
+      psaId match {
+        case Some(id) =>
+          associationConnector.getPSAMinimalDetails(id).map {
+            case Right(psaDetails) => Ok(Json.toJson(psaDetails))
             case Left(e) => result(e)
           }
-        case _ => Future.failed(new BadRequestException("Bad Request with no request body returned for invite PSA"))
+        case _ => Future.failed(new BadRequestException("Bad Request with no request body returned for register PSA"))
       }
 
   }
-
 }

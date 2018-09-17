@@ -58,7 +58,7 @@ trait ErrorHandler {
     Result(ResponseHeader(ex.responseCode), httpEntity)
   }
 
-  protected def logWarning(endpoint: String): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+  protected def logWarning[A](endpoint: String): PartialFunction[Try[Either[HttpException, A]], Unit] = {
     case Success(Left(e: HttpException)) => Logger.warn(s"$endpoint received error response from DES", e)
     case Failure(e) => Logger.error(s"$endpoint received error response from DES", e)
   }

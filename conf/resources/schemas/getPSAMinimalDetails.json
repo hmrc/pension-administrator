@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "API#1442 PODS Get PSA Minimal Details Response Schema",
+  "type": "object",
+  "properties": {
+    "processingDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The date the message was processed"
+    },
+    "psaMinimalDetails": {
+      "$ref": "#/definitions/psaMinimalDetailsObject",
+      "description": "An object containing the PSA Minimal details (this includes either (Organisation OR Partnership Name) OR  Individuals Name)"
+    },
+    "email": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 132,
+      "format": "email"
+    },
+    "psaSuspensionFlag": {
+      "type": "boolean",
+      "description": "true = PSA suspended false= PSA not suspended"
+    }
+  },
+  "required": [
+    "processingDate",
+    "psaMinimalDetails",
+    "email",
+    "psaSuspensionFlag"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "psaMinimalDetailsObject": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "organisationOrPartnershipName": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9\u00C0-\u00FF !#$%&'‘’\"“”«»()*+,./:;=?@\\[\\]£€¥\\u005C\u2014\u2013\u2010\u002d]{1,160}$",
+              "description": "Organisation Or PartnershipName , \u00C0 for À, \u00FF for ÿ, \u2014 for — (EM DASH), \u2013 for – (EN DASH), \u2010 for -(HYPHEN), \u002d - -(HYPHEN_MINUS), \u005C for \\"
+            }
+          },
+          "required": [
+            "organisationOrPartnershipName"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "individualDetails": {
+              "description ": "Individual Details",
+              "$ref": "#/definitions/individualDetailsType"
+            }
+          },
+          "required": [
+            "individualDetails"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "individualDetailsType": {
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "$ref": "#/definitions/nameType"
+        },
+        "middleName": {
+          "$ref": "#/definitions/nameType"
+        },
+        "lastName": {
+          "$ref": "#/definitions/nameType"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "firstName",
+        "lastName"
+      ]
+    },
+    "nameType": {
+      "type": "string",
+      "pattern": "^[a-zA-Z\u00C0-\u00FF '‘’\u2014\u2013\u2010\u002d]{1,35}$",
+      "description": "nameType , \u00C0 for À, \u00FF for ÿ, \u2014 for — (EM DASH), \u2013 for – (EN DASH), \u2010 for -(HYPHEN), \u002d for -(HYPHEN_MINUS)"
+    }
+  }
+}

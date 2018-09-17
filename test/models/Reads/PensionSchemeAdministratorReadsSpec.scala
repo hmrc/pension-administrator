@@ -78,6 +78,7 @@ class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers wit
       "We have a valid idNumber" in {
         val result = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads).asOpt.value
 
+
         result.idNumber mustEqual pensionSchemeAdministratorSample.idNumber
       }
 
