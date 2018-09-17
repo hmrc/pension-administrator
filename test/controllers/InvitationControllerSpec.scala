@@ -102,7 +102,6 @@ class InvitationControllerSpec extends AsyncFlatSpec with MustMatchers  {
 
 object InvitationControllerSpec extends JsonFileReader with MockitoSugar{
 
-  private val inviteePsaId = "A2000001"
   private val invitation = readJsonFromFile("/data/validInvitation.json")
 
   val response = PSAMinimalDetails("aaa@email.com",true,None,Some(IndividualDetails("John",Some("Doe"),"Doe")))
