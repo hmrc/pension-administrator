@@ -18,9 +18,9 @@ package service
 
 import com.google.inject.{ImplementedBy, Inject}
 import connectors.AssociationConnector
-import models.Invitation
+import models.{Invitation, PSAMinimalDetails}
 import play.api.Logger
-import play.api.libs.json.{JsResultException, _}
+import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
 
@@ -30,14 +30,14 @@ import scala.concurrent.{ExecutionContext, Future}
 trait InvitationService {
 
   def invitePSA(jsValue: JsValue)
-                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]]
+                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]]
 
 }
 
 class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
-                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {
     jsValue.validate[Invitation].fold(
       invalid = {
         errors =>
@@ -48,6 +48,5 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
         associationConnector.getPSAMinimalDetails(invitation.inviteePsaId)
       }
     )
-
   }
 }

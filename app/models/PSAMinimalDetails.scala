@@ -17,7 +17,7 @@
 package models
 
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, Json, OFormat, Reads}
+import play.api.libs.json.{JsPath, Json, Reads, Writes}
 
 case class PSAMinimalDetails(
                               email: String,
@@ -27,7 +27,6 @@ case class PSAMinimalDetails(
                             )
 
 object PSAMinimalDetails {
-  implicit val formats: OFormat[PSAMinimalDetails] = Json.format[PSAMinimalDetails]
   implicit val psaMinimalDetailsReads: Reads[PSAMinimalDetails] = (
     (JsPath \ "email").read[String] and
       (JsPath \ "psaSuspensionFlag").read[Boolean] and
@@ -37,6 +36,7 @@ object PSAMinimalDetails {
     PSAMinimalDetails(email, isPsaSuspended, orgName, indvDetails)
   )
 
+  implicit val defaultWrites : Writes[PSAMinimalDetails] = Json.writes[PSAMinimalDetails]
 }
 
 case class IndividualDetails(
@@ -46,12 +46,13 @@ case class IndividualDetails(
                             )
 
 object IndividualDetails {
-  implicit val formats: OFormat[IndividualDetails] = Json.format[IndividualDetails]
-  val individualDetailReads: Reads[IndividualDetails] = (
+  implicit val individualDetailReads: Reads[IndividualDetails] = (
     (JsPath \ "firstName").read[String] and
       (JsPath \ "middleName").readNullable[String] and
       (JsPath \ "lastName").read[String]
     ) ((firstName, middleName, lastName) =>
     IndividualDetails(firstName, middleName, lastName)
   )
+
+  implicit val defaultWrites : Writes[IndividualDetails] = Json.writes[IndividualDetails]
 }

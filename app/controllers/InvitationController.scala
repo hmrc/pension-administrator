@@ -17,6 +17,7 @@
 package controllers
 
 import com.google.inject.Inject
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import service.InvitationService
 import uk.gov.hmrc.http.BadRequestException
@@ -36,7 +37,7 @@ class InvitationController @Inject()(invitationService: InvitationService
       invitationDetails match {
         case Some(jsValue) =>
           invitationService.invitePSA(jsValue).map {
-            case Right(json) => Ok(json)
+            case Right(details) => Ok(Json.toJson(details))
             case Left(e) => result(e)
           }
         case _ => Future.failed(new BadRequestException("Bad Request with no request body returned for invite PSA"))

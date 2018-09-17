@@ -17,6 +17,7 @@
 package controllers
 
 import base.JsonFileReader
+import models.PSAMinimalDetails
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.libs.json._
@@ -109,14 +110,14 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar{
 
   class FakeInvitationService extends InvitationService {
 
-    private var invitePsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(invitePsaValidResponse))
+    private var invitePsaResponse: Future[Either[HttpException, PSAMinimalDetails]] = Future.successful(Right(invitePsaValidResponse.as[PSAMinimalDetails]))
 
-    def setInvitePsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.invitePsaResponse = response
+    def setInvitePsaResponse(response: Future[Either[HttpException, PSAMinimalDetails]]): Unit = this.invitePsaResponse = response
 
 
 
     def invitePSA(jsValue: JsValue)
-                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] =
+                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] =
     invitePsaResponse
   }
 

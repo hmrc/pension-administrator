@@ -18,7 +18,7 @@ package service
 
 import base.{JsonFileReader, SpecBase}
 import connectors.AssociationConnector
-import models.AcceptedInvitation
+import models.{AcceptedInvitation, PSAMinimalDetails}
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
@@ -75,8 +75,8 @@ class FakeAssociationConnector extends AssociationConnector {
   import FakeAssociationConnector._
   def getPSAMinimalDetails(psaId : String)(implicit
                                            headerCarrier: HeaderCarrier,
-                                           ec: ExecutionContext): Future[Either[HttpException,JsValue]] =
-    Future.successful(Right(inviteeMinimalPsaDetails))
+                                           ec: ExecutionContext): Future[Either[HttpException,PSAMinimalDetails]] =
+    Future.successful(Right(inviteeMinimalPsaDetails.as[PSAMinimalDetails]))
 
   override def acceptInvitation(invitation: AcceptedInvitation)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Unit]] = ???
 }
