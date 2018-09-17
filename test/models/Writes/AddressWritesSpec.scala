@@ -90,38 +90,5 @@ class AddressWritesSpec extends WordSpec with MustMatchers with OptionValues {
         }
       }
     }
-
-    "Replace any ampersands with `and`" when {
-      val address = InternationalAddress("line1 & test", Some("line2 & test"), Some("line3 & test"), Some("line4 & test"), "IT", Some("test"))
-      val result = Json.toJson(address.asInstanceOf[Address])
-
-      "addressLine1 contains an ampersand" in {
-        val line1 = (result \ "line1").as[String]
-
-        line1 mustNot include("&")
-        line1 must include("and")
-      }
-
-      "addressLine2 contains an ampersand" in {
-        val line2 = (result \ "line2").as[String]
-
-        line2 mustNot include("&")
-        line2 must include("and")
-      }
-
-      "addressLine3 contains an ampersand" in {
-        val line3 = (result \ "line3").as[String]
-
-        line3 mustNot include("&")
-        line3 must include("and")
-      }
-
-      "addressLine4 contains an ampersand" in {
-        val line4 = (result \ "line4").as[String]
-
-        line4 mustNot include("&")
-        line4 must include("and")
-      }
-    }
   }
 }
