@@ -81,6 +81,22 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     }
   }
 
+  it should "return bad request - 400 if response body is invalid" in {
+    val invalidReponse = Json.obj("response" -> "invalid response").toString()
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsUrl))
+        .willReturn(
+          ok(invalidReponse)
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    connector.getPSAMinimalDetails(psaId).map { response =>
+      response.left.value shouldBe a[BadRequestException]
+      response.left.value.message shouldBe "INVALID PAYLOAD"
+    }
+  }
+
   it should "return bad request - 400 if body contains INVALID_PSAID" in {
 
     val errorResponse =
