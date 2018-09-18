@@ -43,7 +43,16 @@ case class IndividualDetails(
                               firstName: String,
                               middleName: Option[String],
                               lastName: String
-                            )
+                            ) {
+
+  def fullName: String = middleName match {
+    case Some(middle) => s"$firstName $middle $lastName"
+    case _ => name
+  }
+
+  def name: String = s"$firstName $lastName"
+
+}
 
 object IndividualDetails {
   implicit val individualDetailReads: Reads[IndividualDetails] = (

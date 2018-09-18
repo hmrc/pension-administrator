@@ -33,12 +33,11 @@ class InvitationControllerSpec extends AsyncFlatSpec with MustMatchers  {
 
   import InvitationControllerSpec._
 
-  "invite" should "return OK when service returns successfully" in {
+  "invite" should "return Created when service returns successfully" in {
 
       val result = controller.invite()(fakeRequest.withJsonBody(invitation))
 
-      status(result) mustBe OK
-      contentAsJson(result) mustBe Json.toJson(response)
+      status(result) mustBe CREATED
     }
 
     it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
@@ -110,15 +109,16 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar{
 
   class FakeInvitationService extends InvitationService {
 
-    private var invitePsaResponse: Future[Either[HttpException, PSAMinimalDetails]] = Future.successful(Right(response))
+    private var invitePsaResponse: Future[Either[HttpException, Unit]] = Future.successful(Right(()))
 
-    def setInvitePsaResponse(response: Future[Either[HttpException, PSAMinimalDetails]]): Unit = this.invitePsaResponse = response
+    def setInvitePsaResponse(response: Future[Either[HttpException, Unit]]): Unit = this.invitePsaResponse = response
 
     def invitePSA(jsValue: JsValue)
-                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] =
+                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
     invitePsaResponse
   }
 
   val fakeInvitationService = new FakeInvitationService
   val controller = new InvitationController(fakeInvitationService)
+
 }
