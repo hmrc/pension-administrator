@@ -18,10 +18,9 @@ package repositories
 
 import java.nio.charset.StandardCharsets
 
-import org.apache.commons.lang3.SerializationUtils
 import org.joda.time.{DateTime, DateTimeZone}
-import play.api.{Configuration, Logger}
 import play.api.libs.json._
+import play.api.{Configuration, Logger}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.Subtype.GenericBinarySubtype
@@ -126,7 +125,6 @@ abstract class PensionAdministratorCacheRepository(
         val unencrypted = PlainText(Json.stringify(data))
         val encryptedData = jsonCrypto.encrypt(unencrypted).value
         val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
-//        val dataAsByteArray = StandardCharsets.UTF_8.encode(encryptedData).array
         Json.toJson(DataEntry(id, dataAsByteArray))
       } else
         Json.toJson(JsonDataEntry(id, data, DateTime.now(DateTimeZone.UTC)))
