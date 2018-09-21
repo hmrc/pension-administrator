@@ -123,6 +123,8 @@ abstract class PensionAdministratorCacheRepository(
 
     val document: JsValue = {
       if (encrypted) {
+ //val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
+
         val unencrypted = PlainText(Json.stringify(data))
         val encryptedData = jsonCrypto.encrypt(unencrypted).value
         val dataAsByteArray = StandardCharsets.UTF_8.encode(encryptedData).array
