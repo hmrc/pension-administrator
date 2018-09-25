@@ -8,14 +8,16 @@ POST        /register-psa                               controllers.SchemeContro
 
 GET         /get-minimal-psa                            controllers.AssociationController.getMinimalDetails
 
-GET         /journey-cache/manage-pensions/:id                      controllers.ManagePensionsCacheController.get(id: String)
-POST        /journey-cache/manage-pensions/:id                      controllers.ManagePensionsCacheController.save(id: String)
-DELETE      /journey-cache/manage-pensions/:id                      controllers.ManagePensionsCacheController.remove(id: String)
+GET         /journey-cache/manage-pensions/:id          controllers.ManagePensionsCacheController.get(id: String)
+POST        /journey-cache/manage-pensions/:id          controllers.ManagePensionsCacheController.save(id: String)
+DELETE      /journey-cache/manage-pensions/:id          controllers.ManagePensionsCacheController.remove(id: String)
 
 
 POST        /email-response/*id                         controllers.EmailResponseController.retrieveStatus(id: String)
-POST        /invite                               controllers.InvitationController.invite
+POST        /invite                                     controllers.InvitationController.invite
 
-GET         /journey-cache/invitations/:id                      controllers.InvitationsCacheController.get(id: String)
-POST        /journey-cache/invitations/:id                      controllers.InvitationsCacheController.save(id: String)
-DELETE      /journey-cache/invitations/:id                      controllers.InvitationsCacheController.remove(id: String)
+GET         /invitation/get-for-scheme                  controllers.InvitationsCacheController.getForScheme
+GET         /invitation/get-for-invitee                 controllers.InvitationsCacheController.getForInvitee
+GET         /invitation/get                             controllers.InvitationsCacheController.get
+POST        /invitation/add                             controllers.InvitationsCacheController.add
+DELETE      /invitation                                 controllers.InvitationsCacheController.remove
