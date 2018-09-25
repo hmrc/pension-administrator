@@ -17,9 +17,8 @@
 package controllers
 
 import com.google.inject.Inject
-import play.api.libs.json.Json
+import play.api.Configuration
 import play.api.mvc.{Action, AnyContent}
-import play.api.{Configuration, Logger}
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
@@ -28,10 +27,10 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import scala.concurrent.Future
 
 class InvitationsCacheController @Inject()(
-                                                    config: Configuration,
-                                                    repository: InvitationsCacheRepository,
-                                                    val authConnector: AuthConnector
-                                                  ) extends BaseController with AuthorisedFunctions {
+                                            config: Configuration,
+                                            repository: InvitationsCacheRepository,
+                                            val authConnector: AuthConnector
+                                          ) extends BaseController with AuthorisedFunctions {
 
   private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
 
@@ -40,73 +39,68 @@ class InvitationsCacheController @Inject()(
       authorised() {
         request.body.asJson.map {
           jsValue =>
-            val inviteePsaId = ""
-            val pstr = ""
-            repository.insert(inviteePsaId, pstr, jsValue)
-              .map(_ => Ok)
-        } getOrElse Future.successful(EntityTooLarge)
+            request.headers.get("inviteePsaId").map { inviteePsaId =>
+              request.headers.get("pstr").map { pstr =>
+                repository.insert(inviteePsaId, pstr, jsValue)
+                  .map(_ => Ok)
+              }.getOrElse(Future.successful(BadRequest))
+            }.getOrElse(Future.successful(BadRequest))
+        } getOrElse Future.successful(BadRequest)
       }
   }
 
   def get: Action[AnyContent] = Action.async {
     implicit request =>
-      val inviteePsaId = ""
-      val pstr = ""
-      authorised() {
-        repository.get(inviteePsaId, pstr).map { response =>
-          response.map {
-            Ok(_)
+      request.headers.get("inviteePsaId").map { inviteePsaId =>
+        request.headers.get("pstr").map { pstr =>
+          authorised() {
+            repository.get(inviteePsaId, pstr).map { response =>
+              response.map {
+                Ok(_)
+              }
+                .getOrElse(NotFound)
+            }
           }
-            .getOrElse(NotFound)
-        }
-      }
+        }.getOrElse(Future.successful(BadRequest))
+      }.getOrElse(Future.successful(BadRequest))
   }
 
   def getForScheme: Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
-        val pstr: String = ""
-        repository.getForScheme(pstr).map { response =>
-          response.map {
-            Ok(_)
+        request.headers.get("pstr").map { pstr =>
+          repository.getForScheme(pstr).map { response =>
+            response.map {
+              Ok(_)
+            }
+              .getOrElse(NotFound)
           }
-            .getOrElse(NotFound)
-        }
+        }.getOrElse(Future.successful(BadRequest))
       }
   }
 
   def getForInvitee: Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
-        val inviteePsaId: String = ""
-        repository.getForInvitee(inviteePsaId).map { response =>
-          response.map {
-            Ok(_)
+        request.headers.get("inviteePsaId").map { inviteePsaId =>
+          repository.getForInvitee(inviteePsaId).map { response =>
+            response.map {
+              Ok(_)
+            }
+              .getOrElse(NotFound)
           }
-            .getOrElse(NotFound)
-        }
-      }
-  }
-
-
-  def lastUpdated(id: String): Action[AnyContent] = Action.async {
-    implicit request =>
-      authorised() {
-        Logger.debug("controllers.InvitationsCacheController.get: Authorised Request " + id)
-        repository.getLastUpdated(id).map { response =>
-          Logger.debug("controllers.InvitationsCacheController.get: Response " + response)
-          response.map { date => Ok(Json.toJson(date)) }
-            .getOrElse(NotFound)
-        }
+        }.getOrElse(Future.successful(BadRequest))
       }
   }
 
   def remove: Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
-        val inviteePsaId = ""
-        val pstr = ""
-        repository.remove(inviteePsaId, pstr).map(_ => Ok)
+        request.headers.get("inviteePsaId").map { inviteePsaId =>
+          request.headers.get("pstr").map { pstr =>
+            repository.remove(inviteePsaId, pstr).map(_ => Ok)
+          }.getOrElse(Future.successful(BadRequest))
+        }.getOrElse(Future.successful(BadRequest))
       }
   }
 }
