@@ -137,10 +137,10 @@ class InvitationsCacheRepository @Inject()(
     Future.successful(false)
   }
 
-  def get(inviteePsaId: String, pstr: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
+  def getByKeys(mapOfKeys: Map[String,String])(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
     if (encrypted) {
       val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
-      collection.find(BSONDocument("inviteePsaId" -> inviteePsaId, "pstr" -> pstr)).one[DataEntry].map {
+      collection.find(BSONDocument( mapOfKeys )).one[DataEntry].map {
         _.map {
           dataEntry =>
             val dataAsString = new String(dataEntry.data.byteArray, StandardCharsets.UTF_8)
@@ -149,7 +149,7 @@ class InvitationsCacheRepository @Inject()(
         }
       }
     } else {
-      collection.find(BSONDocument("inviteePsaId" -> inviteePsaId, "pstr" -> pstr)).one[JsonDataEntry].map {
+      collection.find(BSONDocument(mapOfKeys)).one[JsonDataEntry].map {
         _.map {
           dataEntry =>
             dataEntry.data
@@ -157,67 +157,6 @@ class InvitationsCacheRepository @Inject()(
       }
     }
   }
-
-  def getForScheme(pstr: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
-    if (encrypted) {
-      val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
-      collection.find(BSONDocument( "pstr" -> pstr)).one[DataEntry].map {
-        _.map {
-          dataEntry =>
-            val dataAsString = new String(dataEntry.data.byteArray, StandardCharsets.UTF_8)
-            val decrypted: PlainText = jsonCrypto.decrypt(Crypted(dataAsString))
-            Json.parse(decrypted.value)
-        }
-      }
-    } else {
-      collection.find(BSONDocument("pstr" -> pstr)).one[JsonDataEntry].map {
-        _.map {
-          dataEntry =>
-            dataEntry.data
-        }
-      }
-    }
-  }
-
-  def getForInvitee(inviteePsaId: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
-    if (encrypted) {
-      val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
-      collection.find(BSONDocument( "inviteePsaId" -> inviteePsaId)).one[DataEntry].map {
-        _.map {
-          dataEntry =>
-            val dataAsString = new String(dataEntry.data.byteArray, StandardCharsets.UTF_8)
-            val decrypted: PlainText = jsonCrypto.decrypt(Crypted(dataAsString))
-            Json.parse(decrypted.value)
-        }
-      }
-    } else {
-      collection.find(BSONDocument("inviteePsaId" -> inviteePsaId)).one[JsonDataEntry].map {
-        _.map {
-          dataEntry =>
-            dataEntry.data
-        }
-      }
-    }
-  }
-
-  def getLastUpdated(inviteePsaId: String)(implicit ec: ExecutionContext): Future[Option[DateTime]] = {
-    if (encrypted) {
-      collection.find(BSONDocument("inviteePsaId" -> inviteePsaId)).one[DataEntry].map {
-        _.map {
-          dataEntry =>
-            dataEntry.lastUpdated
-        }
-      }
-    } else {
-      collection.find(BSONDocument("inviteePsaId" -> inviteePsaId)).one[JsonDataEntry].map {
-        _.map {
-          dataEntry =>
-            dataEntry.lastUpdated
-        }
-      }
-    }
-  }
-
 
   def remove(inviteePsaId: String, pstr: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     val selector = BSONDocument("inviteePsaId" -> inviteePsaId, "pstr" -> pstr)

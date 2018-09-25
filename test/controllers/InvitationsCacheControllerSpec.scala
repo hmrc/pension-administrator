@@ -17,10 +17,7 @@
 package controllers
 
 import akka.stream.Materializer
-import akka.util.ByteString
 import models.Invitation
-import org.apache.commons.lang3.RandomUtils
-import org.joda.time.DateTime
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -35,7 +32,7 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
 
 import scala.concurrent.Future
-
+//syncflatspec
 class InvitationsCacheControllerSpec extends WordSpec with MustMatchers with MockitoSugar with OneAppPerSuite {
 
   implicit lazy val mat: Materializer = app.materializer
@@ -61,38 +58,38 @@ class InvitationsCacheControllerSpec extends WordSpec with MustMatchers with Moc
   }
 
   // scalastyle:off method.length
-  def validCacheController(encrypted: Boolean): Unit = {
+  def validCacheController(encrypted: Boolean, ): Unit = {
     val msg = if (encrypted) "where encrypted" else "where not encrypted"
     s".get $msg" must {
 
       "return 200 and the relevant data when it exists" in {
-        when(repo.get(eqTo(inviteePsaId), eqTo(pstr))(any())) thenReturn Future.successful(Some(invitationJson))
+        when(repo.getByKeys(eqTo(mapBothKeys))(any())) thenReturn Future.successful(Some(invitationJson))
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).get()(FakeRequest().withHeaders("pstr" -> pstr, "inviteePsaId" -> inviteePsaId))
+        val result = controller(repo, authConnector, encrypted).get()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
 
         status(result) mustEqual OK
         contentAsString(result) mustEqual invitationJson.toString
       }
 
       "return 404 when the data doesn't exist" in {
-        when(repo.get(eqTo(inviteePsaId), eqTo(pstr))(any())) thenReturn Future.successful {
+        when(repo.getByKeys(eqTo(mapBothKeys))(any())) thenReturn Future.successful {
           None
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).get()(FakeRequest().withHeaders("pstr" -> pstr, "inviteePsaId" -> inviteePsaId))
+        val result = controller(repo, authConnector, encrypted).get()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
 
         status(result) mustEqual NOT_FOUND
       }
 
       "throw an exception when the repository call fails" in {
-        when(repo.get(eqTo(inviteePsaId), eqTo(pstr))(any())) thenReturn Future.failed {
+        when(repo.getByKeys(eqTo(mapBothKeys))(any())) thenReturn Future.failed {
           new Exception()
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).get()(FakeRequest().withHeaders("pstr" -> pstr, "inviteePsaId" -> inviteePsaId))
+        val result = controller(repo, authConnector, encrypted).get()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
 
         an[Exception] must be thrownBy {
           status(result)
@@ -104,7 +101,7 @@ class InvitationsCacheControllerSpec extends WordSpec with MustMatchers with Moc
           new UnauthorizedException("")
         }
 
-        val result = controller(repo, authConnector, encrypted).get()(FakeRequest().withHeaders("pstr" -> pstr, "inviteePsaId" -> inviteePsaId))
+        val result = controller(repo, authConnector, encrypted).get()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
 
         an[UnauthorizedException] must be thrownBy {
           status(result)
@@ -155,6 +152,9 @@ object InvitationsCacheControllerSpec {
   private val inviterPsaId = "I12345"
   private val inviteePsaId = "P12345"
   private val inviteeName = "Test Invitee Name"
+  private val mapBothKeys = Map("pstr" -> pstr, "inviteePsaId" -> inviteePsaId)
+  private val mapPstr = Map("pstr" -> pstr)
+  private val mapInviteePsaId = Map("inviteePsaId" -> inviteePsaId)
 
   private val invitation = Invitation(pstr = pstr, schemeName = schemeName, inviterPsaId = inviterPsaId, inviteePsaId = inviteePsaId, inviteeName = inviteeName)
 

@@ -18,13 +18,13 @@ package controllers
 
 import com.google.inject.Inject
 import play.api.Configuration
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, Result}
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationsCacheController @Inject()(
                                             config: Configuration,
@@ -33,6 +33,7 @@ class InvitationsCacheController @Inject()(
                                           ) extends BaseController with AuthorisedFunctions {
 
   private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
+
 
   def add: Action[AnyContent] = Action.async {
     implicit request =>
@@ -51,30 +52,29 @@ class InvitationsCacheController @Inject()(
 
   def get: Action[AnyContent] = Action.async {
     implicit request =>
-      request.headers.get("inviteePsaId").map { inviteePsaId =>
-        request.headers.get("pstr").map { pstr =>
-          authorised() {
-            repository.get(inviteePsaId, pstr).map { response =>
-              response.map {
-                Ok(_)
-              }
-                .getOrElse(NotFound)
-            }
+      authorised() {
+        request.headers.get("inviteePsaId").flatMap { inviteePsaId =>
+          request.headers.get("pstr").map { pstr =>
+            getByMap(Map("inviteePsaId" -> inviteePsaId, "pstr" -> pstr))
           }
         }.getOrElse(Future.successful(BadRequest))
-      }.getOrElse(Future.successful(BadRequest))
+      }
+  }
+
+  private def getByMap(map: Map[String, String])(implicit ec: ExecutionContext): Future[Result] = {
+    repository.getByKeys(map).map { response =>
+      response.map {
+        Ok(_)
+      }
+        .getOrElse(NotFound)
+    }
   }
 
   def getForScheme: Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
         request.headers.get("pstr").map { pstr =>
-          repository.getForScheme(pstr).map { response =>
-            response.map {
-              Ok(_)
-            }
-              .getOrElse(NotFound)
-          }
+          getByMap(Map("pstr" -> pstr))
         }.getOrElse(Future.successful(BadRequest))
       }
   }
@@ -83,12 +83,7 @@ class InvitationsCacheController @Inject()(
     implicit request =>
       authorised() {
         request.headers.get("inviteePsaId").map { inviteePsaId =>
-          repository.getForInvitee(inviteePsaId).map { response =>
-            response.map {
-              Ok(_)
-            }
-              .getOrElse(NotFound)
-          }
+          getByMap(Map("inviteePsaId" -> inviteePsaId))
         }.getOrElse(Future.successful(BadRequest))
       }
   }
