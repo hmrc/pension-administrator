@@ -16,6 +16,8 @@
 
 package models
 
+import play.api.libs.json.{Json, Reads}
+
 case class AcceptedInvitation(
   pstr: String,
   inviteePsaId: String,
@@ -24,3 +26,7 @@ case class AcceptedInvitation(
   declarationDuties: Boolean,
   pensionAdvisorDetail: Option[PensionAdvisorDetail]
 )
+
+object AcceptedInvitation {
+  implicit val rds : Reads[AcceptedInvitation] = Json.reads[AcceptedInvitation]
+}

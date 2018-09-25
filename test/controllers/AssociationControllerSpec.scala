@@ -18,7 +18,7 @@ package controllers
 
 import base.JsonFileReader
 import connectors.AssociationConnector
-import models.{AcceptedInvitation, IndividualDetails, PSAMinimalDetails}
+import models._
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
@@ -64,6 +64,75 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     contentAsString(result) mustBe "not found"
   }
 
+
+  "acceptInvitation" should "return Created when the data is posted successfully" in {
+
+    val result = controller.acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
+
+    status(result) mustBe CREATED
+  }
+
+  it should "throw BadRequestException when no data received in the request" in {
+
+    recoverToExceptionIf[BadRequestException](controller.acceptInvitation(fakeRequest)) map {
+      ex =>
+        ex.responseCode mustBe BAD_REQUEST
+        ex.message mustBe "No Request Body received for accept invitation"
+    }
+  }
+
+  it should "throw BadRequestException when invalid data received in the request" in {
+
+    recoverToExceptionIf[BadRequestException](controller.acceptInvitation(fakeRequest.withJsonBody(Json.obj("invalid" -> "data")))) map {
+      ex =>
+        ex.responseCode mustBe BAD_REQUEST
+        ex.message mustBe "Bad request received from frontend for accept invitation"
+    }
+  }
+
+  it should "return CONFLICT when connector returns ConflictException" in {
+
+    fakeAssociationConnector.setAcceptInvitationResponse(
+      Future.successful(Left(new ConflictException("Conflict")))
+    )
+    val result = controller.acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
+
+    status(result) mustBe CONFLICT
+    contentAsString(result) mustBe "Conflict"
+  }
+
+  it should "return BAD_REQUEST when connector return BadRequestException" in {
+
+    fakeAssociationConnector.setAcceptInvitationResponse(
+      Future.successful(Left(new BadRequestException("Bad Request")))
+    )
+    val result = controller.acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "Bad Request"
+  }
+
+  it should "return NOT_FOUND when connector return NotFoundException" in {
+
+    fakeAssociationConnector.setAcceptInvitationResponse(
+      Future.successful(Left(new NotFoundException("Not Found")))
+    )
+    val result = controller.acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
+
+    status(result) mustBe NOT_FOUND
+    contentAsString(result) mustBe "Not Found"
+  }
+
+  it should "throw Upstream5xxResponse when connector throws Upstream5xxResponse" in {
+
+    fakeAssociationConnector.setAcceptInvitationResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+
+    recoverToExceptionIf[Upstream5xxResponse](controller.acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))) map {
+      ex =>
+        ex.upstreamResponseCode mustBe SERVICE_UNAVAILABLE
+        ex.message mustBe "Failed with 5XX"
+    }
+  }
 }
 
 object AssociationControllerSpec {
@@ -84,20 +153,29 @@ object AssociationControllerSpec {
 
     private var minimalPsaDetailsResponse: Future[Either[HttpException, PSAMinimalDetails]] = Future.successful(Right(psaMinimalDetailsIndividualUser))
 
+    private var acceptInvitationResponse: Future[Either[HttpException, Unit]] = Future.successful(Right(()))
+
     def setPsaMinimalDetailsResponse(response: Future[Either[HttpException, PSAMinimalDetails]]): Unit = this.minimalPsaDetailsResponse = response
+
+    def setAcceptInvitationResponse(response: Future[Either[HttpException, Unit]]): Unit = this.acceptInvitationResponse = response
 
     def getPSAMinimalDetails(psaId: String)(implicit
                                             headerCarrier: HeaderCarrier,
                                             ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = minimalPsaDetailsResponse
 
     override def acceptInvitation(invitation: AcceptedInvitation)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext):
-    Future[Either[HttpException, Unit]] = Future.successful(Right(()))
+    Future[Either[HttpException, Unit]] = acceptInvitationResponse
   }
 
   val fakeAssociationConnector = new FakeAssociationConnector
 
-
   val controller = new AssociationController(fakeAssociationConnector)
+
+  val acceptedInvitationRequest = Json.parse(
+    """
+      |{"pstr":"test-pstr","inviteePsaId":"test-invitee-psa-id","inviterPsaId":"test-inviter-psa-id","declaration":true,"declarationDuties":true}
+    """.stripMargin
+  )
 }
 
 
