@@ -159,17 +159,27 @@ def validCacheControllerWithRemove(encrypted: Boolean): Unit = {
 
 object InvitationsCacheControllerSpec {
 
-  private val pstr = "S12345"
-  private val schemeName = "Test scheme name"
-  private val inviterPsaId = "I12345"
-  private val inviteePsaId = "P12345"
-  private val inviteeName = "Test Invitee Name"
-  private val mapBothKeys = Map("pstr" -> pstr, "inviteePsaId" -> inviteePsaId)
-  private val mapPstr = Map("pstr" -> pstr)
-  private val mapInviteePsaId = Map("inviteePsaId" -> inviteePsaId)
+  private val pstr1 = "S12345"
+  private val schemeName1 = "Test scheme1 name"
+  private val inviterPsaId1 = "I12345"
+  private val inviteePsaId1 = "P12345"
+  private val inviteeName1 = "Test Invitee1 Name"
 
-  private val invitation = Invitation(pstr = pstr, schemeName = schemeName, inviterPsaId = inviterPsaId, inviteePsaId = inviteePsaId, inviteeName = inviteeName)
+  private val pstr2 = "D1234"
+  private val schemeName2 = "Test scheme2 name"
+  private val inviterPsaId2 = "Q12345"
+  private val inviteePsaId2 = "T12345"
+  private val inviteeName2 = "Test Invitee2 Name"
 
-  private val invitationJson =  Json.toJson(invitation)
+  private val mapBothKeys = Map("pstr" -> pstr1, "inviteePsaId" -> inviteePsaId1)
+  private val mapPstr = Map("pstr" -> pstr1)
+  private val mapInviteePsaId = Map("inviteePsaId" -> inviteePsaId1)
+
+  private val invitation1 =
+    Invitation(pstr = pstr1, schemeName = schemeName1, inviterPsaId = inviterPsaId1, inviteePsaId = inviteePsaId1, inviteeName = inviteeName1)
+  private val invitation2 =
+    Invitation(pstr = pstr2, schemeName = schemeName2, inviterPsaId = inviterPsaId2, inviteePsaId = inviteePsaId2, inviteeName = inviteeName2)
+
+  private val invitationJson =  Json.toJson(List(invitation1, invitation2))
 
 }

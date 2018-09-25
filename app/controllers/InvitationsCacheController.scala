@@ -18,6 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import play.api.Configuration
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
@@ -62,7 +63,7 @@ class InvitationsCacheController @Inject()(
   }
 
   private def getByMap(map: Map[String, String])(implicit ec: ExecutionContext): Future[Result] = {
-    repository.getByKeys(map).map { response =>
+    repository.getByKeys(map).map{ response =>
       response.map {
         Ok(_)
       }

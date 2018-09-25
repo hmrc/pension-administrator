@@ -23,6 +23,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json._
 import play.api.{Configuration, Logger}
 import play.modules.reactivemongo.ReactiveMongoComponent
+import reactivemongo.api.{Cursor, ReadPreference}
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.Subtype.GenericBinarySubtype
 import reactivemongo.bson.{BSONBinary, BSONDocument, BSONObjectID}
@@ -133,28 +134,40 @@ class InvitationsCacheRepository @Inject()(
       } else
         Json.toJson(JsonDataEntry(inviteePsaId, pstr, data, DateTime.now(DateTimeZone.UTC)))
     }
-    //collection.insert(document).map(_.ok)
     Future.successful(false)
   }
 
   def getByKeys(mapOfKeys: Map[String,String])(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
     if (encrypted) {
       val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
-      collection.find(BSONDocument( mapOfKeys )).one[DataEntry].map {
-        _.map {
+      val queryBuilder = collection.find(BSONDocument( mapOfKeys ))
+      queryBuilder.cursor[DataEntry](ReadPreference.primary).collect[List]().map { de =>
+        val listOfInvitationsJson = de.map {
           dataEntry =>
             val dataAsString = new String(dataEntry.data.byteArray, StandardCharsets.UTF_8)
             val decrypted: PlainText = jsonCrypto.decrypt(Crypted(dataAsString))
             Json.parse(decrypted.value)
         }
+        listToOption(listOfInvitationsJson)
       }
     } else {
-      collection.find(BSONDocument(mapOfKeys)).one[JsonDataEntry].map {
-        _.map {
+        val queryBuilder = collection.find(BSONDocument( mapOfKeys ))
+
+        queryBuilder.cursor[JsonDataEntry](ReadPreference.primary).collect[List]().map { de =>
+        val listOfInvitationsJson = de.map {
           dataEntry =>
             dataEntry.data
         }
+          listToOption(listOfInvitationsJson)
       }
+    }
+  }
+
+  private def listToOption(data: List[JsValue]) = {
+    if (data.isEmpty) {
+      None
+    } else {
+      Some(Json.toJson(data))
     }
   }
 
