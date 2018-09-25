@@ -17,11 +17,13 @@
 package controllers
 
 import com.google.inject.Inject
+import models.PSAMinimalDetails
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
+import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
@@ -41,13 +43,18 @@ class InvitationsCacheController @Inject()(
       authorised() {
         request.body.asJson.map {
           jsValue =>
-            request.headers.get("inviteePsaId").map { inviteePsaId =>
-              request.headers.get("pstr").map { pstr =>
-                repository.insert(inviteePsaId, pstr, jsValue)
-                  .map(_ => Ok)
-              }.getOrElse(Future.successful(BadRequest))
-            }.getOrElse(Future.successful(BadRequest))
-        } getOrElse Future.successful(BadRequest)
+            val inviteePsaId = request.headers.get("inviteePsaId")
+            val pstr = request.headers.get("pstr")
+            (inviteePsaId, pstr) match {
+              case (Some(psaid), Some(ref)) =>
+                jsValue.validate[PSAMinimalDetails].fold(
+                  _=> Future.failed(new BadRequestException("not valid value for PSAMinimalDetails ")),
+                  value => repository.insert(psaid, ref, jsValue).map(_ => Ok)
+                )
+              case _ => Future.failed(new BadRequestException("inviteePsaId  & pstr values missing in request header"))
+            }
+
+        } getOrElse Future.successful(EntityTooLarge)
       }
   }
 

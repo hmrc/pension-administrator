@@ -16,30 +16,36 @@
 
 package service
 
+import akka.io.Tcp.Message
 import com.google.inject.{ImplementedBy, Inject}
 import connectors.AssociationConnector
 import models.{IndividualDetails, Invitation, PSAMinimalDetails}
 import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
+import repositories.InvitationsCacheRepository
+import uk.gov.hmrc.http._
+import play.api.http.Status.INTERNAL_SERVER_ERROR
 import utils.FuzzyNameMatcher
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+
+case class MongoDBFailedException(exceptionMesage: String) extends HttpException(exceptionMesage, INTERNAL_SERVER_ERROR)
 
 @ImplementedBy(classOf[InvitationServiceImpl])
 trait InvitationService {
 
   def invitePSA(jsValue: JsValue)
-                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]]
+                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Boolean]]
 
 }
 
-class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector) extends InvitationService {
+class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector, repository: InvitationsCacheRepository) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
-                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
+                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Boolean]] = {
     jsValue.validate[Invitation].fold(
       {
         errors =>
@@ -48,27 +54,29 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
       },
       {
         invitation =>
-          associationConnector.getPSAMinimalDetails(invitation.inviteePsaId) map {
-            case Right(psaDetails) => doNamesMatch(invitation.inviteeName, psaDetails)
-            case Left(ex) => Left(ex)
+          associationConnector.getPSAMinimalDetails(invitation.inviteePsaId).flatMap {
+            case Right(psaDetails) => doNamesMatch(invitation, psaDetails)
+            case Left(ex) => Future.successful(Left(ex))
           }
       }
     )
   }
 
-  private def doNamesMatch(inviteeName: String, psaDetails: PSAMinimalDetails): Either[HttpException, Unit] = {
+  private def doNamesMatch(invitation: Invitation, psaDetails: PSAMinimalDetails): Future[Either[HttpException, Boolean]] = {
 
     val matches = (psaDetails.organisationName, psaDetails.individualDetails) match {
-      case (Some(organisationName), _) => doOrganisationNamesMatch(inviteeName, organisationName)
-      case (_, Some(individual)) => doIndividualNamesMatch(inviteeName, individual, true)
+      case (Some(organisationName), _) => doOrganisationNamesMatch(invitation.inviteeName, organisationName)
+      case (_, Some(individual)) => doIndividualNamesMatch(invitation.inviteeName, individual, true)
       case _ => throw new IllegalArgumentException("InvitationService cannot match a PSA without organisation or individual detail")
     }
 
     if (matches) {
-      Right(())
+      repository.insert(invitation.inviteePsaId, invitation.pstr, Json.toJson(psaDetails)).map(Right(_)) recover {
+        case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
+      }
     } else {
-      logMismatch(inviteeName, psaDetails)
-      Left(new NotFoundException("NOT_FOUND"))
+      logMismatch(invitation.inviteeName, psaDetails)
+      Future.successful(Left(new NotFoundException("NOT_FOUND")))
     }
 
   }

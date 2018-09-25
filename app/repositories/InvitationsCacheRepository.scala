@@ -36,19 +36,19 @@ import utils.DateUtils
 import scala.concurrent.{ExecutionContext, Future}
 
 
-
-
 class InvitationsCacheRepository @Inject()(
                                             config: Configuration,
                                             component: ReactiveMongoComponent
                                           ) extends ReactiveRepository[JsValue, BSONObjectID](
   config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
-    component.mongoConnector.db,
-    implicitly
-  ){
+  component.mongoConnector.db,
+  implicitly
+) {
   private val ttl = 30
   private val encryptionKey = "manage.json.encryption"
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
+  private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
+
 
   private case class DataEntry(
                                 inviteePsaId: String,
@@ -56,6 +56,7 @@ class InvitationsCacheRepository @Inject()(
                                 data: BSONBinary,
                                 lastUpdated: DateTime,
                                 expireAt: Option[DateTime])
+
   // scalastyle:off magic.number
   private object DataEntry {
     def apply(inviteePsaId: String,
@@ -64,11 +65,11 @@ class InvitationsCacheRepository @Inject()(
               lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
               expireAt: Option[DateTime] = None): DataEntry = {
 
-        DataEntry(inviteePsaId, pstr, BSONBinary(
-          data,
-          GenericBinarySubtype),
-          lastUpdated,
-          Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), ttl)))
+      DataEntry(inviteePsaId, pstr, BSONBinary(
+        data,
+        GenericBinarySubtype),
+        lastUpdated,
+        Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), ttl)))
 
     }
 
@@ -79,11 +80,10 @@ class InvitationsCacheRepository @Inject()(
 
   // scalastyle:on magic.number
 
-  private case class JsonDataEntry(
-                                    inviteePsaId: String,
-                                    pstr: String,
-                                    data: JsValue,
-                                    lastUpdated: DateTime
+  private case class JsonDataEntry(inviteePsaId: String,
+                                   pstr: String,
+                                   data: JsValue,
+                                   lastUpdated: DateTime
                                   )
 
   private object JsonDataEntry {
@@ -123,18 +123,27 @@ class InvitationsCacheRepository @Inject()(
   }
 
   def insert(inviteePsaId: String, pstr: String, data: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
-    val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
+
     val document: JsValue = {
       if (encrypted) {
+        val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(inviteePsaId)).value
+        val encryptedPstr = jsonCrypto.encrypt(PlainText(pstr)).value
+
         val unencrypted = PlainText(Json.stringify(data))
         val encryptedData = jsonCrypto.encrypt(unencrypted).value
         val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
-        // Need to encrypt ids here
-        Json.toJson(DataEntry(inviteePsaId, pstr, dataAsByteArray))
-      } else
+
+        Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray))
+
+      } else {
         Json.toJson(JsonDataEntry(inviteePsaId, pstr, data, DateTime.now(DateTimeZone.UTC)))
+      }
     }
-    Future.successful(false)
+
+    val modifier = BSONDocument("$set" -> document)
+
+    collection.insert(modifier).map(_.ok)
+
   }
 
   def getByKeys(mapOfKeys: Map[String,String])(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
