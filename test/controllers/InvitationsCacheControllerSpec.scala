@@ -18,26 +18,29 @@ package controllers
 
 import akka.stream.Materializer
 import akka.util.ByteString
+import models.{IndividualDetails, PSAMinimalDetails}
 import org.apache.commons.lang3.RandomUtils
 import org.joda.time.DateTime
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.{AsyncFlatSpec, MustMatchers, WordSpec}
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Configuration
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.UnauthorizedException
+import uk.gov.hmrc.http.{BadRequestException, UnauthorizedException}
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
-class InvitationsCacheControllerSpec extends WordSpec with MustMatchers with MockitoSugar with OneAppPerSuite {
+class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers with MockitoSugar{
 
-  implicit lazy val mat: Materializer = app.materializer
+  implicit lazy val mat: Materializer = new GuiceApplicationBuilder().configure("run.mode" -> "Test").build().materializer
 
   private def configuration(encrypted: Boolean = true) = Configuration(
     "mongodb.pension-administrator-cache.maxSize" -> 512000,
@@ -60,117 +63,64 @@ class InvitationsCacheControllerSpec extends WordSpec with MustMatchers with Moc
   // scalastyle:off method.length
   def validCacheController(encrypted: Boolean): Unit = {
     val msg = if (encrypted) "where encrypted" else "where not encrypted"
-    s".get $msg" must {
 
-      "return 200 and the relevant data when it exists" in {
-        when(repo.get(eqTo("foo"))(any())) thenReturn Future.successful {
-          Some(Json.obj())
-        }
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+    s".insert $msg" should "return 200 when the request body can be parsed and passed to the repository successfully" in {
 
-        val result = controller(repo, authConnector, encrypted).get("foo")(FakeRequest())
+        when(repo.insert(any(), any(), any())(any())).thenReturn(Future.successful(true))
+        when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
+        val johnDoe = Json.parse(
+          """
+            |{
+            |	"processingDate": "2009-12-17T09:30:47Z",
+            |	"psaMinimalDetails": {
+            |		"organisationOrPartnershipName": "test org name"
+            |	},
+            |	"email": "test@email.com",
+            |	"psaSuspensionFlag": true
+            |}
+            |
+          """.stripMargin
+        )
 
-        status(result) mustEqual OK
-        contentAsString(result) mustEqual "{}"
-      }
-
-      "return 404 when the data doesn't exist" in {
-        when(repo.get(eqTo("foo"))(any())) thenReturn Future.successful {
-          None
-        }
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
-
-        val result = controller(repo, authConnector, encrypted).get("foo")(FakeRequest())
-
-        status(result) mustEqual NOT_FOUND
-      }
-
-      "throw an exception when the repository call fails" in {
-        when(repo.get(eqTo("foo"))(any())) thenReturn Future.failed {
-          new Exception()
-        }
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
-
-        val result = controller(repo, authConnector, encrypted).get("foo")(FakeRequest())
-
-        an[Exception] must be thrownBy {
-          status(result)
-        }
-      }
-
-      "throw an exception when the call is not authorised" in {
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed {
-          new UnauthorizedException("")
-        }
-
-        val result = controller(repo, authConnector, encrypted).get("foo")(FakeRequest())
-
-        an[UnauthorizedException] must be thrownBy {
-          status(result)
-        }
-      }
-    }
-
-    s".save $msg" must {
-
-      "return 200 when the request body can be parsed and passed to the repository successfully" in {
-
-        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(true)
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
-
-        val result = call(controller(repo, authConnector, encrypted).save("foo"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
+        val result = call(controller(repo, authConnector, encrypted).add, FakeRequest("POST", "/").withHeaders(("inviteePsaId"->""),("pstr","")).withJsonBody(johnDoe))
 
         status(result) mustEqual OK
       }
 
-      "return 413 when the request body cannot be parsed" in {
-        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(true)
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+      it should "return 400 when the request dont have valid headers" in {
 
-        val result = call(controller(repo, authConnector, encrypted).save("foo"), FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
+        when(repo.insert(any(), any(), any())(any())).thenReturn(Future.successful(true))
+        when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
+        val johnDoe = PSAMinimalDetails("john.doe@email.com", false, None, Some(IndividualDetails("John", None, "Doe")))
+
+        recoverToExceptionIf[BadRequestException](call(controller(repo, authConnector, encrypted).add, FakeRequest("POST", "/").withJsonBody(Json.toJson(johnDoe)))).map {
+          ex =>
+            ex.getMessage mustBe "inviteePsaId  & pstr values missing in request header"
+        }
+      }
+
+    it should "return 413 when the request body cannot be parsed" in {
+        when(repo.insert(any(), any(), any())(any())).thenReturn(Future.successful(true))
+        when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
+
+        val result = call(controller(repo, authConnector, encrypted).add, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
         status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
       }
 
-      "throw an exception when the call is not authorised" in {
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed {
+    it should "throw an exception when the call is not authorised" in {
+        when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.failed {
           new UnauthorizedException("")
-        }
+        })
 
-        val result = call(controller(repo, authConnector, encrypted).save("foo"), FakeRequest().withRawBody(ByteString("foo")))
+        val result = call(controller(repo, authConnector, encrypted).add, FakeRequest().withRawBody(ByteString("foo")))
 
         an[UnauthorizedException] must be thrownBy {
           status(result)
         }
       }
-    }
 
-    s".remove $msg" must {
-      "return 200 when the data is removed successfully" in {
-        when(repo.remove(eqTo("foo"))(any())) thenReturn Future.successful(true)
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
-
-        val result = controller(repo, authConnector, encrypted).remove("foo")(FakeRequest())
-
-        status(result) mustEqual OK
-      }
-
-      "throw an exception when the call is not authorised" in {
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed {
-          new UnauthorizedException("")
-        }
-
-        val result = controller(repo, authConnector, encrypted).remove("foo")(FakeRequest())
-
-        an[UnauthorizedException] must be thrownBy {
-          status(result)
-        }
-      }
-    }
-
-    s".lastUpdated $msg" must {
-
-      "return 200 and the relevant data when it exists" in {
+    s".lastUpdated $msg" should "return 200 and the relevant data when it exists" in {
         val date = DateTime.now
         when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
           Some(date)
@@ -183,7 +133,7 @@ class InvitationsCacheControllerSpec extends WordSpec with MustMatchers with Moc
         contentAsJson(result) mustEqual Json.toJson(date.getMillis)
       }
 
-      "return 404 when the data doesn't exist" in {
+      it should "return 404 when the data doesn't exist" in {
         when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
           None
         }
@@ -194,7 +144,7 @@ class InvitationsCacheControllerSpec extends WordSpec with MustMatchers with Moc
         status(result) mustEqual NOT_FOUND
       }
 
-      "throw an exception when the repository call fails" in {
+      it should "throw an exception when the repository call fails" in {
         when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.failed {
           new Exception()
         }
@@ -207,7 +157,7 @@ class InvitationsCacheControllerSpec extends WordSpec with MustMatchers with Moc
         }
       }
 
-      "throw an exception when the call is not authorised" in {
+      it should "throw an exception when the call is not authorised" in {
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed {
           new UnauthorizedException("")
         }
@@ -218,13 +168,9 @@ class InvitationsCacheControllerSpec extends WordSpec with MustMatchers with Moc
           status(result)
         }
       }
-    }
   }
   // scalastyle:on method.length
 
-  "InvitationsCacheController" must {
-    behave like validCacheController(encrypted = false)
-    behave like validCacheController(encrypted = true)
-
-  }
+    "InvitationsCacheController" should behave like validCacheController(encrypted = false)
+    "InvitationsCacheController" should behave like validCacheController(encrypted = true)
 }

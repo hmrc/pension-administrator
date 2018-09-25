@@ -131,7 +131,7 @@ abstract class PensionAdministratorCacheRepository(
     }
     val selector = BSONDocument("id" -> id)
     val modifier = BSONDocument("$set" -> document)
-    collection.update(selector, modifier, upsert = true)
+    collection.update(selector, modifier, upsert = false)
       .map(_.ok)
   }
 
