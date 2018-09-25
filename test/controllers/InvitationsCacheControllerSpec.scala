@@ -25,6 +25,7 @@ import org.scalatest.{MustMatchers, WordSpec}
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Configuration
 import play.api.libs.json.Json
+import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.InvitationsCacheRepository
@@ -46,50 +47,50 @@ class InvitationsCacheControllerSpec extends WordSpec with MustMatchers with Moc
   private val authConnector: AuthConnector = mock[AuthConnector]
 
   private class InvitationsCacheControllerImpl(
-                                                         repo: InvitationsCacheRepository,
-                                                         authConnector: AuthConnector,
-                                                         encrypted: Boolean
-                                                       ) extends InvitationsCacheController(configuration(encrypted), repo, authConnector)
+                                                repo: InvitationsCacheRepository,
+                                                authConnector: AuthConnector,
+                                                encrypted: Boolean
+                                              ) extends InvitationsCacheController(configuration(encrypted), repo, authConnector)
 
   import InvitationsCacheControllerSpec._
+
+  private def msg(encrypted: Boolean) = if (encrypted) "where encrypted" else "where not encrypted"
 
   def controller(repo: InvitationsCacheRepository, authConnector: AuthConnector, encrypted: Boolean): InvitationsCacheController = {
     new InvitationsCacheControllerImpl(repo, authConnector, encrypted)
   }
-
   // scalastyle:off method.length
-  def validCacheController(encrypted: Boolean, ): Unit = {
-    val msg = if (encrypted) "where encrypted" else "where not encrypted"
-    s".get $msg" must {
+  def validCacheControllerWithGet(encrypted: Boolean, map: Map[String, String], testMethod: () => Action[AnyContent]): Unit = {
+    s"work for request with headers: $map ${msg(encrypted)}" must {
 
       "return 200 and the relevant data when it exists" in {
-        when(repo.getByKeys(eqTo(mapBothKeys))(any())) thenReturn Future.successful(Some(invitationJson))
+        when(repo.getByKeys(eqTo(map))(any())) thenReturn Future.successful(Some(invitationJson))
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).get()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
+        val result = testMethod()(FakeRequest().withHeaders(map.toSeq: _*))
 
         status(result) mustEqual OK
         contentAsString(result) mustEqual invitationJson.toString
       }
 
       "return 404 when the data doesn't exist" in {
-        when(repo.getByKeys(eqTo(mapBothKeys))(any())) thenReturn Future.successful {
+        when(repo.getByKeys(eqTo(map))(any())) thenReturn Future.successful {
           None
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).get()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
+        val result = testMethod()(FakeRequest().withHeaders(map.toSeq: _*))
 
         status(result) mustEqual NOT_FOUND
       }
 
       "throw an exception when the repository call fails" in {
-        when(repo.getByKeys(eqTo(mapBothKeys))(any())) thenReturn Future.failed {
+        when(repo.getByKeys(eqTo(map))(any())) thenReturn Future.failed {
           new Exception()
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).get()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
+        val result = testMethod()(FakeRequest().withHeaders(map.toSeq: _*))
 
         an[Exception] must be thrownBy {
           status(result)
@@ -101,7 +102,7 @@ class InvitationsCacheControllerSpec extends WordSpec with MustMatchers with Moc
           new UnauthorizedException("")
         }
 
-        val result = controller(repo, authConnector, encrypted).get()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
+        val result = testMethod()(FakeRequest().withHeaders(map.toSeq: _*))
 
         an[UnauthorizedException] must be thrownBy {
           status(result)
@@ -111,36 +112,47 @@ class InvitationsCacheControllerSpec extends WordSpec with MustMatchers with Moc
   }
 
 
+def validCacheControllerWithRemove(encrypted: Boolean): Unit = {
 
-//    s".remove $msg" must {
-//      "return 200 when the data is removed successfully" in {
-//        when(repo.remove(eqTo("foo"))(any())) thenReturn Future.successful(true)
-//        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
-//
-//        val result = controller(repo, authConnector, encrypted).remove("foo")(FakeRequest())
-//
-//        status(result) mustEqual OK
-//      }
-//
-//      "throw an exception when the call is not authorised" in {
-//        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed {
-//          new UnauthorizedException("")
-//        }
-//
-//        val result = controller(repo, authConnector, encrypted).remove("foo")(FakeRequest())
-//
-//        an[UnauthorizedException] must be thrownBy {
-//          status(result)
-//        }
-//      }
-//    }
+  s".remove ${msg(encrypted)}" must {
+    "return 200 when the data is removed successfully" in {
+      when(repo.remove(eqTo(mapBothKeys))(any())) thenReturn Future.successful(true)
+      when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+
+      val result = controller(repo, authConnector, encrypted).remove()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
+
+      status(result) mustEqual OK
+    }
+
+    "throw an exception when the call is not authorised" in {
+      when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed {
+        new UnauthorizedException("")
+      }
+
+      val result = controller(repo, authConnector, encrypted).remove()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
+
+      an[UnauthorizedException] must be thrownBy {
+        status(result)
+      }
+    }
+  }
+}
 
 
   // scalastyle:on method.length
 
   "InvitationsCacheController" must {
-    behave like validCacheController(encrypted = false)
-    behave like validCacheController(encrypted = true)
+    behave like validCacheControllerWithGet(encrypted = false, mapBothKeys, controller(repo, authConnector, encrypted = false).get _ )
+    behave like validCacheControllerWithGet(encrypted = true, mapBothKeys, controller(repo, authConnector, encrypted = true).get _ )
+    behave like validCacheControllerWithGet(encrypted = false, mapPstr, controller(repo, authConnector, encrypted = false).getForScheme _ )
+    behave like validCacheControllerWithGet(encrypted = true, mapPstr, controller(repo, authConnector, encrypted = true).getForScheme _ )
+    behave like validCacheControllerWithGet(encrypted = false, mapInviteePsaId, controller(repo, authConnector, encrypted = false).getForInvitee _ )
+    behave like validCacheControllerWithGet(encrypted = true, mapInviteePsaId, controller(repo, authConnector, encrypted = true).getForInvitee _ )
+
+    behave like validCacheControllerWithRemove(encrypted = false)
+    behave like validCacheControllerWithRemove(encrypted = true)
+
+
 
   }
 }

@@ -93,7 +93,7 @@ class InvitationsCacheController @Inject()(
       authorised() {
         request.headers.get("inviteePsaId").map { inviteePsaId =>
           request.headers.get("pstr").map { pstr =>
-            repository.remove(inviteePsaId, pstr).map(_ => Ok)
+            repository.remove(Map("inviteePsaId" -> inviteePsaId, "pstr" -> pstr)).map(_ => Ok)
           }.getOrElse(Future.successful(BadRequest))
         }.getOrElse(Future.successful(BadRequest))
       }

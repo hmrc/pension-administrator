@@ -158,8 +158,8 @@ class InvitationsCacheRepository @Inject()(
     }
   }
 
-  def remove(inviteePsaId: String, pstr: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    val selector = BSONDocument("inviteePsaId" -> inviteePsaId, "pstr" -> pstr)
+  def remove(mapOfKeys: Map[String,String])(implicit ec: ExecutionContext): Future[Boolean] = {
+    val selector = BSONDocument(mapOfKeys)
     collection.remove(selector).map(_.ok)
   }
 }
