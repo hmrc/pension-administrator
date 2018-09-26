@@ -17,11 +17,11 @@
 package controllers
 
 import com.google.inject.Inject
-import models.{Invitation, PSAMinimalDetails}
-import play.api.libs.json.Json
+import models.Invitation
+import play.api.Configuration
 import play.api.mvc.{Action, AnyContent}
-import play.api.{Configuration, Logger}
-import repositories.InvitationsCacheRepositoryImpl
+import repositories.InvitationsCacheRepository
+import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
@@ -30,10 +30,10 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import scala.concurrent.Future
 
 class InvitationsCacheController @Inject()(
-                                                    config: Configuration,
-                                                    repository: InvitationsCacheRepositoryImpl,
-                                                    val authConnector: AuthConnector
-                                                  ) extends BaseController with AuthorisedFunctions {
+                                            config: Configuration,
+                                            repository: InvitationsCacheRepository,
+                                            val authConnector: AuthConnector
+                                          ) extends BaseController with AuthorisedFunctions {
 
   private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
 
@@ -44,11 +44,15 @@ class InvitationsCacheController @Inject()(
           jsValue =>
 
             jsValue.validate[Invitation].fold(
-              _=> Future.failed(new BadRequestException("not valid value for PSA Invitation")),
-              value => repository.insert(value).map(_ => Created)
+              _ => Future.failed(new BadRequestException("not valid value for PSA Invitation")),
+              value => repository.insert(value).map(_ => Created).recoverWith {
+                case exception: Exception => {
+                  throw MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}""")
+                }
+              }
             )
 
-        } getOrElse Future.successful(BadRequest("Bad Request with no request body returned for PSA Invitation"))
+        } getOrElse Future.failed(new BadRequestException("Bad Request with no request body returned for PSA Invitation"))
       }
   }
 
@@ -87,19 +91,6 @@ class InvitationsCacheController @Inject()(
           response.map {
             Ok(_)
           }
-            .getOrElse(NotFound)
-        }
-      }
-  }
-
-
-  def lastUpdated(id: String): Action[AnyContent] = Action.async {
-    implicit request =>
-      authorised() {
-        Logger.debug("controllers.InvitationsCacheController.get: Authorised Request " + id)
-        repository.getLastUpdated(id).map { response =>
-          Logger.debug("controllers.InvitationsCacheController.get: Response " + response)
-          response.map { date => Ok(Json.toJson(date)) }
             .getOrElse(NotFound)
         }
       }

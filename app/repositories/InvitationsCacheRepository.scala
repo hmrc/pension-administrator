@@ -36,31 +36,22 @@ import utils.DateUtils
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class InvitationsCacheRepositoryImpl @Inject()(config: Configuration,
-                                               component: ReactiveMongoComponent
-                                              ) extends InvitationsCacheRepository(
-  "manage.json.encryption",
+class InvitationsCacheRepository @Inject()(
+                                            component: ReactiveMongoComponent,
+                                            config: Configuration
+                                          ) extends ReactiveRepository[JsValue, BSONObjectID](
   config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
-  Some(30),
-  component,
-  config
-)
-
-abstract class InvitationsCacheRepository @Inject()(encryptionKey: String,
-                                                    collectionName: String,
-                                                    timeToLive: Option[Int],
-                                                    component: ReactiveMongoComponent,
-                                                    config: Configuration
-                                                   ) extends ReactiveRepository[JsValue, BSONObjectID](
-  collectionName,
   component.mongoConnector.db,
   implicitly
 ) {
+  private val encryptionKey: String = "manage.json.encryption"
+  private val collectionName: String = config.underlying.getString("mongodb.pension-administrator-cache.invitations.name")
   // scalastyle:off magic.number
-  private val ttl = timeToLive.getOrElse(30)
+  private val ttl = 30
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
 
+  private def getExpireAt = Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), ttl))
 
   private case class DataEntry(inviteePsaId: String,
                                pstr: String,
@@ -79,7 +70,8 @@ abstract class InvitationsCacheRepository @Inject()(encryptionKey: String,
         data,
         GenericBinarySubtype),
         lastUpdated,
-        Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), ttl)))
+        getExpireAt
+      )
 
     }
 
@@ -91,10 +83,12 @@ abstract class InvitationsCacheRepository @Inject()(encryptionKey: String,
   private case class JsonDataEntry(inviteePsaId: String,
                                    pstr: String,
                                    data: JsValue,
-                                   lastUpdated: DateTime
+                                   lastUpdated: DateTime,
+                                   expireAt: Option[DateTime] = getExpireAt
                                   )
 
   private object JsonDataEntry {
+
     implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
     implicit val reads: OFormat[JsonDataEntry] = Json.format[JsonDataEntry]
     implicit val writes: OWrites[JsonDataEntry] = Json.format[JsonDataEntry]
@@ -107,44 +101,21 @@ abstract class InvitationsCacheRepository @Inject()(encryptionKey: String,
   private val pstrKey = "pstr"
   private val compoundIndexName = "inviteePsaId_Pstr"
 
-  ensureIndex(fieldName, createdIndexName, Some(ttl))
+  ensureIndex(Seq(fieldName), createdIndexName, Some(ttl))
 
-  ensureCompoundIndex(inviteePsaIdKey, pstrKey, compoundIndexName, Some(ttl))
+  ensureIndex(Seq(inviteePsaIdKey, pstrKey), compoundIndexName, Some(ttl))
 
-  private def ensureIndex(field: String, indexName: String, ttl: Option[Int]): Future[Boolean] = {
-
-    import scala.concurrent.ExecutionContext.Implicits.global
-
-    val defaultIndex: Index = Index(Seq((field, IndexType.Ascending)), Some(indexName))
-
-    val index: Index = ttl.fold(defaultIndex) { ttl =>
-      Index(
-        Seq((field, IndexType.Ascending)),
-        Some(indexName),
-        options = BSONDocument(expireAfterSeconds -> ttl)
-      )
-    }
-
-    collection.indexesManager.ensure(index) map {
-      result => {
-        Logger.debug(s"set [$indexName] with value $ttl -> result : $result")
-        result
-      }
-    } recover {
-      case e => Logger.error("Failed to set TTL index", e)
-        false
-    }
-  }
-
-  private def ensureCompoundIndex(field1: String, field2: String, indexName: String, ttl: Option[Int]): Future[Boolean] = {
+  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int]): Future[Boolean] = {
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
-    val defaultIndex: Index = Index(Seq((field1, IndexType.Ascending),(field2, IndexType.Ascending)), Some(indexName), true)
+    val fieldIndexes = fields.map((_, IndexType.Ascending))
+
+    val defaultIndex: Index = Index(fieldIndexes, Some(indexName), true)
 
     val index: Index = ttl.fold(defaultIndex) { ttl =>
       Index(
-        Seq((field1, IndexType.Ascending), (field2, IndexType.Ascending)),
+        fieldIndexes,
         Some(indexName),
         unique = true,
         options = BSONDocument(expireAfterSeconds -> ttl)

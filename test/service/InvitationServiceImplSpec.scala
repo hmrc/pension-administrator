@@ -18,19 +18,21 @@ package service
 
 import connectors.AssociationConnector
 import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails}
+import org.mockito.Matchers.any
+import org.mockito.Mockito.{never, times, verify, when}
 import org.scalatest.mockito.MockitoSugar
-import org.mockito.Mockito.{verify, when, times, never}
-import org.mockito.Matchers.{any}
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import repositories.InvitationsCacheRepositoryImpl
+import reactivemongo.bson.BSONDocument
+import reactivemongo.core.errors.DatabaseException
+import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues with MockitoSugar{
+class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues with MockitoSugar {
 
   import InvitationServiceImplSpec._
 
@@ -44,7 +46,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
     fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, johnDoe.individualDetails.value.name)).map {
       response =>
         verify(fixture.repository, times(1)).insert(any())(any())
-        response.right.value should equal (true)
+        response.right.value should equal(true)
     }
 
   }
@@ -56,7 +58,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
     fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
       response =>
         verify(fixture.repository, times(1)).insert(any())(any())
-        response.right.value should equal (true)
+        response.right.value should equal(true)
     }
 
   }
@@ -79,7 +81,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
       response =>
         verify(fixture.repository, never).insert(any())(any())
         response.left.value shouldBe a[NotFoundException]
-        response.left.value.message should include ("NOT_FOUND")
+        response.left.value.message should include("NOT_FOUND")
     }
 
   }
@@ -92,7 +94,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
       response =>
         verify(fixture.repository, never).insert(any())(any())
         response.left.value shouldBe a[NotFoundException]
-        response.left.value.message should include ("NOT_FOUND")
+        response.left.value.message should include("NOT_FOUND")
     }
 
   }
@@ -105,7 +107,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
       response =>
         verify(fixture.repository, never).insert(any())(any())
         response.left.value shouldBe a[NotFoundException]
-        response.left.value.message should include ("NOT_FOUND")
+        response.left.value.message should include("NOT_FOUND")
     }
 
   }
@@ -117,7 +119,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
     fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.fullName)) map {
       response =>
         verify(fixture.repository, times(1)).insert(any())(any())
-        response.right.value should equal (true)
+        response.right.value should equal(true)
     }
 
   }
@@ -129,12 +131,12 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
     fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.name)) map {
       response =>
         verify(fixture.repository, times(1)).insert(any())(any())
-        response.right.value should equal (true)
+        response.right.value should equal(true)
     }
 
   }
 
-  it should "return RuntimeException if insertion failed for mongodb" in {
+  it should "return MongoDBFailedException if insertion failed with RunTimeException from mongodb" in {
 
     val fixture = testFixture()
     when(fixture.repository.insert(any())(any())).thenReturn(Future.failed(new RuntimeException("failed to perform DB operation")))
@@ -142,18 +144,39 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
       response =>
         verify(fixture.repository, times(1)).insert(any())(any())
         response.left.value shouldBe a[MongoDBFailedException]
-        response.left.value.message should include ("failed to perform DB operation")
+        response.left.value.message should include("failed to perform DB operation")
+    }
+
+  }
+
+  it should "return MongoDBFailedException if insertion failed with Duplicate record exception from mongodb" in {
+
+    val databaseException = new DatabaseException {
+      override def originalDocument: Option[BSONDocument] = None
+
+      override def code: Option[Int] = Some(1100)
+
+      override def message: String = "duplicate key error"
+    }
+
+    val fixture = testFixture()
+    when(fixture.repository.insert(any())(any())).thenReturn(Future.failed(databaseException))
+    fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.name)) map {
+      response =>
+        verify(fixture.repository, times(1)).insert(any())(any())
+        response.left.value shouldBe a[MongoDBFailedException]
+        response.left.value.message should include("duplicate key error")
     }
 
   }
 
 }
 
-object InvitationServiceImplSpec extends MockitoSugar{
+object InvitationServiceImplSpec extends MockitoSugar {
 
   trait TestFixture {
     val associationConnector: FakeAssociationConnector = new FakeAssociationConnector()
-    val repository: InvitationsCacheRepositoryImpl = mock[InvitationsCacheRepositoryImpl]
+    val repository: InvitationsCacheRepository = mock[InvitationsCacheRepository]
     val invitationService: InvitationServiceImpl = new InvitationServiceImpl(associationConnector, repository) {
       when(repository.insert(any())(any())).thenReturn(Future.successful(true))
     }
@@ -179,8 +202,8 @@ class FakeAssociationConnector extends AssociationConnector {
 
   import InvitationServiceImplSpec._
 
-  def getPSAMinimalDetails(psaId : String)
-    (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = {
+  def getPSAMinimalDetails(psaId: String)
+                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = {
 
     psaId match {
       case `johnDoePsaId` => Future.successful(Right(johnDoe))
@@ -194,6 +217,6 @@ class FakeAssociationConnector extends AssociationConnector {
 
   //noinspection NotImplementedCode
   override def acceptInvitation(invitation: AcceptedInvitation)
-    (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Unit]] = ???
+                               (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Unit]] = ???
 
 }

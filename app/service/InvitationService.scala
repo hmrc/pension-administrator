@@ -16,21 +16,20 @@
 
 package service
 
-import akka.io.Tcp.Message
 import com.google.inject.{ImplementedBy, Inject}
 import connectors.AssociationConnector
 import models.{IndividualDetails, Invitation, PSAMinimalDetails}
 import play.api.Logger
+import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import repositories.InvitationsCacheRepositoryImpl
+import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.http._
-import play.api.http.Status.INTERNAL_SERVER_ERROR
 import utils.FuzzyNameMatcher
 
 import scala.annotation.tailrec
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
 case class MongoDBFailedException(exceptionMesage: String) extends HttpException(exceptionMesage, INTERNAL_SERVER_ERROR)
 
@@ -42,7 +41,7 @@ trait InvitationService {
 
 }
 
-class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector, repository: InvitationsCacheRepositoryImpl) extends InvitationService {
+class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector, repository: InvitationsCacheRepository) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
                           (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Boolean]] = {
