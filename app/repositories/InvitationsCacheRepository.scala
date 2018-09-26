@@ -165,7 +165,7 @@ class InvitationsCacheRepository @Inject()(
         case key => key
       }
 
-      val queryBuilder = collection.find(BSONDocument(mapOfKeys))
+      val queryBuilder = collection.find(BSONDocument(encryptedMapOfKeys))
       queryBuilder.cursor[DataEntry](ReadPreference.primary).collect[List]().map { de =>
         val listOfInvitationsJson = de.map {
           dataEntry =>
