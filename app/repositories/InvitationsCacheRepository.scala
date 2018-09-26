@@ -19,11 +19,12 @@ package repositories
 import java.nio.charset.StandardCharsets
 
 import com.google.inject.Inject
+import models.Invitation
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json._
 import play.api.{Configuration, Logger}
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.{Cursor, ReadPreference}
+import reactivemongo.api.ReadPreference
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.Subtype.GenericBinarySubtype
 import reactivemongo.bson.{BSONBinary, BSONDocument, BSONObjectID}
@@ -73,9 +74,9 @@ class InvitationsCacheRepository @Inject()(
 
     }
 
-    private implicit val dateFormat: Format[DateTime] =
-      ReactiveMongoFormats.dateTimeFormats
-    implicit val format: Format[DataEntry] = Json.format[DataEntry]
+    implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
+    implicit val reads: OFormat[DataEntry] = Json.format[DataEntry]
+    implicit val writes: OWrites[DataEntry] = Json.format[DataEntry]
   }
 
   // scalastyle:on magic.number
@@ -87,8 +88,9 @@ class InvitationsCacheRepository @Inject()(
                                   )
 
   private object JsonDataEntry {
-    private implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
-    implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
+    implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
+    implicit val reads: OFormat[JsonDataEntry] = Json.format[JsonDataEntry]
+    implicit val writes: OWrites[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 
   private val fieldName = "expireAt"
@@ -122,26 +124,23 @@ class InvitationsCacheRepository @Inject()(
     }
   }
 
-  def insert(inviteePsaId: String, pstr: String, data: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
+  def insert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
 
-    val document: JsValue = {
       if (encrypted) {
-        val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(inviteePsaId)).value
-        val encryptedPstr = jsonCrypto.encrypt(PlainText(pstr)).value
+        val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId)).value
+        val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
 
-        val unencrypted = PlainText(Json.stringify(data))
+        val unencrypted = PlainText(Json.stringify(Json.toJson(invitation)))
         val encryptedData = jsonCrypto.encrypt(unencrypted).value
         val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
 
-        Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray))
+        collection.insert(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray)).map(_.ok)
 
       } else {
-        Json.toJson(JsonDataEntry(inviteePsaId, pstr, data, DateTime.now(DateTimeZone.UTC)))
-      }
-    }
 
-    val modifier = BSONDocument("$set" -> document)
-    collection.insert(modifier).map(_.ok)
+        val record = JsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation), DateTime.now(DateTimeZone.UTC))
+        collection.insert(record).map(_.ok)
+      }
   }
 
   def getByKeys(mapOfKeys: Map[String,String])(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
@@ -182,4 +181,23 @@ class InvitationsCacheRepository @Inject()(
     val selector = BSONDocument(mapOfKeys)
     collection.remove(selector).map(_.ok)
   }
+
+  def getLastUpdated(inviteePsaId: String)(implicit ec: ExecutionContext): Future[Option[DateTime]] = {
+    if (encrypted) {
+      collection.find(BSONDocument("inviteePsaId" -> inviteePsaId)).one[DataEntry].map {
+        _.map {
+          dataEntry =>
+            dataEntry.lastUpdated
+        }
+      }
+    } else {
+      collection.find(BSONDocument("inviteePsaId" -> inviteePsaId)).one[JsonDataEntry].map {
+        _.map {
+          dataEntry =>
+            dataEntry.lastUpdated
+        }
+      }
+    }
+  }
+
 }

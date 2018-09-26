@@ -17,7 +17,11 @@
 package controllers
 
 import akka.stream.Materializer
+import akka.util.ByteString
+import controllers.InvitationsCacheControllerSpec._
 import models.Invitation
+import org.apache.commons.lang3.RandomUtils
+import org.joda.time.DateTime
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -31,11 +35,12 @@ import play.api.test.Helpers._
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
+
 import scala.concurrent.Future
-import InvitationsCacheControllerSpec._
 
 class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers with MockitoSugar {
   implicit lazy val mat: Materializer = new GuiceApplicationBuilder().configure("run.mode" -> "Test").build().materializer
+
   private def configuration = Configuration("mongodb.pension-administrator-cache.maxSize" -> 512000)
 
   private val repo = mock[InvitationsCacheRepository]
@@ -46,11 +51,97 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
                                                 authConnector: AuthConnector
                                               ) extends InvitationsCacheController(configuration, repo, authConnector)
 
-  def controller(repo: InvitationsCacheRepository, authConnector: AuthConnector): InvitationsCacheController = {
+  private def controller(repo: InvitationsCacheRepository, authConnector: AuthConnector): InvitationsCacheController = {
     new InvitationsCacheControllerImpl(repo, authConnector)
   }
 
-  def validCacheControllerWithGet(s: String, map: Map[String, String], testMethod: () => Action[AnyContent]): Unit = {
+  // scalastyle:off method.length
+  private def validCacheControllerWithInsert(): Unit = {
+    ".insert " should "return 200 when the request body can be parsed and passed to the repository successfully" in {
+
+      when(repo.insert(any())(any())).thenReturn(Future.successful(true))
+      when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
+      val invitation = Invitation("test-pstr", "test-scheme", "test-inviter-psa-id", "inviteePsaId", "inviteeName")
+
+      val result = call(controller(repo, authConnector).add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation)))
+
+      status(result) mustEqual OK
+    }
+
+    it should "return 413 when the request body cannot be parsed" in {
+      when(repo.insert(any())(any())).thenReturn(Future.successful(true))
+      when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
+
+      val result = call(controller(repo, authConnector).add, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
+
+      status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
+    }
+
+    it should "throw an exception when the call is not authorised" in {
+      when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.failed {
+        new UnauthorizedException("")
+      })
+
+      val result = call(controller(repo, authConnector).add, FakeRequest().withRawBody(ByteString("foo")))
+
+      an[UnauthorizedException] must be thrownBy {
+        status(result)
+      }
+    }
+
+    s".lastUpdated " should "return 200 and the relevant data when it exists" in {
+      val date = DateTime.now
+      when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
+        Some(date)
+      }
+      when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+
+      val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
+
+      status(result) mustEqual OK
+      contentAsJson(result) mustEqual Json.toJson(date.getMillis)
+    }
+
+    it should "return 404 when the data doesn't exist" in {
+      when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
+        None
+      }
+      when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+
+      val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
+
+      status(result) mustEqual NOT_FOUND
+    }
+
+    it should "throw an exception when the repository call fails" in {
+      when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.failed {
+        new Exception()
+      }
+      when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+
+      val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
+
+      an[Exception] must be thrownBy {
+        status(result)
+      }
+    }
+
+    it should "throw an exception when the call is not authorised" in {
+      when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed {
+        new UnauthorizedException("")
+      }
+
+      val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
+
+      an[UnauthorizedException] must be thrownBy {
+        status(result)
+      }
+    }
+  }
+
+  // scalastyle:on method.length
+
+  private def validCacheControllerWithGet(s: String, map: Map[String, String], testMethod: () => Action[AnyContent]): Unit = {
     s"$s should work for request with headers: $map" should "return 200 and the relevant data when it exists" in {
       when(repo.getByKeys(eqTo(map))(any())) thenReturn Future.successful(Some(invitationJson))
       when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
@@ -87,7 +178,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
   }
 
 
-  def validCacheControllerWithRemove(s: String): Unit = {
+  private def validCacheControllerWithRemove(s: String): Unit = {
     s"$s" should "return 200 when the data is removed successfully" in {
       when(repo.remove(eqTo(mapBothKeys))(any())) thenReturn Future.successful(true)
       when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
@@ -106,6 +197,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
     }
   }
 
+  "InvitationsCacheController" should behave like validCacheControllerWithInsert
   it should behave like validCacheControllerWithGet("get", mapBothKeys, controller(repo, authConnector).get _)
   it should behave like validCacheControllerWithGet("getForScheme", mapPstr, controller(repo, authConnector).getForScheme _)
   it should behave like validCacheControllerWithGet("getForInvitee", mapInviteePsaId, controller(repo, authConnector).getForInvitee _)

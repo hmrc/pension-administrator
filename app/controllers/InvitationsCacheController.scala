@@ -17,8 +17,9 @@
 package controllers
 
 import com.google.inject.Inject
-import models.PSAMinimalDetails
-import play.api.Configuration
+import models.Invitation
+import play.api.{Configuration, Logger}
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
@@ -41,16 +42,11 @@ class InvitationsCacheController @Inject()(
       authorised() {
         request.body.asJson.map {
           jsValue =>
-            val inviteePsaId = request.headers.get("inviteePsaId")
-            val pstr = request.headers.get("pstr")
-            (inviteePsaId, pstr) match {
-              case (Some(psaid), Some(ref)) =>
-                jsValue.validate[PSAMinimalDetails].fold(
-                  _ => Future.failed(new BadRequestException("not valid value for PSAMinimalDetails ")),
-                  value => repository.insert(psaid, ref, jsValue).map(_ => Ok)
-                )
-              case _ => Future.failed(new BadRequestException("inviteePsaId  & pstr values missing in request header"))
-            }
+
+            jsValue.validate[Invitation].fold(
+              _ => Future.failed(new BadRequestException("not valid value for PSAMinimalDetails ")),
+              value => repository.insert(value).map(_ => Ok)
+            )
 
         } getOrElse Future.successful(EntityTooLarge)
       }
@@ -89,6 +85,18 @@ class InvitationsCacheController @Inject()(
       authorised() {
         request.headers.get("inviteePsaId").map(inviteePsaId => getByMap(Map("inviteePsaId" -> inviteePsaId)))
           .getOrElse(Future.successful(BadRequest))
+      }
+  }
+
+  def lastUpdated(id: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised() {
+        Logger.debug("controllers.InvitationsCacheController.get: Authorised Request " + id)
+        repository.getLastUpdated(id).map { response =>
+          Logger.debug("controllers.InvitationsCacheController.get: Response " + response)
+          response.map { date => Ok(Json.toJson(date)) }
+            .getOrElse(NotFound)
+        }
       }
   }
 

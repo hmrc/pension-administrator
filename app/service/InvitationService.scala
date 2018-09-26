@@ -16,21 +16,20 @@
 
 package service
 
-import akka.io.Tcp.Message
 import com.google.inject.{ImplementedBy, Inject}
 import connectors.AssociationConnector
 import models.{IndividualDetails, Invitation, PSAMinimalDetails}
 import play.api.Logger
+import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.http._
-import play.api.http.Status.INTERNAL_SERVER_ERROR
 import utils.FuzzyNameMatcher
 
 import scala.annotation.tailrec
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
 case class MongoDBFailedException(exceptionMesage: String) extends HttpException(exceptionMesage, INTERNAL_SERVER_ERROR)
 
@@ -71,7 +70,7 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
     }
 
     if (matches) {
-      repository.insert(invitation.inviteePsaId, invitation.pstr, Json.toJson(psaDetails)).map(Right(_)) recover {
+      repository.insert(invitation).map(x=>Right(x)) recover {
         case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
       }
     } else {
