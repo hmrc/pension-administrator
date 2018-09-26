@@ -155,6 +155,16 @@ class InvitationsCacheRepository @Inject()(
   def getByKeys(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
     if (encrypted) {
       val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
+      val encryptedMapOfKeys = mapOfKeys.map {
+        case key if key._1 == "inviteePsaId" =>
+          val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
+          (key._1, encryptedValue)
+        case key if key._1 == "pstr" =>
+          val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
+          (key._1, encryptedValue)
+        case key => key
+      }
+
       val queryBuilder = collection.find(BSONDocument(mapOfKeys))
       queryBuilder.cursor[DataEntry](ReadPreference.primary).collect[List]().map { de =>
         val listOfInvitationsJson = de.map {
