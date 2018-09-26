@@ -44,11 +44,11 @@ class InvitationsCacheController @Inject()(
           jsValue =>
 
             jsValue.validate[Invitation].fold(
-              _=> Future.failed(new BadRequestException("not valid value for PSAMinimalDetails ")),
-              value => repository.insert(value).map(_ => Ok)
+              _=> Future.failed(new BadRequestException("not valid value for PSA Invitation")),
+              value => repository.insert(value).map(_ => Created)
             )
 
-        } getOrElse Future.successful(EntityTooLarge)
+        } getOrElse Future.successful(BadRequest("Bad Request with no request body returned for PSA Invitation"))
       }
   }
 

@@ -64,7 +64,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
   def validCacheController(encrypted: Boolean): Unit = {
     val msg = if (encrypted) "where encrypted" else "where not encrypted"
 
-    s".insert $msg" should "return 200 when the request body can be parsed and passed to the repository successfully" in {
+    s".insert $msg" should "return 201 when the request body can be parsed and passed to the repository successfully" in {
 
         when(repo.insert(any())(any())).thenReturn(Future.successful(true))
         when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
@@ -72,16 +72,16 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
 
         val result = call(controller(repo, authConnector, encrypted).add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation)))
 
-        status(result) mustEqual OK
+        status(result) mustEqual CREATED
       }
 
-    it should "return 413 when the request body cannot be parsed" in {
+    it should "return 400 when the request body cannot be parsed" in {
         when(repo.insert(any())(any())).thenReturn(Future.successful(true))
         when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
         val result = call(controller(repo, authConnector, encrypted).add, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
-        status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
+        status(result) mustEqual BAD_REQUEST
       }
 
     it should "throw an exception when the call is not authorised" in {
