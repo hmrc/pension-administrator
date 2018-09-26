@@ -73,7 +73,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
 
       val result = call(controller(repo, authConnector).add, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
-      status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
+      status(result) mustEqual BAD_REQUEST
     }
 
     it should "throw an exception when the call is not authorised" in {

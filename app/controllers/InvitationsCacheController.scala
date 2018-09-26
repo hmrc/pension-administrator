@@ -41,7 +41,6 @@ class InvitationsCacheController @Inject()(
       authorised() {
         request.body.asJson.map {
           jsValue =>
-
             jsValue.validate[Invitation].fold(
               _ => Future.failed(new BadRequestException("not valid value for PSAMinimalDetails ")),
               value => repository.insert(value).map(_ => Ok)
