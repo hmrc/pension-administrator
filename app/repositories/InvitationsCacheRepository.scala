@@ -141,9 +141,7 @@ class InvitationsCacheRepository @Inject()(
     }
 
     val modifier = BSONDocument("$set" -> document)
-
     collection.insert(modifier).map(_.ok)
-
   }
 
   def getByKeys(mapOfKeys: Map[String,String])(implicit ec: ExecutionContext): Future[Option[JsValue]] = {

@@ -79,29 +79,25 @@ class InvitationsCacheController @Inject()(
   def getForScheme: Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
-        request.headers.get("pstr").map { pstr =>
-          getByMap(Map("pstr" -> pstr))
-        }.getOrElse(Future.successful(BadRequest))
+        request.headers.get("pstr").map(pstr => getByMap(Map("pstr" -> pstr)))
+          .getOrElse(Future.successful(BadRequest))
       }
   }
 
   def getForInvitee: Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
-        request.headers.get("inviteePsaId").map { inviteePsaId =>
-          getByMap(Map("inviteePsaId" -> inviteePsaId))
-        }.getOrElse(Future.successful(BadRequest))
+        request.headers.get("inviteePsaId").map(inviteePsaId => getByMap(Map("inviteePsaId" -> inviteePsaId)))
+          .getOrElse(Future.successful(BadRequest))
       }
   }
 
   def remove: Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
-        request.headers.get("inviteePsaId").map { inviteePsaId =>
-          request.headers.get("pstr").map { pstr =>
-            repository.remove(Map("inviteePsaId" -> inviteePsaId, "pstr" -> pstr)).map(_ => Ok)
-          }.getOrElse(Future.successful(BadRequest))
-        }.getOrElse(Future.successful(BadRequest))
+        request.headers.get("inviteePsaId").flatMap(inviteePsaId =>
+          request.headers.get("pstr").map(pstr => repository.remove(Map("inviteePsaId" -> inviteePsaId, "pstr" -> pstr)).map(_ => Ok))
+        ).getOrElse(Future.successful(BadRequest))
       }
   }
 }
