@@ -40,7 +40,7 @@ class InvitationsCacheRepositoryImpl @Inject()(config: Configuration,
                                                component: ReactiveMongoComponent
                                               ) extends InvitationsCacheRepository(
   "manage.json.encryption",
-  config.underlying.getString("mongodb.pension-administrator-cache.manage-pensions.name"),
+  config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
   Some(30),
   component,
   config
@@ -103,8 +103,13 @@ abstract class InvitationsCacheRepository @Inject()(encryptionKey: String,
   private val fieldName = "expireAt"
   private val createdIndexName = "dataExpiry"
   private val expireAfterSeconds = "expireAfterSeconds"
+  private val inviteePsaIdKey = "inviteePsaId"
+  private val pstrKey = "pstr"
+  private val compoundIndexName = "inviteePsaId_Pstr"
 
   ensureIndex(fieldName, createdIndexName, Some(ttl))
+
+  ensureCompoundIndex(inviteePsaIdKey, pstrKey, compoundIndexName, Some(ttl))
 
   private def ensureIndex(field: String, indexName: String, ttl: Option[Int]): Future[Boolean] = {
 
@@ -116,6 +121,32 @@ abstract class InvitationsCacheRepository @Inject()(encryptionKey: String,
       Index(
         Seq((field, IndexType.Ascending)),
         Some(indexName),
+        options = BSONDocument(expireAfterSeconds -> ttl)
+      )
+    }
+
+    collection.indexesManager.ensure(index) map {
+      result => {
+        Logger.debug(s"set [$indexName] with value $ttl -> result : $result")
+        result
+      }
+    } recover {
+      case e => Logger.error("Failed to set TTL index", e)
+        false
+    }
+  }
+
+  private def ensureCompoundIndex(field1: String, field2: String, indexName: String, ttl: Option[Int]): Future[Boolean] = {
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val defaultIndex: Index = Index(Seq((field1, IndexType.Ascending),(field2, IndexType.Ascending)), Some(indexName), true)
+
+    val index: Index = ttl.fold(defaultIndex) { ttl =>
+      Index(
+        Seq((field1, IndexType.Ascending), (field2, IndexType.Ascending)),
+        Some(indexName),
+        unique = true,
         options = BSONDocument(expireAfterSeconds -> ttl)
       )
     }
@@ -152,7 +183,7 @@ abstract class InvitationsCacheRepository @Inject()(encryptionKey: String,
 
   def get(inviteePsaId: String, pstr: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
     if (encrypted) {
-      collection.find(BSONDocument("inviteePsaId" -> inviteePsaId, "pstr" -> pstr)).one[DataEntry].map {
+      collection.find(BSONDocument(inviteePsaIdKey -> inviteePsaId, pstrKey -> pstr)).one[DataEntry].map {
         _.map {
           dataEntry =>
             val dataAsString = new String(dataEntry.data.byteArray, StandardCharsets.UTF_8)
@@ -161,7 +192,7 @@ abstract class InvitationsCacheRepository @Inject()(encryptionKey: String,
         }
       }
     } else {
-      collection.find(BSONDocument("inviteePsaId" -> inviteePsaId, "pstr" -> pstr)).one[JsonDataEntry].map {
+      collection.find(BSONDocument(inviteePsaIdKey -> inviteePsaId, pstrKey -> pstr)).one[JsonDataEntry].map {
         _.map {
           dataEntry =>
             dataEntry.data
