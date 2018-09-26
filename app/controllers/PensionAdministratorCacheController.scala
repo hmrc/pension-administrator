@@ -34,12 +34,12 @@ abstract class PensionAdministratorCacheController(
 
   private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
 
-  def save(id: String): Action[RawBuffer] = Action.async(parse.raw(maxSize, maxSize)) {
+  def save(id: String): Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
-        request.body.asBytes().map {
-          bytes =>
-            repository.upsert(id, bytes.toArray[Byte])
+        request.body.asJson.map {
+          jsValue =>
+            repository.upsert(id, jsValue)
               .map(_ => Ok)
         } getOrElse Future.successful(EntityTooLarge)
       }

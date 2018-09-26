@@ -26,6 +26,8 @@ class ManagePensionsCacheRepository @Inject()(
                                       ) extends PensionAdministratorCacheRepository(
   config.underlying.getString("mongodb.pension-administrator-cache.manage-pensions.name"),
   None,
-  component
+  component,
+  "manage.json.encryption",
+  config
 )
 
