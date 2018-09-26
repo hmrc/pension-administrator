@@ -18,7 +18,7 @@ package repositories
 
 import java.nio.charset.StandardCharsets
 
-import com.google.inject.Inject
+import com.google.inject.{Singleton, Inject}
 import models.Invitation
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json._
@@ -35,35 +35,37 @@ import utils.DateUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class InvitationsCacheRepositoryImpl @Inject()(
-                                               config: Configuration,
+@Singleton
+class InvitationsCacheRepositoryImpl @Inject()(config: Configuration,
                                                component: ReactiveMongoComponent
-                                             ) extends InvitationsCacheRepository(
+                                              ) extends InvitationsCacheRepository(
+  "manage.json.encryption",
   config.underlying.getString("mongodb.pension-administrator-cache.manage-pensions.name"),
+  Some(30),
   component,
   config
 )
 
-abstract class InvitationsCacheRepository @Inject()(
-                                            collectionName: String,
-                                            component: ReactiveMongoComponent,
-                                            config: Configuration
-                                          ) extends ReactiveRepository[JsValue, BSONObjectID](
+abstract class InvitationsCacheRepository @Inject()(encryptionKey: String,
+                                                    collectionName: String,
+                                                    timeToLive: Option[Int],
+                                                    component: ReactiveMongoComponent,
+                                                    config: Configuration
+                                                   ) extends ReactiveRepository[JsValue, BSONObjectID](
   collectionName,
   component.mongoConnector.db,
   implicitly
 ) {
-  private val ttl = 30
-  private val encryptionKey = "manage.json.encryption"
+  private val ttl = timeToLive.getOrElse(30)
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
 
 
   private case class DataEntry(inviteePsaId: String,
-                                pstr: String,
-                                data: BSONBinary,
-                                lastUpdated: DateTime,
-                                expireAt: Option[DateTime])
+                               pstr: String,
+                               data: BSONBinary,
+                               lastUpdated: DateTime,
+                               expireAt: Option[DateTime])
 
   // scalastyle:off magic.number
   private object DataEntry {
@@ -131,21 +133,21 @@ abstract class InvitationsCacheRepository @Inject()(
 
   def insert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
 
-      if (encrypted) {
-        val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId)).value
-        val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
+    if (encrypted) {
+      val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId)).value
+      val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
 
-        val unencrypted = PlainText(Json.stringify(Json.toJson(invitation)))
-        val encryptedData = jsonCrypto.encrypt(unencrypted).value
-        val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
+      val unencrypted = PlainText(Json.stringify(Json.toJson(invitation)))
+      val encryptedData = jsonCrypto.encrypt(unencrypted).value
+      val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
 
-        collection.insert(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray)).map(_.ok)
+      collection.insert(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray)).map(_.ok)
 
-      } else {
+    } else {
 
-        val record = JsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation), DateTime.now(DateTimeZone.UTC))
-        collection.insert(record).map(_.ok)
-      }
+      val record = JsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation), DateTime.now(DateTimeZone.UTC))
+      collection.insert(record).map(_.ok)
+    }
   }
 
   def get(inviteePsaId: String, pstr: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
