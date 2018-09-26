@@ -49,23 +49,13 @@ abstract class PensionAdministratorCacheRepository(
   private case class DataEntry(
                                 id: String,
                                 data: BSONBinary,
-                                lastUpdated: DateTime,
-                                expireAt: Option[DateTime])
+                                lastUpdated: DateTime)
   // scalastyle:off magic.number
   private object DataEntry {
     def apply(id: String,
               data: Array[Byte],
-              lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
-              expireAt: Option[DateTime] = None): DataEntry = {
-      ttl match {
-        case None => DataEntry(id, BSONBinary(data, GenericBinarySubtype), lastUpdated, None)
-        case Some(_) => DataEntry(id, BSONBinary(
-          data,
-          GenericBinarySubtype),
-          lastUpdated,
-          Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), 30)))
-      }
-    }
+              lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)): DataEntry =
+     DataEntry(id, BSONBinary(data, GenericBinarySubtype), lastUpdated)
 
       private implicit val dateFormat: Format[DateTime] =
       ReactiveMongoFormats.dateTimeFormats
@@ -85,7 +75,7 @@ abstract class PensionAdministratorCacheRepository(
     implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 
-  private val fieldName = "expireAt"
+  private val fieldName = "lastUpdated"
   private val createdIndexName = "dataExpiry"
   private val expireAfterSeconds = "expireAfterSeconds"
 
