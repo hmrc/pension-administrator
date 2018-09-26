@@ -19,6 +19,7 @@ package repositories
 import java.nio.charset.StandardCharsets
 
 import com.google.inject.Inject
+import models.Invitation
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json._
 import play.api.{Configuration, Logger}
@@ -128,13 +129,13 @@ abstract class InvitationsCacheRepository @Inject()(
     }
   }
 
-  def insert(inviteePsaId: String, pstr: String, data: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
+  def insert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
 
       if (encrypted) {
-        val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(inviteePsaId)).value
-        val encryptedPstr = jsonCrypto.encrypt(PlainText(pstr)).value
+        val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId)).value
+        val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
 
-        val unencrypted = PlainText(Json.stringify(data))
+        val unencrypted = PlainText(Json.stringify(Json.toJson(invitation)))
         val encryptedData = jsonCrypto.encrypt(unencrypted).value
         val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
 
@@ -142,7 +143,8 @@ abstract class InvitationsCacheRepository @Inject()(
 
       } else {
 
-        collection.insert(JsonDataEntry(inviteePsaId, pstr, data, DateTime.now(DateTimeZone.UTC))).map(_.ok)
+        val record = JsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation), DateTime.now(DateTimeZone.UTC))
+        collection.insert(record).map(_.ok)
       }
   }
 

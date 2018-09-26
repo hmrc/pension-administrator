@@ -18,7 +18,7 @@ package controllers
 
 import akka.stream.Materializer
 import akka.util.ByteString
-import models.{IndividualDetails, PSAMinimalDetails}
+import models.{Invitation, IndividualDetails, PSAMinimalDetails}
 import org.apache.commons.lang3.RandomUtils
 import org.joda.time.DateTime
 import org.mockito.Matchers.{eq => eqTo, _}
@@ -66,41 +66,17 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
 
     s".insert $msg" should "return 200 when the request body can be parsed and passed to the repository successfully" in {
 
-        when(repo.insert(any(), any(), any())(any())).thenReturn(Future.successful(true))
+        when(repo.insert(any())(any())).thenReturn(Future.successful(true))
         when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
-        val johnDoe = Json.parse(
-          """
-            |{
-            |	"processingDate": "2009-12-17T09:30:47Z",
-            |	"psaMinimalDetails": {
-            |		"organisationOrPartnershipName": "test org name"
-            |	},
-            |	"email": "test@email.com",
-            |	"psaSuspensionFlag": true
-            |}
-            |
-          """.stripMargin
-        )
+        val invitation = Invitation("test-pstr", "test-scheme", "test-inviter-psa-id", "inviteePsaId", "inviteeName")
 
-        val result = call(controller(repo, authConnector, encrypted).add, FakeRequest("POST", "/").withHeaders(("inviteePsaId"->""),("pstr","")).withJsonBody(johnDoe))
+        val result = call(controller(repo, authConnector, encrypted).add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation)))
 
         status(result) mustEqual OK
       }
 
-      it should "return 400 when the request dont have valid headers" in {
-
-        when(repo.insert(any(), any(), any())(any())).thenReturn(Future.successful(true))
-        when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
-        val johnDoe = PSAMinimalDetails("john.doe@email.com", false, None, Some(IndividualDetails("John", None, "Doe")))
-
-        recoverToExceptionIf[BadRequestException](call(controller(repo, authConnector, encrypted).add, FakeRequest("POST", "/").withJsonBody(Json.toJson(johnDoe)))).map {
-          ex =>
-            ex.getMessage mustBe "inviteePsaId  & pstr values missing in request header"
-        }
-      }
-
     it should "return 413 when the request body cannot be parsed" in {
-        when(repo.insert(any(), any(), any())(any())).thenReturn(Future.successful(true))
+        when(repo.insert(any())(any())).thenReturn(Future.successful(true))
         when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
         val result = call(controller(repo, authConnector, encrypted).add, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))

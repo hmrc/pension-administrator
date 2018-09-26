@@ -71,7 +71,7 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
     }
 
     if (matches) {
-      repository.insert(invitation.inviteePsaId, invitation.pstr, Json.toJson(psaDetails)).map(x=>Right(x)) recover {
+      repository.insert(invitation).map(x=>Right(x)) recover {
         case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
       }
     } else {

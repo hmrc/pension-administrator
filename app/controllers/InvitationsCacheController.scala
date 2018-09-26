@@ -17,7 +17,7 @@
 package controllers
 
 import com.google.inject.Inject
-import models.PSAMinimalDetails
+import models.{Invitation, PSAMinimalDetails}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import play.api.{Configuration, Logger}
@@ -42,16 +42,11 @@ class InvitationsCacheController @Inject()(
       authorised() {
         request.body.asJson.map {
           jsValue =>
-            val inviteePsaId = request.headers.get("inviteePsaId")
-            val pstr = request.headers.get("pstr")
-            (inviteePsaId, pstr) match {
-              case (Some(psaid), Some(ref)) =>
-                jsValue.validate[PSAMinimalDetails].fold(
-                  _=> Future.failed(new BadRequestException("not valid value for PSAMinimalDetails ")),
-                  value => repository.insert(psaid, ref, jsValue).map(_ => Ok)
-                )
-              case _ => Future.failed(new BadRequestException("inviteePsaId  & pstr values missing in request header"))
-            }
+
+            jsValue.validate[Invitation].fold(
+              _=> Future.failed(new BadRequestException("not valid value for PSAMinimalDetails ")),
+              value => repository.insert(value).map(_ => Ok)
+            )
 
         } getOrElse Future.successful(EntityTooLarge)
       }
