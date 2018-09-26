@@ -70,7 +70,7 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
     }
 
     if (matches) {
-      repository.insert(invitation).map(x=>Right(x)) recover {
+      repository.insert(invitation).map(flag=>Right(flag)) recover {
         case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
       }
     } else {

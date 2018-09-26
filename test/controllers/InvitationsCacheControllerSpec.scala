@@ -31,9 +31,12 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import reactivemongo.bson.BSONDocument
+import reactivemongo.core.errors.DatabaseException
 import repositories.InvitationsCacheRepository
+import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.UnauthorizedException
+import uk.gov.hmrc.http.{BadRequestException, UnauthorizedException}
 
 import scala.concurrent.Future
 
@@ -56,40 +59,60 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
 
   // scalastyle:off method.length
   private def validCacheControllerWithInsert(): Unit = {
-    ".insert " should "return 200 when the request body can be parsed and passed to the repository successfully" in {
+
+    s".insert" should "return 201 when the request body can be parsed and passed to the repository successfully" in {
 
       when(repo.insert(any())(any())).thenReturn(Future.successful(true))
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
-      val invitation = Invitation("test-pstr", "test-scheme", "test-inviter-psa-id", "inviteePsaId", "inviteeName")
 
-      val result = call(controller(repo, authConnector).add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation)))
-
-      status(result) mustEqual OK
+      val result = call(controller(repo, authConnector).add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation1)))
+      status(result) mustEqual CREATED
     }
 
-    it should "return 413 when the request body cannot be parsed" in {
+    it should "return 400 when the request body cannot be parsed" in {
+
       when(repo.insert(any())(any())).thenReturn(Future.successful(true))
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
-      val result = call(controller(repo, authConnector).add, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
-
-      status(result) mustEqual BAD_REQUEST
+      recoverToExceptionIf[BadRequestException](
+        call(controller(repo, authConnector).add, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))).map {
+        ex =>
+          ex.responseCode mustBe BAD_REQUEST
+          ex.message mustBe "Bad Request with no request body returned for PSA Invitation"
+      }
     }
 
     it should "throw an exception when the call is not authorised" in {
+
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.failed {
         new UnauthorizedException("")
       })
 
-      val result = call(controller(repo, authConnector).add, FakeRequest().withRawBody(ByteString("foo")))
+      recoverToExceptionIf[UnauthorizedException](
+        call(controller(repo, authConnector).add, FakeRequest().withRawBody(ByteString("foo")))).map {
+        ex =>
+          ex.responseCode mustBe UNAUTHORIZED
+      }
+    }
 
-      an[UnauthorizedException] must be thrownBy {
-        status(result)
+    it should "throw a MongoDBFailedException when the mongodb insert call is failed with DatabaseException" in {
+      val databaseException = new DatabaseException {
+        override def originalDocument: Option[BSONDocument] = None
+        override def code: Option[Int] = Some(1100)
+        override def message: String = "duplicate key error"
+      }
+
+      when(repo.insert(any())(any())).thenReturn(Future.failed(databaseException))
+      when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
+
+      recoverToExceptionIf[MongoDBFailedException](
+        call(controller(repo, authConnector).add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation1)))).map {
+        ex =>
+          ex.responseCode mustBe INTERNAL_SERVER_ERROR
+          ex.message must include("duplicate key error")
       }
     }
   }
-
-
 
   // scalastyle:on method.length
 

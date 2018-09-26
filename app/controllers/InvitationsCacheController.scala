@@ -19,6 +19,11 @@ package controllers
 import com.google.inject.Inject
 import models.Invitation
 import play.api.Configuration
+import play.api.mvc.{Action, AnyContent}
+import repositories.InvitationsCacheRepository
+import service.MongoDBFailedException
+import models.Invitation
+import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import repositories.InvitationsCacheRepository
@@ -43,11 +48,15 @@ class InvitationsCacheController @Inject()(
         request.body.asJson.map {
           jsValue =>
             jsValue.validate[Invitation].fold(
-              _ => Future.failed(new BadRequestException("not valid value for PSAMinimalDetails ")),
-              value => repository.insert(value).map(_ => Ok)
+              _ => Future.failed(new BadRequestException("not valid value for PSA Invitation")),
+              value => repository.insert(value).map(_ => Created).recoverWith {
+                case exception: Exception => {
+                  throw MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}""")
+                }
+              }
             )
 
-        } getOrElse Future.successful(BadRequest)
+        } getOrElse Future.failed(new BadRequestException("Bad Request with no request body returned for PSA Invitation"))
       }
   }
 

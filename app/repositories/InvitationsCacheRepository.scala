@@ -18,7 +18,7 @@ package repositories
 
 import java.nio.charset.StandardCharsets
 
-import com.google.inject.Inject
+import com.google.inject.{Singleton, Inject}
 import models.Invitation
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json._
@@ -45,20 +45,22 @@ class InvitationsCacheRepository @Inject()(
   component.mongoConnector.db,
   implicitly
 ) {
+  private val encryptionKey: String = "manage.json.encryption"
+  private val collectionName: String = config.underlying.getString("mongodb.pension-administrator-cache.invitations.name")
+  // scalastyle:off magic.number
   private val ttl = 30
-  private val encryptionKey = "manage.json.encryption"
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
 
+  private def getExpireAt = Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), ttl))
 
   private case class DataEntry(
                                 inviteePsaId: String,
-                                pstr: String,
-                                data: BSONBinary,
-                                lastUpdated: DateTime,
-                                expireAt: Option[DateTime])
+                               pstr: String,
+                               data: BSONBinary,
+                               lastUpdated: DateTime,
+                               expireAt: Option[DateTime])
 
-  // scalastyle:off magic.number
   private object DataEntry {
     def apply(inviteePsaId: String,
               pstr: String,
@@ -70,7 +72,8 @@ class InvitationsCacheRepository @Inject()(
         data,
         GenericBinarySubtype),
         lastUpdated,
-        Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), ttl)))
+        getExpireAt
+      )
 
     }
 
@@ -108,19 +111,27 @@ class InvitationsCacheRepository @Inject()(
   private val fieldName = "expireAt"
   private val createdIndexName = "dataExpiry"
   private val expireAfterSeconds = "expireAfterSeconds"
+  private val inviteePsaIdKey = "inviteePsaId"
+  private val pstrKey = "pstr"
+  private val compoundIndexName = "inviteePsaId_Pstr"
 
-  ensureIndex(fieldName, createdIndexName, Some(ttl))
+  ensureIndex(Seq(fieldName), createdIndexName, Some(ttl))
 
-  private def ensureIndex(field: String, indexName: String, ttl: Option[Int]): Future[Boolean] = {
+  ensureIndex(Seq(inviteePsaIdKey, pstrKey), compoundIndexName, Some(ttl))
+
+  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int]): Future[Boolean] = {
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
-    val defaultIndex: Index = Index(Seq((field, IndexType.Ascending)), Some(indexName))
+    val fieldIndexes = fields.map((_, IndexType.Ascending))
+
+    val defaultIndex: Index = Index(fieldIndexes, Some(indexName), true)
 
     val index: Index = ttl.fold(defaultIndex) { ttl =>
       Index(
-        Seq((field, IndexType.Ascending)),
+        fieldIndexes,
         Some(indexName),
+        unique = true,
         options = BSONDocument(expireAfterSeconds -> ttl)
       )
     }
@@ -137,19 +148,22 @@ class InvitationsCacheRepository @Inject()(
   }
 
   def insert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
-    if (encrypted) {
-      val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId)).value
-      val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
+
+      if (encrypted) {
+        val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId)).value
+        val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
 
       val unencrypted = PlainText(Json.stringify(Json.toJson(invitation)))
       val encryptedData = jsonCrypto.encrypt(unencrypted).value
       val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
 
-      collection.insert(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray)).map(_.ok)
-    } else {
-      collection.insert(JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation)))
+        collection.insert(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray)).map(_.ok)
+
+      } else {
+
+        collection.insert( JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation)))
         .map(_.ok)
-    }
+      }
   }
 
   def getByKeys(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Option[List[Invitation]]] = {
