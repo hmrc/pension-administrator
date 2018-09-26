@@ -56,10 +56,10 @@ class InvitationsCacheRepository @Inject()(
 
   private case class DataEntry(
                                 inviteePsaId: String,
-                               pstr: String,
-                               data: BSONBinary,
-                               lastUpdated: DateTime,
-                               expireAt: Option[DateTime])
+                                pstr: String,
+                                data: BSONBinary,
+                                lastUpdated: DateTime,
+                                expireAt: Option[DateTime])
 
   private object DataEntry {
     def apply(inviteePsaId: String,
@@ -149,21 +149,21 @@ class InvitationsCacheRepository @Inject()(
 
   def insert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
 
-      if (encrypted) {
-        val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId)).value
-        val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
+    if (encrypted) {
+      val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId)).value
+      val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
 
       val unencrypted = PlainText(Json.stringify(Json.toJson(invitation)))
       val encryptedData = jsonCrypto.encrypt(unencrypted).value
       val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
 
-        collection.insert(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray)).map(_.ok)
+      collection.insert(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray)).map(_.ok)
 
-      } else {
+    } else {
 
-        collection.insert( JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation)))
+      collection.insert(JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation)))
         .map(_.ok)
-      }
+    }
   }
 
   def getByKeys(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Option[List[Invitation]]] = {
@@ -205,39 +205,18 @@ class InvitationsCacheRepository @Inject()(
     if (data.isEmpty) {
       None
     } else {
-      val invitationsList = data.map { v =>
-        val pstr = (v \ "pstr").get.toString
-        val schemeName = (v \ "schemeName").get.toString
-        val inviteePsaId = (v \ "inviteePsaId").get.toString
-        val inviterPsaId = (v \ "inviterPsaId").get.toString
-        val inviteeName = (v \ "inviteeName").get.toString
-        Invitation(pstr = pstr, schemeName = schemeName, inviterPsaId = inviterPsaId, inviteePsaId  = inviteePsaId, inviteeName = inviteeName)
+      val invitationsList = data.map {
+        _.validate[Invitation] match {
+          case JsSuccess(value, _) => value
+          case JsError(errors) => throw JsResultException(errors)
+        }
       }
       Some(invitationsList)
     }
   }
 
-  def remove(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Boolean] = {
-    val selector = BSONDocument(mapOfKeys)
-    collection.remove(selector).map(_.ok)
-  }
-
-  def getLastUpdated(inviteePsaId: String)(implicit ec: ExecutionContext): Future[Option[DateTime]] = {
-    if (encrypted) {
-      collection.find(BSONDocument("inviteePsaId" -> inviteePsaId)).one[DataEntry].map {
-        _.map {
-          dataEntry =>
-            dataEntry.lastUpdated
-        }
-      }
-    } else {
-      collection.find(BSONDocument("inviteePsaId" -> inviteePsaId)).one[JsonDataEntry].map {
-        _.map {
-          dataEntry =>
-            dataEntry.lastUpdated
-        }
-      }
+    def remove(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Boolean] = {
+      val selector = BSONDocument(mapOfKeys)
+      collection.remove(selector).map(_.ok)
     }
   }
-
-}
