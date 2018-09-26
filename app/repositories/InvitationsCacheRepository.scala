@@ -56,6 +56,7 @@ abstract class InvitationsCacheRepository @Inject()(encryptionKey: String,
   component.mongoConnector.db,
   implicitly
 ) {
+  // scalastyle:off magic.number
   private val ttl = timeToLive.getOrElse(30)
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
@@ -67,7 +68,6 @@ abstract class InvitationsCacheRepository @Inject()(encryptionKey: String,
                                lastUpdated: DateTime,
                                expireAt: Option[DateTime])
 
-  // scalastyle:off magic.number
   private object DataEntry {
     def apply(inviteePsaId: String,
               pstr: String,
