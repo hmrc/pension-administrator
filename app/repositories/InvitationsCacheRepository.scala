@@ -152,7 +152,7 @@ class InvitationsCacheRepository @Inject()(
     }
   }
 
-  def getByKeys(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
+  def getByKeys(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Option[List[Invitation]]] = {
     if (encrypted) {
       val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
       val encryptedMapOfKeys = mapOfKeys.map {
@@ -191,7 +191,15 @@ class InvitationsCacheRepository @Inject()(
     if (data.isEmpty) {
       None
     } else {
-      Some(Json.toJson(data))
+      val invitationsList = data.map { v =>
+        val pstr = (v \ "pstr").get.toString
+        val schemeName = (v \ "schemeName").get.toString
+        val inviteePsaId = (v \ "inviteePsaId").get.toString
+        val inviterPsaId = (v \ "inviterPsaId").get.toString
+        val inviteeName = (v \ "inviteeName").get.toString
+        Invitation(pstr = pstr, schemeName = schemeName, inviterPsaId = inviterPsaId, inviteePsaId  = inviteePsaId, inviteeName = inviteeName)
+      }
+      Some(invitationsList)
     }
   }
 

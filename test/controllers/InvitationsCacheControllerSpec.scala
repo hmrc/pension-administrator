@@ -95,11 +95,11 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
 
   private def validCacheControllerWithGet(s: String, map: Map[String, String], testMethod: () => Action[AnyContent]): Unit = {
     s"$s should work for request with headers: $map" should "return 200 and the relevant data when it exists" in {
-      when(repo.getByKeys(eqTo(map))(any())) thenReturn Future.successful(Some(invitationJson))
+      when(repo.getByKeys(eqTo(map))(any())) thenReturn Future.successful(Some(invitationList))
       when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
       val result = testMethod()(FakeRequest().withHeaders(map.toSeq: _*))
       status(result) mustEqual OK
-      contentAsString(result) mustEqual invitationJson.toString
+      contentAsString(result) mustEqual Json.toJson(invitationList).toString
     }
 
     it should "return 404 when the data doesn't exist" in {
@@ -179,5 +179,5 @@ object InvitationsCacheControllerSpec {
   private val invitation2 =
     Invitation(pstr = pstr2, schemeName = schemeName2, inviterPsaId = inviterPsaId2, inviteePsaId = inviteePsaId2, inviteeName = inviteeName2)
 
-  private val invitationJson = Json.toJson(List(invitation1, invitation2))
+  private val invitationList = List(invitation1, invitation2)
 }
