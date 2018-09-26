@@ -46,6 +46,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
     "mongodb.pension-administrator-cache.maxSize" -> 512000,
     "encrypted" -> encrypted
   )
+
   private val invitation = Invitation("test-pstr", "test-scheme", "test-inviter-psa-id", "inviteePsaId", "inviteeName")
 
   private val repo = mock[InvitationsCacheRepository]
@@ -103,8 +104,8 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
     it should "throw a MongoDBFailedException when the mongodb insert call is failed with DatabaseException" in {
       val databaseException = new DatabaseException {
         override def originalDocument: Option[BSONDocument] = None
-        override def code: Option[Int] = Some(1100)
-        override def message: String = "duplicate key error"
+        override def code: Option[Int] = None
+        override def message: String = "mongo error"
       }
 
       when(repo.insert(any())(any())).thenReturn(Future.failed(databaseException))
@@ -114,7 +115,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
         call(controller(repo, authConnector, encrypted).add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation)))).map {
         ex =>
           ex.responseCode mustBe INTERNAL_SERVER_ERROR
-          ex.message must include("duplicate key error")
+          ex.message must include("mongo error")
       }
     }
   }

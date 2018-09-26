@@ -111,13 +111,12 @@ class InvitationsCacheRepository @Inject()(
 
     val fieldIndexes = fields.map((_, IndexType.Ascending))
 
-    val defaultIndex: Index = Index(fieldIndexes, Some(indexName), true)
+    val defaultIndex: Index = Index(fieldIndexes, Some(indexName))
 
     val index: Index = ttl.fold(defaultIndex) { ttl =>
       Index(
         fieldIndexes,
         Some(indexName),
-        unique = true,
         options = BSONDocument(expireAfterSeconds -> ttl)
       )
     }
@@ -135,7 +134,7 @@ class InvitationsCacheRepository @Inject()(
 
   def insert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
 
-    if (encrypted) {
+    val (selector, modifier) = if (encrypted) {
       val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId)).value
       val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
 
@@ -143,13 +142,15 @@ class InvitationsCacheRepository @Inject()(
       val encryptedData = jsonCrypto.encrypt(unencrypted).value
       val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
 
-      collection.insert(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray)).map(_.ok)
-
+      (BSONDocument(inviteePsaIdKey -> encryptedInviteePsaId, pstrKey -> encryptedPstr),
+      BSONDocument("$set" -> Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray, expireAt = getExpireAt))))
     } else {
-
-      val record = JsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation), DateTime.now(DateTimeZone.UTC))
-      collection.insert(record).map(_.ok)
+      val record = JsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation), DateTime.now(DateTimeZone.UTC), expireAt = getExpireAt)
+      (BSONDocument(inviteePsaIdKey -> invitation.inviteePsaId, pstrKey -> invitation.pstr),
+      BSONDocument("$set" -> Json.toJson(record)))
     }
+    collection.update(selector, modifier, upsert = true)
+      .map(_.ok)
   }
 
   def get(inviteePsaId: String, pstr: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
