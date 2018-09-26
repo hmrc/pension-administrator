@@ -21,7 +21,6 @@ import akka.util.ByteString
 import controllers.InvitationsCacheControllerSpec._
 import models.Invitation
 import org.apache.commons.lang3.RandomUtils
-import org.joda.time.DateTime
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -88,56 +87,9 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
         status(result)
       }
     }
-
-    s".lastUpdated " should "return 200 and the relevant data when it exists" in {
-      val date = DateTime.now
-      when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
-        Some(date)
-      }
-      when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
-
-      val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
-
-      status(result) mustEqual OK
-      contentAsJson(result) mustEqual Json.toJson(date.getMillis)
-    }
-
-    it should "return 404 when the data doesn't exist" in {
-      when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
-        None
-      }
-      when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
-
-      val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
-
-      status(result) mustEqual NOT_FOUND
-    }
-
-    it should "throw an exception when the repository call fails" in {
-      when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.failed {
-        new Exception()
-      }
-      when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
-
-      val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
-
-      an[Exception] must be thrownBy {
-        status(result)
-      }
-    }
-
-    it should "throw an exception when the call is not authorised" in {
-      when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed {
-        new UnauthorizedException("")
-      }
-
-      val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
-
-      an[UnauthorizedException] must be thrownBy {
-        status(result)
-      }
-    }
   }
+
+
 
   // scalastyle:on method.length
 

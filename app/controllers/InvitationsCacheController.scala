@@ -18,8 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import models.Invitation
-import play.api.{Configuration, Logger}
-import play.api.libs.json.Json
+import play.api.Configuration
 import play.api.mvc.{Action, AnyContent, Result}
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
@@ -48,7 +47,7 @@ class InvitationsCacheController @Inject()(
               value => repository.insert(value).map(_ => Ok)
             )
 
-        } getOrElse Future.successful(EntityTooLarge)
+        } getOrElse Future.successful(BadRequest)
       }
   }
 
@@ -85,18 +84,6 @@ class InvitationsCacheController @Inject()(
       authorised() {
         request.headers.get("inviteePsaId").map(inviteePsaId => getByMap(Map("inviteePsaId" -> inviteePsaId)))
           .getOrElse(Future.successful(BadRequest))
-      }
-  }
-
-  def lastUpdated(id: String): Action[AnyContent] = Action.async {
-    implicit request =>
-      authorised() {
-        Logger.debug("controllers.InvitationsCacheController.get: Authorised Request " + id)
-        repository.getLastUpdated(id).map { response =>
-          Logger.debug("controllers.InvitationsCacheController.get: Response " + response)
-          response.map { date => Ok(Json.toJson(date)) }
-            .getOrElse(NotFound)
-        }
       }
   }
 
