@@ -53,9 +53,8 @@ class InvitationsCacheController @Inject()(
 
   private def getByMap(map: Map[String, String])(implicit ec: ExecutionContext): Future[Result] = {
     repository.getByKeys(map).map { response =>
-      response.map { xx =>
-        val json = Json.toJson(xx)
-        Ok(json)
+      response.map { invitationsList =>
+        Ok(Json.toJson(invitationsList))
       }
         .getOrElse(NotFound)
     }
