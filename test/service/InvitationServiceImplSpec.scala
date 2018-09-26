@@ -25,7 +25,7 @@ import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import repositories.InvitationsCacheRepository
+import repositories.InvitationsCacheRepositoryImpl
 import uk.gov.hmrc.http._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -153,7 +153,7 @@ object InvitationServiceImplSpec extends MockitoSugar{
 
   trait TestFixture {
     val associationConnector: FakeAssociationConnector = new FakeAssociationConnector()
-    val repository: InvitationsCacheRepository = mock[InvitationsCacheRepository]
+    val repository: InvitationsCacheRepositoryImpl = mock[InvitationsCacheRepositoryImpl]
     val invitationService: InvitationServiceImpl = new InvitationServiceImpl(associationConnector, repository) {
       when(repository.insert(any(), any(), any())(any())).thenReturn(Future.successful(true))
     }

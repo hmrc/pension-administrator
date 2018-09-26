@@ -21,7 +21,7 @@ import models.PSAMinimalDetails
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import play.api.{Configuration, Logger}
-import repositories.InvitationsCacheRepository
+import repositories.InvitationsCacheRepositoryImpl
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
@@ -31,7 +31,7 @@ import scala.concurrent.Future
 
 class InvitationsCacheController @Inject()(
                                                     config: Configuration,
-                                                    repository: InvitationsCacheRepository,
+                                                    repository: InvitationsCacheRepositoryImpl,
                                                     val authConnector: AuthConnector
                                                   ) extends BaseController with AuthorisedFunctions {
 

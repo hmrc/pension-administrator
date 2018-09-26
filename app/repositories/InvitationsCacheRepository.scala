@@ -34,12 +34,21 @@ import utils.DateUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
+class InvitationsCacheRepositoryImpl @Inject()(
+                                               config: Configuration,
+                                               component: ReactiveMongoComponent
+                                             ) extends InvitationsCacheRepository(
+  config.underlying.getString("mongodb.pension-administrator-cache.manage-pensions.name"),
+  component,
+  config
+)
 
-class InvitationsCacheRepository @Inject()(
-                                            config: Configuration,
-                                            component: ReactiveMongoComponent
+abstract class InvitationsCacheRepository @Inject()(
+                                            collectionName: String,
+                                            component: ReactiveMongoComponent,
+                                            config: Configuration
                                           ) extends ReactiveRepository[JsValue, BSONObjectID](
-  config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
+  collectionName,
   component.mongoConnector.db,
   implicitly
 ) {
@@ -49,8 +58,7 @@ class InvitationsCacheRepository @Inject()(
   private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
 
 
-  private case class DataEntry(
-                                inviteePsaId: String,
+  private case class DataEntry(inviteePsaId: String,
                                 pstr: String,
                                 data: BSONBinary,
                                 lastUpdated: DateTime,
@@ -72,12 +80,10 @@ class InvitationsCacheRepository @Inject()(
 
     }
 
-    private implicit val dateFormat: Format[DateTime] =
-      ReactiveMongoFormats.dateTimeFormats
-    implicit val format: Format[DataEntry] = Json.format[DataEntry]
+    implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
+    implicit val reads: OFormat[DataEntry] = Json.format[DataEntry]
+    implicit val writes: OWrites[DataEntry] = Json.format[DataEntry]
   }
-
-  // scalastyle:on magic.number
 
   private case class JsonDataEntry(inviteePsaId: String,
                                    pstr: String,
@@ -86,8 +92,9 @@ class InvitationsCacheRepository @Inject()(
                                   )
 
   private object JsonDataEntry {
-    private implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
-    implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
+    implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
+    implicit val reads: OFormat[JsonDataEntry] = Json.format[JsonDataEntry]
+    implicit val writes: OWrites[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 
   private val fieldName = "expireAt"
@@ -123,7 +130,6 @@ class InvitationsCacheRepository @Inject()(
 
   def insert(inviteePsaId: String, pstr: String, data: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
 
-    val document: JsValue = {
       if (encrypted) {
         val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(inviteePsaId)).value
         val encryptedPstr = jsonCrypto.encrypt(PlainText(pstr)).value
@@ -132,17 +138,12 @@ class InvitationsCacheRepository @Inject()(
         val encryptedData = jsonCrypto.encrypt(unencrypted).value
         val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
 
-        Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray))
+        collection.insert(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray)).map(_.ok)
 
       } else {
-        Json.toJson(JsonDataEntry(inviteePsaId, pstr, data, DateTime.now(DateTimeZone.UTC)))
+
+        collection.insert(JsonDataEntry(inviteePsaId, pstr, data, DateTime.now(DateTimeZone.UTC))).map(_.ok)
       }
-    }
-
-    val modifier = BSONDocument("$set" -> document)
-
-    collection.insert(modifier).map(_.ok)
-
   }
 
   def get(inviteePsaId: String, pstr: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {

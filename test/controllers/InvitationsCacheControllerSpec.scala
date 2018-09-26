@@ -31,7 +31,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import repositories.InvitationsCacheRepository
+import repositories.InvitationsCacheRepositoryImpl
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{BadRequestException, UnauthorizedException}
 
@@ -47,16 +47,16 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
     "encrypted" -> encrypted
   )
 
-  private val repo = mock[InvitationsCacheRepository]
+  private val repo = mock[InvitationsCacheRepositoryImpl]
   private val authConnector: AuthConnector = mock[AuthConnector]
 
   private class InvitationsCacheControllerImpl(
-                                                         repo: InvitationsCacheRepository,
+                                                         repo: InvitationsCacheRepositoryImpl,
                                                          authConnector: AuthConnector,
                                                          encrypted: Boolean
                                                        ) extends InvitationsCacheController(configuration(encrypted), repo, authConnector)
 
-  def controller(repo: InvitationsCacheRepository, authConnector: AuthConnector, encrypted: Boolean): InvitationsCacheController = {
+  def controller(repo: InvitationsCacheRepositoryImpl, authConnector: AuthConnector, encrypted: Boolean): InvitationsCacheController = {
     new InvitationsCacheControllerImpl(repo, authConnector, encrypted)
   }
 

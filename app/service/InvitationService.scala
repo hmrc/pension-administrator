@@ -23,7 +23,7 @@ import models.{IndividualDetails, Invitation, PSAMinimalDetails}
 import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import repositories.InvitationsCacheRepository
+import repositories.InvitationsCacheRepositoryImpl
 import uk.gov.hmrc.http._
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import utils.FuzzyNameMatcher
@@ -42,7 +42,7 @@ trait InvitationService {
 
 }
 
-class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector, repository: InvitationsCacheRepository) extends InvitationService {
+class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector, repository: InvitationsCacheRepositoryImpl) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
                           (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Boolean]] = {
@@ -71,7 +71,7 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
     }
 
     if (matches) {
-      repository.insert(invitation.inviteePsaId, invitation.pstr, Json.toJson(psaDetails)).map(Right(_)) recover {
+      repository.insert(invitation.inviteePsaId, invitation.pstr, Json.toJson(psaDetails)).map(x=>Right(x)) recover {
         case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
       }
     } else {
