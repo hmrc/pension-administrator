@@ -19,7 +19,6 @@ package controllers
 import com.google.inject.Inject
 import models.PSAMinimalDetails
 import play.api.Configuration
-import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
@@ -37,7 +36,6 @@ class InvitationsCacheController @Inject()(
 
   private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
 
-
   def add: Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
@@ -48,7 +46,7 @@ class InvitationsCacheController @Inject()(
             (inviteePsaId, pstr) match {
               case (Some(psaid), Some(ref)) =>
                 jsValue.validate[PSAMinimalDetails].fold(
-                  _=> Future.failed(new BadRequestException("not valid value for PSAMinimalDetails ")),
+                  _ => Future.failed(new BadRequestException("not valid value for PSAMinimalDetails ")),
                   value => repository.insert(psaid, ref, jsValue).map(_ => Ok)
                 )
               case _ => Future.failed(new BadRequestException("inviteePsaId  & pstr values missing in request header"))
@@ -56,6 +54,15 @@ class InvitationsCacheController @Inject()(
 
         } getOrElse Future.successful(EntityTooLarge)
       }
+  }
+
+  private def getByMap(map: Map[String, String])(implicit ec: ExecutionContext): Future[Result] = {
+    repository.getByKeys(map).map { response =>
+      response.map {
+        Ok(_)
+      }
+        .getOrElse(NotFound)
+    }
   }
 
   def get: Action[AnyContent] = Action.async {
@@ -67,15 +74,6 @@ class InvitationsCacheController @Inject()(
           }
         }.getOrElse(Future.successful(BadRequest))
       }
-  }
-
-  private def getByMap(map: Map[String, String])(implicit ec: ExecutionContext): Future[Result] = {
-    repository.getByKeys(map).map{ response =>
-      response.map {
-        Ok(_)
-      }
-        .getOrElse(NotFound)
-    }
   }
 
   def getForScheme: Action[AnyContent] = Action.async {
