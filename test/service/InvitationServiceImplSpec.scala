@@ -18,6 +18,7 @@ package service
 
 import connectors.AssociationConnector
 import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails}
+import org.joda.time.DateTime
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{never, times, verify, when}
 import org.scalatest.mockito.MockitoSugar
@@ -162,12 +163,13 @@ object InvitationServiceImplSpec extends MockitoSugar {
   def testFixture(): TestFixture = new TestFixture {}
 
   def invitationJson(inviteePsaId: String, inviteeName: String): JsValue =
-    Json.toJson(Invitation("test-pstr", "test-scheme", "test-inviter-psa-id", inviteePsaId, inviteeName))
+    Json.toJson(Invitation("test-srn", "test-pstr", "test-scheme", "test-inviter-psa-id", inviteePsaId, inviteeName, expiryDate))
 
   val johnDoePsaId = "A2000001"
   val notFoundPsaId = "A2000002"
   val joeBloggsPsaId = "A2000003"
   val acmeLtdPsaId = "A2000004"
+  val expiryDate = new DateTime("2018-10-10")
 
   val johnDoe = PSAMinimalDetails("john.doe@email.com", false, None, Some(IndividualDetails("John", None, "Doe")))
   val joeBloggs = PSAMinimalDetails("joe.bloggs@email.com", false, None, Some(IndividualDetails("Joe", Some("Herbert"), "Bloggs")))

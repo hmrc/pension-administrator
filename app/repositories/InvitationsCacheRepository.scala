@@ -18,7 +18,7 @@ package repositories
 
 import java.nio.charset.StandardCharsets
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import models.Invitation
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json._
@@ -32,7 +32,6 @@ import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
-import utils.DateUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,8 +49,6 @@ class InvitationsCacheRepository @Inject()(
   private val ttl = 0
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
-
-  private def getExpireAt = Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), ttl))
 
   private case class DataEntry(
                                 inviteePsaId: String,
@@ -71,7 +68,7 @@ class InvitationsCacheRepository @Inject()(
         data,
         GenericBinarySubtype),
         lastUpdated,
-        getExpireAt
+        expireAt
       )
 
     }
@@ -99,7 +96,7 @@ class InvitationsCacheRepository @Inject()(
 
       JsonDataEntry(inviteePsaId, pstr, data,
         lastUpdated,
-        getExpireAt)
+        expireAt)
     }
 
     implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
@@ -159,9 +156,11 @@ class InvitationsCacheRepository @Inject()(
       val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
 
       (BSONDocument(inviteePsaIdKey -> encryptedInviteePsaId, pstrKey -> encryptedPstr),
-        BSONDocument("$set" -> Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray))))
+        BSONDocument("$set" -> Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray, invitation.expireAt))))
     } else {
-      val record = JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation))
+      val record = JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId,
+                                                    invitation.pstr,
+                                                    Json.toJson(invitation), invitation.expireAt)
       (BSONDocument(inviteePsaIdKey -> invitation.inviteePsaId, pstrKey -> invitation.pstr),
         BSONDocument("$set" -> Json.toJson(record)))
     }
