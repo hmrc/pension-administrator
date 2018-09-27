@@ -169,18 +169,21 @@ class InvitationsCacheRepository @Inject()(
       .map(_.ok)
   }
 
+  private def encryptKeys(mapOfKeys: Map[String, String]): Map[String, String] = {
+    mapOfKeys.map {
+      case key if key._1 == "inviteePsaId" =>
+        val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
+        (key._1, encryptedValue)
+      case key if key._1 == "pstr" =>
+        val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
+        (key._1, encryptedValue)
+      case key => key
+    }
+  }
+
   def getByKeys(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Option[List[Invitation]]] = {
     if (encrypted) {
-      val encryptedMapOfKeys = mapOfKeys.map {
-        case key if key._1 == "inviteePsaId" =>
-          val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
-          (key._1, encryptedValue)
-        case key if key._1 == "pstr" =>
-          val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
-          (key._1, encryptedValue)
-        case key => key
-      }
-
+      val encryptedMapOfKeys = encryptKeys(mapOfKeys)
       val queryBuilder = collection.find(BSONDocument(encryptedMapOfKeys))
       queryBuilder.cursor[DataEntry](ReadPreference.primary).collect[List]().map { de =>
         val listOfInvitationsJson = de.map {
@@ -218,7 +221,11 @@ class InvitationsCacheRepository @Inject()(
   }
 
   def remove(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Boolean] = {
-    val selector = mapOfKeys
+    val selector = if (encrypted) {
+      encryptKeys(mapOfKeys)
+    } else {
+      mapOfKeys
+    }
     collection.remove(selector).map(_.ok)
   }
 }
