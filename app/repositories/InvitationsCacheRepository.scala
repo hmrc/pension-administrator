@@ -36,19 +36,18 @@ import utils.DateUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
-
+@Singleton
 class InvitationsCacheRepository @Inject()(
-                                            config: Configuration,
-                                            component: ReactiveMongoComponent
+                                            component: ReactiveMongoComponent,
+                                            config: Configuration
                                           ) extends ReactiveRepository[JsValue, BSONObjectID](
   config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
   component.mongoConnector.db,
   implicitly
 ) {
   private val encryptionKey: String = "manage.json.encryption"
-  private val collectionName: String = config.underlying.getString("mongodb.pension-administrator-cache.invitations.name")
   // scalastyle:off magic.number
-  private val ttl = 30
+  private val ttl = 0
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
 
@@ -100,7 +99,7 @@ class InvitationsCacheRepository @Inject()(
 
       JsonDataEntry(inviteePsaId, pstr, data,
         lastUpdated,
-        Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), ttl)))
+        getExpireAt)
     }
 
     implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
@@ -114,10 +113,13 @@ class InvitationsCacheRepository @Inject()(
   private val inviteePsaIdKey = "inviteePsaId"
   private val pstrKey = "pstr"
   private val compoundIndexName = "inviteePsaId_Pstr"
+  private val pstrIndexName = "pstr"
 
   ensureIndex(Seq(fieldName), createdIndexName, Some(ttl))
 
   ensureIndex(Seq(inviteePsaIdKey, pstrKey), compoundIndexName, Some(ttl))
+
+  ensureIndex(Seq(pstrKey), pstrIndexName, Some(ttl))
 
   private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int]): Future[Boolean] = {
 
@@ -125,13 +127,12 @@ class InvitationsCacheRepository @Inject()(
 
     val fieldIndexes = fields.map((_, IndexType.Ascending))
 
-    val defaultIndex: Index = Index(fieldIndexes, Some(indexName), true)
+    val defaultIndex: Index = Index(fieldIndexes, Some(indexName))
 
     val index: Index = ttl.fold(defaultIndex) { ttl =>
       Index(
         fieldIndexes,
         Some(indexName),
-        unique = true,
         options = BSONDocument(expireAfterSeconds -> ttl)
       )
     }
@@ -149,7 +150,7 @@ class InvitationsCacheRepository @Inject()(
 
   def insert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
 
-    if (encrypted) {
+    val (selector, modifier) = if (encrypted) {
       val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId)).value
       val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
 
@@ -157,18 +158,19 @@ class InvitationsCacheRepository @Inject()(
       val encryptedData = jsonCrypto.encrypt(unencrypted).value
       val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
 
-      collection.insert(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray)).map(_.ok)
-
+      (BSONDocument(inviteePsaIdKey -> encryptedInviteePsaId, pstrKey -> encryptedPstr),
+        BSONDocument("$set" -> Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray))))
     } else {
-
-      collection.insert(JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation)))
-        .map(_.ok)
+      val record = JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation))
+      (BSONDocument(inviteePsaIdKey -> invitation.inviteePsaId, pstrKey -> invitation.pstr),
+        BSONDocument("$set" -> Json.toJson(record)))
     }
+    collection.update(selector, modifier, upsert = true)
+      .map(_.ok)
   }
 
   def getByKeys(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Option[List[Invitation]]] = {
     if (encrypted) {
-      val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
       val encryptedMapOfKeys = mapOfKeys.map {
         case key if key._1 == "inviteePsaId" =>
           val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
@@ -215,8 +217,8 @@ class InvitationsCacheRepository @Inject()(
     }
   }
 
-    def remove(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Boolean] = {
-      val selector = BSONDocument(mapOfKeys)
-      collection.remove(selector).map(_.ok)
-    }
+  def remove(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Boolean] = {
+    val selector = BSONDocument(mapOfKeys)
+    collection.remove(selector).map(_.ok)
   }
+}

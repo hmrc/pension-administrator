@@ -18,6 +18,7 @@ package controllers
 
 import akka.stream.Materializer
 import akka.util.ByteString
+import config.AppConfig
 import controllers.InvitationsCacheControllerSpec._
 import models.Invitation
 import org.apache.commons.lang3.RandomUtils
@@ -45,27 +46,22 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
 
   private def configuration = Configuration("mongodb.pension-administrator-cache.maxSize" -> 512000)
 
+  private val invitation = Invitation("test-pstr", "test-scheme", "test-inviter-psa-id", "inviteePsaId", "inviteeName")
+
   private val repo = mock[InvitationsCacheRepository]
   private val authConnector: AuthConnector = mock[AuthConnector]
 
-  private class InvitationsCacheControllerImpl(
-                                                repo: InvitationsCacheRepository,
-                                                authConnector: AuthConnector
-                                              ) extends InvitationsCacheController(configuration, repo, authConnector)
-
-  private def controller(repo: InvitationsCacheRepository, authConnector: AuthConnector): InvitationsCacheController = {
-    new InvitationsCacheControllerImpl(repo, authConnector)
-  }
+  def controller: InvitationsCacheController = new InvitationsCacheController(configuration, repo, authConnector)
 
   // scalastyle:off method.length
-  private def validCacheControllerWithInsert(): Unit = {
+  def validCacheControllerWithInsert(): Unit = {
 
-    s".insert" should "return 201 when the request body can be parsed and passed to the repository successfully" in {
+    ".insert" should "return 201 when the request body can be parsed and passed to the repository successfully" in {
 
       when(repo.insert(any())(any())).thenReturn(Future.successful(true))
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
-      val result = call(controller(repo, authConnector).add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation1)))
+      val result = call(controller.add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation)))
       status(result) mustEqual CREATED
     }
 
@@ -75,7 +71,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
       recoverToExceptionIf[BadRequestException](
-        call(controller(repo, authConnector).add, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))).map {
+        call(controller.add, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))).map {
         ex =>
           ex.responseCode mustBe BAD_REQUEST
           ex.message mustBe "Bad Request with no request body returned for PSA Invitation"
@@ -89,7 +85,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
       })
 
       recoverToExceptionIf[UnauthorizedException](
-        call(controller(repo, authConnector).add, FakeRequest().withRawBody(ByteString("foo")))).map {
+        call(controller.add, FakeRequest().withRawBody(ByteString("foo")))).map {
         ex =>
           ex.responseCode mustBe UNAUTHORIZED
       }
@@ -98,18 +94,20 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
     it should "throw a MongoDBFailedException when the mongodb insert call is failed with DatabaseException" in {
       val databaseException = new DatabaseException {
         override def originalDocument: Option[BSONDocument] = None
-        override def code: Option[Int] = Some(1100)
-        override def message: String = "duplicate key error"
+
+        override def code: Option[Int] = None
+
+        override def message: String = "mongo error"
       }
 
       when(repo.insert(any())(any())).thenReturn(Future.failed(databaseException))
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
       recoverToExceptionIf[MongoDBFailedException](
-        call(controller(repo, authConnector).add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation1)))).map {
+        call(controller.add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation)))).map {
         ex =>
           ex.responseCode mustBe INTERNAL_SERVER_ERROR
-          ex.message must include("duplicate key error")
+          ex.message must include("mongo error")
       }
     }
   }
@@ -158,7 +156,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
       when(repo.remove(eqTo(mapBothKeys))(any())) thenReturn Future.successful(true)
       when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-      val result = controller(repo, authConnector).remove()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
+      val result = controller.remove()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
 
       status(result) mustEqual OK
     }
@@ -167,15 +165,15 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
       when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed {
         new UnauthorizedException("")
       }
-      val result = controller(repo, authConnector).remove()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
+      val result = controller.remove()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
       an[UnauthorizedException] must be thrownBy status(result)
     }
   }
 
   "InvitationsCacheController" should behave like validCacheControllerWithInsert
-  it should behave like validCacheControllerWithGet("get", mapBothKeys, controller(repo, authConnector).get _)
-  it should behave like validCacheControllerWithGet("getForScheme", mapPstr, controller(repo, authConnector).getForScheme _)
-  it should behave like validCacheControllerWithGet("getForInvitee", mapInviteePsaId, controller(repo, authConnector).getForInvitee _)
+  it should behave like validCacheControllerWithGet("get", mapBothKeys, controller.get _)
+  it should behave like validCacheControllerWithGet("getForScheme", mapPstr, controller.getForScheme _)
+  it should behave like validCacheControllerWithGet("getForInvitee", mapInviteePsaId, controller.getForInvitee _)
   it should behave like validCacheControllerWithRemove("remove")
 }
 

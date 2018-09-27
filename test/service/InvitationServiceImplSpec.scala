@@ -146,30 +146,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
         response.left.value shouldBe a[MongoDBFailedException]
         response.left.value.message should include("failed to perform DB operation")
     }
-
   }
-
-  it should "return MongoDBFailedException if insertion failed with Duplicate record exception from mongodb" in {
-
-    val databaseException = new DatabaseException {
-      override def originalDocument: Option[BSONDocument] = None
-
-      override def code: Option[Int] = Some(1100)
-
-      override def message: String = "duplicate key error"
-    }
-
-    val fixture = testFixture()
-    when(fixture.repository.insert(any())(any())).thenReturn(Future.failed(databaseException))
-    fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.name)) map {
-      response =>
-        verify(fixture.repository, times(1)).insert(any())(any())
-        response.left.value shouldBe a[MongoDBFailedException]
-        response.left.value.message should include("duplicate key error")
-    }
-
-  }
-
 }
 
 object InvitationServiceImplSpec extends MockitoSugar {
