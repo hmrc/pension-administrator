@@ -218,7 +218,7 @@ class InvitationsCacheRepository @Inject()(
   }
 
   def remove(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Boolean] = {
-    val selector = BSONDocument(mapOfKeys)
+    val selector = mapOfKeys
     collection.remove(selector).map(_.ok)
   }
 }
