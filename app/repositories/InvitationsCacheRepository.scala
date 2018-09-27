@@ -51,7 +51,7 @@ class InvitationsCacheRepository @Inject()(
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
 
-  private def getExpireAt = Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), ttl))
+  private def getExpireAt = Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), 30))
 
   private case class DataEntry(
                                 inviteePsaId: String,
