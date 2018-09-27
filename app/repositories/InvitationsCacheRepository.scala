@@ -47,7 +47,7 @@ class InvitationsCacheRepository @Inject()(
   private val encryptionKey: String = "manage.json.encryption"
   private val collectionName: String = config.underlying.getString("mongodb.pension-administrator-cache.invitations.name")
   // scalastyle:off magic.number
-  private val ttl = 30
+  private val ttl = 0
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
 
