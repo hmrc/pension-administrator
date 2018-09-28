@@ -125,13 +125,14 @@ class InvitationsCacheRepository @Inject()(
 
     val fieldIndexes = fields.map((_, IndexType.Ascending))
 
-    val defaultIndex: Index = Index(fieldIndexes, Some(indexName))
+    val defaultIndex: Index = Index(fieldIndexes, Some(indexName), unique = true)
 
     val index: Index = ttl.fold(defaultIndex) { ttl =>
       Index(
         fieldIndexes,
         Some(indexName),
-        options = BSONDocument(expireAfterSeconds -> ttl)
+        options = BSONDocument(expireAfterSeconds -> ttl),
+        unique = true
       )
     }
 
