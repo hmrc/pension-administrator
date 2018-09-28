@@ -16,12 +16,14 @@
 
 package service
 
-import connectors.AssociationConnector
+import connectors.helper.FakeSchemeConnector
+import connectors.{AssociationConnector, SchemeConnector}
 import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails}
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
-import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.AnyContentAsEmpty
+import play.api.libs.json.{JsBoolean, JsValue, Json}
+import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -129,7 +131,8 @@ object InvitationServiceImplSpec {
 
   trait TestFixture {
     val associationConnector: FakeAssociationConnector = new FakeAssociationConnector()
-    val invitationService: InvitationServiceImpl = new InvitationServiceImpl(associationConnector) {
+    val fakeSchemeConnector: FakeSchemeConnector = new FakeSchemeConnector()
+    val invitationService: InvitationServiceImpl = new InvitationServiceImpl(associationConnector, fakeSchemeConnector) {
     }
   }
 
@@ -171,3 +174,4 @@ class FakeAssociationConnector extends AssociationConnector {
     (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Unit]] = ???
 
 }
+

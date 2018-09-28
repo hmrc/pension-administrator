@@ -17,11 +17,12 @@
 package service
 
 import com.google.inject.{ImplementedBy, Inject}
-import connectors.AssociationConnector
+import connectors.{AssociationConnector, SchemeConnector}
 import models.{IndividualDetails, Invitation, PSAMinimalDetails}
 import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
 import utils.FuzzyNameMatcher
 
@@ -32,11 +33,11 @@ import scala.concurrent.{ExecutionContext, Future}
 trait InvitationService {
 
   def invitePSA(jsValue: JsValue)
-                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]]
+               (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]]
 
 }
 
-class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector) extends InvitationService {
+class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector, schemeConnector: SchemeConnector) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
                           (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
@@ -55,6 +56,8 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
       }
     )
   }
+
+  private def checkForExistingInvite(psaId: PsaId): Either[HttpException, Unit] = ???
 
   private def doNamesMatch(inviteeName: String, psaDetails: PSAMinimalDetails): Either[HttpException, Unit] = {
 

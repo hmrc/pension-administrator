@@ -22,8 +22,9 @@ import config.AppConfig
 import connectors.helper.HeaderUtils
 import play.Logger
 import play.api.http.Status._
-import play.api.libs.json.{Json, JsValue}
-import play.api.mvc.{Result, RequestHeader}
+import play.api.libs.json.{JsBoolean, JsValue, Json}
+import play.api.mvc.{RequestHeader, Result}
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
@@ -33,6 +34,11 @@ import scala.util.{Success, Try}
 
 @ImplementedBy(classOf[SchemeConnectorImpl])
 trait SchemeConnector {
+
+  def checkForExistingInvite(psaId: PsaId)(implicit
+                                           headerCarrier: HeaderCarrier,
+                                           ec: ExecutionContext,
+                                           request: RequestHeader): Future[Either[HttpException, JsBoolean]]
 
   def registerPSA(registerData: JsValue)(implicit
                                          headerCarrier: HeaderCarrier,
@@ -82,7 +88,10 @@ class SchemeConnectorImpl @Inject()(
 
   }
 
-
+  override def checkForExistingInvite(psaId: PsaId)(implicit
+                                           headerCarrier: HeaderCarrier,
+                                           ec: ExecutionContext,
+                                           request: RequestHeader): Future[Either[HttpException, JsBoolean]] = ???
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
 
@@ -92,7 +101,7 @@ class SchemeConnectorImpl @Inject()(
       case OK => Right(response.json)
       case CONFLICT if response.body.contains("DUPLICATE_SUBMISSION") => Left(new ConflictException(response.body))
       case FORBIDDEN if response.body.contains("INVALID_BUSINESS_PARTNER") => Left(new ForbiddenException(response.body))
-      case status => Left(handleErrorResponse("Subscription", url, response, badResponseSeq))
+      case _ => Left(handleErrorResponse("Subscription", url, response, badResponseSeq))
     }
 
   }

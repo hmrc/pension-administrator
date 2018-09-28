@@ -18,21 +18,20 @@ package service
 
 import audit.{PSASubscription, StubSuccessfulAuditService}
 import base.SpecBase
-import connectors.SchemeConnector
+import connectors.helper.FakeSchemeConnector
 import models.PensionSchemeAdministrator
-import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.{HttpResponse, BadRequestException, HeaderCarrier, HttpException}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues {
 
-  import FakeSchemeConnector._
+  import connectors.helper.FakeSchemeConnector._
   import SchemeServiceImplSpec._
 
   "registerPSA" should "return the result from the connector" in {
@@ -158,31 +157,3 @@ object SchemeServiceImplSpec extends SpecBase {
 
 }
 
-class FakeSchemeConnector extends SchemeConnector {
-
-  import FakeSchemeConnector._
-
-  private var registerPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
-
-  def setRegisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.registerPsaResponse = response
-
-  override def registerPSA(registerData: JsValue)(implicit
-                                                  headerCarrier: HeaderCarrier,
-                                                  ec: ExecutionContext,
-                                                  request: RequestHeader): Future[Either[HttpException, JsValue]] = registerPsaResponse
-
-  override def getPSASubscriptionDetails(psaId: String)(implicit
-                                                        headerCarrier: HeaderCarrier,
-                                                        ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = Future.successful(Right(Json.obj()))
-}
-
-object FakeSchemeConnector {
-
-  val registerPsaResponseJson: JsValue =
-    Json.obj(
-      "processingDate" -> LocalDate.now,
-      "formBundle" -> "1121313",
-      "psaId" -> "A21999999"
-    )
-}
