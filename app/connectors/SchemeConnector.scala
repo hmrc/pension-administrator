@@ -20,6 +20,7 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
+import models.SchemeReferenceNumber
 import play.Logger
 import play.api.http.Status._
 import play.api.libs.json.{JsBoolean, JsValue, Json}
@@ -35,10 +36,10 @@ import scala.util.{Success, Try}
 @ImplementedBy(classOf[SchemeConnectorImpl])
 trait SchemeConnector {
 
-  def checkForExistingInvite(psaId: PsaId)(implicit
-                                           headerCarrier: HeaderCarrier,
-                                           ec: ExecutionContext,
-                                           request: RequestHeader): Future[Either[HttpException, JsBoolean]]
+  def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit
+                                        headerCarrier: HeaderCarrier,
+                                        ec: ExecutionContext,
+                                        request: RequestHeader): Future[Either[HttpException, JsBoolean]]
 
   def registerPSA(registerData: JsValue)(implicit
                                          headerCarrier: HeaderCarrier,
@@ -88,10 +89,10 @@ class SchemeConnectorImpl @Inject()(
 
   }
 
-  override def checkForExistingInvite(psaId: PsaId)(implicit
-                                           headerCarrier: HeaderCarrier,
-                                           ec: ExecutionContext,
-                                           request: RequestHeader): Future[Either[HttpException, JsBoolean]] = ???
+  override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit
+                                                                             headerCarrier: HeaderCarrier,
+                                                                             ec: ExecutionContext,
+                                                                             request: RequestHeader): Future[Either[HttpException, JsBoolean]] = ???
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
 

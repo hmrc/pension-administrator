@@ -16,25 +16,20 @@
 
 package service
 
+import config.AppConfig
 import connectors.AssociationConnector
 import connectors.helper.FakeSchemeConnector
-import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails}
+import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails, _}
+import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
 import utils.{DateHelper, FakeEmailConnector}
 
 import scala.concurrent.{ExecutionContext, Future}
-import config.AppConfig
-import connectors.AssociationConnector
-import models._
-import org.joda.time.LocalDate
-import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.AnyContentAsEmpty
 
 class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues {
 
@@ -55,6 +50,17 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
   }
 
   it should "return successfully when an organisation PSA exists and names match" in {
+
+    val fixture = testFixture()
+
+    fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
+      response =>
+        response.right.value should equal (())
+    }
+
+  }
+
+  it should "return ConflictException when an organisation PSA exists and names match but invite already exists" in {
 
     val fixture = testFixture()
 

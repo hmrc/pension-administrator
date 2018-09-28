@@ -37,7 +37,7 @@ class AppConfig @Inject()(override val runModeConfiguration: Configuration, envi
   lazy val createPsaAssociationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.createPsaAssociation")}"
   lazy val desEnvironment: String = runModeConfiguration.getString("microservice.services.des-hod.env").getOrElse("local")
   lazy val authorization: String = "Bearer " + runModeConfiguration.getString("microservice.services.des-hod.authorizationToken").getOrElse("local")
-  lazy val pensionsScheme: String = s"$baseURL${runModeConfiguration.underlying.getString("microservice.services.pensions-scheme")}"
+  lazy val pensionsScheme: String = s"$baseURL${runModeConfiguration.underlying.getString("microservice.services.pensions-scheme")}/pensions-scheme"
   lazy val emailUrl: String = s"$baseUrlEmail${runModeConfiguration.underlying.getString("serviceUrls.email")}"
   lazy val invitationExpiryDays: Int = runModeConfiguration.underlying.getInt("invitationExpiryDays")
 

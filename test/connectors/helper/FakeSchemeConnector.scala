@@ -43,7 +43,7 @@ class FakeSchemeConnector extends SchemeConnector {
                                                         ec: ExecutionContext,
                                                         request: RequestHeader): Future[Either[HttpException, JsValue]] = Future.successful(Right(Json.obj()))
 
-  override def checkForExistingInvite(psaId: PsaId)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsBoolean]] = ???
+  override def checkForAssociation(psaId: PsaId)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsBoolean]] = ???
 }
 
 object FakeSchemeConnector {

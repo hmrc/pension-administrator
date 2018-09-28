@@ -19,7 +19,9 @@ package connectors
 import audit.{AuditService, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
-import connectors.helper.{ConnectorBehaviours}
+import config.AppConfig
+import connectors.helper.ConnectorBehaviours
+import models.SchemeReferenceNumber
 import org.joda.time.LocalDate
 import org.scalatest._
 import org.slf4j.event.Level
@@ -27,9 +29,10 @@ import play.api.LoggerLike
 import play.api.http.Status._
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json.Json
+import play.api.libs.json.{JsBoolean, Json}
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import utils.{StubLogger, WireMockHelper}
 
@@ -52,6 +55,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     )
 
   lazy val connector: SchemeConnector = injector.instanceOf[SchemeConnector]
+  lazy val appConfig: AppConfig = injector.instanceOf[AppConfig]
 
   "SchemeConnector registerPSA" should "handle OK (200)" in {
     val successResponse = Json.obj(
@@ -156,35 +160,48 @@ class SchemeConnectorSpec extends AsyncFlatSpec
                .withHeader("Content-Type", "application/json")
            )
        )
-       connector.getPSASubscriptionDetails(psaId).map { response =>
+       connector.getPSASubscriptionDetails(psaId.value).map { response =>
          response.right.value shouldBe psaSubscriptionData
          server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
        }
-     }
+
+  }
 
   it should behave like errorHandlerForGetApiFailures(
-    connector.getPSASubscriptionDetails(psaId),
+    connector.getPSASubscriptionDetails(psaId.value),
     psaSubscriptionDetailsUrl
   )
 
-}
+  "SchemeConnector checkForAssociation" should "handle OK (200)" in {
+
+    server.stubFor(
+      get(urlEqualTo(s"${appConfig.pensionsScheme}/psa-associated"))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          ok(JsBoolean(true).toString())
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    connector.checkForAssociation(psaId, srn) map { response =>
+      response.right.value shouldBe psaSubscriptionData
+      server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
+    }
+
+  }
+
+  }
 
 object SchemeConnectorSpec extends JsonFileReader {
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val rh: RequestHeader = FakeRequest("", "")
-  val psaId = "test"
   private val registerPsaData = readJsonFromFile("/data/validPsaRequest.json")
   private val psaSubscriptionData = readJsonFromFile("/data/validPSASubscriptionDetails.json")
-  val registerPsaUrl = "/pension-online/subscription"
-  val psaSubscriptionDetailsUrl = s"/pension-online/psa-subscription-details/${psaId}"
 
-  private val invalidPSAIdResponse =
-    Json.stringify(
-      Json.obj(
-        "code" -> "INVALID_PSAID",
-        "reason" -> "test-reason"
-      )
-    )
+  val srn = SchemeReferenceNumber("S0987654321")
+  val psaId = PsaId("A7654321")
+  val registerPsaUrl = "/pension-online/subscription"
+  val psaSubscriptionDetailsUrl = s"/pension-online/psa-subscription-details/$psaId"
 
   private val invalidBusinessPartnerResponse =
     Json.stringify(
