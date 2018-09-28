@@ -51,21 +51,20 @@ class InvitationsCacheRepository @Inject()(
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
 
-  private def getExpireAt = Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), 30))
+  private def getExpireAt = DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), 30)
 
   private case class DataEntry(
                                 inviteePsaId: String,
                                 pstr: String,
                                 data: BSONBinary,
                                 lastUpdated: DateTime,
-                                expireAt: Option[DateTime])
+                                expireAt: DateTime)
 
   private object DataEntry {
     def apply(inviteePsaId: String,
               pstr: String,
               data: Array[Byte],
-              lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
-              expireAt: Option[DateTime] = None): DataEntry = {
+              lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)): DataEntry = {
 
       DataEntry(inviteePsaId, pstr, BSONBinary(
         data,
@@ -87,15 +86,14 @@ class InvitationsCacheRepository @Inject()(
                                    pstr: String,
                                    data: JsValue,
                                    lastUpdated: DateTime,
-                                   expireAt: Option[DateTime]
+                                   expireAt: DateTime
                                   )
 
   private object JsonDataEntry {
     def applyJsonDataEntry(inviteePsaId: String,
                            pstr: String,
                            data: JsValue,
-                           lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
-                           expireAt: Option[DateTime] = None): JsonDataEntry = {
+                           lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)): JsonDataEntry = {
 
       JsonDataEntry(inviteePsaId, pstr, data,
         lastUpdated,
