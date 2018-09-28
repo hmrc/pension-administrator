@@ -25,6 +25,7 @@ class AppConfig @Inject()(override val runModeConfiguration: Configuration, envi
   override protected def mode: Mode = environment.mode
 
   lazy val baseURL: String = baseUrl("des-hod")
+  lazy val baseUrlEmail: String = baseUrl("email")
   lazy val appName: String = runModeConfiguration.underlying.getString("appName")
 
   lazy val schemeAdminRegistrationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.scheme.administrator.register")}"
@@ -37,5 +38,7 @@ class AppConfig @Inject()(override val runModeConfiguration: Configuration, envi
   lazy val desEnvironment: String = runModeConfiguration.getString("microservice.services.des-hod.env").getOrElse("local")
   lazy val authorization: String = "Bearer " + runModeConfiguration.getString("microservice.services.des-hod.authorizationToken").getOrElse("local")
   lazy val pensionsScheme: String = s"$baseURL${runModeConfiguration.underlying.getString("microservice.services.pensions-scheme")}"
+  lazy val emailUrl: String = s"$baseUrlEmail${runModeConfiguration.underlying.getString("serviceUrls.email")}"
+  lazy val invitationExpiryDays: Int = runModeConfiguration.underlying.getInt("invitationExpiryDays")
 
 }

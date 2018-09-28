@@ -16,17 +16,25 @@
 
 package service
 
+import connectors.AssociationConnector
 import connectors.helper.FakeSchemeConnector
-import connectors.{AssociationConnector, SchemeConnector}
 import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails}
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
-import play.api.libs.json.{JsBoolean, JsValue, Json}
-import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
+import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
+import utils.{DateHelper, FakeEmailConnector}
 
 import scala.concurrent.{ExecutionContext, Future}
+import config.AppConfig
+import connectors.AssociationConnector
+import models._
+import org.joda.time.LocalDate
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.AnyContentAsEmpty
 
 class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues {
 
@@ -125,30 +133,76 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
 
   }
 
+  it should "send an email to the invitee" in {
+
+    import FakeEmailConnector._
+
+    val expectedEmail =
+      SendEmailRequest(
+        List(johnDoeEmail),
+        "pods_psa_invited",
+        Map(
+          "inviteeName" -> johnDoe.individualDetails.value.fullName,
+          "schemeName" -> testSchemeName,
+          "expiryDate" -> DateHelper.formatDate(LocalDate.now().plusDays(FakeConfig.invitationExpiryDays))
+        )
+      )
+
+    val fixture = testFixture()
+
+    fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, johnDoe.individualDetails.value.name)).map {
+      _ =>
+        fixture.emailConnector.sentEmails should containEmail(expectedEmail)
+    }
+
+  }
+
 }
 
 object InvitationServiceImplSpec {
 
-  trait TestFixture {
-    val associationConnector: FakeAssociationConnector = new FakeAssociationConnector()
-    val fakeSchemeConnector: FakeSchemeConnector = new FakeSchemeConnector()
-    val invitationService: InvitationServiceImpl = new InvitationServiceImpl(associationConnector, fakeSchemeConnector) {
-    }
+  val config: AppConfig = {
+    new GuiceApplicationBuilder().build().injector.instanceOf[AppConfig]
   }
 
-  def testFixture(): TestFixture = new TestFixture {}
+  trait TestFixture {
+
+    val associationConnector: FakeAssociationConnector = new FakeAssociationConnector()
+    val fakeSchemeConnector: FakeSchemeConnector = new FakeSchemeConnector()
+    val emailConnector: FakeEmailConnector = new FakeEmailConnector()
+
+    val invitationService: InvitationServiceImpl =
+      new InvitationServiceImpl(
+        associationConnector,
+        emailConnector,
+        config,
+        fakeSchemeConnector
+      )
+
+  }
+
+  def testFixture(): TestFixture = new TestFixture() {}
+
+  val testSchemeName = "test-scheme"
 
   def invitationJson(inviteePsaId: String, inviteeName: String): JsValue =
-    Json.toJson(Invitation("test-pstr", "test-scheme", "test-inviter-psa-id", inviteePsaId, inviteeName))
+    Json.toJson(Invitation("test-pstr", testSchemeName, "test-inviter-psa-id", inviteePsaId, inviteeName))
 
   val johnDoePsaId = "A2000001"
-  val notFoundPsaId = "A2000002"
-  val joeBloggsPsaId = "A2000003"
-  val acmeLtdPsaId = "A2000004"
+  val johnDoeEmail = "john.doe@email.com"
+  val johnDoe = PSAMinimalDetails(johnDoeEmail, false, None, Some(IndividualDetails("John", None, "Doe")))
 
-  val johnDoe = PSAMinimalDetails("john.doe@email.com", false, None, Some(IndividualDetails("John", None, "Doe")))
+  val joeBloggsPsaId = "A2000002"
   val joeBloggs = PSAMinimalDetails("joe.bloggs@email.com", false, None, Some(IndividualDetails("Joe", Some("Herbert"), "Bloggs")))
+
+  val acmeLtdPsaId = "A2000003"
   val acmeLtd = PSAMinimalDetails("info@acme.com", false, Some("Acme Ltd"), None)
+
+  val notFoundPsaId = "A2000004"
+
+  object FakeConfig {
+    val invitationExpiryDays: Int = 30
+  }
 
 }
 
@@ -169,9 +223,10 @@ class FakeAssociationConnector extends AssociationConnector {
 
   }
 
-  //noinspection NotImplementedCode
   override def acceptInvitation(invitation: AcceptedInvitation)
-    (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Unit]] = ???
+    (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Unit]] = {
+    throw new NotImplementedError()
+  }
 
 }
 
