@@ -17,13 +17,15 @@
 package service
 
 import com.google.inject.{ImplementedBy, Inject}
-import connectors.AssociationConnector
-import models.{IndividualDetails, Invitation, PSAMinimalDetails}
+import config.AppConfig
+import connectors.{AssociationConnector, EmailConnector, EmailSent}
+import models.{IndividualDetails, Invitation, PSAMinimalDetails, SendEmailRequest}
+import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
-import utils.FuzzyNameMatcher
+import utils.{DateHelper, FuzzyNameMatcher}
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,7 +38,11 @@ trait InvitationService {
 
 }
 
-class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector) extends InvitationService {
+class InvitationServiceImpl @Inject()(
+  associationConnector: AssociationConnector,
+  emailConnector: EmailConnector,
+  config: AppConfig
+) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
                           (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
@@ -48,15 +54,21 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
       },
       {
         invitation =>
-          associationConnector.getPSAMinimalDetails(invitation.inviteePsaId) map {
-            case Right(psaDetails) => doNamesMatch(invitation.inviteeName, psaDetails)
-            case Left(ex) => Left(ex)
+          associationConnector.getPSAMinimalDetails(invitation.inviteePsaId) flatMap {
+            case Right(psaDetails) =>
+              if (doNamesMatch(invitation.inviteeName, psaDetails)) {
+                sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
+              }
+              else {
+                Future.successful(Left(new NotFoundException("NOT_FOUND")))
+              }
+            case Left(ex) => Future.successful(Left(ex))
           }
       }
     )
   }
 
-  private def doNamesMatch(inviteeName: String, psaDetails: PSAMinimalDetails): Either[HttpException, Unit] = {
+  private def doNamesMatch(inviteeName: String, psaDetails: PSAMinimalDetails): Boolean = {
 
     val matches = (psaDetails.organisationName, psaDetails.individualDetails) match {
       case (Some(organisationName), _) => doOrganisationNamesMatch(inviteeName, organisationName)
@@ -64,12 +76,11 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
       case _ => throw new IllegalArgumentException("InvitationService cannot match a PSA without organisation or individual detail")
     }
 
-    if (matches) {
-      Right(())
-    } else {
+    if (!matches) {
       logMismatch(inviteeName, psaDetails)
-      Left(new NotFoundException("NOT_FOUND"))
     }
+
+    matches
 
   }
 
@@ -140,6 +151,31 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
     value
       .replaceAll("[a-zA-Z]", "x")
       .replaceAll("[0-9]", "9")
+  }
+
+  private def sendInviteeEmail(invitation: Invitation, psaDetails: PSAMinimalDetails, config: AppConfig)
+    (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
+
+    val name = psaDetails.individualDetails.map(_.fullName).getOrElse(psaDetails.organisationName.getOrElse(""))
+    val expiryDate = DateHelper.formatDate(LocalDate.now().plusDays(config.invitationExpiryDays))
+
+    val email = SendEmailRequest(
+      List(psaDetails.email),
+      "pods_psa_invited",
+      Map(
+        "inviteeName" -> name,
+        "schemeName" -> invitation.schemeName,
+        "expiryDate" -> expiryDate
+      )
+    )
+
+    emailConnector.sendEmail(email).map {
+      case EmailSent => ()
+      case _ =>
+        Logger.error("Unable to send email to invited PSA. Support intervention possibly required.")
+        ()
+    }
+
   }
 
 }
