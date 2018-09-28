@@ -25,8 +25,6 @@ import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import reactivemongo.bson.BSONDocument
-import reactivemongo.core.errors.DatabaseException
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.http._
 

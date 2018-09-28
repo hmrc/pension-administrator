@@ -26,7 +26,6 @@ import play.api.mvc.RequestHeader
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.http._
 import utils.FuzzyNameMatcher
-
 import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,14 +36,14 @@ case class MongoDBFailedException(exceptionMesage: String) extends HttpException
 trait InvitationService {
 
   def invitePSA(jsValue: JsValue)
-                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Boolean]]
+               (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Boolean]]
 
 }
 
 class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector, repository: InvitationsCacheRepository) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
-                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Boolean]] = {
+                        (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Boolean]] = {
     jsValue.validate[Invitation].fold(
       {
         errors =>
@@ -54,14 +53,20 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
       {
         invitation =>
           associationConnector.getPSAMinimalDetails(invitation.inviteePsaId).flatMap {
-            case Right(psaDetails) => doNamesMatch(invitation, psaDetails)
+            case Right(psaDetails) =>
+              doNamesMatch(invitation, psaDetails) match {
+                case Right(_) =>
+                  insertInvitation(invitation)
+                case Left(ex) =>
+                  Future.successful(Left(ex))
+              }
             case Left(ex) => Future.successful(Left(ex))
           }
       }
     )
   }
 
-  private def doNamesMatch(invitation: Invitation, psaDetails: PSAMinimalDetails): Future[Either[HttpException, Boolean]] = {
+  private def doNamesMatch(invitation: Invitation, psaDetails: PSAMinimalDetails): Either[HttpException, Unit] = {
 
     val matches = (psaDetails.organisationName, psaDetails.individualDetails) match {
       case (Some(organisationName), _) => doOrganisationNamesMatch(invitation.inviteeName, organisationName)
@@ -70,14 +75,17 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
     }
 
     if (matches) {
-      repository.insert(invitation).map(flag=>Right(flag)) recover {
-        case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
-      }
+      Right(())
     } else {
       logMismatch(invitation.inviteeName, psaDetails)
-      Future.successful(Left(new NotFoundException("NOT_FOUND")))
+      Left(new NotFoundException("NOT_FOUND"))
     }
+  }
 
+  private def insertInvitation(invitation: Invitation): Future[Either[HttpException, Boolean]] = {
+    repository.insert(invitation).map(flag => Right(flag)) recover {
+      case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
+    }
   }
 
   private def doOrganisationNamesMatch(inviteeName: String, organisationName: String): Boolean = {
@@ -136,9 +144,9 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
 
     Logger.warn(
       s"Cannot match invitee and PSA names. Logging depersonalised names.\n" +
-      s"Entity Type: $entityType\n" +
-      s"Invitee: ${depersonalise(inviteeName)}\n" +
-      s"PSA: $psaName"
+        s"Entity Type: $entityType\n" +
+        s"Invitee: ${depersonalise(inviteeName)}\n" +
+        s"PSA: $psaName"
     )
 
   }

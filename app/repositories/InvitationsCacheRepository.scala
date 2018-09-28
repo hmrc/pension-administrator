@@ -105,7 +105,7 @@ class InvitationsCacheRepository @Inject()(
     implicit val writes: OWrites[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 
-  private val fieldName = "expireAt"
+  private val expireAt = "expireAt"
   private val createdIndexName = "dataExpiry"
   private val expireAfterSeconds = "expireAfterSeconds"
   private val inviteePsaIdKey = "inviteePsaId"
@@ -113,13 +113,13 @@ class InvitationsCacheRepository @Inject()(
   private val compoundIndexName = "inviteePsaId_Pstr"
   private val pstrIndexName = "pstr"
 
-  ensureIndex(Seq(fieldName), createdIndexName, Some(ttl))
+  ensureIndex(Seq(expireAt), createdIndexName, Some(ttl))
 
-  ensureIndex(Seq(inviteePsaIdKey, pstrKey), compoundIndexName, Some(ttl))
+  ensureIndex(Seq(inviteePsaIdKey, pstrKey), compoundIndexName)
 
-  ensureIndex(Seq(pstrKey), pstrIndexName, Some(ttl))
+  ensureIndex(Seq(pstrKey), pstrIndexName)
 
-  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int]): Future[Boolean] = {
+  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None): Future[Boolean] = {
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
