@@ -16,8 +16,10 @@
 
 package service
 
+import audit.{AuditService, EmailAuditEvent, InvitationAuditEvent, StubSuccessfulAuditService}
 import config.AppConfig
 import connectors.AssociationConnector
+import controllers.EmailResponseControllerSpec.{fakeAuditService, psa}
 import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails, _}
 import org.joda.time.LocalDate
 import org.mockito.Matchers.any
@@ -31,6 +33,7 @@ import play.api.test.FakeRequest
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
 import utils.{DateHelper, FakeEmailConnector}
+import org.mockito.Mockito._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -63,6 +66,15 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
         response.right.value should equal(())
     }
 
+  }
+
+  it should "audit successfully when an organisation PSA exists and names match" in {
+    val fixture = testFixture()
+    fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
+      _ =>
+        val i = invitation(acmeLtdPsaId, acmeLtd.organisationName.value)
+        fakeAuditService.verifySent(InvitationAuditEvent(i)) should equal(true)
+    }
   }
 
   it should "throw BadRequestException if the JSON cannot be parsed as Invitation" in {
@@ -194,7 +206,8 @@ object InvitationServiceImplSpec extends MockitoSugar {
         associationConnector,
         emailConnector,
         config,
-        repository
+        repository,
+        fakeAuditService
       )
     when(repository.insert(any())(any())).thenReturn(Future.successful(true))
   }
@@ -203,8 +216,11 @@ object InvitationServiceImplSpec extends MockitoSugar {
 
   val testSchemeName = "test-scheme"
 
+  def invitation(inviteePsaId: String, inviteeName: String): Invitation =
+    Invitation("test-pstr", testSchemeName, "test-inviter-psa-id", inviteePsaId, inviteeName)
+
   def invitationJson(inviteePsaId: String, inviteeName: String): JsValue =
-    Json.toJson(Invitation("test-pstr", testSchemeName, "test-inviter-psa-id", inviteePsaId, inviteeName))
+    Json.toJson(invitation(inviteePsaId, inviteeName))
 
   val johnDoePsaId = "A2000001"
   val johnDoeEmail = "john.doe@email.com"
