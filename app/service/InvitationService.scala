@@ -17,17 +17,22 @@
 package service
 
 import com.google.inject.{ImplementedBy, Inject}
-import connectors.AssociationConnector
-import models.{IndividualDetails, Invitation, PSAMinimalDetails}
+import config.AppConfig
+import connectors.{AssociationConnector, EmailConnector, EmailSent}
+import models.{IndividualDetails, Invitation, PSAMinimalDetails, SendEmailRequest}
+import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
+import utils.{DateHelper, FuzzyNameMatcher}
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.http._
 import utils.FuzzyNameMatcher
 
 import scala.annotation.tailrec
+import scala.concurrent
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,14 +42,19 @@ case class MongoDBFailedException(exceptionMesage: String) extends HttpException
 trait InvitationService {
 
   def invitePSA(jsValue: JsValue)
-                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Boolean]]
+               (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]]
 
 }
 
-class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector, repository: InvitationsCacheRepository) extends InvitationService {
+class InvitationServiceImpl @Inject()(
+                                       associationConnector: AssociationConnector,
+                                       emailConnector: EmailConnector,
+                                       config: AppConfig,
+                                       repository: InvitationsCacheRepository
+                                     ) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
-                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Boolean]] = {
+                        (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
     jsValue.validate[Invitation].fold(
       {
         errors =>
@@ -54,30 +64,43 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
       {
         invitation =>
           associationConnector.getPSAMinimalDetails(invitation.inviteePsaId).flatMap {
-            case Right(psaDetails) => doNamesMatch(invitation, psaDetails)
+            case Right(psaDetails) =>
+              if (doNamesMatch(invitation.inviteeName, psaDetails)) {
+                insertInvitation(invitation).flatMap {
+                  case Right(_) =>
+                    sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
+                  case Left(error) =>
+                    Future.successful(Left(error))
+                }
+              }
+              else {
+                Future.successful(Left(new NotFoundException("NOT_FOUND")))
+              }
             case Left(ex) => Future.successful(Left(ex))
           }
       }
     )
   }
 
-  private def doNamesMatch(invitation: Invitation, psaDetails: PSAMinimalDetails): Future[Either[HttpException, Boolean]] = {
+  private def doNamesMatch(inviteeName: String, psaDetails: PSAMinimalDetails): Boolean = {
 
     val matches = (psaDetails.organisationName, psaDetails.individualDetails) match {
-      case (Some(organisationName), _) => doOrganisationNamesMatch(invitation.inviteeName, organisationName)
-      case (_, Some(individual)) => doIndividualNamesMatch(invitation.inviteeName, individual, true)
+      case (Some(organisationName), _) => doOrganisationNamesMatch(inviteeName, organisationName)
+      case (_, Some(individual)) => doIndividualNamesMatch(inviteeName, individual, true)
       case _ => throw new IllegalArgumentException("InvitationService cannot match a PSA without organisation or individual detail")
     }
 
-    if (matches) {
-      repository.insert(invitation).map(flag=>Right(flag)) recover {
-        case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
-      }
-    } else {
-      logMismatch(invitation.inviteeName, psaDetails)
-      Future.successful(Left(new NotFoundException("NOT_FOUND")))
+    if (!matches) {
+      logMismatch(inviteeName, psaDetails)
     }
+    matches
+  }
 
+
+  private def insertInvitation(invitation: Invitation): Future[Either[HttpException, Unit]] = {
+    repository.insert(invitation).map(_ => Right(())) recover {
+      case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
+    }
   }
 
   private def doOrganisationNamesMatch(inviteeName: String, organisationName: String): Boolean = {
@@ -136,9 +159,9 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
 
     Logger.warn(
       s"Cannot match invitee and PSA names. Logging depersonalised names.\n" +
-      s"Entity Type: $entityType\n" +
-      s"Invitee: ${depersonalise(inviteeName)}\n" +
-      s"PSA: $psaName"
+        s"Entity Type: $entityType\n" +
+        s"Invitee: ${depersonalise(inviteeName)}\n" +
+        s"PSA: $psaName"
     )
 
   }
@@ -147,6 +170,31 @@ class InvitationServiceImpl @Inject()(associationConnector: AssociationConnector
     value
       .replaceAll("[a-zA-Z]", "x")
       .replaceAll("[0-9]", "9")
+  }
+
+  private def sendInviteeEmail(invitation: Invitation, psaDetails: PSAMinimalDetails, config: AppConfig)
+                              (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
+
+    val name = psaDetails.individualDetails.map(_.fullName).getOrElse(psaDetails.organisationName.getOrElse(""))
+    val expiryDate = DateHelper.formatDate(invitation.expireAt.toLocalDate)
+
+    val email = SendEmailRequest(
+      List(psaDetails.email),
+      "pods_psa_invited",
+      Map(
+        "inviteeName" -> name,
+        "schemeName" -> invitation.schemeName,
+        "expiryDate" -> expiryDate
+      )
+    )
+
+    emailConnector.sendEmail(email).map {
+      case EmailSent => ()
+      case _ =>
+        Logger.error("Unable to send email to invited PSA. Support intervention possibly required.")
+        ()
+    }
+
   }
 
 }

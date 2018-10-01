@@ -18,6 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.AssociationConnector
+import models.AcceptedInvitation
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.http.BadRequestException
@@ -38,8 +39,31 @@ class AssociationController @Inject()(
             case Right(psaDetails) => Ok(Json.toJson(psaDetails))
             case Left(e) => result(e)
           }
-        case _ => Future.failed(new BadRequestException("Bad Request with no request body returned for register PSA"))
+        case _ => Future.failed(new BadRequestException("No PSA Id in the header for get minimal details"))
       }
 
+  }
+
+  def acceptInvitation: Action[AnyContent] = Action.async {
+    implicit request =>
+      val feJson = request.body.asJson
+
+      feJson match {
+        case Some(acceptedInvitationJsValue) =>
+          acceptedInvitationJsValue.validate[AcceptedInvitation].fold(
+            _ =>
+              Future.failed(
+                new BadRequestException("Bad request received from frontend for accept invitation")
+              ),
+            acceptedInvitation =>
+              associationConnector.acceptInvitation(acceptedInvitation).map {
+                case Right(_) => Created
+                case Left(e) => result(e)
+              }
+          )
+        case None =>
+          Future.failed(new BadRequestException("No Request Body received for accept invitation"))
+
+      }
   }
 }

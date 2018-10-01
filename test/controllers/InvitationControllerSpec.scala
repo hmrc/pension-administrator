@@ -109,12 +109,12 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar{
 
   class FakeInvitationService extends InvitationService {
 
-    private var invitePsaResponse: Future[Either[HttpException, Boolean]] = Future.successful(Right(true))
+    private var invitePsaResponse: Future[Either[HttpException, Unit]] = Future.successful(Right(()))
 
-    def setInvitePsaResponse(response: Future[Either[HttpException, Boolean]]): Unit = this.invitePsaResponse = response
+    def setInvitePsaResponse(response: Future[Either[HttpException, Unit]]): Unit = this.invitePsaResponse = response
 
     def invitePSA(jsValue: JsValue)
-                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Boolean]] =
+                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
     invitePsaResponse
   }
 

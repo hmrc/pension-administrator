@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package models
+package utils
 
-import play.api.libs.json.{Json, Reads}
+import org.joda.time.LocalDate
+import org.joda.time.format.DateTimeFormat
 
-case class AcceptedInvitation(
-  pstr: String,
-  inviteePsaId: String,
-  inviterPsaId: String,
-  declaration: Boolean,
-  declarationDuties: Boolean,
-  pensionAdvisorDetail: Option[PensionAdvisorDetail]
-)
+object DateHelper {
 
-object AcceptedInvitation {
-  implicit val rds : Reads[AcceptedInvitation] = Json.reads[AcceptedInvitation]
+  def formatDate(date: LocalDate): String = {
+    val dateFormat = DateTimeFormat.forPattern("d MMMM yyyy")
+    dateFormat.print(date)
+  }
 }

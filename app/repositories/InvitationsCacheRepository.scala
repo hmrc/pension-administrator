@@ -104,7 +104,7 @@ class InvitationsCacheRepository @Inject()(
     implicit val writes: OWrites[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 
-  private val fieldName = "expireAt"
+  private val expireAt = "expireAt"
   private val createdIndexName = "dataExpiry"
   private val expireAfterSeconds = "expireAfterSeconds"
   private val inviteePsaIdKey = "inviteePsaId"
@@ -112,35 +112,33 @@ class InvitationsCacheRepository @Inject()(
   private val compoundIndexName = "inviteePsaId_Pstr"
   private val pstrIndexName = "pstr"
 
-  ensureIndex(Seq(fieldName), createdIndexName, Some(ttl))
+  ensureIndex(fields = Seq(expireAt), indexName = createdIndexName, ttl = Some(ttl))
 
-  ensureIndex(Seq(inviteePsaIdKey, pstrKey), compoundIndexName, Some(ttl))
+  ensureIndex(fields = Seq(inviteePsaIdKey, pstrKey), indexName = compoundIndexName, isUnique = true)
 
-  ensureIndex(Seq(pstrKey), pstrIndexName, Some(ttl))
+  ensureIndex(fields = Seq(pstrKey), indexName = pstrIndexName)
 
-  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int]): Future[Boolean] = {
+  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None, isUnique:Boolean = false): Future[Boolean] = {
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
     val fieldIndexes = fields.map((_, IndexType.Ascending))
 
-    val defaultIndex: Index = Index(fieldIndexes, Some(indexName))
-
-    val index: Index = ttl.fold(defaultIndex) { ttl =>
-      Index(
-        fieldIndexes,
-        Some(indexName),
-        options = BSONDocument(expireAfterSeconds -> ttl)
-      )
+    val index = {
+      val defaultIndex = Index(fieldIndexes, Some(indexName), unique = isUnique)
+      ttl.map(ttl => defaultIndex.copy(options = BSONDocument(expireAfterSeconds -> ttl))).fold(defaultIndex)(identity)
     }
 
-    collection.indexesManager.ensure(index) map {
-      result => {
-        Logger.debug(s"set [$indexName] with value $ttl -> result : $result")
-        result
-      }
+    val indexCreationDescription = {
+      def addExpireAfterSecondsDescription(s:String) = ttl.fold(s)(ttl => s"$s (expireAfterSeconds = $ttl)")
+      addExpireAfterSecondsDescription(s"Attempt to create Mongo index $index (unique = ${index.unique}))")
+    }
+
+    collection.indexesManager.ensure(index) map{ result =>
+      Logger.debug( indexCreationDescription + s" was successful and result is: $result")
+      result
     } recover {
-      case e => Logger.error("Failed to set TTL index", e)
+      case e => Logger.error(indexCreationDescription + s" was unsuccessful", e)
         false
     }
   }
@@ -168,18 +166,21 @@ class InvitationsCacheRepository @Inject()(
       .map(_.ok)
   }
 
+  private def encryptKeys(mapOfKeys: Map[String, String]): Map[String, String] = {
+    mapOfKeys.map {
+      case key if key._1 == "inviteePsaId" =>
+        val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
+        (key._1, encryptedValue)
+      case key if key._1 == "pstr" =>
+        val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
+        (key._1, encryptedValue)
+      case key => key
+    }
+  }
+
   def getByKeys(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Option[List[Invitation]]] = {
     if (encrypted) {
-      val encryptedMapOfKeys = mapOfKeys.map {
-        case key if key._1 == "inviteePsaId" =>
-          val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
-          (key._1, encryptedValue)
-        case key if key._1 == "pstr" =>
-          val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
-          (key._1, encryptedValue)
-        case key => key
-      }
-
+      val encryptedMapOfKeys = encryptKeys(mapOfKeys)
       val queryBuilder = collection.find(BSONDocument(encryptedMapOfKeys))
       queryBuilder.cursor[DataEntry](ReadPreference.primary).collect[List]().map { de =>
         val listOfInvitationsJson = de.map {
@@ -217,7 +218,11 @@ class InvitationsCacheRepository @Inject()(
   }
 
   def remove(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Boolean] = {
-    val selector = mapOfKeys
+    val selector = if (encrypted) {
+      encryptKeys(mapOfKeys)
+    } else {
+      mapOfKeys
+    }
     collection.remove(selector).map(_.ok)
   }
 }

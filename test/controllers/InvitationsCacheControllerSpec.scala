@@ -18,6 +18,8 @@ package controllers
 
 import akka.stream.Materializer
 import akka.util.ByteString
+import config.AppConfig
+import models.Invitation
 import org.apache.commons.lang3.RandomUtils
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
