@@ -16,6 +16,8 @@
 
 package connectors
 
+import audit.AuditService
+import audit.testdoubles.StubSuccessfulAuditService
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours
 import config.AppConfig
@@ -26,6 +28,8 @@ import play.api.LoggerLike
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
+import play.api.mvc.RequestHeader
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http._
 import utils.{StubLogger, WireMockHelper}
@@ -39,6 +43,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   import AssociationConnectorSpec._
 
+  private implicit val rh: RequestHeader = FakeRequest("", "")
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private val logger = new StubLogger()
   private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/$psaId"
@@ -46,8 +51,11 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   override protected def portConfigKey: String = "microservice.services.des-hod.port"
 
+  private val auditService = new StubSuccessfulAuditService()
+
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
+      bind[AuditService].toInstance(auditService),
       bind[LoggerLike].toInstance(logger)
     )
 

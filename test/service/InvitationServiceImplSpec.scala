@@ -26,7 +26,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
@@ -242,7 +242,7 @@ class FakeAssociationConnector extends AssociationConnector {
   }
 
   override def acceptInvitation(invitation: AcceptedInvitation)
-    (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Unit]] = {
+    (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] = {
     throw new NotImplementedError()
   }
 

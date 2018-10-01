@@ -27,9 +27,8 @@ class StubSuccessfulAuditService extends AuditService {
   private val events: mutable.ListBuffer[AuditEvent] = mutable.ListBuffer()
 
   override def sendEvent[T <: AuditEvent](event: T)
-                                         (implicit rh: RequestHeader, ec: ExecutionContext): Unit = {
+                                         (implicit rh: RequestHeader, ec: ExecutionContext): Unit =
     events += event
-  }
 
   def verifySent[T <: AuditEvent](event: T): Boolean = events.contains(event)
 
