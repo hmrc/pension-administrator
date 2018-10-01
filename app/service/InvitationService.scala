@@ -22,30 +22,39 @@ import connectors.{AssociationConnector, EmailConnector, EmailSent}
 import models.{IndividualDetails, Invitation, PSAMinimalDetails, SendEmailRequest}
 import org.joda.time.LocalDate
 import play.api.Logger
+import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
 import utils.{DateHelper, FuzzyNameMatcher}
+import repositories.InvitationsCacheRepository
+import uk.gov.hmrc.http._
+import utils.FuzzyNameMatcher
 
 import scala.annotation.tailrec
+import scala.concurrent
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
+
+case class MongoDBFailedException(exceptionMesage: String) extends HttpException(exceptionMesage, INTERNAL_SERVER_ERROR)
 
 @ImplementedBy(classOf[InvitationServiceImpl])
 trait InvitationService {
 
   def invitePSA(jsValue: JsValue)
-                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]]
+               (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]]
 
 }
 
 class InvitationServiceImpl @Inject()(
-  associationConnector: AssociationConnector,
-  emailConnector: EmailConnector,
-  config: AppConfig
-) extends InvitationService {
+                                       associationConnector: AssociationConnector,
+                                       emailConnector: EmailConnector,
+                                       config: AppConfig,
+                                       repository: InvitationsCacheRepository
+                                     ) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
-                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
+                        (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
     jsValue.validate[Invitation].fold(
       {
         errors =>
@@ -54,10 +63,15 @@ class InvitationServiceImpl @Inject()(
       },
       {
         invitation =>
-          associationConnector.getPSAMinimalDetails(invitation.inviteePsaId) flatMap {
+          associationConnector.getPSAMinimalDetails(invitation.inviteePsaId).flatMap {
             case Right(psaDetails) =>
               if (doNamesMatch(invitation.inviteeName, psaDetails)) {
-                sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
+                insertInvitation(invitation).flatMap {
+                  case Right(_) =>
+                    sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
+                  case Left(error) =>
+                    Future.successful(Left(error))
+                }
               }
               else {
                 Future.successful(Left(new NotFoundException("NOT_FOUND")))
@@ -79,9 +93,13 @@ class InvitationServiceImpl @Inject()(
     if (!matches) {
       logMismatch(inviteeName, psaDetails)
     }
-
     matches
+  }
 
+  private def insertInvitation(invitation: Invitation): Future[Either[HttpException, Unit]] = {
+    repository.insert(invitation).map(_ => Right(())) recover {
+      case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
+    }
   }
 
   private def doOrganisationNamesMatch(inviteeName: String, organisationName: String): Boolean = {
@@ -140,9 +158,9 @@ class InvitationServiceImpl @Inject()(
 
     Logger.warn(
       s"Cannot match invitee and PSA names. Logging depersonalised names.\n" +
-      s"Entity Type: $entityType\n" +
-      s"Invitee: ${depersonalise(inviteeName)}\n" +
-      s"PSA: $psaName"
+        s"Entity Type: $entityType\n" +
+        s"Invitee: ${depersonalise(inviteeName)}\n" +
+        s"PSA: $psaName"
     )
 
   }
@@ -154,7 +172,7 @@ class InvitationServiceImpl @Inject()(
   }
 
   private def sendInviteeEmail(invitation: Invitation, psaDetails: PSAMinimalDetails, config: AppConfig)
-    (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
+                              (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
 
     val name = psaDetails.individualDetails.map(_.fullName).getOrElse(psaDetails.organisationName.getOrElse(""))
     val expiryDate = DateHelper.formatDate(LocalDate.now().plusDays(config.invitationExpiryDays))

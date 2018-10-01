@@ -17,12 +17,91 @@
 package controllers
 
 import com.google.inject.Inject
+import models.Invitation
 import play.api.Configuration
+import play.api.mvc.{Action, AnyContent}
 import repositories.InvitationsCacheRepository
-import uk.gov.hmrc.auth.core.AuthConnector
+import service.MongoDBFailedException
+import models.Invitation
+import play.api.Configuration
+import play.api.libs.json.Json
+import play.api.mvc.{Action, AnyContent, Result}
+import repositories.InvitationsCacheRepository
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
+import uk.gov.hmrc.http.BadRequestException
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationsCacheController @Inject()(
-                                          config: Configuration,
-                                          repository: InvitationsCacheRepository,
-                                          authConnector: AuthConnector
-                                 ) extends PensionAdministratorCacheController(config, repository, authConnector)
+                                            config: Configuration,
+                                            repository: InvitationsCacheRepository,
+                                            val authConnector: AuthConnector
+                                          ) extends BaseController with AuthorisedFunctions {
+
+  private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
+
+  def add: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised() {
+        request.body.asJson.map {
+          jsValue =>
+            jsValue.validate[Invitation].fold(
+              _ => Future.failed(new BadRequestException("not valid value for PSA Invitation")),
+              value => repository.insert(value).map(_ => Created).recoverWith {
+                case exception: Exception => {
+                  throw MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}""")
+                }
+              }
+            )
+
+        } getOrElse Future.failed(new BadRequestException("Bad Request with no request body returned for PSA Invitation"))
+      }
+  }
+
+  private def getByMap(map: Map[String, String])(implicit ec: ExecutionContext): Future[Result] = {
+    repository.getByKeys(map).map { response =>
+      response.map { invitationsList =>
+        Ok(Json.toJson(invitationsList))
+      }
+        .getOrElse(NotFound)
+    }
+  }
+
+  def get: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised() {
+        request.headers.get("inviteePsaId").flatMap { inviteePsaId =>
+          request.headers.get("pstr").map { pstr =>
+            getByMap(Map("inviteePsaId" -> inviteePsaId, "pstr" -> pstr))
+          }
+        }.getOrElse(Future.successful(BadRequest))
+      }
+  }
+
+  def getForScheme: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised() {
+        request.headers.get("pstr").map(pstr => getByMap(Map("pstr" -> pstr)))
+          .getOrElse(Future.successful(BadRequest))
+      }
+  }
+
+  def getForInvitee: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised() {
+        request.headers.get("inviteePsaId").map(inviteePsaId => getByMap(Map("inviteePsaId" -> inviteePsaId)))
+          .getOrElse(Future.successful(BadRequest))
+      }
+  }
+
+  def remove: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised() {
+        request.headers.get("inviteePsaId").flatMap(inviteePsaId =>
+          request.headers.get("pstr").map(pstr => repository.remove(Map("inviteePsaId" -> inviteePsaId, "pstr" -> pstr)).map(_ => Ok))
+        ).getOrElse(Future.successful(BadRequest))
+      }
+  }
+}
