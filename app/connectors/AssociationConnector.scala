@@ -98,11 +98,12 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   private def processResponse(acceptedInvitation: AcceptedInvitation,
                               response: HttpResponse, url: String)(implicit request: RequestHeader, ec: ExecutionContext) = {
-    sendAcceptInvitationAuditEvent(acceptedInvitation, response.status, Some(response.json))
     if (response.status == OK) {
+      sendAcceptInvitationAuditEvent(acceptedInvitation, response.status, Some(response.json))
       Logger.info(s"POST of $url returned successfully")
       Right(())
     } else {
+      sendAcceptInvitationAuditEvent(acceptedInvitation, response.status, None)
       processFailureResponse(response, url)
     }
   }
@@ -114,7 +115,6 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   def acceptInvitation(acceptedInvitation: AcceptedInvitation)
                       (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] = {
-
     val headerCarrierWithDesHeaders: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
     val url = appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)
 
