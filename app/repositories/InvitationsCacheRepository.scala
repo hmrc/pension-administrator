@@ -113,36 +113,33 @@ class InvitationsCacheRepository @Inject()(
   private val compoundIndexName = "inviteePsaId_Pstr"
   private val pstrIndexName = "pstr"
 
-  ensureIndex(Seq(expireAt), createdIndexName, Some(ttl))
+  ensureIndex(fields = Seq(expireAt), indexName = createdIndexName, ttl = Some(ttl))
 
-  ensureIndex(Seq(inviteePsaIdKey, pstrKey), compoundIndexName)
+  ensureIndex(fields = Seq(inviteePsaIdKey, pstrKey), indexName = compoundIndexName, isUnique = true)
 
-  ensureIndex(Seq(pstrKey), pstrIndexName)
+  ensureIndex(fields = Seq(pstrKey), indexName = pstrIndexName)
 
-  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None): Future[Boolean] = {
+  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None, isUnique:Boolean = false): Future[Boolean] = {
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
     val fieldIndexes = fields.map((_, IndexType.Ascending))
 
-    val defaultIndex: Index = Index(fieldIndexes, Some(indexName), unique = true)
-
-    val index: Index = ttl.fold(defaultIndex) { ttl =>
-      Index(
-        fieldIndexes,
-        Some(indexName),
-        options = BSONDocument(expireAfterSeconds -> ttl),
-        unique = true
-      )
+    val index = {
+      val defaultIndex = Index(fieldIndexes, Some(indexName), unique = isUnique)
+      ttl.map(ttl => defaultIndex.copy(options = BSONDocument(expireAfterSeconds -> ttl))).fold(defaultIndex)(identity)
     }
 
-    collection.indexesManager.ensure(index) map {
-      result => {
-        Logger.debug(s"set [$indexName] with value $ttl -> result : $result")
+    val indexCreationDescription = {
+      def addExpireAfterSecondsDescription(s:String) = ttl.fold(s)(ttl => s"$s (expireAfterSeconds = $ttl)")
+      addExpireAfterSecondsDescription(s"Attempt to create Mongo index $index (unique = ${index.unique}))")
+    }
+
+    collection.indexesManager.ensure(index) map{ result =>
+        Logger.debug( indexCreationDescription + s" was successful and result is: $result")
         result
-      }
     } recover {
-      case e => Logger.error("Failed to set TTL index", e)
+      case e => Logger.error(indexCreationDescription + s" was unsuccessful", e)
         false
     }
   }
