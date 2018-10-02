@@ -296,7 +296,25 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should "return not found exception for a 404 response" in {
+  it should "return not found exception and failure response details for a 404 response" in {
+    server.stubFor(
+      post(urlEqualTo(acceptInvitationUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(NOT_FOUND)
+            .withHeader("Content-Type", "application/json")
+            .withBody(failureResponseJson.toString)
+        )
+    )
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
+      pensionAdvisorDetail = None)
+
+    connector.acceptInvitation(acceptedInvitation).collect {
+      case Left(_: NotFoundException) => succeed
+    }
+  }
+
+  it should "return not found exception for a 404 response where no response details" in {
     server.stubFor(
       post(urlEqualTo(acceptInvitationUrl))
         .willReturn(
@@ -487,6 +505,12 @@ object AssociationConnectorSpec extends OptionValues {
     """{
       |	"processingDate": "2001-12-17T09:30:47Z",
       |	"formBundleNumber": "12345678912"
+      |}""".stripMargin
+
+  private val failureResponseJson =
+    """{
+      |	"failureDate": "2001-12-17T09:30:47Z",
+      |	"failureDetails": "bla"
       |}""".stripMargin
 
   private val psaMinimunIndividualDetailPayload = Json.parse(

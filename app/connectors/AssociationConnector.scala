@@ -103,7 +103,8 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
       Logger.info(s"POST of $url returned successfully")
       Right(())
     } else {
-      sendAcceptInvitationAuditEvent(acceptedInvitation, response.status, None)
+      sendAcceptInvitationAuditEvent(acceptedInvitation, response.status,
+        if (response.body.isEmpty) None else Some(response.json))
       processFailureResponse(response, url)
     }
   }
