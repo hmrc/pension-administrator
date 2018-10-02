@@ -25,11 +25,11 @@ import org.scalatest._
 import play.api.LoggerLike
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json.JsBoolean
+import play.api.libs.json.{JsBoolean, Json}
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 import utils.{StubLogger, WireMockHelper}
 
 class SchemeConnectorSpec extends AsyncFlatSpec
@@ -68,6 +68,23 @@ class SchemeConnectorSpec extends AsyncFlatSpec
 
     connector.checkForAssociation(psaId, srn) map { response =>
       response.right.value shouldBe true
+    }
+
+  }
+
+  it should "relay BadRequestException when headers are missing" in {
+
+    server.stubFor(
+      get(urlEqualTo(checkForAssociationUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          badRequest
+            .withBody("Bad Request with missing parameters PSA Id or SRN")
+        )
+    )
+
+    connector.checkForAssociation(psaId, srn) map { response =>
+      response.left.value shouldBe a[BadRequestException]
     }
 
   }

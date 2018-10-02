@@ -20,13 +20,14 @@ import audit.AuditService
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.SchemeReferenceNumber
+import models.{PSAMinimalDetails, SchemeReferenceNumber}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 import play.api.http.Status._
+import play.api.libs.json.JsSuccess
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -58,14 +59,16 @@ class SchemeConnectorImpl @Inject()(
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headers)
 
-    http.GET[HttpResponse](config.checkAssociationUrl)(implicitly, hc, implicitly) map {
-      case HttpResponse(OK, json, _, _) =>
-        json.validate[Boolean].fold(
-          x => Left(???),
-          Right(_)
-        )
-      case response =>
-        Left(handleErrorResponse("Check for association", config.checkAssociationUrl, response, Seq.empty))
+    http.GET[HttpResponse](config.checkAssociationUrl)(implicitly, hc, implicitly) map handleResponse
+  }
+
+  private def handleResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Either[HttpException, Boolean] = {
+    val badResponse = Seq("Bad Request with missing parameters PSA Id or SRN")
+    response.status match {
+      case OK => response.json.validate[Boolean] match {
+        case JsSuccess(value, _) => Right(value)
+      }
+      case _ => Left(handleErrorResponse(s"PSA minimal details with headers: ${hc.headers}", config.checkAssociationUrl, response, badResponse))
     }
   }
 
