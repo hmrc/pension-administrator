@@ -71,8 +71,8 @@ class InvitationServiceImpl @Inject()(
           associationConnector.getPSAMinimalDetails(invitation.inviteePsaId).flatMap {
             case Right(psaDetails) =>
 
-              isAssociated(invitation.inviteePsaId, ???) flatMap {
-                case true => ???
+              isAssociated(invitation.inviteePsaId, SchemeReferenceNumber("S0987654321")) flatMap {
+                case true => Future.successful(Left(new BadRequestException("The invitation is to a PSA already associated with this scheme")))
                 case false =>
 
 
@@ -103,7 +103,14 @@ class InvitationServiceImpl @Inject()(
     )
   }
 
-  private def isAssociated(psaId: PsaId, srn: SchemeReferenceNumber): Future[Boolean] = ???
+  private def isAssociated(psaId: PsaId, srn: SchemeReferenceNumber)(implicit hc: HeaderCarrier, requestHeader: RequestHeader): Future[Boolean] =
+    schemeConnector.checkForAssociation(psaId, srn) map {
+      case Right(json) => json.validate[Boolean].fold(
+        invalid => ???,
+        valid => valid
+      )
+      case Left(exception) => ???
+    }
 
   private def doNamesMatch(inviteeName: String, psaDetails: PSAMinimalDetails): Boolean = {
 

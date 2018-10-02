@@ -102,8 +102,8 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
 
     val fixture = testFixture()
 
-    recoverToSucceededIf[BadRequestException] {
-      fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, johnDoe.individualDetails.value.name))
+    fixture.invitationService.invitePSA(invitationJson(associatedPsaId, johnDoe.individualDetails.value.name)) map { response =>
+      response.left.value shouldBe a[BadRequestException]
     }
 
   }
@@ -241,23 +241,24 @@ object InvitationServiceImplSpec extends MockitoSugar {
 
   val testSchemeName = "test-scheme"
 
-  def invitation(inviteePsaId: String, inviteeName: String): Invitation =
-    Invitation("test-pstr", testSchemeName, PsaId("A7654321"), PsaId(inviteePsaId), inviteeName)
+  def invitation(inviteePsaId: PsaId, inviteeName: String): Invitation =
+    Invitation("test-pstr", testSchemeName, PsaId("A7654321"), inviteePsaId, inviteeName)
 
-  def invitationJson(inviteePsaId: String, inviteeName: String): JsValue =
+  def invitationJson(inviteePsaId: PsaId, inviteeName: String): JsValue =
     Json.toJson(invitation(inviteePsaId, inviteeName))
 
-  val johnDoePsaId = "A2000001"
+  val johnDoePsaId = PsaId("A2000001")
   val johnDoeEmail = "john.doe@email.com"
   val johnDoe = PSAMinimalDetails(johnDoeEmail, false, None, Some(IndividualDetails("John", None, "Doe")))
 
-  val joeBloggsPsaId = "A2000002"
+  val joeBloggsPsaId = PsaId("A2000002")
   val joeBloggs = PSAMinimalDetails("joe.bloggs@email.com", false, None, Some(IndividualDetails("Joe", Some("Herbert"), "Bloggs")))
 
-  val acmeLtdPsaId = "A2000003"
+  val acmeLtdPsaId = PsaId("A2000003")
   val acmeLtd = PSAMinimalDetails("info@acme.com", false, Some("Acme Ltd"), None)
 
-  val notFoundPsaId = "A2000004"
+  val notFoundPsaId = PsaId("A2000004")
+  val associatedPsaId = PsaId("A2000005")
 
   object FakeConfig {
     val invitationExpiryDays: Int = 30
@@ -272,8 +273,8 @@ class FakeAssociationConnector extends AssociationConnector {
   def getPSAMinimalDetails(psaId: PsaId)
                           (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = {
 
-    psaId.value match {
-      case `johnDoePsaId` => Future.successful(Right(johnDoe))
+    psaId match {
+      case `johnDoePsaId` | `associatedPsaId` => Future.successful(Right(johnDoe))
       case `notFoundPsaId` => Future.successful(Left(new NotFoundException("NOT_FOUND")))
       case `joeBloggsPsaId` => Future.successful(Right(joeBloggs))
       case `acmeLtdPsaId` => Future.successful(Right(acmeLtd))
@@ -295,7 +296,7 @@ class FakeSchemeConnector extends SchemeConnector {
 
   override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)
                                   (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-    Future.successful(Right(JsBoolean(psaId.value == johnDoePsaId)))
+    Future.successful(Right(JsBoolean(psaId equals associatedPsaId)))
   }
 
 }
