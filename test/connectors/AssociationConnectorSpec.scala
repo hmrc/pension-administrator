@@ -16,7 +16,7 @@
 
 package connectors
 
-import audit.AuditService
+import audit.{AuditService, InvitationAcceptanceAuditEvent}
 import audit.testdoubles.StubSuccessfulAuditService
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours
@@ -229,6 +229,27 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
   }
 
+  it should "correctly send an audit event for a valid request" in {
+    server.stubFor(
+      post(urlEqualTo(acceptInvitationUrl))
+        .withRequestBody(equalToJson(psaAssociationDetailsjsonUKAddress))
+        .willReturn(
+          aResponse()
+            .withStatus(OK)
+            .withHeader("Content-Type", "application/json")
+            .withBody(successResponseJson)
+        )
+    )
+
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
+      pensionAdvisorDetail = Some(pensionAdvisorDetailUK))
+
+    connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
+
+    val invitationAcceptanceAuditEvent = InvitationAcceptanceAuditEvent(acceptedInvitation, OK, Some(Json.parse(successResponseJson)))
+    auditService.verifySent(invitationAcceptanceAuditEvent) should equal(true)
+  }
+
   it should "correctly submit and handle a valid request for a non-UK address" in {
     server.stubFor(
       post(urlEqualTo(acceptInvitationUrl))
@@ -290,6 +311,27 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     connector.acceptInvitation(acceptedInvitation).collect {
       case Left(_: NotFoundException) => succeed
     }
+  }
+
+  it should "send an audit event with no response for a 404 response" in {
+    server.stubFor(
+      post(urlEqualTo(acceptInvitationUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(NOT_FOUND)
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
+      pensionAdvisorDetail = None)
+
+    connector.acceptInvitation(acceptedInvitation).collect {
+      case Left(_: NotFoundException) => succeed
+    }
+
+    val invitationAcceptanceAuditEvent = InvitationAcceptanceAuditEvent(acceptedInvitation, NOT_FOUND, None)
+    auditService.verifySent(invitationAcceptanceAuditEvent) should equal(true)
+
   }
 
   it should "return bad request exception for a 404 invalid payload response" in {
