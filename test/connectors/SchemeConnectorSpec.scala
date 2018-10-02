@@ -30,6 +30,7 @@ import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
+import uk.gov.hmrc.play.it.servicemanager.JsException
 import utils.{StubLogger, WireMockHelper}
 
 class SchemeConnectorSpec extends AsyncFlatSpec
@@ -67,7 +68,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     )
 
     connector.checkForAssociation(psaId, srn) map { response =>
-      response.right.value shouldBe true
+      response.right.value shouldBe JsBoolean(true)
     }
 
   }
@@ -88,7 +89,6 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     }
 
   }
-
 
 }
 

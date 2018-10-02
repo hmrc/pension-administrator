@@ -20,14 +20,14 @@ import audit.AuditService
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.{PSAMinimalDetails, SchemeReferenceNumber}
+import models.SchemeReferenceNumber
+import play.api.http.Status._
+import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, HttpResponse}
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
-import play.api.http.Status._
-import play.api.libs.json.JsSuccess
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,7 +37,7 @@ trait SchemeConnector {
     def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit
                                                                       headerCarrier: HeaderCarrier,
                                                                       ec: ExecutionContext,
-                                                                      request: RequestHeader): Future[Either[HttpException, Boolean]]
+                                                                      request: RequestHeader): Future[Either[HttpException, JsValue]]
 
 }
 
@@ -53,23 +53,20 @@ class SchemeConnectorImpl @Inject()(
   override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit
                                                                              headerCarrier: HeaderCarrier,
                                                                              ec: ExecutionContext,
-                                                                             request: RequestHeader): Future[Either[HttpException, Boolean]] = {
+                                                                             request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     val headers: Seq[(String, String)] = Seq(("psaId", psaId.value), ("schemeReferenceNumber", srn), ("Content-Type", "application/json"))
 
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headers)
+    implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headers: _*)
 
-    http.GET[HttpResponse](config.checkAssociationUrl)(implicitly, hc, implicitly) map handleResponse
-  }
-
-  private def handleResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Either[HttpException, Boolean] = {
-    val badResponse = Seq("Bad Request with missing parameters PSA Id or SRN")
-    response.status match {
-      case OK => response.json.validate[Boolean] match {
-        case JsSuccess(value, _) => Right(value)
+    http.GET[HttpResponse](config.checkAssociationUrl)(implicitly, hc, implicitly) map { response =>
+      val badResponse = Seq("Bad Request with missing parameters PSA Id or SRN")
+      response.status match {
+        case OK => Right(response.json)
+        case _ => Left(handleErrorResponse(s"Check for Association with headers: ${hc.headers}", config.checkAssociationUrl, response, badResponse))
       }
-      case _ => Left(handleErrorResponse(s"PSA minimal details with headers: ${hc.headers}", config.checkAssociationUrl, response, badResponse))
     }
+
   }
 
 }
