@@ -118,6 +118,16 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
 
   }
 
+  it should "relay HttpExceptions throw from SchemeConnector" in {
+
+    val fixture = testFixture()
+
+    fixture.invitationService.invitePSA(invitationJson(exceptionResponsePsaId, johnDoe.individualDetails.value.name)) map { response =>
+      response.left.value shouldBe a[NotFoundException]
+    }
+
+  }
+
   it should "return NotFoundException if the PSA Id cannot be found" in {
 
     val fixture = testFixture()
@@ -270,6 +280,7 @@ object InvitationServiceImplSpec extends MockitoSugar {
   val notFoundPsaId = PsaId("A2000004")
   val associatedPsaId = PsaId("A2000005")
   val invalidResponsePsaId = PsaId("A2000006")
+  val exceptionResponsePsaId = PsaId("A2000007")
 
   object FakeConfig {
     val invitationExpiryDays: Int = 30
@@ -285,10 +296,10 @@ class FakeAssociationConnector extends AssociationConnector {
                           (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = {
 
     psaId match {
-      case `johnDoePsaId` | `associatedPsaId` | `invalidResponsePsaId` => Future.successful(Right(johnDoe))
+      case `johnDoePsaId` | `associatedPsaId` => Future.successful(Right(johnDoe))
+      case `joeBloggsPsaId` | `exceptionResponsePsaId` => Future.successful(Right(joeBloggs))
+      case `acmeLtdPsaId` | `invalidResponsePsaId` => Future.successful(Right(acmeLtd))
       case `notFoundPsaId` => Future.successful(Left(new NotFoundException("NOT_FOUND")))
-      case `joeBloggsPsaId` => Future.successful(Right(joeBloggs))
-      case `acmeLtdPsaId` => Future.successful(Right(acmeLtd))
       case unknownPsaId => throw new IllegalArgumentException(s"FakeAssociationConnector cannot handle PSA Id $unknownPsaId")
     }
 
@@ -310,6 +321,8 @@ class FakeSchemeConnector extends SchemeConnector {
     Future.successful {
       if (psaId equals invalidResponsePsaId) {
         Right(Json.obj())
+      } else if (psaId equals exceptionResponsePsaId) {
+        Left(new NotFoundException("Cannot find this endpoint"))
       } else {
         Right(JsBoolean(psaId equals associatedPsaId))
       }

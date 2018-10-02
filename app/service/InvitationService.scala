@@ -111,7 +111,7 @@ class InvitationServiceImpl @Inject()(
         invalid => Left(new InternalServerException("Response from pension-scheme cannot be parsed to boolean")),
         Right(_)
       )
-      case Left(exception) => ???
+      case Left(ex) => Left(ex)
     }
 
   private def doNamesMatch(inviteeName: String, psaDetails: PSAMinimalDetails): Boolean = {
