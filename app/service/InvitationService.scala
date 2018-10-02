@@ -54,6 +54,16 @@ class InvitationServiceImpl @Inject()(
                                        schemeConnector: SchemeConnector
                                      ) extends InvitationService {
 
+  def handle[T](request: Future[Either[HttpException, T]])
+               (f: T => Future[Either[HttpException, Unit]]): Future[Either[HttpException, Unit]] = {
+    request flatMap {
+      case Right(n) =>
+        f(n)
+      case Left(error) =>
+        Future.successful(Left(error))
+    }
+  }
+
   override def invitePSA(jsValue: JsValue)
                         (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
     jsValue.validate[Invitation].fold(
@@ -64,41 +74,21 @@ class InvitationServiceImpl @Inject()(
       },
       {
         invitation => {
-
-
-          associationConnector.getPSAMinimalDetails(invitation.inviteePsaId).flatMap {
-            case Right(psaDetails) =>
-
-              isAssociated(invitation.inviteePsaId, SchemeReferenceNumber("S0987654321")) flatMap {
-                case Right(isAssociated) => isAssociated match {
-                  case true => Future.successful(Left(new BadRequestException("The invitation is to a PSA already associated with this scheme")))
-                  case false =>
-
-
-                    if (doNamesMatch(invitation.inviteeName, psaDetails)) {
-
-
-                      insertInvitation(invitation).flatMap {
-                        case Right(_) =>
-                          auditService.sendEvent(InvitationAuditEvent(invitation))
-                          sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
-                        case Left(error) =>
-                          Future.successful(Left(error))
-                      }
-
-                    }
-                    else {
-                      Future.successful(Left(new NotFoundException("NOT_FOUND")))
-                    }
-
-
+          handle[PSAMinimalDetails](associationConnector.getPSAMinimalDetails(invitation.inviteePsaId)){ psaDetails =>
+            handle[Boolean](isAssociated(invitation.inviteePsaId, SchemeReferenceNumber("S0987654321"))){
+              case true => Future.successful(Left(new BadRequestException("The invitation is to a PSA already associated with this scheme")))
+              case false =>
+                if (doNamesMatch(invitation.inviteeName, psaDetails)) {
+                  handle[Unit](insertInvitation(invitation)){ x =>
+                    auditService.sendEvent(InvitationAuditEvent(invitation))
+                    sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
+                  }
                 }
-                case Left(ex) => Future.successful(Left(ex))
-              }
-            case Left(ex) => Future.successful(Left(ex))
+                else {
+                  Future.successful(Left(new NotFoundException("NOT_FOUND")))
+                }
+            }
           }
-
-
         }
       }
     )
