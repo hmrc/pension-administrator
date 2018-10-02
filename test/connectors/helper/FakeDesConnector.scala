@@ -44,7 +44,6 @@ class FakeDesConnector extends DesConnector {
                                                         ec: ExecutionContext,
                                                         request: RequestHeader): Future[Either[HttpException, JsValue]] = Future.successful(Right(Json.obj()))
 
-  override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Boolean]] = ???
 }
 
 object FakeDesConnector {

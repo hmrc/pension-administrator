@@ -36,11 +36,6 @@ import scala.util.{Success, Try}
 @ImplementedBy(classOf[DesConnectorImpl])
 trait DesConnector {
 
-  def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit
-                                        headerCarrier: HeaderCarrier,
-                                        ec: ExecutionContext,
-                                        request: RequestHeader): Future[Either[HttpException, Boolean]]
-
   def registerPSA(registerData: JsValue)(implicit
                                          headerCarrier: HeaderCarrier,
                                          ec: ExecutionContext,
@@ -89,26 +84,6 @@ class DesConnectorImpl @Inject()(
       implicitly[HeaderCarrier](hc),
       implicitly) map { handleGetResponse(_, subscriptionDetailsUrl) } andThen logWarning("PSA subscription details")
 
-  }
-
-  override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit
-                                                                             headerCarrier: HeaderCarrier,
-                                                                             ec: ExecutionContext,
-                                                                             request: RequestHeader): Future[Either[HttpException, Boolean]] = {
-
-    val headers: Seq[(String, String)] = Seq(("psaId", psaId.value), ("schemeReferenceNumber", srn), ("Content-Type", "application/json"))
-
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headers)
-
-    http.GET[HttpResponse](config.checkAssociationUrl)(implicitly, hc, implicitly) map {
-      case HttpResponse(OK, json, _, _) =>
-        json.validate[Boolean].fold(
-          x => Left(???),
-          Right(_)
-        )
-      case response =>
-        Left(handleErrorResponse("Check for association", config.checkAssociationUrl, response, Seq.empty))
-    }
   }
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {

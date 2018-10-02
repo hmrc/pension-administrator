@@ -185,7 +185,6 @@ object DesConnectorSpec extends JsonFileReader {
 
   val registerPsaUrl = "/pension-online/subscription"
   val psaSubscriptionDetailsUrl = s"/pension-online/psa-subscription-details/$psaId"
-  val checkForAssociationUrl = "/pensions-scheme/is-psa-associated"
 
   private val invalidBusinessPartnerResponse =
     Json.stringify(
