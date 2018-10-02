@@ -18,7 +18,7 @@ package service
 
 import audit.{PSASubscription, StubSuccessfulAuditService}
 import base.SpecBase
-import connectors.helper.FakeSchemeConnector
+import connectors.helper.FakeDesConnector
 import models.PensionSchemeAdministrator
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.http.Status
@@ -31,7 +31,7 @@ import scala.concurrent.Future
 
 class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues {
 
-  import connectors.helper.FakeSchemeConnector._
+  import connectors.helper.FakeDesConnector._
   import SchemeServiceImplSpec._
 
   "registerPSA" should "return the result from the connector" in {
@@ -104,7 +104,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 object SchemeServiceImplSpec extends SpecBase {
 
   trait TestFixture {
-    val schemeConnector: FakeSchemeConnector = new FakeSchemeConnector()
+    val schemeConnector: FakeDesConnector = new FakeDesConnector()
     val auditService: StubSuccessfulAuditService = new StubSuccessfulAuditService()
     val schemeService: SchemeServiceImpl = new SchemeServiceImpl(schemeConnector, auditService, appConfig) {
     }

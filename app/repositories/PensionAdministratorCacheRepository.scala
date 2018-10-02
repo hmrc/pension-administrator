@@ -49,23 +49,13 @@ abstract class PensionAdministratorCacheRepository(
   private case class DataEntry(
                                 id: String,
                                 data: BSONBinary,
-                                lastUpdated: DateTime,
-                                expireAt: Option[DateTime])
+                                lastUpdated: DateTime)
   // scalastyle:off magic.number
   private object DataEntry {
     def apply(id: String,
               data: Array[Byte],
-              lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
-              expireAt: Option[DateTime] = None): DataEntry = {
-      ttl match {
-        case None => DataEntry(id, BSONBinary(data, GenericBinarySubtype), lastUpdated, None)
-        case Some(_) => DataEntry(id, BSONBinary(
-          data,
-          GenericBinarySubtype),
-          lastUpdated,
-          Some(DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), 30)))
-      }
-    }
+              lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)): DataEntry =
+     DataEntry(id, BSONBinary(data, GenericBinarySubtype), lastUpdated)
 
       private implicit val dateFormat: Format[DateTime] =
       ReactiveMongoFormats.dateTimeFormats
@@ -85,7 +75,7 @@ abstract class PensionAdministratorCacheRepository(
     implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 
-  private val fieldName = "expireAt"
+  private val fieldName = "lastUpdated"
   private val createdIndexName = "dataExpiry"
   private val expireAfterSeconds = "expireAfterSeconds"
 
@@ -107,7 +97,7 @@ abstract class PensionAdministratorCacheRepository(
 
     collection.indexesManager.ensure(index) map {
       result => {
-        Logger.debug(s"set [$indexName] with value $ttl -> result : $result")
+        Logger.warn(s"Created index $indexName on collection ${collection.name} with TTL value $ttl -> result: $result")
         result
       }
     } recover {
@@ -174,9 +164,10 @@ abstract class PensionAdministratorCacheRepository(
     }
   }
 
-
   def remove(id: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    Logger.warn(s"Removing row from collection ${collection.name} externalId:$id")
     val selector = BSONDocument("id" -> id)
     collection.remove(selector).map(_.ok)
   }
+
 }

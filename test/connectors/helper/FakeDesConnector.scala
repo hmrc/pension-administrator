@@ -26,9 +26,9 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeSchemeConnector extends DesConnector {
+class FakeDesConnector extends DesConnector {
 
-  import FakeSchemeConnector._
+  import FakeDesConnector._
 
   private var registerPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
 
@@ -47,7 +47,7 @@ class FakeSchemeConnector extends DesConnector {
   override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Boolean]] = ???
 }
 
-object FakeSchemeConnector {
+object FakeDesConnector {
 
   val registerPsaResponseJson: JsValue =
     Json.obj(

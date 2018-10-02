@@ -16,10 +16,10 @@
 
 package models
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{Format, Json, Writes}
 
 case class Invitation(pstr: String, schemeName: String, inviterPsaId: String, inviteePsaId: String, inviteeName: String)
 
 object Invitation {
-  implicit val formats: Format[Invitation] = Json.format
+  implicit val formats: Format[Invitation] = Json.format[Invitation]
 }
