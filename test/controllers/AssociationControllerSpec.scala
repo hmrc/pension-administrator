@@ -177,5 +177,3 @@ object AssociationControllerSpec {
     """.stripMargin
   )
 }
-
-

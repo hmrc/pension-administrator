@@ -57,9 +57,7 @@ class AssociationController @Inject()(
               ),
             acceptedInvitation =>
               associationConnector.acceptInvitation(acceptedInvitation).map {
-                case Right(_) =>
-
-                  Created
+                case Right(_) => Created
                 case Left(e) => result(e)
               }
           )

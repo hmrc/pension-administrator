@@ -42,6 +42,4 @@ case class InvitationAcceptanceAuditEvent(acceptedInvitation: AcceptedInvitation
     )
 }
 
-object InvitationAcceptanceAuditEvent {
-  //implicit val formatsPSASubscription: Format[InvitationAcceptanceAuditEvent] = Json.format[InvitationAcceptanceAuditEvent]
-}
+
