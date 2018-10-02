@@ -67,7 +67,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     )
 
     connector.checkForAssociation(psaId, srn) map { response =>
-      response.right.value shouldBe JsBoolean(true)
+      response.right.value shouldBe true
     }
 
   }

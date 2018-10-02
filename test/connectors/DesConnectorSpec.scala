@@ -57,7 +57,7 @@ class DesConnectorSpec extends AsyncFlatSpec
   lazy val connector: DesConnector = injector.instanceOf[DesConnector]
   lazy val appConfig: AppConfig = injector.instanceOf[AppConfig]
 
-  "SchemeConnector registerPSA" should "handle OK (200)" in {
+  "DesConnector registerPSA" should "handle OK (200)" in {
     val successResponse = Json.obj(
       "processingDate" -> LocalDate.now,
       "formBundle" -> "1121313",
@@ -150,7 +150,7 @@ class DesConnectorSpec extends AsyncFlatSpec
     registerPsaUrl
   )
 
-  "SchemeConnector getPSASubscriptionDetails" should "handle OK (200)" in {
+  "DesConnector getPSASubscriptionDetails" should "handle OK (200)" in {
 
        server.stubFor(
          get(urlEqualTo(psaSubscriptionDetailsUrl))

@@ -30,7 +30,7 @@ import play.api.http.Status._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-@ImplementedBy(classOf[DesConnectorImpl])
+@ImplementedBy(classOf[SchemeConnectorImpl])
 trait SchemeConnector {
 
     def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit
