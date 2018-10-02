@@ -177,6 +177,8 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     server.stubFor(
       get(urlEqualTo(s"${appConfig.pensionsScheme}/psa-associated"))
         .withHeader("Content-Type", equalTo("application/json"))
+        .withHeader("psaId", equalTo(psaId.value))
+        .withHeader("schemeReferenceNumber", equalTo(srn))
         .willReturn(
           ok(JsBoolean(true).toString())
             .withHeader("Content-Type", "application/json")
