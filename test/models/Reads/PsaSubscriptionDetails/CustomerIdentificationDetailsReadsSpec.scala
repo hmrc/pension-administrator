@@ -16,11 +16,11 @@
 
 package models.Reads.PsaSubscriptionDetails
 
+import models.PsaSubscription.CustomerIdentificationDetails
 import models.Samples
 import org.scalacheck.Gen
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
 
 class CustomerIdentificationDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
   "A valid payload with Customer Identification Details" should {
@@ -49,20 +49,10 @@ class CustomerIdentificationDetailsReadsSpec extends WordSpec with MustMatchers 
       }
 
       "we have a flag for noIdentifier" in {
-        result.isNonUK mustBe (customerIdentificationDetails \ "noIdentifier").as[Boolean]
+        result.isOverseasCustomer mustBe (customerIdentificationDetails \ "noIdentifier").as[Boolean]
       }
     }
   }
 }
 
-case class CustomerIdentificationDetails(legalStatus: String, typeOfId: Option[String], number: Option[String], isNonUK: Boolean)
 
-object CustomerIdentificationDetails {
-  implicit val reads : Reads[CustomerIdentificationDetails] = (
-    (JsPath \ "legalStatus").read[String] and
-      (JsPath \ "idType").readNullable[String] and
-      (JsPath \ "idNumber").readNullable[String] and
-      (JsPath \ "noIdentifier").read[Boolean]
-  )((legalStatus, typeOfId, number, isNonUK) => CustomerIdentificationDetails(legalStatus, typeOfId, number, isNonUK))
-  implicit val writes : Writes[CustomerIdentificationDetails] = Json.writes[CustomerIdentificationDetails]
-}
