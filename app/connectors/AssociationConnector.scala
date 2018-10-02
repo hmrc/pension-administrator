@@ -98,13 +98,13 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   private def processResponse(acceptedInvitation: AcceptedInvitation,
                               response: HttpResponse, url: String)(implicit request: RequestHeader, ec: ExecutionContext) = {
+    val sendAuditEvent = sendAcceptInvitationAuditEvent(acceptedInvitation, response.status, _ : Option[JsValue])
     if (response.status == OK) {
-      sendAcceptInvitationAuditEvent(acceptedInvitation, response.status, Some(response.json))
+      sendAuditEvent(Some(response.json))
       Logger.info(s"POST of $url returned successfully")
       Right(())
     } else {
-      sendAcceptInvitationAuditEvent(acceptedInvitation, response.status,
-        if (response.body.isEmpty) None else Some(response.json))
+      sendAuditEvent(if (response.body.isEmpty) None else Some(response.json))
       processFailureResponse(response, url)
     }
   }
