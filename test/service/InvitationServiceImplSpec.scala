@@ -32,7 +32,7 @@ import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
+import uk.gov.hmrc.http._
 import utils.{DateHelper, FakeEmailConnector}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -104,6 +104,16 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
 
     fixture.invitationService.invitePSA(invitationJson(associatedPsaId, johnDoe.individualDetails.value.name)) map { response =>
       response.left.value shouldBe a[BadRequestException]
+    }
+
+  }
+
+  it should "throw InternalServerException if check for association is not a boolean" in {
+
+    val fixture = testFixture()
+
+    fixture.invitationService.invitePSA(invitationJson(invalidResponsePsaId, johnDoe.individualDetails.value.name)) map { response =>
+      response.left.value shouldBe a[InternalServerException]
     }
 
   }
@@ -259,6 +269,7 @@ object InvitationServiceImplSpec extends MockitoSugar {
 
   val notFoundPsaId = PsaId("A2000004")
   val associatedPsaId = PsaId("A2000005")
+  val invalidResponsePsaId = PsaId("A2000006")
 
   object FakeConfig {
     val invitationExpiryDays: Int = 30
@@ -274,7 +285,7 @@ class FakeAssociationConnector extends AssociationConnector {
                           (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = {
 
     psaId match {
-      case `johnDoePsaId` | `associatedPsaId` => Future.successful(Right(johnDoe))
+      case `johnDoePsaId` | `associatedPsaId` | `invalidResponsePsaId` => Future.successful(Right(johnDoe))
       case `notFoundPsaId` => Future.successful(Left(new NotFoundException("NOT_FOUND")))
       case `joeBloggsPsaId` => Future.successful(Right(joeBloggs))
       case `acmeLtdPsaId` => Future.successful(Right(acmeLtd))
@@ -296,7 +307,13 @@ class FakeSchemeConnector extends SchemeConnector {
 
   override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)
                                   (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-    Future.successful(Right(JsBoolean(psaId equals associatedPsaId)))
+    Future.successful {
+      if (psaId equals invalidResponsePsaId) {
+        Right(Json.obj())
+      } else {
+        Right(JsBoolean(psaId equals associatedPsaId))
+      }
+    }
   }
 
 }

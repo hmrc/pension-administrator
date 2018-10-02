@@ -20,22 +20,20 @@ import audit.{AuditService, InvitationAuditEvent}
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors._
+import models._
 import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import repositories.InvitationsCacheRepository
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
+import uk.gov.hmrc.domain.PsaId
+import uk.gov.hmrc.http._
 import utils.{DateHelper, FuzzyNameMatcher}
 
 import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
-import config.AppConfig
-import models._
-import org.joda.time.LocalDate
-import uk.gov.hmrc.domain.PsaId
 
 case class MongoDBFailedException(exceptionMesage: String) extends HttpException(exceptionMesage, INTERNAL_SERVER_ERROR)
 
@@ -72,27 +70,30 @@ class InvitationServiceImpl @Inject()(
             case Right(psaDetails) =>
 
               isAssociated(invitation.inviteePsaId, SchemeReferenceNumber("S0987654321")) flatMap {
-                case true => Future.successful(Left(new BadRequestException("The invitation is to a PSA already associated with this scheme")))
-                case false =>
+                case Right(isAssociated) => isAssociated match {
+                  case true => Future.successful(Left(new BadRequestException("The invitation is to a PSA already associated with this scheme")))
+                  case false =>
 
 
-                  if (doNamesMatch(invitation.inviteeName, psaDetails)) {
+                    if (doNamesMatch(invitation.inviteeName, psaDetails)) {
 
 
-                    insertInvitation(invitation).flatMap {
-                      case Right(_) =>
-                        auditService.sendEvent(InvitationAuditEvent(invitation))
-                        sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
-                      case Left(error) =>
-                        Future.successful(Left(error))
+                      insertInvitation(invitation).flatMap {
+                        case Right(_) =>
+                          auditService.sendEvent(InvitationAuditEvent(invitation))
+                          sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
+                        case Left(error) =>
+                          Future.successful(Left(error))
+                      }
+
+                    }
+                    else {
+                      Future.successful(Left(new NotFoundException("NOT_FOUND")))
                     }
 
-                  }
-                  else {
-                    Future.successful(Left(new NotFoundException("NOT_FOUND")))
-                  }
 
-
+                }
+                case Left(ex) => Future.successful(Left(ex))
               }
             case Left(ex) => Future.successful(Left(ex))
           }
@@ -103,11 +104,12 @@ class InvitationServiceImpl @Inject()(
     )
   }
 
-  private def isAssociated(psaId: PsaId, srn: SchemeReferenceNumber)(implicit hc: HeaderCarrier, requestHeader: RequestHeader): Future[Boolean] =
+  private def isAssociated(psaId: PsaId, srn: SchemeReferenceNumber)
+                          (implicit hc: HeaderCarrier, requestHeader: RequestHeader): Future[Either[HttpException, Boolean]] =
     schemeConnector.checkForAssociation(psaId, srn) map {
       case Right(json) => json.validate[Boolean].fold(
-        invalid => ???,
-        valid => valid
+        invalid => Left(new InternalServerException("Response from pension-scheme cannot be parsed to boolean")),
+        Right(_)
       )
       case Left(exception) => ???
     }
