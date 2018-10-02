@@ -33,10 +33,10 @@ import play.api.libs.json.{JsBoolean, Json}
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.{StubLogger, WireMockHelper}
 
-class SchemeConnectorSpec extends AsyncFlatSpec
+class DesConnectorSpec extends AsyncFlatSpec
   with Matchers
   with WireMockHelper
   with OptionValues
@@ -44,7 +44,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
   with EitherValues
   with ConnectorBehaviours{
 
-  import SchemeConnectorSpec._
+  import DesConnectorSpec._
 
   override protected def portConfigKey: String = "microservice.services.des-hod.port"
 
@@ -54,7 +54,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
       bind[LoggerLike].toInstance(logger)
     )
 
-  lazy val connector: SchemeConnector = injector.instanceOf[SchemeConnector]
+  lazy val connector: DesConnector = injector.instanceOf[DesConnector]
   lazy val appConfig: AppConfig = injector.instanceOf[AppConfig]
 
   "SchemeConnector registerPSA" should "handle OK (200)" in {
@@ -172,29 +172,9 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     psaSubscriptionDetailsUrl
   )
 
-  "SchemeConnector checkForAssociation" should "handle OK (200)" in {
+}
 
-    server.stubFor(
-      get(urlEqualTo(s"${appConfig.pensionsScheme}/psa-associated"))
-        .withHeader("Content-Type", equalTo("application/json"))
-        .withHeader("psaId", equalTo(psaId.value))
-        .withHeader("schemeReferenceNumber", equalTo(srn))
-        .willReturn(
-          ok(JsBoolean(true).toString())
-            .withHeader("Content-Type", "application/json")
-        )
-    )
-
-    connector.checkForAssociation(psaId, srn) map { response =>
-      response.right.value shouldBe psaSubscriptionData
-      server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
-    }
-
-  }
-
-  }
-
-object SchemeConnectorSpec extends JsonFileReader {
+object DesConnectorSpec extends JsonFileReader {
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val rh: RequestHeader = FakeRequest("", "")
   private val registerPsaData = readJsonFromFile("/data/validPsaRequest.json")
@@ -202,8 +182,10 @@ object SchemeConnectorSpec extends JsonFileReader {
 
   val srn = SchemeReferenceNumber("S0987654321")
   val psaId = PsaId("A7654321")
+
   val registerPsaUrl = "/pension-online/subscription"
   val psaSubscriptionDetailsUrl = s"/pension-online/psa-subscription-details/$psaId"
+  val checkForAssociationUrl = "/pensions-scheme/is-psa-associated"
 
   private val invalidBusinessPartnerResponse =
     Json.stringify(

@@ -16,17 +16,17 @@
 
 package connectors.helper
 
-import connectors.SchemeConnector
+import connectors.DesConnector
 import models.SchemeReferenceNumber
 import org.joda.time.LocalDate
-import play.api.libs.json.{JsBoolean, JsValue, Json}
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeSchemeConnector extends SchemeConnector {
+class FakeSchemeConnector extends DesConnector {
 
   import FakeSchemeConnector._
 
@@ -44,7 +44,7 @@ class FakeSchemeConnector extends SchemeConnector {
                                                         ec: ExecutionContext,
                                                         request: RequestHeader): Future[Either[HttpException, JsValue]] = Future.successful(Right(Json.obj()))
 
-  override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsBoolean]] = ???
+  override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Boolean]] = ???
 }
 
 object FakeSchemeConnector {

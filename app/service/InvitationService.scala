@@ -17,7 +17,7 @@
 package service
 
 import com.google.inject.{ImplementedBy, Inject}
-import connectors.{AssociationConnector, SchemeConnector}
+import connectors.{AssociationConnector, DesConnector}
 import models.{IndividualDetails, Invitation, PSAMinimalDetails}
 import play.api.Logger
 import play.api.libs.json._
@@ -45,7 +45,7 @@ class InvitationServiceImpl @Inject()(
   associationConnector: AssociationConnector,
   emailConnector: EmailConnector,
   config: AppConfig,
-  schemeConnector: SchemeConnector
+  schemeConnector: DesConnector
 ) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)

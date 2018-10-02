@@ -23,8 +23,8 @@ import connectors.helper.HeaderUtils
 import models.SchemeReferenceNumber
 import play.Logger
 import play.api.http.Status._
-import play.api.libs.json.{JsBoolean, JsValue, Json}
-import play.api.mvc.{RequestHeader, Result}
+import play.api.libs.json.JsValue
+import play.api.mvc.RequestHeader
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -33,13 +33,13 @@ import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
 
-@ImplementedBy(classOf[SchemeConnectorImpl])
-trait SchemeConnector {
+@ImplementedBy(classOf[DesConnectorImpl])
+trait DesConnector {
 
   def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit
                                         headerCarrier: HeaderCarrier,
                                         ec: ExecutionContext,
-                                        request: RequestHeader): Future[Either[HttpException, JsBoolean]]
+                                        request: RequestHeader): Future[Either[HttpException, Boolean]]
 
   def registerPSA(registerData: JsValue)(implicit
                                          headerCarrier: HeaderCarrier,
@@ -52,13 +52,13 @@ trait SchemeConnector {
                                                request: RequestHeader): Future[Either[HttpException, JsValue]]
 }
 
-class SchemeConnectorImpl @Inject()(
+class DesConnectorImpl @Inject()(
                                      http: HttpClient,
                                      config: AppConfig,
                                      auditService: AuditService,
                                      invalidPayloadHandler: InvalidPayloadHandler,
                                      headerUtils: HeaderUtils
-                                   ) extends SchemeConnector with HttpResponseHelper with ErrorHandler {
+                                   ) extends DesConnector with HttpResponseHelper with ErrorHandler {
 
   override def registerPSA(registerData: JsValue)(implicit
                                                   headerCarrier: HeaderCarrier,
@@ -84,7 +84,9 @@ class SchemeConnectorImpl @Inject()(
 
     val subscriptionDetailsUrl = config.psaSubscriptionDetailsUrl.format(psaId)
 
-    http.GET[HttpResponse](subscriptionDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
+    http.GET[HttpResponse](subscriptionDetailsUrl)(
+      implicitly[HttpReads[HttpResponse]],
+      implicitly[HeaderCarrier](hc),
       implicitly) map { handleGetResponse(_, subscriptionDetailsUrl) } andThen logWarning("PSA subscription details")
 
   }
@@ -92,7 +94,22 @@ class SchemeConnectorImpl @Inject()(
   override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit
                                                                              headerCarrier: HeaderCarrier,
                                                                              ec: ExecutionContext,
-                                                                             request: RequestHeader): Future[Either[HttpException, JsBoolean]] = ???
+                                                                             request: RequestHeader): Future[Either[HttpException, Boolean]] = {
+
+    val headers: Seq[(String, String)] = Seq(("psaId", psaId.value), ("schemeReferenceNumber", srn), ("Content-Type", "application/json"))
+
+    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headers)
+
+    http.GET[HttpResponse](config.checkAssociationUrl)(implicitly, hc, implicitly) map {
+      case HttpResponse(OK, json, _, _) =>
+        json.validate[Boolean].fold(
+          x => Left(???),
+          Right(_)
+        )
+      case response =>
+        Left(handleErrorResponse("Check for association", config.checkAssociationUrl, response, Seq.empty))
+    }
+  }
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
 
@@ -113,7 +130,7 @@ class SchemeConnectorImpl @Inject()(
 
     response.status match {
       case OK => Right(response.json)
-      case status => Left(handleErrorResponse("PSA Subscription details", url, response, badResponseSeq))
+      case _ => Left(handleErrorResponse("PSA Subscription details", url, response, badResponseSeq))
     }
 
   }

@@ -19,7 +19,7 @@ package service
 import audit.{AuditService, SchemeAuditService}
 import com.google.inject.Inject
 import config.AppConfig
-import connectors.SchemeConnector
+import connectors.DesConnector
 import models.PensionSchemeAdministrator
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
@@ -29,7 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 import utils.validationUtils._
 
-class SchemeServiceImpl @Inject()(schemeConnector: SchemeConnector,
+class SchemeServiceImpl @Inject()(schemeConnector: DesConnector,
                                   auditService: AuditService, appConfig: AppConfig) extends SchemeService with SchemeAuditService {
 
   override def registerPSA(json: JsValue)
