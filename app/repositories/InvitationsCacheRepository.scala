@@ -147,7 +147,7 @@ class InvitationsCacheRepository @Inject()(
   def insert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
 
     val (selector, modifier) = if (encrypted) {
-      val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId)).value
+      val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId.value)).value
       val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
 
       val unencrypted = PlainText(Json.stringify(Json.toJson(invitation)))
@@ -157,8 +157,8 @@ class InvitationsCacheRepository @Inject()(
       (BSONDocument(inviteePsaIdKey -> encryptedInviteePsaId, pstrKey -> encryptedPstr),
         BSONDocument("$set" -> Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray))))
     } else {
-      val record = JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation))
-      (BSONDocument(inviteePsaIdKey -> invitation.inviteePsaId, pstrKey -> invitation.pstr),
+      val record = JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId.value, invitation.pstr, Json.toJson(invitation))
+      (BSONDocument(inviteePsaIdKey -> invitation.inviteePsaId.value, pstrKey -> invitation.pstr),
         BSONDocument("$set" -> Json.toJson(record)))
     }
     collection.update(selector, modifier, upsert = true)

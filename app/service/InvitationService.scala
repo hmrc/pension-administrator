@@ -19,7 +19,7 @@ package service
 import audit.{AuditService, InvitationAuditEvent}
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
-import connectors.{AssociationConnector, DesConnector, EmailConnector, EmailSent}
+import connectors._
 import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.http.Status.INTERNAL_SERVER_ERROR
@@ -33,8 +33,7 @@ import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 import config.AppConfig
-import connectors.{AssociationConnector, EmailConnector, EmailSent}
-import models.{IndividualDetails, Invitation, PSAMinimalDetails, SendEmailRequest}
+import models._
 import org.joda.time.LocalDate
 import uk.gov.hmrc.domain.PsaId
 
@@ -54,13 +53,8 @@ class InvitationServiceImpl @Inject()(
                                        config: AppConfig,
                                        repository: InvitationsCacheRepository,
                                        auditService: AuditService,
-                                       desConnector: DesConnector
+                                       schemeConnector: SchemeConnector
                                      ) extends InvitationService {
-
-  private def sendInvitationRequestAuditEvent(invitation: Invitation)(implicit headerCarrier: HeaderCarrier,
-                                                                      ec: ExecutionContext,
-                                                                      rh: RequestHeader): Unit =
-    auditService.sendEvent(InvitationAuditEvent(invitation))
 
   override def invitePSA(jsValue: JsValue)
                         (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
@@ -71,28 +65,45 @@ class InvitationServiceImpl @Inject()(
           Future.failed(new BadRequestException(s"Bad invitation format sent $errors"))
       },
       {
-        invitation =>
+        invitation => {
+
+
           associationConnector.getPSAMinimalDetails(invitation.inviteePsaId).flatMap {
             case Right(psaDetails) =>
-              if (doNamesMatch(invitation.inviteeName, psaDetails)) {
-                insertInvitation(invitation).flatMap {
-                  case Right(_) =>
-                    sendInvitationRequestAuditEvent(invitation)
-                    sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
-                  case Left(error) =>
-                    Future.successful(Left(error))
-                }
-              }
-              else {
-                Future.successful(Left(new NotFoundException("NOT_FOUND")))
+
+              isAssociated(invitation.inviteePsaId, ???) flatMap {
+                case true => ???
+                case false =>
+
+
+                  if (doNamesMatch(invitation.inviteeName, psaDetails)) {
+
+
+                    insertInvitation(invitation).flatMap {
+                      case Right(_) =>
+                        auditService.sendEvent(InvitationAuditEvent(invitation))
+                        sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
+                      case Left(error) =>
+                        Future.successful(Left(error))
+                    }
+
+                  }
+                  else {
+                    Future.successful(Left(new NotFoundException("NOT_FOUND")))
+                  }
+
+
               }
             case Left(ex) => Future.successful(Left(ex))
           }
+
+
+        }
       }
     )
   }
 
-  private def checkForExistingInvite(psaId: PsaId): Either[HttpException, Unit] = ???
+  private def isAssociated(psaId: PsaId, srn: SchemeReferenceNumber): Future[Boolean] = ???
 
   private def doNamesMatch(inviteeName: String, psaDetails: PSAMinimalDetails): Boolean = {
 

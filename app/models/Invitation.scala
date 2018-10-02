@@ -16,9 +16,10 @@
 
 package models
 
-import play.api.libs.json.{Format, Json, Writes}
+import play.api.libs.json.{Format, Json}
+import uk.gov.hmrc.domain.PsaId
 
-case class Invitation(pstr: String, schemeName: String, inviterPsaId: String, inviteePsaId: String, inviteeName: String)
+case class Invitation(pstr: String, schemeName: String, inviterPsaId: PsaId, inviteePsaId: PsaId, inviteeName: String)
 
 object Invitation {
   implicit val formats: Format[Invitation] = Json.format[Invitation]

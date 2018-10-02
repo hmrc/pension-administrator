@@ -16,30 +16,26 @@
 
 package service
 
-import audit.{AuditService, EmailAuditEvent, InvitationAuditEvent, StubSuccessfulAuditService}
+import audit.InvitationAuditEvent
 import config.AppConfig
-import connectors.AssociationConnector
-import connectors.helper.FakeDesConnector
-import models._
+import connectors.{AssociationConnector, SchemeConnector}
+import controllers.EmailResponseControllerSpec.fakeAuditService
+import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails, _}
 import org.joda.time.LocalDate
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{never, times, verify, when}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.AnyContentAsEmpty
+import play.api.libs.json.{JsBoolean, JsValue, Json}
+import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
 import repositories.InvitationsCacheRepository
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
 import utils.{DateHelper, FakeEmailConnector}
-import org.mockito.Mockito._
 
 import scala.concurrent.{ExecutionContext, Future}
-import controllers.EmailResponseControllerSpec.{fakeAuditService, psa}
-import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails, _}
-import connectors.helper.FakeDesConnector
-import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails, _}
 
 class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues with MockitoSugar {
 
@@ -98,6 +94,16 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
 
     recoverToSucceededIf[BadRequestException] {
       fixture.invitationService.invitePSA(Json.obj())
+    }
+
+  }
+
+  it should "throw BadRequestException if the Invitation is for a PSA already associated to that scheme" in {
+
+    val fixture = testFixture()
+
+    recoverToSucceededIf[BadRequestException] {
+      fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, johnDoe.individualDetails.value.name))
     }
 
   }
@@ -213,7 +219,7 @@ object InvitationServiceImplSpec extends MockitoSugar {
 
     val associationConnector: FakeAssociationConnector = new FakeAssociationConnector()
     val repository: InvitationsCacheRepository = mock[InvitationsCacheRepository]
-    val fakeSchemeConnector: FakeDesConnector = new FakeDesConnector()
+    val fakeSchemeConnector: SchemeConnector = new FakeSchemeConnector()
 
     val emailConnector: FakeEmailConnector = new FakeEmailConnector()
 
@@ -226,7 +232,9 @@ object InvitationServiceImplSpec extends MockitoSugar {
         fakeAuditService,
         fakeSchemeConnector
       )
-    when(repository.insert(any())(any())).thenReturn(Future.successful(true))
+
+    when(repository.insert(any())(any()))
+      .thenReturn(Future.successful(true))
   }
 
   def testFixture(): TestFixture = new TestFixture() {}
@@ -234,7 +242,7 @@ object InvitationServiceImplSpec extends MockitoSugar {
   val testSchemeName = "test-scheme"
 
   def invitation(inviteePsaId: String, inviteeName: String): Invitation =
-    Invitation("test-pstr", testSchemeName, "test-inviter-psa-id", inviteePsaId, inviteeName)
+    Invitation("test-pstr", testSchemeName, PsaId("A7654321"), PsaId(inviteePsaId), inviteeName)
 
   def invitationJson(inviteePsaId: String, inviteeName: String): JsValue =
     Json.toJson(invitation(inviteePsaId, inviteeName))
@@ -261,10 +269,10 @@ class FakeAssociationConnector extends AssociationConnector {
 
   import InvitationServiceImplSpec._
 
-  def getPSAMinimalDetails(psaId: String)
+  def getPSAMinimalDetails(psaId: PsaId)
                           (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = {
 
-    psaId match {
+    psaId.value match {
       case `johnDoePsaId` => Future.successful(Right(johnDoe))
       case `notFoundPsaId` => Future.successful(Left(new NotFoundException("NOT_FOUND")))
       case `joeBloggsPsaId` => Future.successful(Right(joeBloggs))
@@ -281,3 +289,13 @@ class FakeAssociationConnector extends AssociationConnector {
 
 }
 
+class FakeSchemeConnector extends SchemeConnector {
+
+  import InvitationServiceImplSpec._
+
+  override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)
+                                  (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+    Future.successful(Right(JsBoolean(psaId.value == johnDoePsaId)))
+  }
+
+}

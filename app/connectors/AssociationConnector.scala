@@ -23,15 +23,17 @@ import models._
 import play.api.{Logger, LoggerLike}
 import play.api.http.Status._
 import play.api.libs.json._
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
 
-  def getPSAMinimalDetails(psaId: String)(implicit
+  def getPSAMinimalDetails(psaId: PsaId)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]]
 
@@ -49,7 +51,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   import AssociationConnectorImpl._
 
-  def getPSAMinimalDetails(psaId: String)(implicit
+  def getPSAMinimalDetails(psaId: PsaId)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = {
 

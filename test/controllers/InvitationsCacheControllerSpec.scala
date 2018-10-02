@@ -37,6 +37,7 @@ import reactivemongo.core.errors.DatabaseException
 import repositories.InvitationsCacheRepository
 import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, UnauthorizedException}
 
 import scala.concurrent.Future
@@ -46,7 +47,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
 
   private def configuration = Configuration("mongodb.pension-administrator-cache.maxSize" -> 512000)
 
-  private val invitation = Invitation("test-pstr", "test-scheme", "test-inviter-psa-id", "inviteePsaId", "inviteeName")
+  private val invitation = Invitation("test-pstr", "test-scheme", PsaId("A7654321"), PsaId("A1234567"), "inviteeName")
 
   private val repo = mock[InvitationsCacheRepository]
   private val authConnector: AuthConnector = mock[AuthConnector]
@@ -181,19 +182,19 @@ object InvitationsCacheControllerSpec {
 
   private val pstr1 = "S12345"
   private val schemeName1 = "Test scheme1 name"
-  private val inviterPsaId1 = "I12345"
-  private val inviteePsaId1 = "P12345"
+  private val inviterPsaId1 = PsaId("I1234567")
+  private val inviteePsaId1 = PsaId("P1234567")
   private val inviteeName1 = "Test Invitee1 Name"
 
   private val pstr2 = "D1234"
   private val schemeName2 = "Test scheme2 name"
-  private val inviterPsaId2 = "Q12345"
-  private val inviteePsaId2 = "T12345"
+  private val inviterPsaId2 = PsaId("Q1234567")
+  private val inviteePsaId2 = PsaId("T1234567")
   private val inviteeName2 = "Test Invitee2 Name"
 
-  private val mapBothKeys = Map("pstr" -> pstr1, "inviteePsaId" -> inviteePsaId1)
+  private val mapBothKeys = Map("pstr" -> pstr1, "inviteePsaId" -> inviteePsaId1.value)
   private val mapPstr = Map("pstr" -> pstr1)
-  private val mapInviteePsaId = Map("inviteePsaId" -> inviteePsaId1)
+  private val mapInviteePsaId = Map("inviteePsaId" -> inviteePsaId1.value)
 
   private val invitation1 =
     Invitation(pstr = pstr1, schemeName = schemeName1, inviterPsaId = inviterPsaId1, inviteePsaId = inviteePsaId1, inviteeName = inviteeName1)

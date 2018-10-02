@@ -21,9 +21,11 @@ import connectors.AssociationConnector
 import models.AcceptedInvitation
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import utils.ErrorHandler
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -35,7 +37,7 @@ class AssociationController @Inject()(
       val psaId = request.headers.get("psaId")
       psaId match {
         case Some(id) =>
-          associationConnector.getPSAMinimalDetails(id).map {
+          associationConnector.getPSAMinimalDetails(PsaId(id)).map {
             case Right(psaDetails) => Ok(Json.toJson(psaDetails))
             case Left(e) => result(e)
           }
