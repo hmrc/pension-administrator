@@ -16,23 +16,21 @@
 
 package service
 
+import audit.{AuditService, InvitationAuditEvent}
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.{AssociationConnector, EmailConnector, EmailSent}
-import models.{IndividualDetails, Invitation, PSAMinimalDetails, SendEmailRequest}
+import models._
 import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
+import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
 import utils.{DateHelper, FuzzyNameMatcher}
-import repositories.InvitationsCacheRepository
-import uk.gov.hmrc.http._
-import utils.FuzzyNameMatcher
 
 import scala.annotation.tailrec
-import scala.concurrent
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,8 +48,14 @@ class InvitationServiceImpl @Inject()(
                                        associationConnector: AssociationConnector,
                                        emailConnector: EmailConnector,
                                        config: AppConfig,
-                                       repository: InvitationsCacheRepository
+                                       repository: InvitationsCacheRepository,
+                                       auditService: AuditService
                                      ) extends InvitationService {
+
+  private def sendInvitationRequestAuditEvent(invitation: Invitation)(implicit headerCarrier: HeaderCarrier,
+                                                                      ec: ExecutionContext,
+                                                                      rh: RequestHeader): Unit =
+    auditService.sendEvent(InvitationAuditEvent(invitation))
 
   override def invitePSA(jsValue: JsValue)
                         (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
@@ -68,6 +72,7 @@ class InvitationServiceImpl @Inject()(
               if (doNamesMatch(invitation.inviteeName, psaDetails)) {
                 insertInvitation(invitation).flatMap {
                   case Right(_) =>
+                    sendInvitationRequestAuditEvent(invitation)
                     sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
                   case Left(error) =>
                     Future.successful(Left(error))
