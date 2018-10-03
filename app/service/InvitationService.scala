@@ -65,7 +65,7 @@ class InvitationServiceImpl @Inject()(
       {
         invitation =>
           handle(associationConnector.getPSAMinimalDetails(invitation.inviteePsaId)){ psaDetails =>
-            handle(isAssociated(invitation.inviteePsaId, SchemeReferenceNumber("S2100000005"))){
+            handle(isAssociated(invitation.inviteePsaId, SchemeReferenceNumber(invitation.srn))){
               case false if doNamesMatch(invitation.inviteeName, psaDetails) =>
                 handle(insertInvitation(invitation)){ _ =>
                   auditService.sendEvent(InvitationAuditEvent(invitation))
