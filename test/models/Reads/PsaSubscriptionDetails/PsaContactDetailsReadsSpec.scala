@@ -27,7 +27,7 @@ class PsaContactDetailsReadsSpec extends WordSpec with MustMatchers with OptionV
     "parse to a valid tactDetails object" when {
 
       val input = Json.obj("telephone" -> Gen.numStr.sample,
-      "email" -> Gen.option(s"${Gen.alphaStr}@${Gen.alphaStr}.${Gen.alphaLowerStr}").sample)
+      "email" -> Gen.option(Gen.alphaStr).sample)
 
       val output = input.as[PsaContactDetails]
 
