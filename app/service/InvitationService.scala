@@ -63,9 +63,9 @@ class InvitationServiceImpl @Inject()(
           Future.failed(new BadRequestException(s"Bad invitation format sent $errors"))
       },
       {
-        invitation => {
+        invitation =>
           handle(associationConnector.getPSAMinimalDetails(invitation.inviteePsaId)){ psaDetails =>
-            handle(isAssociated(invitation.inviteePsaId, SchemeReferenceNumber("S0987654321"))){
+            handle(isAssociated(invitation.inviteePsaId, SchemeReferenceNumber("S2100000005"))){
               case false if doNamesMatch(invitation.inviteeName, psaDetails) =>
                 handle(insertInvitation(invitation)){ _ =>
                   auditService.sendEvent(InvitationAuditEvent(invitation))
@@ -75,7 +75,6 @@ class InvitationServiceImpl @Inject()(
               case _ => Future.successful(Left(new NotFoundException("NOT_FOUND")))
             }
           }
-        }
       }
     )
   }
