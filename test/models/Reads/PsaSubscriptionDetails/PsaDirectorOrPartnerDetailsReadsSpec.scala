@@ -16,11 +16,11 @@
 
 package models.Reads.PsaSubscriptionDetails
 
-import models.Samples
+import models.{CorrespondenceAddress, Samples}
 import org.joda.time.LocalDate
 import org.scalacheck.Gen
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json.{JsPath, Json, Reads, Writes}
+import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 class PsaDirectorOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
@@ -33,6 +33,14 @@ class PsaDirectorOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers wi
         year <-Gen.choose(2000,2018)
       } yield new LocalDate(year,month,day)
 
+      val address = Json.obj("nonUKAddress" -> Gen.oneOf(JsBoolean(true),JsBoolean(false)).sample,
+        "line1" -> Gen.alphaStr.sample,
+        "line2" -> Gen.alphaStr.sample,
+        "line3" -> Gen.option(Gen.alphaStr.sample).sample,
+        "line4" -> Gen.option(Gen.alphaStr.sample).sample,
+        "postalCode" -> Gen.option(Gen.alphaStr.sample).sample,
+        "countryCode" -> Gen.alphaStr.sample)
+
       val input = Json.obj("entityType" -> Gen.oneOf("Director","Partner").sample,
       "title" -> Gen.option(Gen.oneOf("Mr","Mrs","Miss","Ms","Dr","Sir","Professor","Lord")).sample,
       "firstName" -> Gen.alphaStr.sample,
@@ -40,7 +48,9 @@ class PsaDirectorOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers wi
       "lastName" -> Gen.alphaStr.sample,
       "dateOfBirth" -> date.sample,
       "nino" -> Gen.alphaUpperStr.sample,
-      "utr" -> Gen.alphaUpperStr.sample)
+      "utr" -> Gen.alphaUpperStr.sample,
+      "previousAddressDetails" -> Json.obj("isPreviousAddressLast12Month" -> Gen.oneOf(true,false).sample,
+                            "previousAddress" -> Gen.option(address).sample))
 
       val output = input.as[PsaDirectorOrPartnerDetails]
 
@@ -75,6 +85,14 @@ class PsaDirectorOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers wi
       "we have an optional utr" in {
         output.utr mustBe (input \ "utr").asOpt[String]
       }
+
+      "we have a flag to say whether if they have been in the same prevoius address in last 12 months" in {
+        output.isSameAddressForLast12Months mustBe (input \ "previousAddressDetails" \ "isPreviousAddressLast12Month").as[Boolean]
+      }
+
+      "we have an optional previous address" in {
+        output.previousAddress mustBe (input \ "previousAddressDetails" \ "previousAddress").asOpt[CorrespondenceAddress]
+      }
     }
   }
 }
@@ -86,7 +104,9 @@ case class PsaDirectorOrPartnerDetails(detailsForDirectorOrPartner: String,
                                        lastName: String,
                                        dateOfBirth: LocalDate,
                                        nino: Option[String],
-                                       utr: Option[String])
+                                       utr: Option[String],
+                                       isSameAddressForLast12Months: Boolean,
+                                       previousAddress: Option[CorrespondenceAddress])
 
 object PsaDirectorOrPartnerDetails {
   implicit val writes : Writes[PsaDirectorOrPartnerDetails] = Json.writes[PsaDirectorOrPartnerDetails]
@@ -98,8 +118,11 @@ object PsaDirectorOrPartnerDetails {
       (JsPath \ "lastName").read[String] and
       (JsPath \ "dateOfBirth").read[LocalDate] and
       (JsPath \ "nino").readNullable[String] and
-      (JsPath \ "utr").readNullable[String]
-  )((entityType,title,name,middleName,surname,dob,nino,utr) => PsaDirectorOrPartnerDetails(entityType,title,name,middleName,surname,dob,nino,utr))
+      (JsPath \ "utr").readNullable[String] and
+      (JsPath \ "previousAddressDetails" \ "isPreviousAddressLast12Month").read[Boolean] and
+      (JsPath \ "previousAddressDetails" \ "previousAddress").readNullable[CorrespondenceAddress]
+  )((entityType,title,name,middleName,surname,dob,nino,utr,isSameAddress,previousAddress) =>
+    PsaDirectorOrPartnerDetails(entityType,title,name,middleName,surname,dob,nino,utr,isSameAddress,previousAddress))
 }
 
 
