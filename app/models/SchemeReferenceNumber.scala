@@ -17,6 +17,7 @@
 package models
 
 import models.SchemeReferenceNumber.stringToSchemeReferenceNumber
+import play.api.libs.json.Json
 
 import scala.language.implicitConversions
 import scala.util.matching.Regex
@@ -40,5 +41,7 @@ object SchemeReferenceNumber {
   }
 
   case class InvalidSchemeReferenceNumberException() extends Exception
+
+  implicit val format = Json.format[SchemeReferenceNumber]
 
 }

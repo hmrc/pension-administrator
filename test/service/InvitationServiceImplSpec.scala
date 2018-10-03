@@ -265,10 +265,12 @@ object InvitationServiceImplSpec extends MockitoSugar {
   val testSchemeName = "test-scheme"
 
   def invitation(inviteePsaId: PsaId, inviteeName: String): Invitation =
-    Invitation("test-srn", "test-pstr", testSchemeName, PsaId("A7654321"), inviteePsaId, inviteeName, expiryDate)
+    Invitation(testSrn, "test-pstr", testSchemeName, PsaId("A7654321"), inviteePsaId, inviteeName, expiryDate)
 
   def invitationJson(inviteePsaId: PsaId, inviteeName: String): JsValue =
-    Json.toJson(Invitation("test-srn", "test-pstr", testSchemeName, PsaId("A7654321"), inviteePsaId, inviteeName, expiryDate))
+    Json.toJson(Invitation(testSrn, "test-pstr", testSchemeName, PsaId("A7654321"), inviteePsaId, inviteeName, expiryDate))
+
+  val testSrn = SchemeReferenceNumber("S0987654321")
 
   val johnDoePsaId = PsaId("A2000001")
   val johnDoeEmail = "john.doe@email.com"
