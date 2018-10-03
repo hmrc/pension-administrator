@@ -19,23 +19,26 @@ package service
 import audit.InvitationAuditEvent
 import config.AppConfig
 import connectors.{AssociationConnector, SchemeConnector}
-import controllers.EmailResponseControllerSpec.fakeAuditService
-import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails, _}
-import org.joda.time.LocalDate
-import org.mockito.Matchers.any
-import org.mockito.Mockito.{never, times, verify, when}
-import org.scalatest.mockito.MockitoSugar
+import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails}
+import org.joda.time.DateTime
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsBoolean, JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
+
+import scala.concurrent.{ExecutionContext, Future}
+import controllers.EmailResponseControllerSpec.{fakeAuditService, psa}
+import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails, _}
+import org.joda.time.LocalDate
+import org.mockito.Matchers.any
+import org.mockito.Mockito.{never, times, verify, when}
+import org.scalatest.mockito.MockitoSugar
 import repositories.InvitationsCacheRepository
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import utils.{DateHelper, FakeEmailConnector}
-
-import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues with MockitoSugar {
 
@@ -214,7 +217,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
         Map(
           "inviteeName" -> johnDoe.individualDetails.value.fullName,
           "schemeName" -> testSchemeName,
-          "expiryDate" -> DateHelper.formatDate(LocalDate.now().plusDays(FakeConfig.invitationExpiryDays))
+          "expiryDate" -> DateHelper.formatDate(expiryDate.toLocalDate)
         )
       )
 
@@ -262,14 +265,16 @@ object InvitationServiceImplSpec extends MockitoSugar {
   val testSchemeName = "test-scheme"
 
   def invitation(inviteePsaId: PsaId, inviteeName: String): Invitation =
-    Invitation("test-pstr", testSchemeName, PsaId("A7654321"), inviteePsaId, inviteeName)
+    Invitation("test-srn", "test-pstr", testSchemeName, PsaId("A7654321"), inviteePsaId, inviteeName, expiryDate)
 
   def invitationJson(inviteePsaId: PsaId, inviteeName: String): JsValue =
-    Json.toJson(invitation(inviteePsaId, inviteeName))
+    Json.toJson(Invitation("test-srn", "test-pstr", testSchemeName, PsaId("A7654321"), inviteePsaId, inviteeName, expiryDate))
 
   val johnDoePsaId = PsaId("A2000001")
   val johnDoeEmail = "john.doe@email.com"
   val johnDoe = PSAMinimalDetails(johnDoeEmail, false, None, Some(IndividualDetails("John", None, "Doe")))
+
+  val expiryDate = new DateTime("2018-10-10")
 
   val joeBloggsPsaId = PsaId("A2000002")
   val joeBloggs = PSAMinimalDetails("joe.bloggs@email.com", false, None, Some(IndividualDetails("Joe", Some("Herbert"), "Bloggs")))
