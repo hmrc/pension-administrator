@@ -71,7 +71,7 @@ class InvitationServiceImpl @Inject()(
                   auditService.sendEvent(InvitationAuditEvent(invitation))
                   sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
                 }
-              case true => Future.successful(Left(new BadRequestException("The invitation is to a PSA already associated with this scheme")))
+              case true => Future.successful(Left(new ForbiddenException("The invitation is to a PSA already associated with this scheme")))
               case _ => Future.successful(Left(new NotFoundException("NOT_FOUND")))
             }
           }

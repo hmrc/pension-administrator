@@ -98,12 +98,12 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
 
   }
 
-  it should "throw BadRequestException if the Invitation is for a PSA already associated to that scheme" in {
+  it should "throw ForbiddenException if the Invitation is for a PSA already associated to that scheme" in {
 
     val fixture = testFixture()
 
     fixture.invitationService.invitePSA(invitationJson(associatedPsaId, johnDoe.individualDetails.value.name)) map { response =>
-      response.left.value shouldBe a[BadRequestException]
+      response.left.value shouldBe a[ForbiddenException]
     }
 
   }
