@@ -101,6 +101,7 @@ class InvitationServiceImpl @Inject()(
     matches
   }
 
+
   private def insertInvitation(invitation: Invitation): Future[Either[HttpException, Unit]] = {
     repository.insert(invitation).map(_ => Right(())) recover {
       case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
@@ -180,7 +181,7 @@ class InvitationServiceImpl @Inject()(
                               (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
 
     val name = psaDetails.individualDetails.map(_.fullName).getOrElse(psaDetails.organisationName.getOrElse(""))
-    val expiryDate = DateHelper.formatDate(LocalDate.now().plusDays(config.invitationExpiryDays))
+    val expiryDate = DateHelper.formatDate(invitation.expireAt.toLocalDate)
 
     val email = SendEmailRequest(
       List(psaDetails.email),
