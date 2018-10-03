@@ -55,14 +55,14 @@ class InvitationsCacheRepository @Inject()(
                                 pstr: String,
                                 data: BSONBinary,
                                 lastUpdated: DateTime,
-                                expireAt: Option[DateTime])
+                                expireAt: DateTime)
 
   private object DataEntry {
     def apply(inviteePsaId: String,
               pstr: String,
               data: Array[Byte],
               lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
-              expireAt: Option[DateTime] = None): DataEntry = {
+              expireAt: DateTime): DataEntry = {
 
       DataEntry(inviteePsaId, pstr, BSONBinary(
         data,
@@ -84,7 +84,7 @@ class InvitationsCacheRepository @Inject()(
                                    pstr: String,
                                    data: JsValue,
                                    lastUpdated: DateTime,
-                                   expireAt: Option[DateTime]
+                                   expireAt: DateTime
                                   )
 
   private object JsonDataEntry {
@@ -92,7 +92,7 @@ class InvitationsCacheRepository @Inject()(
                            pstr: String,
                            data: JsValue,
                            lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
-                           expireAt: Option[DateTime] = None): JsonDataEntry = {
+                           expireAt: DateTime): JsonDataEntry = {
 
       JsonDataEntry(inviteePsaId, pstr, data,
         lastUpdated,
@@ -154,11 +154,11 @@ class InvitationsCacheRepository @Inject()(
       val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
 
       (BSONDocument(inviteePsaIdKey -> encryptedInviteePsaId, pstrKey -> encryptedPstr),
-        BSONDocument("$set" -> Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray, invitation.expireAt))))
+        BSONDocument("$set" -> Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray, expireAt = invitation.expireAt))))
     } else {
       val record = JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId,
                                                     invitation.pstr,
-                                                    Json.toJson(invitation), invitation.expireAt)
+                                                    Json.toJson(invitation), expireAt = invitation.expireAt)
       (BSONDocument(inviteePsaIdKey -> invitation.inviteePsaId, pstrKey -> invitation.pstr),
         BSONDocument("$set" -> Json.toJson(record)))
     }
