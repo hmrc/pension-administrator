@@ -54,16 +54,6 @@ class InvitationServiceImpl @Inject()(
                                        schemeConnector: SchemeConnector
                                      ) extends InvitationService {
 
-  def handle[T](request: Future[Either[HttpException, T]])
-               (f: T => Future[Either[HttpException, Unit]]): Future[Either[HttpException, Unit]] = {
-    request flatMap {
-      case Right(n) =>
-        f(n)
-      case Left(error) =>
-        Future.successful(Left(error))
-    }
-  }
-
   override def invitePSA(jsValue: JsValue)
                         (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
     jsValue.validate[Invitation].fold(
@@ -74,19 +64,15 @@ class InvitationServiceImpl @Inject()(
       },
       {
         invitation => {
-          handle[PSAMinimalDetails](associationConnector.getPSAMinimalDetails(invitation.inviteePsaId)){ psaDetails =>
-            handle[Boolean](isAssociated(invitation.inviteePsaId, SchemeReferenceNumber("S0987654321"))){
+          handle(associationConnector.getPSAMinimalDetails(invitation.inviteePsaId)){ psaDetails =>
+            handle(isAssociated(invitation.inviteePsaId, SchemeReferenceNumber("S0987654321"))){
+              case false if doNamesMatch(invitation.inviteeName, psaDetails) =>
+                handle(insertInvitation(invitation)){ _ =>
+                  auditService.sendEvent(InvitationAuditEvent(invitation))
+                  sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
+                }
               case true => Future.successful(Left(new BadRequestException("The invitation is to a PSA already associated with this scheme")))
-              case false =>
-                if (doNamesMatch(invitation.inviteeName, psaDetails)) {
-                  handle[Unit](insertInvitation(invitation)){ x =>
-                    auditService.sendEvent(InvitationAuditEvent(invitation))
-                    sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
-                  }
-                }
-                else {
-                  Future.successful(Left(new NotFoundException("NOT_FOUND")))
-                }
+              case _ => Future.successful(Left(new NotFoundException("NOT_FOUND")))
             }
           }
         }
@@ -98,7 +84,7 @@ class InvitationServiceImpl @Inject()(
                           (implicit hc: HeaderCarrier, requestHeader: RequestHeader): Future[Either[HttpException, Boolean]] =
     schemeConnector.checkForAssociation(psaId, srn) map {
       case Right(json) => json.validate[Boolean].fold(
-        invalid => Left(new InternalServerException("Response from pension-scheme cannot be parsed to boolean")),
+        _ => Left(new InternalServerException("Response from pension-scheme cannot be parsed to boolean")),
         Right(_)
       )
       case Left(ex) => Left(ex)
@@ -118,15 +104,13 @@ class InvitationServiceImpl @Inject()(
     matches
   }
 
-  private def insertInvitation(invitation: Invitation): Future[Either[HttpException, Unit]] = {
+  private def insertInvitation(invitation: Invitation): Future[Either[HttpException, Unit]] =
     repository.insert(invitation).map(_ => Right(())) recover {
       case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
     }
-  }
 
-  private def doOrganisationNamesMatch(inviteeName: String, organisationName: String): Boolean = {
+  private def doOrganisationNamesMatch(inviteeName: String, organisationName: String): Boolean =
     FuzzyNameMatcher.matches(inviteeName, organisationName)
-  }
 
   @tailrec
   private def doIndividualNamesMatch(inviteeName: String, individualDetails: IndividualDetails, matchFullName: Boolean): Boolean = {
@@ -216,6 +200,16 @@ class InvitationServiceImpl @Inject()(
         ()
     }
 
+  }
+
+  private def handle[T](request: Future[Either[HttpException, T]])
+                       (f: T => Future[Either[HttpException, Unit]]): Future[Either[HttpException, Unit]] = {
+    request flatMap {
+      case Right(n) =>
+        f(n)
+      case Left(error) =>
+        Future.successful(Left(error))
+    }
   }
 
 }
