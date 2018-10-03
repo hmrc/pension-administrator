@@ -19,6 +19,20 @@ package models
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
+case class CorrespondenceAddress(addressLine1: String, addressLine2: String, addressLine3: Option[String], addressLine4: Option[String], countryCode: String, postalCode: Option[String])
+
+object CorrespondenceAddress {
+  implicit val writes: Writes[CorrespondenceAddress] = Json.writes[CorrespondenceAddress]
+  implicit val reads: Reads[CorrespondenceAddress] = (
+    (JsPath \ "line1").read[String] and
+      (JsPath \ "line2").read[String] and
+      (JsPath \ "line3").readNullable[String] and
+      (JsPath \ "line4").readNullable[String] and
+      (JsPath \ "countryCode").read[String] and
+      (JsPath \ "postalCode").readNullable[String]
+    ) (CorrespondenceAddress.apply _)
+}
+
 sealed trait Address
 
 object Address {
