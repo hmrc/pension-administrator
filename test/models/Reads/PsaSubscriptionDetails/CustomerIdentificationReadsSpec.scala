@@ -17,30 +17,35 @@
 package models.Reads.PsaSubscriptionDetails
 
 import models.PsaSubscription.CustomerIdentification
-import models.Samples
-import org.scalacheck.Gen
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json._
+import org.scalatest.prop.PropertyChecks._
+
 
 class CustomerIdentificationReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A valid payload with Customer Identification Details" should {
     "validate to a Customer Identification Details object" when {
-      val result = customerIdentificationDetailsGenerator.as[CustomerIdentification]
-
       "we have a legal status" in {
-        result.legalStatus mustBe (customerIdentificationDetailsGenerator \ "legalStatus").as[String]
+        forAll(customerIdentificationDetailsGenerator) {
+          customerDetails => customerDetails.as[CustomerIdentification].legalStatus mustBe (customerDetails \ "legalStatus").as[String]
+        }
       }
 
       "we have an optional id type" in {
-        result.typeOfId mustBe (customerIdentificationDetailsGenerator \ "idType").asOpt[String]
+        forAll(customerIdentificationDetailsGenerator) {
+          customerDetails => customerDetails.as[CustomerIdentification].typeOfId mustBe (customerDetails \ "idType").asOpt[String]
+        }
       }
 
       "we have an optional id number" in {
-        result.number mustBe (customerIdentificationDetailsGenerator \ "idNumber").asOpt[String]
+        forAll(customerIdentificationDetailsGenerator) {
+          customerDetails => customerDetails.as[CustomerIdentification].number mustBe (customerDetails \ "idNumber").asOpt[String]
+        }
       }
 
       "we have a flag for noIdentifier" in {
-        result.isOverseasCustomer mustBe (customerIdentificationDetailsGenerator \ "noIdentifier").as[Boolean]
+        forAll(customerIdentificationDetailsGenerator) {
+          customerDetails => customerDetails.as[CustomerIdentification].isOverseasCustomer mustBe (customerDetails \ "noIdentifier").as[Boolean]
+        }
       }
     }
   }

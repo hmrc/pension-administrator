@@ -17,30 +17,35 @@
 package models.Reads.PsaSubscriptionDetails
 
 import models.PsaSubscription.OrganisationOrPartner
-import models.Samples
-import org.scalacheck.Gen
+import org.scalatest.prop.PropertyChecks._
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json._
+
 
 class OrganisationOrPartnerReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A valid payload with Organisation or Partner Details" should {
     "validate to a Organisation or Partner Details object" when {
-      val result = orgOrPartnerDetailsGenerator.as[OrganisationOrPartner]
-
       "we have a name" in {
-        result.name mustBe (orgOrPartnerDetailsGenerator \ "name").as[String]
+        forAll(orgOrPartnerDetailsGenerator){
+          orgOrPartner => orgOrPartner.as[OrganisationOrPartner].name mustBe (orgOrPartner \ "name").as[String]
+        }
       }
 
       "we have an optional crnNumber" in {
-        result.crn mustBe (orgOrPartnerDetailsGenerator \ "crnNumber").asOpt[String]
+        forAll(orgOrPartnerDetailsGenerator){
+          orgOrPartner => orgOrPartner.as[OrganisationOrPartner].crn mustBe (orgOrPartner \ "crnNumber").asOpt[String]
+        }
       }
 
       "we have an optional vatRegistrationNumber" in {
-        result.vatRegistration mustBe (orgOrPartnerDetailsGenerator \ "vatRegistrationNumber").asOpt[String]
+        forAll(orgOrPartnerDetailsGenerator){
+          orgOrPartner => orgOrPartner.as[OrganisationOrPartner].vatRegistration mustBe (orgOrPartner \ "vatRegistrationNumber").asOpt[String]
+        }
       }
 
       "we have an optional payeReference" in {
-        result.paye mustBe (orgOrPartnerDetailsGenerator \ "payeReference").asOpt[String]
+        forAll(orgOrPartnerDetailsGenerator){
+          orgOrPartner => orgOrPartner.as[OrganisationOrPartner].paye mustBe (orgOrPartner \ "payeReference").asOpt[String]
+        }
       }
     }
   }

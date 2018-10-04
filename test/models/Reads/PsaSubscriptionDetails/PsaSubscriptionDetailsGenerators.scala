@@ -18,28 +18,52 @@ package models.Reads.PsaSubscriptionDetails
 
 import org.joda.time.LocalDate
 import org.scalacheck.Gen
+import org.scalacheck.Arbitrary._
 import play.api.libs.json.{JsArray, JsBoolean, JsObject, Json}
 
 trait PsaSubscriptionDetailsGenerators {
   val legalStatus: Gen[String] = Gen.oneOf("Individual","Partnership","Limited Company")
   val idType: Gen[Option[String]] = Gen.option(Gen.oneOf("NINO","UTR"))
-  val booleanGen = Gen.oneOf(true,false).sample
+  val booleanGen: Option[Boolean] = Gen.oneOf(true,false).sample
 
-  val customerIdentificationDetailsGenerator: JsObject = Json.obj("legalStatus" -> legalStatus.sample,
-    "idType" -> idType.sample,
-    "idNumber" -> Gen.option(Gen.alphaStr).sample,
-    "noIdentifier" -> booleanGen)
+  val customerIdentificationDetailsGenerator: Gen[JsObject] = for {
+    legalStatus <- legalStatus
+    idType <- idType
+    idNumber <- Gen.option(Gen.alphaStr)
+    noIdentifier <- arbitrary[Boolean]
+  } yield {
+    Json.obj(
+      "legalStatus" -> legalStatus,
+      "idType" -> idType,
+      "idNumber" -> idNumber,
+      "noIdentifier" -> noIdentifier
+    )
+  }
 
-  val orgOrPartnerDetailsGenerator  = Json.obj("name" -> Gen.alphaStr.sample,
-    "crnNumber" -> Gen.option(Gen.alphaStr).sample,
-    "vatRegistrationNumber" -> Gen.option(Gen.alphaStr).sample,
-    "payeReference" -> Gen.option(Gen.alphaStr).sample)
+  val orgOrPartnerDetailsGenerator: Gen[JsObject] = for {
+    name <- Gen.alphaStr
+    crnNumber <- Gen.option(Gen.alphaStr)
+    vatRegistrationNumber <- Gen.option(Gen.alphaStr)
+    payeReference <- Gen.option(Gen.alphaStr)
+  } yield {
+    Json.obj(
+      "name" -> name,
+      "crnNumber" -> crnNumber,
+      "vatRegistrationNumber" -> vatRegistrationNumber,
+      "payeReference" -> payeReference
+    )
+  }
 
-  val contactDetails: JsObject = Json.obj("telephone" -> Gen.numStr.sample,
-    "email" -> Gen.option(Gen.alphaStr).sample)
+  val psaContactDetailsGenerator : Gen[JsObject] = for {
+    telephone <- Gen.numStr
+    email <- Gen.option(Gen.alphaStr)
+  } yield {
+    Json.obj(
+      "telephone" -> telephone,
+      "email" -> email
+    )
+  }
 
-  val psaContactDetailsGenerator = Json.obj("telephone" -> Gen.numStr.sample,
-    "email" -> Gen.option(Gen.alphaStr).sample)
 
   val address: JsObject = Json.obj("nonUKAddress" -> booleanGen,
     "line1" -> Gen.alphaStr.sample,
@@ -50,7 +74,7 @@ trait PsaSubscriptionDetailsGenerators {
     "countryCode" -> Gen.alphaStr.sample)
 
   val correspondenceDetailsGenerator: JsObject = Json.obj("addressDetails" -> address,
-    "contactDetails" -> Gen.option(contactDetails).sample)
+    "contactDetails" -> Gen.option(psaContactDetailsGenerator).sample)
 
   val date: Gen[LocalDate] = for {
     day <- Gen.choose(1,28)
@@ -82,7 +106,7 @@ trait PsaSubscriptionDetailsGenerators {
     "utr" -> Gen.alphaUpperStr.sample,
     "previousAddressDetails" -> Json.obj("isPreviousAddressLast12Month" -> booleanGen,
       "previousAddress" -> Gen.option(address).sample),
-    "correspondenceCommonDetails" -> Gen.option(Json.obj("addressDetails" -> address, "contactDetails" -> Gen.option(contactDetails).sample)).sample)
+    "correspondenceCommonDetails" -> Gen.option(Json.obj("addressDetails" -> address, "contactDetails" -> Gen.option(psaContactDetailsGenerator).sample)).sample)
 
 
 
@@ -90,19 +114,13 @@ trait PsaSubscriptionDetailsGenerators {
 
   val pensionAdvisorGenerator = Json.obj("name" -> Gen.alphaStr.sample, "addressDetails" -> address, "contactDetails" -> Gen.option(psaContactDetailsGenerator).sample)
 
-  val psaSubscriptionDetailsGenerator = Json.obj("psaSubscriptionDetails" -> Json.obj("isPSASuspension" -> booleanGen, "customerIdentificationDetails" -> customerIdentificationDetailsGenerator,
+  val psaSubscriptionDetailsGenerator = Json.obj("psaSubscriptionDetails" -> Json.obj("isPSASuspension" -> booleanGen, "customerIdentificationDetails" -> customerIdentificationDetailsGenerator.sample,
     "organisationOrPartnerDetails" -> Gen.option(orgOrPartnerDetailsGenerator).sample,
   "individualDetails" -> Gen.option(individualGenerator).sample, "correspondenceAddressDetails" -> address,
-  "correspondenceContactDetails" -> contactDetails,
+  "correspondenceContactDetails" -> psaContactDetailsGenerator.sample,
     "previousAddressDetails" -> previousAddressGenerator,
   "directorOrPartnerDetails" -> Gen.option(directorsOrPartners).sample,
   "declarationDetails" -> Json.obj("pensionAdvisorDetails" -> Gen.option(pensionAdvisorGenerator).sample)))
-}
-
-//TODO: Refactor to this
-
-/*
-
 
   val newPsaDirectorOrPartnerDetailsGenerator = for {
     entityType <- Gen.oneOf("Director","Partner")
@@ -124,7 +142,7 @@ trait PsaSubscriptionDetailsGenerators {
     }
     correspondenceCommonDetails <- for {
       address <- Gen.option(address)
-      contactDetails <- Gen.option(contactDetails)
+      contactDetails <- Gen.option(psaContactDetailsGenerator)
     } yield Json.obj(
       "addressDetails" -> address,
       "contactDetails" -> contactDetails
@@ -140,7 +158,7 @@ trait PsaSubscriptionDetailsGenerators {
     "utr" -> Gen.alphaUpperStr.sample,
     "previousAddressDetails" -> Json.obj("isPreviousAddressLast12Month" -> booleanGen,
       "previousAddress" -> Gen.option(address).sample),
-    "correspondenceCommonDetails" -> Gen.option(Json.obj("addressDetails" -> address, "contactDetails" -> Gen.option(contactDetails).sample)).sample)
-  )
+    "correspondenceCommonDetails" -> Gen.option(Json.obj("addressDetails" -> address, "contactDetails" -> Gen.option(psaContactDetailsGenerator).sample)).sample)
+}
 
- */
+

@@ -17,22 +17,22 @@
 package models.Reads.PsaSubscriptionDetails
 
 import models.PsaSubscription.PsaContactDetails
-import models.Samples
-import org.scalacheck.Gen
+import org.scalatest.prop.PropertyChecks._
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json.Json
 
 class PsaContactDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A payload containing psa contact details" should {
     "parse to a valid tactDetails object" when {
-      val output = psaContactDetailsGenerator.as[PsaContactDetails]
-
       "we have a telephone number" in {
-        output.telephone mustBe (psaContactDetailsGenerator \ "telephone").as[String]
+        forAll(psaContactDetailsGenerator){
+          contact => contact.as[PsaContactDetails].telephone mustBe (contact \ "telephone").as[String]
+        }
       }
 
       "we have an optional email" in {
-        output.email mustBe (psaContactDetailsGenerator \ "email").asOpt[String]
+        forAll(psaContactDetailsGenerator){
+          contact => contact.as[PsaContactDetails].email mustBe (contact \ "email").asOpt[String]
+        }
       }
     }
   }
