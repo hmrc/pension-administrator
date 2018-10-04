@@ -19,7 +19,6 @@ package controllers
 import akka.stream.Materializer
 import akka.util.ByteString
 import config.AppConfig
-import controllers.InvitationsCacheControllerSpec._
 import models.Invitation
 import org.apache.commons.lang3.RandomUtils
 import org.mockito.Matchers.{eq => eqTo, _}
@@ -38,6 +37,7 @@ import repositories.InvitationsCacheRepository
 import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{BadRequestException, UnauthorizedException}
+import utils.testhelpers.InvitationBuilder._
 
 import scala.concurrent.Future
 
@@ -45,8 +45,6 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
   implicit lazy val mat: Materializer = new GuiceApplicationBuilder().configure("run.mode" -> "Test").build().materializer
 
   private def configuration = Configuration("mongodb.pension-administrator-cache.maxSize" -> 512000)
-
-  private val invitation = Invitation("test-pstr", "test-scheme", "test-inviter-psa-id", "inviteePsaId", "inviteeName")
 
   private val repo = mock[InvitationsCacheRepository]
   private val authConnector: AuthConnector = mock[AuthConnector]
@@ -61,7 +59,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
       when(repo.insert(any())(any())).thenReturn(Future.successful(true))
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
-      val result = call(controller.add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation)))
+      val result = call(controller.add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation1)))
       status(result) mustEqual CREATED
     }
 
@@ -104,7 +102,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
       recoverToExceptionIf[MongoDBFailedException](
-        call(controller.add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation)))).map {
+        call(controller.add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation1)))).map {
         ex =>
           ex.responseCode mustBe INTERNAL_SERVER_ERROR
           ex.message must include("mongo error")
@@ -177,28 +175,3 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
   it should behave like validCacheControllerWithRemove("remove")
 }
 
-object InvitationsCacheControllerSpec {
-
-  private val pstr1 = "S12345"
-  private val schemeName1 = "Test scheme1 name"
-  private val inviterPsaId1 = "I12345"
-  private val inviteePsaId1 = "P12345"
-  private val inviteeName1 = "Test Invitee1 Name"
-
-  private val pstr2 = "D1234"
-  private val schemeName2 = "Test scheme2 name"
-  private val inviterPsaId2 = "Q12345"
-  private val inviteePsaId2 = "T12345"
-  private val inviteeName2 = "Test Invitee2 Name"
-
-  private val mapBothKeys = Map("pstr" -> pstr1, "inviteePsaId" -> inviteePsaId1)
-  private val mapPstr = Map("pstr" -> pstr1)
-  private val mapInviteePsaId = Map("inviteePsaId" -> inviteePsaId1)
-
-  private val invitation1 =
-    Invitation(pstr = pstr1, schemeName = schemeName1, inviterPsaId = inviterPsaId1, inviteePsaId = inviteePsaId1, inviteeName = inviteeName1)
-  private val invitation2 =
-    Invitation(pstr = pstr2, schemeName = schemeName2, inviterPsaId = inviterPsaId2, inviteePsaId = inviteePsaId2, inviteeName = inviteeName2)
-
-  private val invitationList = List(invitation1, invitation2)
-}
