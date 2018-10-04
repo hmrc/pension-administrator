@@ -16,67 +16,63 @@
 
 package controllers
 
-import java.time.Instant
+import java.text.SimpleDateFormat
 import java.util.Date
 
 import javax.inject.Inject
-import org.mongodb.scala.bson.collection.immutable.Document
-import org.mongodb.scala.model.Accumulators._
-import org.mongodb.scala.model.Aggregates._
-import org.mongodb.scala.model.Projections._
-import org.mongodb.scala.{MongoClient, MongoCollection}
 import play.api.Configuration
-import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent}
+import play.modules.reactivemongo.ReactiveMongoComponent
+import reactivemongo.api.Cursor
+import reactivemongo.api.collections.bson.BSONCollection
+import reactivemongo.bson.{BSONDocument, BSONString}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.language.postfixOps
 
-class MongoDiagnosticsController @Inject()(config: Configuration) extends BaseController {
+class MongoDiagnosticsController @Inject()(config: Configuration, component: ReactiveMongoComponent) extends BaseController {
 
   // scalastyle:off magic.number
   private val banner = Seq.fill(50)("-").mkString
   // scalastyle:on magic.number
 
-  def mongoDiagnostics(): Action[AnyContent] = Action {
+  private val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z")
+
+  def mongoDiagnostics(): Action[AnyContent] = Action.async {
     implicit request =>
 
-      Ok(fetchDiagnostics().mkString("\n"))
-
-  }
-
-  def fetchDiagnostics(): Seq[String] = {
-
-    val mongoClient: MongoClient = MongoClient(config.underlying.getString("mongodb.uri"))
-
-    try {
-      val db = mongoClient.getDatabase(config.underlying.getString("appName"))
-
-      val result = db.listCollectionNames().toFuture() map {
-        names =>
-          names.flatMap {
-            name =>
-              Seq(
-                banner,
-                name,
-                banner
-              ) ++
-                Await.result(collectionDiagnostics(db.getCollection(name)), 10 seconds)
-          }
+      fetchDiagnostics() map {
+        diagnostics =>
+          Ok(diagnostics.mkString("\n"))
       }
 
-      Await.result(result, 10 seconds)
-    }
-    finally {
-      mongoClient.close()
+  }
+
+  def fetchDiagnostics(): Future[Seq[String]] = {
+
+    val db = component.mongoConnector.db()
+
+    db.collectionNames flatMap  {
+      names =>
+        Future.traverse(names) {
+          name =>
+            Future.successful(name)
+            collectionDiagnostics(db.collection(name)) map {
+              diagnostics =>
+                (Seq(
+                  banner,
+                  name,
+                  banner
+                ) ++ diagnostics).mkString("\n").concat("\n")
+            }
+        }
     }
 
   }
 
-  def collectionDiagnostics(collection: MongoCollection[Document]): Future[Seq[String]] = {
+  def collectionDiagnostics(collection: BSONCollection): Future[Seq[String]] = {
 
     for {
       rows <- rowCount(collection)
@@ -98,50 +94,59 @@ class MongoDiagnosticsController @Inject()(config: Configuration) extends BaseCo
 
   }
 
-  def indexInfo(collection: MongoCollection[Document]): Future[String] = {
+  def indexInfo(collection: BSONCollection): Future[String] = {
 
-    collection.listIndexes().toFuture() map {
-      docs =>
-        docs.map(_.toJson()).mkString("\n")
-    }
-
-  }
-
-  def minLastUpdated(collection: MongoCollection[Document]): Future[String] = {
-
-    collection.aggregate(Seq(group("", min("minLastUpdated", "$lastUpdated")))).head() map {
-      doc =>
-        if (doc != null) {
-          (Json.parse(doc.toJson()) \ "minLastUpdated" \ "$date").validateOpt[Long] match {
-            case JsSuccess(Some(minLastUpdated), _) => Date.from(Instant.ofEpochMilli(minLastUpdated)).toString
-            case JsSuccess(None, _) => "<none>"
-            case JsError(errors) => throw JsResultException(errors)
-          }
-        } else {
-          "<none>"
-        }
-    }
-
-  }
-
-  def ids(collection: MongoCollection[Document]): Future[String] = {
-
-    collection.find().projection(include("id")).toFuture() map {
-      docs =>
-        docs map {
-          doc =>
-            (Json.parse(doc.toJson()) \ "id").validate[String] match {
-              case JsSuccess(externalId, _) => externalId
-              case JsError(errors) => throw JsResultException(errors)
-            }
+    collection.indexesManager.list() map {
+      indexes =>
+        indexes.map {
+          index =>
+            val ttl = index.options.getAs[Int]("expireAfterSeconds").getOrElse("<none>")
+            s"Name: ${index.name.getOrElse("?")}; Fields: (${index.key.map(_._1).mkString(", ")}); Unique: ${index.unique}; TTL: $ttl"
         } mkString "\n"
     }
 
   }
 
-  def rowCount(collection: MongoCollection[Document]): Future[Long] = {
+  def minLastUpdated(collection: BSONCollection): Future[String] = {
 
-    collection.countDocuments().head()
+    import collection.BatchCommands.AggregationFramework.{Group, MinField}
+
+    collection.aggregate(
+      Group(BSONString(""))("minLastUpdated" -> MinField("lastUpdated"))
+    ) map {
+      result =>
+        result.firstBatch.headOption.flatMap {
+          head =>
+            head.getAs[Date]("minLastUpdated") map {
+              date =>
+                dateFormat.format(date)
+            }
+        }.getOrElse("<none>")
+    }
+
+  }
+
+  def ids(collection: BSONCollection): Future[String] = {
+
+    val query = BSONDocument()
+    val projection = BSONDocument("_id" -> 0, "id" -> 1)
+
+    collection.find(query, projection)
+      .cursor[BSONDocument]()
+      .collect[Seq](-1, Cursor.FailOnError[Seq[BSONDocument]]())
+      .map {
+        docs =>
+          docs.map {
+            doc =>
+              doc.getAs[String]("id").getOrElse("<unknown>")
+          } mkString "\n"
+      }
+
+  }
+
+  def rowCount(collection: BSONCollection): Future[Int] = {
+
+    collection.count()
 
   }
 
