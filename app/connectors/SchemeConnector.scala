@@ -20,10 +20,11 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
+import models.PsaSubscription.PsaSubscription
 import play.Logger
 import play.api.http.Status._
-import play.api.libs.json.{Json, JsValue}
-import play.api.mvc.{Result, RequestHeader}
+import play.api.libs.json._
+import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
@@ -42,7 +43,7 @@ trait SchemeConnector {
   def getPSASubscriptionDetails(psaId: String)(implicit
                                                headerCarrier: HeaderCarrier,
                                                ec: ExecutionContext,
-                                               request: RequestHeader): Future[Either[HttpException, JsValue]]
+                                               request: RequestHeader): Future[Either[HttpException, PsaSubscription]]
 }
 
 class SchemeConnectorImpl @Inject()(
@@ -71,7 +72,7 @@ class SchemeConnectorImpl @Inject()(
   override def getPSASubscriptionDetails(psaId: String)(implicit
                                                         headerCarrier: HeaderCarrier,
                                                         ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                                        request: RequestHeader): Future[Either[HttpException, PsaSubscription]] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
@@ -97,12 +98,19 @@ class SchemeConnectorImpl @Inject()(
 
   }
 
-  private def handleGetResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
+  private def validateJson(json: JsValue): PsaSubscription ={
+    json.validate[PsaSubscription] match {
+      case JsSuccess(value, _) => value
+      case JsError(errors) => throw new JsResultException(errors)
+    }
+  }
+
+  private def handleGetResponse(response: HttpResponse, url: String): Either[HttpException, PsaSubscription] = {
 
     val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATION_ID")
 
     response.status match {
-      case OK => Right(response.json)
+      case OK => Right(validateJson(response.json))
       case status => Left(handleErrorResponse("PSA Subscription details", url, response, badResponseSeq))
     }
 

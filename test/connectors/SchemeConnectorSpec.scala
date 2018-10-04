@@ -32,6 +32,7 @@ import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http._
 import utils.{StubLogger, WireMockHelper}
+import utils.testhelpers.PsaSubscriptionBuilder._
 
 class SchemeConnectorSpec extends AsyncFlatSpec
   with Matchers
@@ -157,15 +158,15 @@ class SchemeConnectorSpec extends AsyncFlatSpec
            )
        )
        connector.getPSASubscriptionDetails(psaId).map { response =>
-         response.right.value shouldBe psaSubscriptionData
+         response.right.value shouldBe psaSubscription
          server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
        }
      }
 
-  it should behave like errorHandlerForGetApiFailures(
-    connector.getPSASubscriptionDetails(psaId),
-    psaSubscriptionDetailsUrl
-  )
+    it should behave like errorHandlerForGetApiFailures(
+      connector.getPSASubscriptionDetails(psaId),
+      psaSubscriptionDetailsUrl
+    )
 
 }
 

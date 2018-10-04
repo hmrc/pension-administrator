@@ -90,13 +90,13 @@ trait PsaSubscriptionDetailsGenerators {
 
   val pensionAdvisorGenerator = Json.obj("name" -> Gen.alphaStr.sample, "addressDetails" -> address, "contactDetails" -> Gen.option(psaContactDetailsGenerator).sample)
 
-  val psaSubscriptionDetailsGenerator = Json.obj("isPSASuspension" -> booleanGen, "customerIdentificationDetails" -> customerIdentificationDetailsGenerator,
+  val psaSubscriptionDetailsGenerator = Json.obj("psaSubscriptionDetails" -> Json.obj("isPSASuspension" -> booleanGen, "customerIdentificationDetails" -> customerIdentificationDetailsGenerator,
     "organisationOrPartnerDetails" -> Gen.option(orgOrPartnerDetailsGenerator).sample,
   "individualDetails" -> Gen.option(individualGenerator).sample, "correspondenceAddressDetails" -> address,
   "correspondenceContactDetails" -> contactDetails,
     "previousAddressDetails" -> previousAddressGenerator,
   "directorOrPartnerDetails" -> Gen.option(directorsOrPartners).sample,
-  "declarationDetails" -> Json.obj("pensionAdvisorDetails" -> Gen.option(pensionAdvisorGenerator).sample))
+  "declarationDetails" -> Json.obj("pensionAdvisorDetails" -> Gen.option(pensionAdvisorGenerator).sample)))
 }
 
 //TODO: Refactor to this

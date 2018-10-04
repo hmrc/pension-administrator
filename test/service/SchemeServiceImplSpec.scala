@@ -20,13 +20,16 @@ import audit.{PSASubscription, StubSuccessfulAuditService}
 import base.SpecBase
 import connectors.SchemeConnector
 import models.PensionSchemeAdministrator
+import models.PsaSubscription.PsaSubscription
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.{HttpResponse, BadRequestException, HeaderCarrier, HttpException}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
+import utils.FakeSchemeConnector
+import utils.testhelpers.PsaSubscriptionBuilder._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -158,31 +161,3 @@ object SchemeServiceImplSpec extends SpecBase {
 
 }
 
-class FakeSchemeConnector extends SchemeConnector {
-
-  import FakeSchemeConnector._
-
-  private var registerPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
-
-  def setRegisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.registerPsaResponse = response
-
-  override def registerPSA(registerData: JsValue)(implicit
-                                                  headerCarrier: HeaderCarrier,
-                                                  ec: ExecutionContext,
-                                                  request: RequestHeader): Future[Either[HttpException, JsValue]] = registerPsaResponse
-
-  override def getPSASubscriptionDetails(psaId: String)(implicit
-                                                        headerCarrier: HeaderCarrier,
-                                                        ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = Future.successful(Right(Json.obj()))
-}
-
-object FakeSchemeConnector {
-
-  val registerPsaResponseJson: JsValue =
-    Json.obj(
-      "processingDate" -> LocalDate.now,
-      "formBundle" -> "1121313",
-      "psaId" -> "A21999999"
-    )
-}
