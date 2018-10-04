@@ -35,6 +35,7 @@ class FakeSchemeConnector extends SchemeConnector {
 
   def setRegisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.registerPsaResponse = response
   def setPsaDetailsResponse(response: Future[Either[HttpException, PsaSubscription]]): Unit = this.getPsaResponse = response
+
   override def registerPSA(registerData: JsValue)(implicit
                                                   headerCarrier: HeaderCarrier,
                                                   ec: ExecutionContext,
@@ -43,7 +44,7 @@ class FakeSchemeConnector extends SchemeConnector {
   override def getPSASubscriptionDetails(psaId: String)(implicit
                                                         headerCarrier: HeaderCarrier,
                                                         ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, PsaSubscription]] = Future.successful(Right(psaSubscription))
+                                                        request: RequestHeader): Future[Either[HttpException, PsaSubscription]] = getPsaResponse
 }
 
 object FakeSchemeConnector {
