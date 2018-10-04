@@ -16,16 +16,16 @@
 
 package models.Reads.PsaSubscriptionDetails
 
-import models.PsaSubscription.OrganisationOrPartnerDetails
+import models.PsaSubscription.OrganisationOrPartner
 import models.Samples
 import org.scalacheck.Gen
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
 
-class OrganisationOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
+class OrganisationOrPartnerReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A valid payload with Organisation or Partner Details" should {
     "validate to a Organisation or Partner Details object" when {
-      val result = orgOrPartnerDetailsGenerator.as[OrganisationOrPartnerDetails]
+      val result = orgOrPartnerDetailsGenerator.as[OrganisationOrPartner]
 
       "we have a name" in {
         result.name mustBe (orgOrPartnerDetailsGenerator \ "name").as[String]

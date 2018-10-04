@@ -17,7 +17,7 @@
 package models.Reads.PsaSubscriptionDetails
 
 import models.CorrespondenceAddress
-import models.PsaSubscription.PsaContactDetails
+import models.PsaSubscription.{PensionAdvisor, PsaContactDetails}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.{JsPath, Json, Reads, Writes}
 import play.api.libs.functional.syntax._
@@ -40,15 +40,4 @@ class PensionAdvisorReadsSpec extends WordSpec with MustMatchers with OptionValu
       }
     }
   }
-}
-
-case class PensionAdvisor(name: String, address: CorrespondenceAddress, contactDetails: Option[PsaContactDetails])
-
-object PensionAdvisor {
-  implicit val writes : Writes[PensionAdvisor] = Json.writes[PensionAdvisor]
-  implicit val reads : Reads[PensionAdvisor] = (
-    (JsPath \ "name").read[String] and
-      (JsPath \ "addressDetails").read[CorrespondenceAddress] and
-      (JsPath \ "contactDetails").readNullable[PsaContactDetails]
-  )(PensionAdvisor.apply _)
 }

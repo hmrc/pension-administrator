@@ -19,14 +19,14 @@ package models.PsaSubscription
 import play.api.libs.json.{JsPath, Json, Reads, Writes}
 import play.api.libs.functional.syntax._
 
-case class OrganisationOrPartnerDetails(name: String, crn: Option[String], vatRegistration: Option[String], paye: Option[String])
+case class CustomerIdentification(legalStatus: String, typeOfId: Option[String], number: Option[String], isOverseasCustomer: Boolean)
 
-object OrganisationOrPartnerDetails {
-  implicit val writes : Writes[OrganisationOrPartnerDetails] = Json.writes[OrganisationOrPartnerDetails]
-  implicit val reads : Reads[OrganisationOrPartnerDetails] = (
-    (JsPath \ "name").read[String] and
-      (JsPath \ "crnNumber").readNullable[String] and
-      (JsPath \ "vatRegistrationNumber").readNullable[String] and
-      (JsPath \ "payeReference").readNullable[String]
-    )(OrganisationOrPartnerDetails.apply _)
+object CustomerIdentification {
+  implicit val reads : Reads[CustomerIdentification] = (
+    (JsPath \ "legalStatus").read[String] and
+      (JsPath \ "idType").readNullable[String] and
+      (JsPath \ "idNumber").readNullable[String] and
+      (JsPath \ "noIdentifier").read[Boolean]
+    )(CustomerIdentification.apply _)
+  implicit val writes : Writes[CustomerIdentification] = Json.writes[CustomerIdentification]
 }

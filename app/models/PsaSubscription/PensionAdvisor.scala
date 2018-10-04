@@ -16,17 +16,17 @@
 
 package models.PsaSubscription
 
+import models.CorrespondenceAddress
 import play.api.libs.json.{JsPath, Json, Reads, Writes}
 import play.api.libs.functional.syntax._
 
-case class CustomerIdentificationDetails(legalStatus: String, typeOfId: Option[String], number: Option[String], isOverseasCustomer: Boolean)
+case class PensionAdvisor(name: String, address: CorrespondenceAddress, contactDetails: Option[PsaContactDetails])
 
-object CustomerIdentificationDetails {
-  implicit val reads : Reads[CustomerIdentificationDetails] = (
-    (JsPath \ "legalStatus").read[String] and
-      (JsPath \ "idType").readNullable[String] and
-      (JsPath \ "idNumber").readNullable[String] and
-      (JsPath \ "noIdentifier").read[Boolean]
-    )(CustomerIdentificationDetails.apply _)
-  implicit val writes : Writes[CustomerIdentificationDetails] = Json.writes[CustomerIdentificationDetails]
+object PensionAdvisor {
+  implicit val writes : Writes[PensionAdvisor] = Json.writes[PensionAdvisor]
+  implicit val reads : Reads[PensionAdvisor] = (
+    (JsPath \ "name").read[String] and
+      (JsPath \ "addressDetails").read[CorrespondenceAddress] and
+      (JsPath \ "contactDetails").readNullable[PsaContactDetails]
+    )(PensionAdvisor.apply _)
 }

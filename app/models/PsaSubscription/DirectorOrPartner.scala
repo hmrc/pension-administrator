@@ -21,21 +21,21 @@ import org.joda.time.LocalDate
 import play.api.libs.json.{JsPath, Json, Reads, Writes}
 import play.api.libs.functional.syntax._
 
-case class DirectorOrPartnerDetails(isDirectorOrPartner: String,
-                                    title: Option[String],
-                                    firstName: String,
-                                    middleName: Option[String],
-                                    lastName: String,
-                                    dateOfBirth: LocalDate,
-                                    nino: Option[String],
-                                    utr: Option[String],
-                                    isSameAddressForLast12Months: Boolean,
-                                    previousAddress: Option[CorrespondenceAddress],
-                                    correspondenceDetails: Option[CorrespondenceDetails])
+case class DirectorOrPartner(isDirectorOrPartner: String,
+                             title: Option[String],
+                             firstName: String,
+                             middleName: Option[String],
+                             lastName: String,
+                             dateOfBirth: LocalDate,
+                             nino: Option[String],
+                             utr: Option[String],
+                             isSameAddressForLast12Months: Boolean,
+                             previousAddress: Option[CorrespondenceAddress],
+                             correspondenceDetails: Option[CorrespondenceDetails])
 
-object DirectorOrPartnerDetails {
-  implicit val writes : Writes[DirectorOrPartnerDetails] = Json.writes[DirectorOrPartnerDetails]
-  implicit val reads : Reads[DirectorOrPartnerDetails] = (
+object DirectorOrPartner {
+  implicit val writes : Writes[DirectorOrPartner] = Json.writes[DirectorOrPartner]
+  implicit val reads : Reads[DirectorOrPartner] = (
     (JsPath \ "entityType").read[String] and
       (JsPath \ "title").readNullable[String] and
       (JsPath \ "firstName").read[String] and
@@ -48,5 +48,5 @@ object DirectorOrPartnerDetails {
       (JsPath \ "previousAddressDetails" \ "previousAddress").readNullable[CorrespondenceAddress] and
       (JsPath \ "correspondenceCommonDetails").readNullable[CorrespondenceDetails]
     )((entityType,title,name,middleName,surname,dob,nino,utr,isSameAddress,previousAddress,correspondence) =>
-    DirectorOrPartnerDetails(entityType,title,name,middleName,surname,dob,nino,utr,isSameAddress,previousAddress,correspondence))
+    DirectorOrPartner(entityType,title,name,middleName,surname,dob,nino,utr,isSameAddress,previousAddress,correspondence))
 }

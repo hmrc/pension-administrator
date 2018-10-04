@@ -16,16 +16,16 @@
 
 package models.Reads.PsaSubscriptionDetails
 
-import models.PsaSubscription.CustomerIdentificationDetails
+import models.PsaSubscription.CustomerIdentification
 import models.Samples
 import org.scalacheck.Gen
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
 
-class CustomerIdentificationDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
+class CustomerIdentificationReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A valid payload with Customer Identification Details" should {
     "validate to a Customer Identification Details object" when {
-      val result = customerIdentificationDetailsGenerator.as[CustomerIdentificationDetails]
+      val result = customerIdentificationDetailsGenerator.as[CustomerIdentification]
 
       "we have a legal status" in {
         result.legalStatus mustBe (customerIdentificationDetailsGenerator \ "legalStatus").as[String]
