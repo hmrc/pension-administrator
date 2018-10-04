@@ -23,33 +23,18 @@ import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-class CorrespondenceDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class CorrespondenceDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
 
   "A payload containing correspondence details" should {
     "map correclty to a CorrespondenceDetails object" when {
-
-      val contactDetails = Json.obj("telephone" -> Gen.numStr.sample,
-        "email" -> Gen.option(Gen.alphaStr).sample)
-
-      val address = Json.obj("nonUKAddress" -> Gen.oneOf(JsBoolean(true),JsBoolean(false)).sample,
-        "line1" -> Gen.alphaStr.sample,
-        "line2" -> Gen.alphaStr.sample,
-        "line3" -> Gen.option(Gen.alphaStr.sample).sample,
-        "line4" -> Gen.option(Gen.alphaStr.sample).sample,
-        "postalCode" -> Gen.option(Gen.alphaStr.sample).sample,
-        "countryCode" -> Gen.alphaStr.sample)
-
-      val input = Json.obj("addressDetails" -> address,
-      "contactDetails" -> Gen.option(contactDetails).sample)
-
-      val output = input.as[CorrespondenceDetails]
+      val output = correspondenceDetailsGenerator.as[CorrespondenceDetails]
 
       "we have an address" in {
-        output.address mustBe (input \ "addressDetails").as[CorrespondenceAddress]
+        output.address mustBe (correspondenceDetailsGenerator \ "addressDetails").as[CorrespondenceAddress]
       }
 
       "we have an optional contact details" in {
-        output.contactDetails mustBe (input \ "contactDetails").asOpt[PsaContactDetails]
+        output.contactDetails mustBe (correspondenceDetailsGenerator \ "contactDetails").asOpt[PsaContactDetails]
       }
     }
   }

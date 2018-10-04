@@ -24,83 +24,53 @@ import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-class PsaDirectorOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class PsaDirectorOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A payload containing details for a Director or a Partner" should {
     "parse correctly to a PsaDirectorOrPartnerDetails object" when {
-
-      val contactDetails = Json.obj("telephone" -> Gen.numStr.sample,
-        "email" -> Gen.option(s"${Gen.alphaStr}@${Gen.alphaStr}.${Gen.alphaLowerStr}").sample)
-
-      val date: Gen[LocalDate] = for {
-        day <- Gen.choose(1,28)
-        month <-Gen.choose(1,12)
-        year <-Gen.choose(2000,2018)
-      } yield new LocalDate(year,month,day)
-
-      val address = Json.obj("nonUKAddress" -> Gen.oneOf(JsBoolean(true),JsBoolean(false)).sample,
-        "line1" -> Gen.alphaStr.sample,
-        "line2" -> Gen.alphaStr.sample,
-        "line3" -> Gen.option(Gen.alphaStr.sample).sample,
-        "line4" -> Gen.option(Gen.alphaStr.sample).sample,
-        "postalCode" -> Gen.option(Gen.alphaStr.sample).sample,
-        "countryCode" -> Gen.alphaStr.sample)
-
-      val input = Json.obj("entityType" -> Gen.oneOf("Director","Partner").sample,
-      "title" -> Gen.option(Gen.oneOf("Mr","Mrs","Miss","Ms","Dr","Sir","Professor","Lord")).sample,
-      "firstName" -> Gen.alphaStr.sample,
-      "middleName" -> Gen.option(Gen.alphaStr).sample,
-      "lastName" -> Gen.alphaStr.sample,
-      "dateOfBirth" -> date.sample,
-      "nino" -> Gen.alphaUpperStr.sample,
-      "utr" -> Gen.alphaUpperStr.sample,
-      "previousAddressDetails" -> Json.obj("isPreviousAddressLast12Month" -> Gen.oneOf(true,false).sample,
-                            "previousAddress" -> Gen.option(address).sample),
-      "correspondenceCommonDetails" -> Gen.option(Json.obj("addressDetails" -> address, "contactDetails" -> Gen.option(contactDetails).sample)).sample)
-
-      val output = input.as[PsaDirectorOrPartnerDetails]
+      val output = psaDirectorOrPartnerDetailsGenerator.as[PsaDirectorOrPartnerDetails]
 
       "we have an entity type" in {
-        output.detailsForDirectorOrPartner mustBe (input \ "entityType").as[String]
+        output.isDirectorOrPartner mustBe (psaDirectorOrPartnerDetailsGenerator \ "entityType").as[String]
       }
 
       "we have an optional title" in {
-        output.title mustBe (input \ "title").asOpt[String]
+        output.title mustBe (psaDirectorOrPartnerDetailsGenerator \ "title").asOpt[String]
       }
 
       "we have a first name" in {
-        output.firstName mustBe (input \ "firstName").as[String]
+        output.firstName mustBe (psaDirectorOrPartnerDetailsGenerator \ "firstName").as[String]
       }
 
       "we have an optional middle name" in {
-        output.middleName mustBe (input \ "middleName").asOpt[String]
+        output.middleName mustBe (psaDirectorOrPartnerDetailsGenerator \ "middleName").asOpt[String]
       }
 
       "we have a surname" in {
-        output.lastName mustBe (input \ "lastName").as[String]
+        output.lastName mustBe (psaDirectorOrPartnerDetailsGenerator \ "lastName").as[String]
       }
 
       "we have a dob" in {
-        output.dateOfBirth.toString() mustBe (input \ "dateOfBirth").as[String]
+        output.dateOfBirth.toString() mustBe (psaDirectorOrPartnerDetailsGenerator \ "dateOfBirth").as[String]
       }
 
       "we have an optional nino" in {
-        output.nino mustBe (input \ "nino").asOpt[String]
+        output.nino mustBe (psaDirectorOrPartnerDetailsGenerator \ "nino").asOpt[String]
       }
 
       "we have an optional utr" in {
-        output.utr mustBe (input \ "utr").asOpt[String]
+        output.utr mustBe (psaDirectorOrPartnerDetailsGenerator \ "utr").asOpt[String]
       }
 
       "we have a flag to say whether if they have been in the same prevoius address in last 12 months" in {
-        output.isSameAddressForLast12Months mustBe (input \ "previousAddressDetails" \ "isPreviousAddressLast12Month").as[Boolean]
+        output.isSameAddressForLast12Months mustBe (psaDirectorOrPartnerDetailsGenerator \ "previousAddressDetails" \ "isPreviousAddressLast12Month").as[Boolean]
       }
 
       "we have an optional previous address" in {
-        output.previousAddress mustBe (input \ "previousAddressDetails" \ "previousAddress").asOpt[CorrespondenceAddress]
+        output.previousAddress mustBe (psaDirectorOrPartnerDetailsGenerator \ "previousAddressDetails" \ "previousAddress").asOpt[CorrespondenceAddress]
       }
 
       "we have an optional correspondence common details" in {
-        output.correspondenceDetails mustBe (input \ "correspondenceCommonDetails").asOpt[CorrespondenceDetails]
+        output.correspondenceDetails mustBe (psaDirectorOrPartnerDetailsGenerator \ "correspondenceCommonDetails").asOpt[CorrespondenceDetails]
       }
     }
   }
@@ -108,7 +78,7 @@ class PsaDirectorOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers wi
 
 
 
-case class PsaDirectorOrPartnerDetails(detailsForDirectorOrPartner: String,
+case class PsaDirectorOrPartnerDetails(isDirectorOrPartner: String,
                                        title: Option[String],
                                        firstName: String,
                                        middleName: Option[String],

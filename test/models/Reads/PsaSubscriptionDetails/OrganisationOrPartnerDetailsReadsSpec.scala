@@ -22,31 +22,25 @@ import org.scalacheck.Gen
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
 
-class OrganisationOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class OrganisationOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A valid payload with Organisation or Partner Details" should {
     "validate to a Organisation or Partner Details object" when {
-
-      val customerIdentificationDetails  = Json.obj("name" -> Gen.alphaStr.sample,
-        "crnNumber" -> Gen.option(Gen.alphaStr).sample,
-        "vatRegistrationNumber" -> Gen.option(Gen.alphaStr).sample,
-        "payeReference" -> Gen.option(Gen.alphaStr).sample)
-
-      val result = customerIdentificationDetails.as[OrganisationOrPartnerDetails]
+      val result = orgOrPartnerDetailsGenerator.as[OrganisationOrPartnerDetails]
 
       "we have a name" in {
-        result.name mustBe (customerIdentificationDetails \ "name").as[String]
+        result.name mustBe (orgOrPartnerDetailsGenerator \ "name").as[String]
       }
 
       "we have an optional crnNumber" in {
-        result.crn mustBe (customerIdentificationDetails \ "crnNumber").asOpt[String]
+        result.crn mustBe (orgOrPartnerDetailsGenerator \ "crnNumber").asOpt[String]
       }
 
       "we have an optional vatRegistrationNumber" in {
-        result.vatRegistration mustBe (customerIdentificationDetails \ "vatRegistrationNumber").asOpt[String]
+        result.vatRegistration mustBe (orgOrPartnerDetailsGenerator \ "vatRegistrationNumber").asOpt[String]
       }
 
       "we have an optional payeReference" in {
-        result.paye mustBe (customerIdentificationDetails \ "payeReference").asOpt[String]
+        result.paye mustBe (orgOrPartnerDetailsGenerator \ "payeReference").asOpt[String]
       }
     }
   }

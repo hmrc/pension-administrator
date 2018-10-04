@@ -22,21 +22,17 @@ import org.scalacheck.Gen
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.Json
 
-class PsaContactDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class PsaContactDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A payload containing psa contact details" should {
     "parse to a valid tactDetails object" when {
-
-      val input = Json.obj("telephone" -> Gen.numStr.sample,
-      "email" -> Gen.option(Gen.alphaStr).sample)
-
-      val output = input.as[PsaContactDetails]
+      val output = psaContactDetailsGenerator.as[PsaContactDetails]
 
       "we have a telephone number" in {
-        output.telephone mustBe (input \ "telephone").as[String]
+        output.telephone mustBe (psaContactDetailsGenerator \ "telephone").as[String]
       }
-      
+
       "we have an optional email" in {
-        output.email mustBe (input \ "email").asOpt[String]
+        output.email mustBe (psaContactDetailsGenerator \ "email").asOpt[String]
       }
     }
   }

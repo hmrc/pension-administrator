@@ -22,34 +22,25 @@ import org.scalacheck.Gen
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
 
-class CustomerIdentificationDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class CustomerIdentificationDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A valid payload with Customer Identification Details" should {
     "validate to a Customer Identification Details object" when {
-
-      val legalStatus = Gen.oneOf("Individual","Partnership","Limited Company")
-      val idType = Gen.option(Gen.oneOf("NINO","UTR"))
-
-      val customerIdentificationDetails  = Json.obj("legalStatus" -> legalStatus.sample,
-        "idType" -> idType.sample,
-        "idNumber" -> Gen.option(Gen.alphaStr).sample,
-        "noIdentifier" -> Gen.oneOf(true,false).sample)
-
-      val result = customerIdentificationDetails.as[CustomerIdentificationDetails]
+      val result = customerIdentificationDetailsGenerator.as[CustomerIdentificationDetails]
 
       "we have a legal status" in {
-        result.legalStatus mustBe (customerIdentificationDetails \ "legalStatus").as[String]
+        result.legalStatus mustBe (customerIdentificationDetailsGenerator \ "legalStatus").as[String]
       }
 
       "we have an optional id type" in {
-        result.typeOfId mustBe (customerIdentificationDetails \ "idType").asOpt[String]
+        result.typeOfId mustBe (customerIdentificationDetailsGenerator \ "idType").asOpt[String]
       }
 
       "we have an optional id number" in {
-        result.number mustBe (customerIdentificationDetails \ "idNumber").asOpt[String]
+        result.number mustBe (customerIdentificationDetailsGenerator \ "idNumber").asOpt[String]
       }
 
       "we have a flag for noIdentifier" in {
-        result.isOverseasCustomer mustBe (customerIdentificationDetails \ "noIdentifier").as[Boolean]
+        result.isOverseasCustomer mustBe (customerIdentificationDetailsGenerator \ "noIdentifier").as[Boolean]
       }
     }
   }
