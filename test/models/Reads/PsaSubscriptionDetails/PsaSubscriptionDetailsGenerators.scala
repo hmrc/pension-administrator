@@ -76,4 +76,6 @@ trait PsaSubscriptionDetailsGenerators {
     "previousAddressDetails" -> Json.obj("isPreviousAddressLast12Month" -> Gen.oneOf(true,false).sample,
       "previousAddress" -> Gen.option(address).sample),
     "correspondenceCommonDetails" -> Gen.option(Json.obj("addressDetails" -> address, "contactDetails" -> Gen.option(contactDetails).sample)).sample)
+
+  val pensionAdvisorGenerator = Json.obj("name" -> Gen.alphaStr.sample, "addressDetails" -> address, "contactDetails" -> Gen.option(psaContactDetailsGenerator).sample)
 }
