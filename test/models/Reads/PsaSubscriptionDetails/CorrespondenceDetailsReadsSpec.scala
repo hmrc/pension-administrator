@@ -22,19 +22,23 @@ import org.scalacheck.Gen
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import org.scalatest.prop.PropertyChecks._
+
 
 class CorrespondenceDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
 
   "A payload containing correspondence details" should {
     "map correclty to a CorrespondenceDetails object" when {
-      val output = correspondenceDetailsGenerator.as[CorrespondenceDetails]
-
       "we have an address" in {
-        output.address mustBe (correspondenceDetailsGenerator \ "addressDetails").as[CorrespondenceAddress]
+        forAll(correspondenceDetailsGenerator) {
+          correspondence => correspondence.as[CorrespondenceDetails].address mustBe (correspondence \ "addressDetails").as[CorrespondenceAddress]
+        }
       }
 
       "we have an optional contact details" in {
-        output.contactDetails mustBe (correspondenceDetailsGenerator \ "contactDetails").asOpt[PsaContactDetails]
+        forAll(correspondenceDetailsGenerator) {
+          correspondence => correspondence.as[CorrespondenceDetails].contactDetails mustBe (correspondence \ "contactDetails").asOpt[PsaContactDetails]
+        }
       }
     }
   }
