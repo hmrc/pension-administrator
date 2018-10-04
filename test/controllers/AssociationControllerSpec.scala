@@ -24,6 +24,7 @@ import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -63,7 +64,6 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     status(result) mustBe NOT_FOUND
     contentAsString(result) mustBe "not found"
   }
-
 
   "acceptInvitation" should "return Created when the data is posted successfully" in {
 
@@ -159,7 +159,7 @@ object AssociationControllerSpec {
 
     def setAcceptInvitationResponse(response: Future[Either[HttpException, Unit]]): Unit = this.acceptInvitationResponse = response
 
-    def getPSAMinimalDetails(psaId: String)(implicit
+    def getPSAMinimalDetails(psaId: PsaId)(implicit
                                             headerCarrier: HeaderCarrier,
                                             ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = minimalPsaDetailsResponse
 
@@ -173,7 +173,7 @@ object AssociationControllerSpec {
 
   val acceptedInvitationRequest = Json.parse(
     """
-      |{"pstr":"test-pstr","inviteePsaId":"test-invitee-psa-id","inviterPsaId":"test-inviter-psa-id","declaration":true,"declarationDuties":true}
+      |{"pstr":"test-pstr","inviteePsaId":"A7654321","inviterPsaId":"A1234567","declaration":true,"declarationDuties":true}
     """.stripMargin
   )
 }

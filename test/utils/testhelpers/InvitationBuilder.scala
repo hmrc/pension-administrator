@@ -16,23 +16,24 @@
 
 package utils.testhelpers
 
-import models.Invitation
+import models.{Invitation, SchemeReferenceNumber}
 import org.joda.time.DateTime
+import uk.gov.hmrc.domain.PsaId
 
 object InvitationBuilder {
 
-  val srn = "test-srn"
+  val srn = SchemeReferenceNumber("S2200000000")
   val pstr1 = "S12345"
   val schemeName1 = "Test scheme1 name"
-  val inviterPsaId1 = "I12345"
-  val inviteePsaId1 = "P12345"
+  val inviterPsaId1 = PsaId("I1234567")
+  val inviteePsaId1 = PsaId("P1234567")
   val inviteeName1 = "Test Invitee1 Name"
   val expiryDate1 = new DateTime("2018-11-10")
 
   val pstr2 = "D1234"
   val schemeName2 = "Test scheme2 name"
-  val inviterPsaId2 = "Q12345"
-  val inviteePsaId2 = "T12345"
+  val inviterPsaId2 = PsaId("Q1234567")
+  val inviteePsaId2 = PsaId("T1234567")
   val inviteeName2 = "Test Invitee2 Name"
   val expiryDate2 = new DateTime("2018-11-11")
 
@@ -55,8 +56,8 @@ object InvitationBuilder {
 
   val invitationList = List(invitation1, invitation2)
 
-  val mapBothKeys = Map("pstr" -> pstr1, "inviteePsaId" -> inviteePsaId1)
+  val mapBothKeys = Map("pstr" -> pstr1, "inviteePsaId" -> inviteePsaId1.value)
   val mapPstr = Map("pstr" -> pstr1)
-  val mapInviteePsaId = Map("inviteePsaId" -> inviteePsaId1)
+  val mapInviteePsaId = Map("inviteePsaId" -> inviteePsaId1.value)
 
 }

@@ -27,6 +27,7 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
 import play.api.test.Helpers._
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import utils.{StubLogger, WireMockHelper}
 
@@ -329,8 +330,9 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
 object AssociationConnectorSpec extends OptionValues {
 
-  private val psaIdInvitee = "A2123456"
-  private val psaId = "A2123456"
+  private val psaIdInvitee = PsaId("A2123456")
+  private val psaId = PsaId("A2123456")
+
   private val ukAddress = UkAddress(
     addressLine1 = "address line 1",
     addressLine2 = Some("address line 2"),
