@@ -16,18 +16,14 @@
 
 package models.Reads.PsaSubscriptionDetails
 
-import models.PsaSubscription.CorrespondenceDetails
-import models.{CorrespondenceAddress, CorrespondenceCommonDetail, Samples}
-import org.joda.time.LocalDate
-import org.scalacheck.Gen
+import models.CorrespondenceAddress
+import models.PsaSubscription.{CorrespondenceDetails, DirectorOrPartnerDetails}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
 
-class PsaDirectorOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
+class DirectorOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A payload containing details for a Director or a Partner" should {
     "parse correctly to a PsaDirectorOrPartnerDetails object" when {
-      val output = psaDirectorOrPartnerDetailsGenerator.as[PsaDirectorOrPartnerDetails]
+      val output = psaDirectorOrPartnerDetailsGenerator.as[DirectorOrPartnerDetails]
 
       "we have an entity type" in {
         output.isDirectorOrPartner mustBe (psaDirectorOrPartnerDetailsGenerator \ "entityType").as[String]
@@ -74,38 +70,6 @@ class PsaDirectorOrPartnerDetailsReadsSpec extends WordSpec with MustMatchers wi
       }
     }
   }
-}
-
-
-
-case class PsaDirectorOrPartnerDetails(isDirectorOrPartner: String,
-                                       title: Option[String],
-                                       firstName: String,
-                                       middleName: Option[String],
-                                       lastName: String,
-                                       dateOfBirth: LocalDate,
-                                       nino: Option[String],
-                                       utr: Option[String],
-                                       isSameAddressForLast12Months: Boolean,
-                                       previousAddress: Option[CorrespondenceAddress],
-                                       correspondenceDetails: Option[CorrespondenceDetails])
-
-object PsaDirectorOrPartnerDetails {
-  implicit val writes : Writes[PsaDirectorOrPartnerDetails] = Json.writes[PsaDirectorOrPartnerDetails]
-  implicit val reads : Reads[PsaDirectorOrPartnerDetails] = (
-    (JsPath \ "entityType").read[String] and
-      (JsPath \ "title").readNullable[String] and
-      (JsPath \ "firstName").read[String] and
-      (JsPath \ "middleName").readNullable[String] and
-      (JsPath \ "lastName").read[String] and
-      (JsPath \ "dateOfBirth").read[LocalDate] and
-      (JsPath \ "nino").readNullable[String] and
-      (JsPath \ "utr").readNullable[String] and
-      (JsPath \ "previousAddressDetails" \ "isPreviousAddressLast12Month").read[Boolean] and
-      (JsPath \ "previousAddressDetails" \ "previousAddress").readNullable[CorrespondenceAddress] and
-      (JsPath \ "correspondenceCommonDetails").readNullable[CorrespondenceDetails]
-  )((entityType,title,name,middleName,surname,dob,nino,utr,isSameAddress,previousAddress,correspondence) =>
-    PsaDirectorOrPartnerDetails(entityType,title,name,middleName,surname,dob,nino,utr,isSameAddress,previousAddress,correspondence))
 }
 
 
