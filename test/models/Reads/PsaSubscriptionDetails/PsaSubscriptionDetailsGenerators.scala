@@ -164,9 +164,20 @@ trait PsaSubscriptionDetailsGenerators {
     "correspondenceCommonDetails" -> correspondenceCommonDetails)
   }
 
+  val pensionAdvisorGenerator: Gen[JsObject] = for {
+    name <- Gen.alphaStr
+    addressDetails <- addressGenerator
+    contactDetails <- Gen.option(psaContactDetailsGenerator)
+  } yield {
+    Json.obj(
+      "name" -> name,
+      "addressDetails" -> addressDetails,
+      "contactDetails" -> contactDetails
+    )
+  }
+
   val directorsOrPartners = JsArray(Gen.listOf(psaDirectorOrPartnerDetailsGenerator).sample.get)
 
-  val pensionAdvisorGenerator = Json.obj("name" -> Gen.alphaStr.sample, "addressDetails" -> addressGenerator.sample, "contactDetails" -> Gen.option(psaContactDetailsGenerator).sample)
 
   val psaSubscriptionDetailsGenerator = Json.obj("psaSubscriptionDetails" -> Json.obj("isPSASuspension" -> booleanGen, "customerIdentificationDetails" -> customerIdentificationDetailsGenerator.sample,
     "organisationOrPartnerDetails" -> Gen.option(orgOrPartnerDetailsGenerator).sample,

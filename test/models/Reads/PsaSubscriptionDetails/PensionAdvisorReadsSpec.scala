@@ -21,22 +21,28 @@ import models.PsaSubscription.{PensionAdvisor, PsaContactDetails}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.{JsPath, Json, Reads, Writes}
 import play.api.libs.functional.syntax._
+import org.scalatest.prop.PropertyChecks._
+
 
 class PensionAdvisorReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A payload containing details for a pension advisor" should {
     "Map correctly to a Pension Advisor object" when {
-      val output = pensionAdvisorGenerator.as[PensionAdvisor]
-      
       "We have a name" in {
-        output.name mustBe (pensionAdvisorGenerator \ "name").as[String]
+        forAll(pensionAdvisorGenerator){
+          advisor => advisor.as[PensionAdvisor].name mustBe (advisor \ "name").as[String]
+        }
       }
 
       "we have an address" in {
-        output.address mustBe (pensionAdvisorGenerator \ "addressDetails").as[CorrespondenceAddress]
+        forAll(pensionAdvisorGenerator){
+          advisor => advisor.as[PensionAdvisor].address mustBe (advisor \ "addressDetails").as[CorrespondenceAddress]
+        }
       }
 
       "we have an optional contact details" in {
-        output.contactDetails mustBe (pensionAdvisorGenerator \ "contactDetails").asOpt[PsaContactDetails]
+        forAll(pensionAdvisorGenerator){
+          advisor => advisor.as[PensionAdvisor].contactDetails mustBe (advisor \ "contactDetails").asOpt[PsaContactDetails]
+        }
       }
     }
   }
