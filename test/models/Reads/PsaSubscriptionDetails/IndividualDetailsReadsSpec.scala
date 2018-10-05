@@ -16,36 +16,43 @@
 
 package models.Reads.PsaSubscriptionDetails
 
-import models.{IndividualDetailType, Samples}
-import org.joda.time.LocalDate
-import org.scalacheck.Gen
+import models.IndividualDetailType
+import org.scalatest.prop.PropertyChecks._
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json.Json
 
 
 class IndividualDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A psa subscription details payload containing individual details" should {
     "parse the individual details into an Individual Details object" when {
-      val result = individualGenerator.as[IndividualDetailType]
 
       "we have an optional title" in {
-        result.title mustBe (individualGenerator \ "title").asOpt[String]
+        forAll(individualGenerator) {
+          individual => individual.as[IndividualDetailType].title mustBe (individual \ "title").asOpt[String]
+        }
       }
 
       "we have a first name" in {
-        result.firstName mustBe (individualGenerator \ "firstName").as[String]
+        forAll(individualGenerator) {
+          individual => individual.as[IndividualDetailType].firstName mustBe (individual \ "firstName").as[String]
+        }
       }
 
       "we have an optional middle name" in {
-        result.middleName mustBe (individualGenerator \ "middleName").asOpt[String]
+        forAll(individualGenerator) {
+          individual => individual.as[IndividualDetailType].middleName mustBe (individual \ "middleName").asOpt[String]
+        }
       }
 
       "we have a last name" in {
-        result.lastName mustBe (individualGenerator \ "lastName").as[String]
+        forAll(individualGenerator) {
+          individual => individual.as[IndividualDetailType].lastName mustBe (individual \ "lastName").as[String]
+        }
       }
 
       "we have a date of birth" in {
-        result.dateOfBirth.toString mustBe (individualGenerator \ "dateOfBirth").as[String]
+        forAll(individualGenerator) {
+          individual => individual.as[IndividualDetailType].dateOfBirth.toString mustBe (individual \ "dateOfBirth").as[String]
+        }
       }
     }
   }

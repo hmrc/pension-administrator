@@ -16,13 +16,10 @@
 
 package models.Reads.PsaSubscriptionDetails
 
+import models.CorrespondenceAddress
 import models.PsaSubscription.{CorrespondenceDetails, PsaContactDetails}
-import models.{CorrespondenceAddress, Samples}
-import org.scalacheck.Gen
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
 import org.scalatest.prop.PropertyChecks._
+import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 
 
 class CorrespondenceDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
