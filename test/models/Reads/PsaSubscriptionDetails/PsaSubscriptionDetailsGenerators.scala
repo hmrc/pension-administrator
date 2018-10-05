@@ -128,20 +128,41 @@ trait PsaSubscriptionDetailsGenerators {
     "previousAddress" -> previousAddress)
   }
 
-
-  val psaDirectorOrPartnerDetailsGenerator = Json.obj("entityType" -> Gen.oneOf("Director","Partner").sample,
-    "title" -> Gen.option(titlesGenerator).sample,
-    "firstName" -> Gen.alphaStr.sample,
-    "middleName" -> Gen.option(Gen.alphaStr).sample,
-    "lastName" -> Gen.alphaStr.sample,
-    "dateOfBirth" -> dateGenerator.sample,
-    "nino" -> Gen.alphaUpperStr.sample,
-    "utr" -> Gen.alphaUpperStr.sample,
-    "previousAddressDetails" -> Json.obj("isPreviousAddressLast12Month" -> booleanGen,
-      "previousAddress" -> Gen.option(addressGenerator).sample),
-    "correspondenceCommonDetails" -> Gen.option(Json.obj("addressDetails" -> addressGenerator.sample, "contactDetails" -> Gen.option(psaContactDetailsGenerator).sample)).sample)
+  val correspondenceCommonDetailsGenerator : Gen[JsObject] = for {
+    addressDetails <- addressGenerator
+    contactDetails <- Gen.option(psaContactDetailsGenerator)
+  } yield {
+    Json.obj(
+      "addressDetails" -> addressDetails,
+      "contactDetails" -> contactDetails
+    )
+  }
 
 
+  val psaDirectorOrPartnerDetailsGenerator : Gen[JsObject] = for {
+    entityType <- Gen.oneOf("Director","Partner")
+    title <- Gen.option(titlesGenerator)
+    firstName <- Gen.alphaStr
+    middleName <- Gen.option(Gen.alphaStr)
+    lastName <- Gen.alphaStr
+    dateOfBirth <- dateGenerator
+    nino <- Gen.alphaUpperStr
+    utr <- Gen.alphaUpperStr
+    previousAddressDetails <- previousAddressGenerator
+    correspondenceCommonDetails <- Gen.option(correspondenceCommonDetailsGenerator)
+  } yield {
+    Json.obj(
+    "entityType" -> entityType,
+    "title" -> title,
+    "firstName" -> firstName,
+    "middleName" -> middleName,
+    "lastName" -> lastName,
+    "dateOfBirth" -> dateOfBirth,
+    "nino" -> nino,
+    "utr" -> utr,
+    "previousAddressDetails" -> previousAddressDetails,
+    "correspondenceCommonDetails" -> correspondenceCommonDetails)
+  }
 
   val directorsOrPartners = JsArray(Gen.listOf(psaDirectorOrPartnerDetailsGenerator).sample.get)
 

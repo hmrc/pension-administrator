@@ -19,54 +19,76 @@ package models.Reads.PsaSubscriptionDetails
 import models.CorrespondenceAddress
 import models.PsaSubscription.{CorrespondenceDetails, DirectorOrPartner}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.prop.PropertyChecks._
+
 
 class DirectorOrPartnerReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A payload containing details for a Director or a Partner" should {
     "parse correctly to a PsaDirectorOrPartnerDetails object" when {
-      val output = psaDirectorOrPartnerDetailsGenerator.as[DirectorOrPartner]
-
       "we have an entity type" in {
-        output.isDirectorOrPartner mustBe (psaDirectorOrPartnerDetailsGenerator \ "entityType").as[String]
+        forAll(psaDirectorOrPartnerDetailsGenerator){
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].isDirectorOrPartner mustBe (directorOrPartner \ "entityType").as[String]
+        }
       }
 
       "we have an optional title" in {
-        output.title mustBe (psaDirectorOrPartnerDetailsGenerator \ "title").asOpt[String]
+        forAll(psaDirectorOrPartnerDetailsGenerator){
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].title mustBe (directorOrPartner \ "title").asOpt[String]
+        }
       }
 
       "we have a first name" in {
-        output.firstName mustBe (psaDirectorOrPartnerDetailsGenerator \ "firstName").as[String]
+        forAll(psaDirectorOrPartnerDetailsGenerator){
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].firstName mustBe (directorOrPartner \ "firstName").as[String]
+        }
       }
 
       "we have an optional middle name" in {
-        output.middleName mustBe (psaDirectorOrPartnerDetailsGenerator \ "middleName").asOpt[String]
+        forAll(psaDirectorOrPartnerDetailsGenerator){
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].middleName mustBe (directorOrPartner \ "middleName").asOpt[String]
+        }
       }
 
       "we have a surname" in {
-        output.lastName mustBe (psaDirectorOrPartnerDetailsGenerator \ "lastName").as[String]
+        forAll(psaDirectorOrPartnerDetailsGenerator){
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].lastName mustBe (directorOrPartner \ "lastName").as[String]
+        }
       }
 
       "we have a dob" in {
-        output.dateOfBirth.toString() mustBe (psaDirectorOrPartnerDetailsGenerator \ "dateOfBirth").as[String]
+        forAll(psaDirectorOrPartnerDetailsGenerator){
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].dateOfBirth.toString() mustBe (directorOrPartner \ "dateOfBirth").as[String]
+        }
       }
 
       "we have an optional nino" in {
-        output.nino mustBe (psaDirectorOrPartnerDetailsGenerator \ "nino").asOpt[String]
+        forAll(psaDirectorOrPartnerDetailsGenerator){
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].nino mustBe (directorOrPartner \ "nino").asOpt[String]
+        }
       }
 
       "we have an optional utr" in {
-        output.utr mustBe (psaDirectorOrPartnerDetailsGenerator \ "utr").asOpt[String]
+        forAll(psaDirectorOrPartnerDetailsGenerator){
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].utr mustBe (directorOrPartner \ "utr").asOpt[String]
+        }
       }
 
-      "we have a flag to say whether if they have been in the same prevoius address in last 12 months" in {
-        output.isSameAddressForLast12Months mustBe (psaDirectorOrPartnerDetailsGenerator \ "previousAddressDetails" \ "isPreviousAddressLast12Month").as[Boolean]
+      "we have a flag to say whether if they have been in the same previous address in last 12 months" in {
+        forAll(psaDirectorOrPartnerDetailsGenerator){
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].isSameAddressForLast12Months mustBe (directorOrPartner \ "previousAddressDetails" \ "isPreviousAddressLast12Month").as[Boolean]
+        }
       }
 
       "we have an optional previous address" in {
-        output.previousAddress mustBe (psaDirectorOrPartnerDetailsGenerator \ "previousAddressDetails" \ "previousAddress").asOpt[CorrespondenceAddress]
+        forAll(psaDirectorOrPartnerDetailsGenerator){
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].previousAddress mustBe (directorOrPartner \ "previousAddressDetails" \ "previousAddress").asOpt[CorrespondenceAddress]
+        }
       }
 
       "we have an optional correspondence common details" in {
-        output.correspondenceDetails mustBe (psaDirectorOrPartnerDetailsGenerator \ "correspondenceCommonDetails").asOpt[CorrespondenceDetails]
+        forAll(psaDirectorOrPartnerDetailsGenerator){
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].correspondenceDetails mustBe (directorOrPartner \ "correspondenceCommonDetails").asOpt[CorrespondenceDetails]
+        }
       }
     }
   }
