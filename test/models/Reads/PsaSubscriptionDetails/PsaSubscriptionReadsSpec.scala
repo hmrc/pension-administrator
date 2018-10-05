@@ -16,55 +16,73 @@
 
 package models.Reads.PsaSubscriptionDetails
 
-import models.PsaSubscription._
 import models.{CorrespondenceAddress, IndividualDetailType}
+import models.PsaSubscription._
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+
 
 class PsaSubscriptionReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators with PropertyChecks {
   "A payload containing details for a PSA subscription" should {
     "map correctly to a PsaSubscription object" when {
-
-      val output = psaSubscriptionDetailsGenerator.as[PsaSubscription]
-
-      "we have a isSuspended flag" in {
-        output.isSuspended mustBe (psaSubscriptionDetailsGenerator \ "psaSubscriptionDetails" \ "isPSASuspension").as[Boolean]
+      "we have a isSuspended flag " in {
+        forAll(psaSubscriptionDetailsGenerator){
+          psa => psa.as[PsaSubscription].isSuspended mustBe (psa \ "isPSASuspension").as[Boolean]
+        }
       }
 
       "we have customer identification details" in {
-        output.customerIdentification mustBe (psaSubscriptionDetailsGenerator \ "psaSubscriptionDetails" \ "customerIdentificationDetails").as[CustomerIdentification]
+        forAll(psaSubscriptionDetailsGenerator){
+          psa => psa.as[PsaSubscription].customerIdentification mustBe (psa \ "customerIdentificationDetails").as[CustomerIdentification]
+        }
       }
 
       "we have an optional organisation or partner details" in {
-        output.organisationOrPartner mustBe (psaSubscriptionDetailsGenerator \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails").asOpt[OrganisationOrPartner]
+        forAll(psaSubscriptionDetailsGenerator){
+          psa => psa.as[PsaSubscription].organisationOrPartner mustBe (psa \ "organisationOrPartnerDetails").asOpt[OrganisationOrPartner]
+        }
       }
 
       "we have optional individual details" in {
-        output.individual mustBe (psaSubscriptionDetailsGenerator \ "psaSubscriptionDetails" \ "individualDetails").asOpt[IndividualDetailType]
+        forAll(psaSubscriptionDetailsGenerator){
+          psa => psa.as[PsaSubscription].individual mustBe (psa \ "individualDetails").asOpt[IndividualDetailType]
+        }
       }
 
       "we have a correspondence address" in {
-        output.address mustBe (psaSubscriptionDetailsGenerator \ "psaSubscriptionDetails"  \ "correspondenceAddressDetails").as[CorrespondenceAddress]
+        forAll(psaSubscriptionDetailsGenerator){
+          psa => psa.as[PsaSubscription].address mustBe (psa \ "correspondenceAddressDetails").as[CorrespondenceAddress]
+        }
       }
 
       "we have a correspondence contact details" in {
-        output.contact mustBe (psaSubscriptionDetailsGenerator \ "psaSubscriptionDetails" \ "correspondenceContactDetails").as[PsaContactDetails]
+        forAll(psaSubscriptionDetailsGenerator){
+          psa => psa.as[PsaSubscription].contact mustBe (psa \ "correspondenceContactDetails").as[PsaContactDetails]
+        }
       }
 
       "we have a flag that tells us if they have lived in the same address for last 12 months" in {
-        output.isSameAddressForLast12Months mustBe (psaSubscriptionDetailsGenerator \ "psaSubscriptionDetails" \ "previousAddressDetails" \ "isPreviousAddressLast12Month").as[Boolean]
+        forAll(psaSubscriptionDetailsGenerator){
+          psa => psa.as[PsaSubscription].isSameAddressForLast12Months mustBe (psa \  "previousAddressDetails" \ "isPreviousAddressLast12Month").as[Boolean]
+        }
       }
 
       "we have an optional previous address" in {
-        output.previousAddress mustBe (psaSubscriptionDetailsGenerator \ "psaSubscriptionDetails" \ "previousAddressDetails" \ "previousAddress").asOpt[CorrespondenceAddress]
+        forAll(psaSubscriptionDetailsGenerator){
+          psa => psa.as[PsaSubscription].previousAddress mustBe (psa \  "previousAddressDetails" \ "previousAddress").asOpt[CorrespondenceAddress]
+        }
       }
 
       "we have an optional list of directors or partners" in {
-        output.directorsOrPartners mustBe (psaSubscriptionDetailsGenerator \ "psaSubscriptionDetails" \ "directorOrPartnerDetails").asOpt[Seq[DirectorOrPartner]]
+        forAll(psaSubscriptionDetailsGenerator){
+          psa => psa.as[PsaSubscription].directorsOrPartners mustBe (psa \  "directorOrPartnerDetails").asOpt[Seq[DirectorOrPartner]]
+        }
       }
 
       "we have an option Pension Advisor" in {
-        output.pensionAdvisor mustBe (psaSubscriptionDetailsGenerator \ "psaSubscriptionDetails" \ "declarationDetails" \ "pensionAdvisorDetails").asOpt[PensionAdvisor]
+        forAll(psaSubscriptionDetailsGenerator){
+          psa => psa.as[PsaSubscription].pensionAdvisor mustBe (psa \ "declarationDetails" \ "pensionAdvisorDetails").asOpt[PensionAdvisor]
+        }
       }
     }
   }

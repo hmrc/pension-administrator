@@ -18,10 +18,8 @@ package models.Reads.PsaSubscriptionDetails
 
 import models.CorrespondenceAddress
 import models.PsaSubscription.{PensionAdvisor, PsaContactDetails}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json.{JsPath, Json, Reads, Writes}
-import play.api.libs.functional.syntax._
 import org.scalatest.prop.PropertyChecks._
+import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 
 
 class PensionAdvisorReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
