@@ -29,7 +29,7 @@ import play.api.LoggerLike
 import play.api.http.Status._
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json.Json
+import play.api.libs.json.{JsResultException, Json}
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.PsaId
@@ -173,6 +173,22 @@ class DesConnectorSpec extends AsyncFlatSpec
     psaSubscriptionDetailsUrl
   )
 
+  it should "return a JsResultException if the API response cannot be converted to PsaSubscription" in {
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          ok(invalidPsaSubscriptionResponse.toString())
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    recoverToExceptionIf[JsResultException](connector.getPSASubscriptionDetails(psaId.value)) map {
+      ex =>
+        ex.leftSide shouldBe a[JsResultException]
+    }
+  }
+
 }
 
 object DesConnectorSpec extends JsonFileReader {
@@ -180,6 +196,7 @@ object DesConnectorSpec extends JsonFileReader {
   private implicit val rh: RequestHeader = FakeRequest("", "")
   private val registerPsaData = readJsonFromFile("/data/validPsaRequest.json")
   private val psaSubscriptionData = readJsonFromFile("/data/validPSASubscriptionDetails.json")
+  private val invalidPsaSubscriptionResponse = readJsonFromFile("/data/validPsaRequest.json")
 
   val srn = SchemeReferenceNumber("S0987654321")
   val psaId = PsaId("A7654321")
