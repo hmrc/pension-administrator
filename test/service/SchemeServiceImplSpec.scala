@@ -18,23 +18,20 @@ package service
 
 import audit.{PSASubscription, StubSuccessfulAuditService}
 import base.SpecBase
-import connectors.SchemeConnector
-import models.{PensionSchemeAdministrator, PsaSubscription}
-import org.joda.time.LocalDate
+import models.PensionSchemeAdministrator
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
-import utils.FakeSchemeConnector
-import utils.testhelpers.PsaSubscriptionBuilder._
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
+import utils.FakeDesConnector
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues {
 
-  import FakeSchemeConnector._
+  import utils.FakeDesConnector._
   import SchemeServiceImplSpec._
 
   "registerPSA" should "return the result from the connector" in {
@@ -107,7 +104,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 object SchemeServiceImplSpec extends SpecBase {
 
   trait TestFixture {
-    val schemeConnector: FakeSchemeConnector = new FakeSchemeConnector()
+    val schemeConnector: FakeDesConnector = new FakeDesConnector()
     val auditService: StubSuccessfulAuditService = new StubSuccessfulAuditService()
     val schemeService: SchemeServiceImpl = new SchemeServiceImpl(schemeConnector, auditService, appConfig) {
     }

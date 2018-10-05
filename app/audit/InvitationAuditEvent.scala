@@ -25,8 +25,8 @@ case class InvitationAuditEvent(invitation: Invitation) extends AuditEvent {
   override def details: Map[String, String] =
     Map(
       "inviteeName" -> invitation.inviteeName,
-      "inviteePsaId" -> invitation.inviteePsaId,
-      "inviterPsaId" -> invitation.inviterPsaId,
+      "inviteePsaId" -> invitation.inviteePsaId.value,
+      "inviterPsaId" -> invitation.inviterPsaId.value,
       "pstr" -> invitation.pstr,
       "schemeName" -> invitation.schemeName
     )

@@ -26,7 +26,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import service.SchemeService
 import uk.gov.hmrc.http._
-import utils.FakeSchemeConnector
+import utils.FakeDesConnector
 import utils.testhelpers.PsaSubscriptionBuilder._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -146,7 +146,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
 
   it should "return bad request when connector returns BAD_REQUEST" in {
 
-    fakeSchemeConnector.setPsaDetailsResponse(
+    fakeDesConnector.setPsaDetailsResponse(
       Future.successful(Left(new BadRequestException("bad request")))
     )
 
@@ -158,7 +158,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
 
   it should "return not found when connector returns NOT_FOUND" in {
 
-    fakeSchemeConnector.setPsaDetailsResponse(
+    fakeDesConnector.setPsaDetailsResponse(
       Future.successful(Left(new NotFoundException("not found")))
     )
 
@@ -191,6 +191,6 @@ object SchemeControllerSpec {
       "psaId" -> "A21999999"
     )
   val fakeSchemeService = new FakeSchemeService
-  val fakeSchemeConnector: FakeSchemeConnector = new FakeSchemeConnector()
-  val controller = new SchemeController(fakeSchemeService, fakeSchemeConnector)
+  val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
+  val controller = new SchemeController(fakeSchemeService, fakeDesConnector)
 }

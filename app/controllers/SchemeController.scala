@@ -17,7 +17,7 @@
 package controllers
 
 import com.google.inject.Inject
-import connectors.SchemeConnector
+import connectors.{DesConnector, SchemeConnector}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -29,7 +29,7 @@ import utils.ErrorHandler
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class SchemeController @Inject()(schemeService: SchemeService, schemeConnector: SchemeConnector) extends BaseController with ErrorHandler {
+class SchemeController @Inject()(schemeService: SchemeService, schemeConnector: DesConnector) extends BaseController with ErrorHandler {
 
   def registerPSA: Action[AnyContent] = Action.async {
     implicit request => {

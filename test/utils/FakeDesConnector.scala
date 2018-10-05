@@ -16,7 +16,7 @@
 
 package utils
 
-import connectors.SchemeConnector
+import connectors.DesConnector
 import models.PsaSubscription
 import org.joda.time.LocalDate
 import play.api.libs.json.{JsValue, Json}
@@ -26,9 +26,9 @@ import utils.testhelpers.PsaSubscriptionBuilder.psaSubscription
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeSchemeConnector extends SchemeConnector {
+class FakeDesConnector extends DesConnector {
 
-  import FakeSchemeConnector._
+  import FakeDesConnector._
 
   private var registerPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
   private var getPsaResponse: Future[Either[HttpException, PsaSubscription]] = Future.successful(Right(psaSubscription))
@@ -47,7 +47,7 @@ class FakeSchemeConnector extends SchemeConnector {
                                                         request: RequestHeader): Future[Either[HttpException, PsaSubscription]] = getPsaResponse
 }
 
-object FakeSchemeConnector {
+object FakeDesConnector {
 
   val registerPsaResponseJson: JsValue =
     Json.obj(
@@ -55,5 +55,4 @@ object FakeSchemeConnector {
       "formBundle" -> "1121313",
       "psaId" -> "A21999999"
     )
-
 }
