@@ -36,8 +36,7 @@ object MicroServiceBuild extends Build with MicroService {
     "uk.gov.hmrc" %% "bootstrap-play-25" % "3.3.0",
     "com.networknt" % "json-schema-validator" % "0.1.19",
     "com.josephpconley" %% "play-jsonpath" % "2.5.0",
-    "uk.gov.hmrc" %% "domain" % domainVersion,
-    "org.mongodb.scala" %% "mongo-scala-driver" % "2.4.0"
+    "uk.gov.hmrc" %% "domain" % domainVersion
   )
 
   def test(scope: String = "test,it") = Seq(
