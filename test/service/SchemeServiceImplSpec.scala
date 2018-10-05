@@ -18,7 +18,6 @@ package service
 
 import audit.{PSASubscription, StubSuccessfulAuditService}
 import base.SpecBase
-import connectors.helper.FakeDesConnector
 import models.PensionSchemeAdministrator
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.http.Status
@@ -26,12 +25,13 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
+import utils.FakeDesConnector
 
 import scala.concurrent.Future
 
 class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues {
 
-  import connectors.helper.FakeDesConnector._
+  import utils.FakeDesConnector._
   import SchemeServiceImplSpec._
 
   "registerPSA" should "return the result from the connector" in {

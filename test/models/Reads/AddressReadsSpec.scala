@@ -16,13 +16,49 @@
 
 package models.Reads
 
-import models.{Address, InternationalAddress, Samples, UkAddress}
+import models._
+import org.scalacheck.Gen
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
+
 
 class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
   "A JSON Payload with an address" should {
     "Map correctly to an Address type" when {
+      "we have an incoming address coming from DES" when {
+        val address = Json.obj("nonUKAddress" -> Gen.oneOf(JsBoolean(true),JsBoolean(false)).sample,
+          "line1" -> Gen.alphaStr.sample,
+          "line2" -> Gen.alphaStr.sample,
+          "line3" -> Gen.option(Gen.alphaStr.sample).sample,
+          "line4" -> Gen.option(Gen.alphaStr.sample).sample,
+          "postalCode" -> Gen.option(Gen.alphaStr.sample).sample,
+          "countryCode" -> Gen.alphaStr.sample)
+        val result = address.as[CorrespondenceAddress]
+
+        "with addressLine 1" in {
+          result.addressLine1 mustBe (address \ "line1").as[String]
+        }
+
+        "with addressLine 2" in {
+          result.addressLine2 mustBe (address \ "line2").as[String]
+        }
+
+        "with an optional addressLine 3" in {
+          result.addressLine3 mustBe (address \ "line3").asOpt[String]
+        }
+
+        "with an optional addressLine 4" in {
+          result.addressLine4 mustBe (address \ "line4").asOpt[String]
+        }
+
+        "with an optional postalCode" in {
+          result.postalCode mustBe (address \ "postalCode").asOpt[String]
+        }
+
+        "with countryCode" in {
+          result.countryCode mustBe (address \ "countryCode").as[String]
+        }
+      }
 
       val address = Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"),
         "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"),

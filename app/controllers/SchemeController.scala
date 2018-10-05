@@ -17,7 +17,9 @@
 package controllers
 
 import com.google.inject.Inject
+import connectors.{DesConnector, SchemeConnector}
 import play.api.Logger
+import play.api.libs.json.Json
 import play.api.mvc._
 import service.SchemeService
 import uk.gov.hmrc.http._
@@ -27,7 +29,7 @@ import utils.ErrorHandler
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class SchemeController @Inject()(schemeService: SchemeService) extends BaseController with ErrorHandler {
+class SchemeController @Inject()(schemeService: SchemeService, schemeConnector: DesConnector) extends BaseController with ErrorHandler {
 
   def registerPSA: Action[AnyContent] = Action.async {
     implicit request => {
@@ -43,5 +45,19 @@ class SchemeController @Inject()(schemeService: SchemeService) extends BaseContr
         case _ => Future.failed(new BadRequestException("Bad Request with no request body returned for register PSA"))
       }
     } recoverWith recoverFromError
+  }
+
+  def getPsaDetails: Action[AnyContent] = Action.async {
+    implicit request =>
+      val psaId = request.headers.get("psaId")
+      psaId match {
+        case Some(id) =>
+          schemeConnector.getPSASubscriptionDetails(id).map {
+            case Right(psaDetails) => Ok(Json.toJson(psaDetails))
+            case Left(e) => result(e)
+          }
+        case _ => Future.failed(new BadRequestException("No PSA Id in the header for get minimal details"))
+      }
+
   }
 }

@@ -25,12 +25,11 @@ import org.scalatest._
 import play.api.LoggerLike
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json.{JsBoolean, Json}
+import play.api.libs.json.JsBoolean
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
-import uk.gov.hmrc.play.it.servicemanager.JsException
 import utils.{StubLogger, WireMockHelper}
 
 class SchemeConnectorSpec extends AsyncFlatSpec

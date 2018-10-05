@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package models.Reads.Writes
+package models.Writes
 
 import models.{PensionSchemeAdministrator, PreviousAddressDetails, Samples}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
