@@ -24,7 +24,6 @@ import play.api.libs.json.{JsArray, JsBoolean, JsObject, Json}
 trait PsaSubscriptionDetailsGenerators {
   val legalStatus: Gen[String] = Gen.oneOf("Individual","Partnership","Limited Company")
   val idType: Gen[Option[String]] = Gen.option(Gen.oneOf("NINO","UTR"))
-  val booleanGen: Option[Boolean] = Gen.oneOf(true,false).sample
 
   val customerIdentificationDetailsGenerator: Gen[JsObject] = for {
     legalStatus <- legalStatus
@@ -179,7 +178,7 @@ trait PsaSubscriptionDetailsGenerators {
   val directorsOrPartners = JsArray(Gen.listOf(psaDirectorOrPartnerDetailsGenerator).sample.get)
 
 
-  val psaSubscriptionDetailsGenerator = for {
+  val psaSubscriptionDetailsGenerator: Gen[JsObject] = for {
     isPSASuspension <- arbitrary[Boolean]
     customerIdentificationDetails <- customerIdentificationDetailsGenerator
     organisationOrPartnerDetails <- Gen.option(orgOrPartnerDetailsGenerator)
@@ -203,7 +202,7 @@ trait PsaSubscriptionDetailsGenerators {
     )
   }
 
-  val psaDetailsGenerator = Json.obj("psaSubscriptionDetails" -> psaSubscriptionDetailsGenerator.sample)
+  val psaDetailsGenerator: Gen[JsObject] = psaSubscriptionDetailsGenerator.map(psaSubscriptionDetails => Json.obj("psaSubscriptionDetails" -> psaSubscriptionDetails))
 }
 
 

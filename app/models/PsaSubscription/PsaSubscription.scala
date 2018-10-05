@@ -28,16 +28,16 @@ case class PsaSubscription(isSuspended: Boolean, customerIdentification: Custome
 object PsaSubscription {
   implicit val writes : Writes[PsaSubscription] = Json.writes[PsaSubscription]
   implicit val reads : Reads[PsaSubscription] = (
-    (JsPath \ "isPSASuspension").read[Boolean] and
-      (JsPath \ "customerIdentificationDetails").read[CustomerIdentification] and
-      (JsPath \ "organisationOrPartnerDetails").readNullable[OrganisationOrPartner] and
-      (JsPath \ "individualDetails").readNullable[IndividualDetailType] and
-      (JsPath \ "correspondenceAddressDetails").read[CorrespondenceAddress] and
-      (JsPath \ "correspondenceContactDetails").read[PsaContactDetails] and
-      (JsPath \ "previousAddressDetails" \ "isPreviousAddressLast12Month").read[Boolean] and
-      (JsPath \ "previousAddressDetails" \ "previousAddress").readNullable[CorrespondenceAddress] and
-      (JsPath \ "directorOrPartnerDetails").readNullable[Seq[DirectorOrPartner]] and
-      (JsPath \ "declarationDetails" \ "pensionAdvisorDetails").readNullable[PensionAdvisor]
+    (JsPath \ "psaSubscriptionDetails" \ "isPSASuspension").read[Boolean] and
+      (JsPath \ "psaSubscriptionDetails" \ "customerIdentificationDetails").read[CustomerIdentification] and
+      (JsPath \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails").readNullable[OrganisationOrPartner] and
+      (JsPath \ "psaSubscriptionDetails" \ "individualDetails").readNullable[IndividualDetailType] and
+      (JsPath \ "psaSubscriptionDetails" \ "correspondenceAddressDetails").read[CorrespondenceAddress] and
+      (JsPath \ "psaSubscriptionDetails" \ "correspondenceContactDetails").read[PsaContactDetails] and
+      (JsPath \ "psaSubscriptionDetails" \ "previousAddressDetails" \ "isPreviousAddressLast12Month").read[Boolean] and
+      (JsPath \ "psaSubscriptionDetails" \ "previousAddressDetails" \ "previousAddress").readNullable[CorrespondenceAddress] and
+      (JsPath \ "psaSubscriptionDetails" \ "directorOrPartnerDetails").readNullable[Seq[DirectorOrPartner]] and
+      (JsPath \ "psaSubscriptionDetails" \ "declarationDetails" \ "pensionAdvisorDetails").readNullable[PensionAdvisor]
     )((isSuspended,customerIdentification, organisationOrPartnerDetails, individual, address, contactDetails,
        isSameAddress, prevAddress, directorOrPartner, advisor) =>
     PsaSubscription(isSuspended,customerIdentification,organisationOrPartnerDetails, individual, address,
