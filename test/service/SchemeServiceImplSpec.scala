@@ -19,8 +19,7 @@ package service
 import audit.{PSASubscription, StubSuccessfulAuditService}
 import base.SpecBase
 import connectors.SchemeConnector
-import models.PensionSchemeAdministrator
-import models.PsaSubscription.PsaSubscription
+import models.{PensionSchemeAdministrator, PsaSubscription}
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.http.Status

@@ -17,7 +17,7 @@
 package utils
 
 import connectors.SchemeConnector
-import models.PsaSubscription.PsaSubscription
+import models.PsaSubscription
 import org.joda.time.LocalDate
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader

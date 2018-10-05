@@ -18,7 +18,7 @@ package utils.testhelpers
 
 import java.time.LocalDate
 
-import models.{CorrespondenceAddress, IndividualDetailType}
+import models._
 import models.PsaSubscription._
 import play.api.libs.json.JsResultException
 
