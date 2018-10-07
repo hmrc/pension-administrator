@@ -151,14 +151,13 @@ object AssociationConnectorImpl {
 
   val writesAcceptedInvitation: Writes[AcceptedInvitation] = Writes {
     { invite =>
-      val pensionAdviserDetails = invite.pensionAdvisorDetail match {
-        case Some(advisor) => Json.obj(
+      val pensionAdviserDetails = invite.pensionAdviserDetails match {
+        case Some(adviser) => Json.obj(
           "pensionAdviserDetails" -> Json.obj(
-            "name" -> advisor.name,
-            "addressDetails" -> addressWrites.writes(advisor.addressDetail),
+            "name" -> adviser.name,
+            "addressDetails" -> addressWrites.writes(adviser.addressDetail),
             "contactDetails" -> Json.obj(
-              "telephone" -> advisor.contactDetail.telephone,
-              "email" -> advisor.contactDetail.email
+              "email" -> adviser.email
             )
           )
         )
