@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package connectors.helper
+package utils
 
 import connectors.DesConnector
-import models.SchemeReferenceNumber
+import models.PsaSubscription
 import org.joda.time.LocalDate
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
+import utils.testhelpers.PsaSubscriptionBuilder.psaSubscription
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,8 +31,10 @@ class FakeDesConnector extends DesConnector {
   import FakeDesConnector._
 
   private var registerPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
+  private var getPsaResponse: Future[Either[HttpException, PsaSubscription]] = Future.successful(Right(psaSubscription))
 
   def setRegisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.registerPsaResponse = response
+  def setPsaDetailsResponse(response: Future[Either[HttpException, PsaSubscription]]): Unit = this.getPsaResponse = response
 
   override def registerPSA(registerData: JsValue)(implicit
                                                   headerCarrier: HeaderCarrier,
@@ -42,8 +44,7 @@ class FakeDesConnector extends DesConnector {
   override def getPSASubscriptionDetails(psaId: String)(implicit
                                                         headerCarrier: HeaderCarrier,
                                                         ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = Future.successful(Right(Json.obj()))
-
+                                                        request: RequestHeader): Future[Either[HttpException, PsaSubscription]] = getPsaResponse
 }
 
 object FakeDesConnector {

@@ -20,12 +20,11 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.SchemeReferenceNumber
+import models.PsaSubscription
 import play.Logger
 import play.api.http.Status._
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsError, JsResultException, JsSuccess, JsValue}
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
@@ -44,7 +43,7 @@ trait DesConnector {
   def getPSASubscriptionDetails(psaId: String)(implicit
                                                headerCarrier: HeaderCarrier,
                                                ec: ExecutionContext,
-                                               request: RequestHeader): Future[Either[HttpException, JsValue]]
+                                               request: RequestHeader): Future[Either[HttpException, PsaSubscription]]
 }
 
 class DesConnectorImpl @Inject()(
@@ -73,7 +72,7 @@ class DesConnectorImpl @Inject()(
   override def getPSASubscriptionDetails(psaId: String)(implicit
                                                         headerCarrier: HeaderCarrier,
                                                         ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                                        request: RequestHeader): Future[Either[HttpException, PsaSubscription]] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
@@ -99,13 +98,13 @@ class DesConnectorImpl @Inject()(
 
   }
 
-  private def handleGetResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
+  private def handleGetResponse(response: HttpResponse, url: String): Either[HttpException, PsaSubscription] = {
 
     val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATION_ID")
 
     response.status match {
-      case OK => Right(response.json)
-      case _ => Left(handleErrorResponse("PSA Subscription details", url, response, badResponseSeq))
+      case OK => Right(validateJson(response.json))
+      case status => Left(handleErrorResponse("PSA Subscription details", url, response, badResponseSeq))
     }
 
   }
@@ -114,6 +113,13 @@ class DesConnectorImpl @Inject()(
     case Success(Left(e: BadRequestException)) if e.message.contains("INVALID_PAYLOAD") =>
       invalidPayloadHandler.logFailures(schemaPath, data)
     case Success(Left(e: HttpResponse)) => Logger.warn(s"$endpoint received error response from DES", e)
+  }
+
+  private def validateJson(json: JsValue): PsaSubscription ={
+    json.validate[PsaSubscription] match {
+      case JsSuccess(value, _) => value
+      case JsError(errors) => throw new JsResultException(errors)
+    }
   }
 
 }
