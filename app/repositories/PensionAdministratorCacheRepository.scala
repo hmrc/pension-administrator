@@ -29,8 +29,8 @@ import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
-import utils.DateUtils
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 abstract class PensionAdministratorCacheRepository(
@@ -79,7 +79,9 @@ abstract class PensionAdministratorCacheRepository(
   private val createdIndexName = "dataExpiry"
   private val expireAfterSeconds = "expireAfterSeconds"
 
-  ensureIndex(fieldName, createdIndexName, ttl)
+  ensureIndex(fieldName, createdIndexName, ttl) andThen {
+    case _ => CollectionDiagnostics.logCollectionInfo(collection)
+  }
 
   private def ensureIndex(field: String, indexName: String, ttl: Option[Int]): Future[Boolean] = {
 
