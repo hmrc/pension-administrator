@@ -152,7 +152,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
       response =>
         verify(fixture.repository, never).insert(any())(any())
         response.left.value shouldBe a[NotFoundException]
-        response.left.value.message should include("NOT_FOUND")
+        response.left.value.message should include("The name and PSA Id do not match")
     }
 
   }
@@ -165,7 +165,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
       response =>
         verify(fixture.repository, never).insert(any())(any())
         response.left.value shouldBe a[NotFoundException]
-        response.left.value.message should include("NOT_FOUND")
+        response.left.value.message should include("The name and PSA Id do not match")
     }
 
   }
