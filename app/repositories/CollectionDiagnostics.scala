@@ -30,7 +30,7 @@ object CollectionDiagnostics {
 
     indexInfo(collection) map {
       indexes =>
-        Logger.info(
+        Logger.warn(
           s"Diagnostic information for collection ${collection.name}\n\n" +
           s"Index definitions\n\n" +
             (indexes.map {

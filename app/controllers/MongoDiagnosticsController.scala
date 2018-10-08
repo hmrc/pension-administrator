@@ -58,7 +58,6 @@ class MongoDiagnosticsController @Inject()(config: Configuration, component: Rea
       names =>
         Future.traverse(names) {
           name =>
-            Future.successful(name)
             collectionDiagnostics(db.collection(name)) map {
               diagnostics =>
                 (Seq(
