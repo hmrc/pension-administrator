@@ -106,19 +106,41 @@ class InvitationsCacheRepository @Inject()(
   }
 
   private val expireAt = "expireAt"
-  private val createdIndexName = "dataExpiry"
+  private val dataExpiry = "dataExpiry"
   private val expireAfterSeconds = "expireAfterSeconds"
   private val inviteePsaIdKey = "inviteePsaId"
   private val pstrKey = "pstr"
-  private val compoundIndexName = "inviteePsaId_Pstr"
+  private val uniqueInvitation = "inviteePsaId_Pstr"
   private val pstrIndexName = "pstr"
 
-  ensureIndex(fields = Seq(expireAt), indexName = createdIndexName, ttl = Some(ttl)) andThen {
-    case _ => ensureIndex(fields = Seq(inviteePsaIdKey, pstrKey), indexName = compoundIndexName, isUnique = true)
-  } andThen {
-    case _ => ensureIndex(fields = Seq(pstrKey), indexName = pstrIndexName)
+  (for {
+    _ <- checkIndexTtl(dataExpiry, Some(ttl))
+    _ <- ensureIndex(fields = Seq(expireAt), indexName = dataExpiry, ttl = Some(ttl))
+    _ <- ensureIndex(fields = Seq(inviteePsaIdKey, pstrKey), indexName = uniqueInvitation, isUnique = true)
+    _ <- ensureIndex(fields = Seq(pstrKey), indexName = pstrIndexName)
+  } yield {
+    ()
+  }) recoverWith {
+    case t: Throwable => Future.successful(Logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
   } andThen {
     case _ => CollectionDiagnostics.logCollectionInfo(collection)
+  }
+
+  private def checkIndexTtl(indexName: String, ttl: Option[Int]): Future[Unit] = {
+
+    CollectionDiagnostics.indexInfo(collection)
+      .flatMap {seqIndexes =>
+        seqIndexes
+          .find(index => index.name == indexName && index.ttl != ttl)
+          .map {
+            index =>
+              Logger.warn(s"Index $indexName on collection ${collection.name} with TTL ${index.ttl} does not match configuration value $ttl")
+              collection.indexesManager.drop(index.name) map {
+                case n if n > 0 => Logger.warn(s"Dropped index $indexName on collection ${collection.name} as TTL value incorrect")
+                case _ => Logger.warn(s"Index index $indexName on collection ${collection.name} had already been dropped (possible race condition)")
+              }
+          } getOrElse Future.successful(Logger.info(s"Index $indexName on collection ${collection.name} has correct TTL $ttl"))
+      }
   }
 
   private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None, isUnique:Boolean = false): Future[Boolean] = {
