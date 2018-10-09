@@ -34,6 +34,7 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
 class InvitationsCacheRepository @Inject()(
@@ -112,11 +113,13 @@ class InvitationsCacheRepository @Inject()(
   private val compoundIndexName = "inviteePsaId_Pstr"
   private val pstrIndexName = "pstr"
 
-  ensureIndex(fields = Seq(expireAt), indexName = createdIndexName, ttl = Some(ttl))
-
-  ensureIndex(fields = Seq(inviteePsaIdKey, pstrKey), indexName = compoundIndexName, isUnique = true)
-
-  ensureIndex(fields = Seq(pstrKey), indexName = pstrIndexName)
+  ensureIndex(fields = Seq(expireAt), indexName = createdIndexName, ttl = Some(ttl)) andThen {
+    case _ => ensureIndex(fields = Seq(inviteePsaIdKey, pstrKey), indexName = compoundIndexName, isUnique = true)
+  } andThen {
+    case _ => ensureIndex(fields = Seq(pstrKey), indexName = pstrIndexName)
+  } andThen {
+    case _ => CollectionDiagnostics.logCollectionInfo(collection)
+  }
 
   private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None, isUnique:Boolean = false): Future[Boolean] = {
 
