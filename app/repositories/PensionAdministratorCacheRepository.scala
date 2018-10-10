@@ -79,7 +79,14 @@ abstract class PensionAdministratorCacheRepository(
   private val createdIndexName = "dataExpiry"
   private val expireAfterSeconds = "expireAfterSeconds"
 
-  ensureIndex(fieldName, createdIndexName, ttl) andThen {
+  (for {
+    _ <- CollectionDiagnostics.checkIndexTtl(collection, createdIndexName, ttl)
+    _ <- ensureIndex(fieldName, createdIndexName, ttl)
+  } yield {
+    ()
+  }) recoverWith {
+    case t: Throwable => Future.successful(Logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
+  } andThen {
     case _ => CollectionDiagnostics.logCollectionInfo(collection)
   }
 
@@ -93,6 +100,7 @@ abstract class PensionAdministratorCacheRepository(
       Index(
         Seq((field, IndexType.Ascending)),
         Some(indexName),
+        background = true,
         options = BSONDocument(expireAfterSeconds -> ttl)
       )
     }

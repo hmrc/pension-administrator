@@ -106,29 +106,32 @@ class InvitationsCacheRepository @Inject()(
   }
 
   private val expireAt = "expireAt"
-  private val createdIndexName = "dataExpiry"
+  private val dataExpiry = "dataExpiry"
   private val expireAfterSeconds = "expireAfterSeconds"
   private val inviteePsaIdKey = "inviteePsaId"
   private val pstrKey = "pstr"
-  private val compoundIndexName = "inviteePsaId_Pstr"
+  private val uniqueInvitation = "inviteePsaId_Pstr"
   private val pstrIndexName = "pstr"
 
-  ensureIndex(fields = Seq(expireAt), indexName = createdIndexName, ttl = Some(ttl)) andThen {
-    case _ => ensureIndex(fields = Seq(inviteePsaIdKey, pstrKey), indexName = compoundIndexName, isUnique = true)
-  } andThen {
-    case _ => ensureIndex(fields = Seq(pstrKey), indexName = pstrIndexName)
+  (for {
+    _ <- CollectionDiagnostics.checkIndexTtl(collection, dataExpiry, Some(ttl))
+    _ <- ensureIndex(fields = Seq(expireAt), indexName = dataExpiry, ttl = Some(ttl))
+    _ <- ensureIndex(fields = Seq(inviteePsaIdKey, pstrKey), indexName = uniqueInvitation, isUnique = true)
+    _ <- ensureIndex(fields = Seq(pstrKey), indexName = pstrIndexName)
+  } yield {
+    ()
+  }) recoverWith {
+    case t: Throwable => Future.successful(Logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
   } andThen {
     case _ => CollectionDiagnostics.logCollectionInfo(collection)
   }
 
   private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None, isUnique:Boolean = false): Future[Boolean] = {
 
-    import scala.concurrent.ExecutionContext.Implicits.global
-
     val fieldIndexes = fields.map((_, IndexType.Ascending))
 
     val index = {
-      val defaultIndex = Index(fieldIndexes, Some(indexName), unique = isUnique)
+      val defaultIndex = Index(fieldIndexes, Some(indexName), background = true, unique = isUnique)
       ttl.map(ttl => defaultIndex.copy(options = BSONDocument(expireAfterSeconds -> ttl))).fold(defaultIndex)(identity)
     }
 
