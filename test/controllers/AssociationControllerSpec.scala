@@ -19,6 +19,9 @@ package controllers
 import base.JsonFileReader
 import connectors.AssociationConnector
 import models._
+import org.mockito.Matchers._
+import org.mockito.Mockito._
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
@@ -26,6 +29,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
+import utils.AuthRetrievals
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,7 +39,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
   "getMinimalDetails" should "return OK when service returns successfully" in {
 
-    val result = controller.getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
+    val result = controller().getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
 
     status(result) mustBe OK
     contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
@@ -47,7 +51,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
       Future.successful(Left(new BadRequestException("bad request")))
     )
 
-    val result = controller.getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
+    val result = controller().getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
 
     status(result) mustBe BAD_REQUEST
     contentAsString(result) mustBe "bad request"
@@ -59,7 +63,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
       Future.successful(Left(new NotFoundException("not found")))
     )
 
-    val result = controller.getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
+    val result = controller().getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
 
     status(result) mustBe NOT_FOUND
     contentAsString(result) mustBe "not found"
@@ -67,14 +71,14 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
   "acceptInvitation" should "return Created when the data is posted successfully" in {
 
-    val result = controller.acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
+    val result = controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
 
     status(result) mustBe CREATED
   }
 
   it should "throw BadRequestException when no data received in the request" in {
 
-    recoverToExceptionIf[BadRequestException](controller.acceptInvitation(fakeRequest)) map {
+    recoverToExceptionIf[BadRequestException](controller().acceptInvitation(fakeRequest)) map {
       ex =>
         ex.responseCode mustBe BAD_REQUEST
         ex.message mustBe "No Request Body received for accept invitation"
@@ -83,7 +87,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
   it should "throw BadRequestException when invalid data received in the request" in {
 
-    recoverToExceptionIf[BadRequestException](controller.acceptInvitation(fakeRequest.withJsonBody(Json.obj("invalid" -> "data")))) map {
+    recoverToExceptionIf[BadRequestException](controller().acceptInvitation(fakeRequest.withJsonBody(Json.obj("invalid" -> "data")))) map {
       ex =>
         ex.responseCode mustBe BAD_REQUEST
         ex.message mustBe "Bad request received from frontend for accept invitation"
@@ -95,7 +99,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     fakeAssociationConnector.setAcceptInvitationResponse(
       Future.successful(Left(new ConflictException("Conflict")))
     )
-    val result = controller.acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
+    val result = controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
 
     status(result) mustBe CONFLICT
     contentAsString(result) mustBe "Conflict"
@@ -106,7 +110,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     fakeAssociationConnector.setAcceptInvitationResponse(
       Future.successful(Left(new BadRequestException("Bad Request")))
     )
-    val result = controller.acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
+    val result = controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
 
     status(result) mustBe BAD_REQUEST
     contentAsString(result) mustBe "Bad Request"
@@ -117,7 +121,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     fakeAssociationConnector.setAcceptInvitationResponse(
       Future.successful(Left(new NotFoundException("Not Found")))
     )
-    val result = controller.acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
+    val result = controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
 
     status(result) mustBe NOT_FOUND
     contentAsString(result) mustBe "Not Found"
@@ -127,15 +131,48 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     fakeAssociationConnector.setAcceptInvitationResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
-    recoverToExceptionIf[Upstream5xxResponse](controller.acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))) map {
+    recoverToExceptionIf[Upstream5xxResponse](controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))) map {
       ex =>
         ex.upstreamResponseCode mustBe SERVICE_UNAVAILABLE
         ex.message mustBe "Failed with 5XX"
     }
   }
+
+  "getEmail" should "return email associated with PSAID for current user" in {
+
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
+      psaMinimalDetailsIndividualUser
+    )))
+
+    val result = controller().getEmail(fakeRequest)
+
+    status(result) mustBe OK
+    contentAsString(result) mustBe "test@email.com"
+  }
+
+  it should "return UnauthorizedException with message for psaId not found in enrolments" in {
+
+    recoverToExceptionIf[UnauthorizedException](controller(psaId = None).getEmail(fakeRequest)) map { ex =>
+      ex.message mustBe "Cannot retrieve enrolment PSAID"
+    }
+
+  }
+
+  it should "relay response from connector if not OK" in {
+
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(
+      Future.successful(Left(new BadRequestException("bad request")))
+    )
+
+    val result = controller().getEmail(fakeRequest)
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "bad request"
+  }
+
 }
 
-object AssociationControllerSpec {
+object AssociationControllerSpec extends MockitoSugar {
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
   val psaMinimalDetailsIndividualUser = PSAMinimalDetails(
@@ -169,7 +206,16 @@ object AssociationControllerSpec {
 
   val fakeAssociationConnector = new FakeAssociationConnector
 
-  val controller = new AssociationController(fakeAssociationConnector)
+  lazy val mockAuthRetrievals: AuthRetrievals = mock[AuthRetrievals]
+
+  def controller(psaId: Option[PsaId] = Some(PsaId("A2123456"))): AssociationController = {
+
+    when(mockAuthRetrievals.getPsaId(any(), any()))
+      .thenReturn(Future.successful(psaId))
+
+    new AssociationController(fakeAssociationConnector, mockAuthRetrievals)
+
+  }
 
   val acceptedInvitationRequest = Json.parse(
     """
