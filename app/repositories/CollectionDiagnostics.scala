@@ -63,4 +63,22 @@ object CollectionDiagnostics {
 
   }
 
+  def checkIndexTtl(collection: JSONCollection, indexName: String, ttl: Option[Int]): Future[Unit] = {
+
+    indexInfo(collection)
+      .flatMap {seqIndexes =>
+        seqIndexes
+          .find(index => index.name == indexName && index.ttl != ttl)
+          .map {
+            index =>
+              Logger.warn(s"Index $indexName on collection ${collection.name} with TTL ${index.ttl} does not match configuration value $ttl")
+              collection.indexesManager.drop(index.name) map {
+                case n if n > 0 => Logger.warn(s"Dropped index $indexName on collection ${collection.name} as TTL value incorrect")
+                case _ => Logger.warn(s"Index index $indexName on collection ${collection.name} had already been dropped (possible race condition)")
+              }
+          } getOrElse Future.successful(Logger.info(s"Index $indexName on collection ${collection.name} has correct TTL $ttl"))
+      }
+
+  }
+
 }

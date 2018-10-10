@@ -80,7 +80,7 @@ abstract class PensionAdministratorCacheRepository(
   private val expireAfterSeconds = "expireAfterSeconds"
 
   (for {
-    _ <- checkIndexTtl(createdIndexName, ttl)
+    _ <- CollectionDiagnostics.checkIndexTtl(collection, createdIndexName, ttl)
     _ <- ensureIndex(fieldName, createdIndexName, ttl)
   } yield {
     ()
@@ -88,24 +88,6 @@ abstract class PensionAdministratorCacheRepository(
     case t: Throwable => Future.successful(Logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
   } andThen {
     case _ => CollectionDiagnostics.logCollectionInfo(collection)
-  }
-
-  private def checkIndexTtl(indexName: String, ttl: Option[Int]): Future[Unit] = {
-
-    CollectionDiagnostics.indexInfo(collection)
-      .flatMap {seqIndexes =>
-        seqIndexes
-          .find(index => index.name == indexName && index.ttl != ttl)
-          .map {
-            index =>
-              Logger.warn(s"Index $indexName on collection ${collection.name} with TTL ${index.ttl} does not match configuration value $ttl")
-              collection.indexesManager.drop(index.name) map {
-                case n if n > 0 => Logger.warn(s"Dropped index $indexName on collection ${collection.name} as TTL value incorrect")
-                case _ => Logger.warn(s"Index index $indexName on collection ${collection.name} had already been dropped (possible race condition)")
-              }
-          } getOrElse Future.successful(Logger.info(s"Index $indexName on collection ${collection.name} has correct TTL $ttl"))
-      }
-
   }
 
   private def ensureIndex(field: String, indexName: String, ttl: Option[Int]): Future[Boolean] = {
@@ -118,6 +100,7 @@ abstract class PensionAdministratorCacheRepository(
       Index(
         Seq((field, IndexType.Ascending)),
         Some(indexName),
+        background = true,
         options = BSONDocument(expireAfterSeconds -> ttl)
       )
     }

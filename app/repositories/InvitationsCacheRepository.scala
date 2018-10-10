@@ -114,7 +114,7 @@ class InvitationsCacheRepository @Inject()(
   private val pstrIndexName = "pstr"
 
   (for {
-    _ <- checkIndexTtl(dataExpiry, Some(ttl))
+    _ <- CollectionDiagnostics.checkIndexTtl(collection, dataExpiry, Some(ttl))
     _ <- ensureIndex(fields = Seq(expireAt), indexName = dataExpiry, ttl = Some(ttl))
     _ <- ensureIndex(fields = Seq(inviteePsaIdKey, pstrKey), indexName = uniqueInvitation, isUnique = true)
     _ <- ensureIndex(fields = Seq(pstrKey), indexName = pstrIndexName)
@@ -126,31 +126,12 @@ class InvitationsCacheRepository @Inject()(
     case _ => CollectionDiagnostics.logCollectionInfo(collection)
   }
 
-  private def checkIndexTtl(indexName: String, ttl: Option[Int]): Future[Unit] = {
-
-    CollectionDiagnostics.indexInfo(collection)
-      .flatMap {seqIndexes =>
-        seqIndexes
-          .find(index => index.name == indexName && index.ttl != ttl)
-          .map {
-            index =>
-              Logger.warn(s"Index $indexName on collection ${collection.name} with TTL ${index.ttl} does not match configuration value $ttl")
-              collection.indexesManager.drop(index.name) map {
-                case n if n > 0 => Logger.warn(s"Dropped index $indexName on collection ${collection.name} as TTL value incorrect")
-                case _ => Logger.warn(s"Index index $indexName on collection ${collection.name} had already been dropped (possible race condition)")
-              }
-          } getOrElse Future.successful(Logger.info(s"Index $indexName on collection ${collection.name} has correct TTL $ttl"))
-      }
-  }
-
   private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None, isUnique:Boolean = false): Future[Boolean] = {
-
-    import scala.concurrent.ExecutionContext.Implicits.global
 
     val fieldIndexes = fields.map((_, IndexType.Ascending))
 
     val index = {
-      val defaultIndex = Index(fieldIndexes, Some(indexName), unique = isUnique)
+      val defaultIndex = Index(fieldIndexes, Some(indexName), background = true, unique = isUnique)
       ttl.map(ttl => defaultIndex.copy(options = BSONDocument(expireAfterSeconds -> ttl))).fold(defaultIndex)(identity)
     }
 
