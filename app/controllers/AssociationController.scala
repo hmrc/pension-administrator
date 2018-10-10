@@ -77,7 +77,7 @@ class AssociationController @Inject()(
       retrievals.getPsaId flatMap {
         case Some(psaId) => getPSAMinimalDetails(psaId.id).map {
           case Right(psaDetails) => Ok(psaDetails.email)
-          case Left(e) => ???
+          case Left(e) => result(e)
         }
         case _ => Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
       }

@@ -158,6 +158,18 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
   }
 
+  it should "relay response from connector if not OK" in {
+
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(
+      Future.successful(Left(new BadRequestException("bad request")))
+    )
+
+    val result = controller().getEmail(fakeRequest)
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "bad request"
+  }
+
 }
 
 object AssociationControllerSpec extends MockitoSugar {
