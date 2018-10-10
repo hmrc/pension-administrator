@@ -19,6 +19,7 @@ package controllers
 import com.google.inject.Inject
 import connectors.AssociationConnector
 import models.AcceptedInvitation
+import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.domain.PsaId
@@ -49,6 +50,7 @@ class AssociationController @Inject()(
   def acceptInvitation: Action[AnyContent] = Action.async {
     implicit request =>
       val feJson = request.body.asJson
+      Logger.debug(s"[Accept-Invitation-Incoming-Payload]$feJson")
 
       feJson match {
         case Some(acceptedInvitationJsValue) =>
