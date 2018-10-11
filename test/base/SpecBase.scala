@@ -32,4 +32,5 @@ trait SpecBase extends PlaySpec with GuiceOneAppPerSuite with JsonFileReader {
   def appConfig: AppConfig = injector.instanceOf[AppConfig]
 
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
+
 }

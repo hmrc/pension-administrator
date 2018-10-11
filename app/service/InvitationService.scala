@@ -21,12 +21,14 @@ import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors._
 import models._
+import models.enumeration.JourneyType
 import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import repositories.InvitationsCacheRepository
+import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import utils.{DateHelper, FuzzyNameMatcher}
@@ -51,7 +53,8 @@ class InvitationServiceImpl @Inject()(
                                        config: AppConfig,
                                        repository: InvitationsCacheRepository,
                                        auditService: AuditService,
-                                       schemeConnector: SchemeConnector
+                                       schemeConnector: SchemeConnector,
+                                       crypto: ApplicationCrypto
                                      ) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
@@ -182,6 +185,7 @@ class InvitationServiceImpl @Inject()(
 
     val name = psaDetails.individualDetails.map(_.fullName).getOrElse(psaDetails.organisationName.getOrElse(""))
     val expiryDate = DateHelper.formatDate(invitation.expireAt.toLocalDate)
+    val inviterPsaId = invitation.inviterPsaId
 
     val email = SendEmailRequest(
       List(psaDetails.email),
@@ -190,7 +194,9 @@ class InvitationServiceImpl @Inject()(
         "inviteeName" -> name,
         "schemeName" -> invitation.schemeName,
         "expiryDate" -> expiryDate
-      )
+      ),
+      false,
+      Some(callBackUrl(inviterPsaId))
     )
 
     emailConnector.sendEmail(email).map {
@@ -200,6 +206,11 @@ class InvitationServiceImpl @Inject()(
         ()
     }
 
+  }
+
+  private def callBackUrl(psaId: PsaId): String = {
+    val encryptedPsaId = crypto.QueryParameterCrypto.encrypt(PlainText(psaId.value)).value
+    config.invitationCallbackUrl.format(JourneyType.INVITE, encryptedPsaId)
   }
 
   private def handle[T](request: Future[Either[HttpException, T]])

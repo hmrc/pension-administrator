@@ -45,5 +45,6 @@ class AppConfig @Inject()(override val runModeConfiguration: Configuration, envi
   lazy val checkAssociationUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.checkPsaAssociation")}"
 
   lazy val invitationExpiryDays: Int = runModeConfiguration.underlying.getInt("invitationExpiryDays")
+  lazy val invitationCallbackUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.invitation.callback")}"
 
 }
