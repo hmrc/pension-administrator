@@ -7,6 +7,7 @@ POST        /register-with-id/organisation              controllers.Registration
 GET         /psa-subscription-details                   controllers.SchemeController.getPsaDetails
 POST        /register-psa                               controllers.SchemeController.registerPSA
 
+GET         /get-name                                   controllers.AssociationController.getName
 GET         /get-email                                  controllers.AssociationController.getEmail
 GET         /get-minimal-psa                            controllers.AssociationController.getMinimalDetails
 POST        /accept-invitation                          controllers.AssociationController.acceptInvitation
