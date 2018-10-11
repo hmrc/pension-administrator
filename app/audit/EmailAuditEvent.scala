@@ -18,9 +18,9 @@ package audit
 
 import models.Event
 import uk.gov.hmrc.domain.PsaId
-import models.enumeration.EmailJourneyType
+import models.enumeration.JourneyType
 
-case class EmailAuditEvent(psaId: PsaId, event: Event, journeyType: EmailJourneyType.Value) extends AuditEvent {
+case class EmailAuditEvent(psaId: PsaId, event: Event, journeyType: JourneyType.Name) extends AuditEvent {
 
   override def auditType: String = s"${journeyType.toString.toUpperCase}EmailEvent"
 

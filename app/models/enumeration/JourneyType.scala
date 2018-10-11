@@ -19,10 +19,10 @@ package models.enumeration
 import play.api.mvc.PathBindable
 import models.enumeration.binders.EnumPathBinder
 
-object EmailJourneyType extends Enumeration {
-
+object JourneyType extends Enumeration {
+  type Name = Value
   val PSA, INVITE = Value
 
-  implicit val journeyTypePathBinder: PathBindable[EmailJourneyType.Value] =
+  implicit val journeyTypePathBinder: PathBindable[Name] =
     EnumPathBinder.pathBinder(this)
 }

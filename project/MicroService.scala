@@ -34,7 +34,7 @@ trait MicroService {
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
     .settings(
-      RoutesKeys.routesImport ++= Seq("models.enumeration.EmailJourneyType"),
+      RoutesKeys.routesImport ++= Seq("models.enumeration.JourneyType"),
       libraryDependencies ++= appDependencies,
       retrieveManaged := true,
       evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),

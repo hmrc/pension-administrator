@@ -20,7 +20,7 @@ import audit.testdoubles.StubSuccessfulAuditService
 import audit.{AuditService, EmailAuditEvent}
 import base.SpecBase
 import models._
-import models.enumeration.EmailJourneyType
+import models.enumeration.JourneyType
 import org.joda.time.DateTime
 import play.api.inject.bind
 import play.api.libs.json.Json
@@ -36,28 +36,27 @@ class EmailResponseControllerSpec extends SpecBase {
 
     "respond OK when given EmailEvents" which {
 
-      "will send events excluding Opened to audit service" in {
+      JourneyType.values.foreach { eventType =>
+        s"will send events excluding Opened for ${eventType.toString} to audit service" in {
 
-        running(_.overrides(
-          bind[AuditService].to(fakeAuditService)
-        )) { app =>
+          running(_.overrides(
+            bind[AuditService].to(fakeAuditService)
+          )) { app =>
 
-          val encrypted = app.injector.instanceOf[ApplicationCrypto].QueryParameterCrypto.encrypt(PlainText(psa.id)).value
+            val encrypted = app.injector.instanceOf[ApplicationCrypto].QueryParameterCrypto.encrypt(PlainText(psa.id)).value
 
-          val controller = app.injector.instanceOf[EmailResponseController]
+            val controller = app.injector.instanceOf[EmailResponseController]
 
-          val result = controller.retrieveStatus(EmailJourneyType.PSA, encrypted)(fakeRequest.withBody(Json.toJson(emailEvents)))
+            val result = controller.retrieveStatus(eventType, encrypted)(fakeRequest.withBody(Json.toJson(emailEvents)))
 
-          status(result) mustBe OK
-          fakeAuditService.verifySent(EmailAuditEvent(psa, Sent, EmailJourneyType.PSA)) mustBe true
-          fakeAuditService.verifySent(EmailAuditEvent(psa, Delivered, EmailJourneyType.PSA)) mustBe true
-          fakeAuditService.verifySent(EmailAuditEvent(psa, Opened, EmailJourneyType.PSA)) mustBe false
-
+            status(result) mustBe OK
+            fakeAuditService.verifySent(EmailAuditEvent(psa, Sent, eventType)) mustBe true
+            fakeAuditService.verifySent(EmailAuditEvent(psa, Delivered, eventType)) mustBe true
+            fakeAuditService.verifySent(EmailAuditEvent(psa, Opened, eventType)) mustBe false
+          }
         }
       }
-
     }
-
   }
 
   "respond with BAD_REQUEST when not given EmailEvents" in {
@@ -72,7 +71,7 @@ class EmailResponseControllerSpec extends SpecBase {
 
       val controller = app.injector.instanceOf[EmailResponseController]
 
-      val result = controller.retrieveStatus(EmailJourneyType.PSA, encrypted)(fakeRequest.withBody(validJson))
+      val result = controller.retrieveStatus(JourneyType.PSA, encrypted)(fakeRequest.withBody(validJson))
 
       status(result) mustBe BAD_REQUEST
       fakeAuditService.verifyNothingSent mustBe true
@@ -94,7 +93,7 @@ class EmailResponseControllerSpec extends SpecBase {
 
         val controller = app.injector.instanceOf[EmailResponseController]
 
-        val result = controller.retrieveStatus(EmailJourneyType.PSA, psa)(fakeRequest.withBody(Json.toJson(emailEvents)))
+        val result = controller.retrieveStatus(JourneyType.PSA, psa)(fakeRequest.withBody(Json.toJson(emailEvents)))
 
         status(result) mustBe FORBIDDEN
         contentAsString(result) mustBe "Malformed PSAID"
