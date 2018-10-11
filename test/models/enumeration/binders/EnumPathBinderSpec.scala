@@ -23,17 +23,17 @@ class EnumPathBinderSpec extends WordSpec with MustMatchers with EitherValues {
 
   "EnumPathBinder" must {
 
-    "bind to any Enum" in {
+    "bind to correct Enumeration" in {
       val actualResult = EnumPathBinder.pathBinder(DummyEnum).bind("test1", "test1")
       actualResult.right.value mustEqual DummyEnum.test1
     }
 
-    "not bind if not correct Enum Value" in {
+    "not bind for incorrect Enumumeration Value" in {
       val actualResult = EnumPathBinder.pathBinder(DummyEnum).bind("unknown", "unknown")
       actualResult.left.value must include("Unknown Journey Type")
     }
 
-    "unbind to the correct enum value" in {
+    "unbind to the correct enumeration value" in {
       val actualResult = EnumPathBinder.pathBinder(DummyEnum).unbind("test1", DummyEnum.test1)
       actualResult mustEqual DummyEnum.test1.toString
     }

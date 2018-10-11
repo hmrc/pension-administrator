@@ -24,9 +24,9 @@ object EnumPathBinder {
 
     def bind(key: String, value: String): Either[String, T#Value] = {
 
-      enum.values.find(_.toString.toLowerCase == value.toLowerCase) match {
+      enum.values.find(_.toString == value) match {
         case Some(v) => Right(v)
-        case None => Left("Unknown Journey Type '" + value + "'")
+        case None => Left(s"Unknown Journey Type $value")
       }
     }
 
