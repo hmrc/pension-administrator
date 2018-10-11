@@ -21,7 +21,8 @@ import models.enumeration.binders.EnumPathBinder
 
 object JourneyType extends Enumeration {
   type Name = Value
-  val PSA, INVITE = Value
+  val PSA = Value("PSA")
+  val INVITE = Value("PSAInvite")
 
   implicit val journeyTypePathBinder: PathBindable[Name] =
     EnumPathBinder.pathBinder(this)

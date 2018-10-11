@@ -22,7 +22,7 @@ import models.enumeration.JourneyType
 
 case class EmailAuditEvent(psaId: PsaId, event: Event, journeyType: JourneyType.Name) extends AuditEvent {
 
-  override def auditType: String = s"${journeyType.toString.toUpperCase}EmailEvent"
+  override def auditType: String = s"${journeyType.toString}EmailEvent"
 
   override def details: Map[String, String] = Map("psaId" -> psaId.id, "event" -> event.toString)
 

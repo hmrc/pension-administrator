@@ -217,7 +217,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
 
       import FakeEmailConnector._
       val fixture = testFixture(app)
-      val encryptedPsaId = fixture.crypto.QueryParameterCrypto.encrypt(PlainText(inviterPsaId.value)).value
+      val encryptedPsaId = fixture.crypto.QueryParameterCrypto.encrypt(PlainText(johnDoePsaId.value)).value
 
       val expectedEmail =
         SendEmailRequest(

@@ -185,7 +185,7 @@ class InvitationServiceImpl @Inject()(
 
     val name = psaDetails.individualDetails.map(_.fullName).getOrElse(psaDetails.organisationName.getOrElse(""))
     val expiryDate = DateHelper.formatDate(invitation.expireAt.toLocalDate)
-    val inviterPsaId = invitation.inviterPsaId
+    val inviteePsaId = invitation.inviteePsaId
 
     val email = SendEmailRequest(
       List(psaDetails.email),
@@ -196,7 +196,7 @@ class InvitationServiceImpl @Inject()(
         "expiryDate" -> expiryDate
       ),
       false,
-      Some(callBackUrl(inviterPsaId))
+      Some(callBackUrl(inviteePsaId))
     )
 
     emailConnector.sendEmail(email).map {
@@ -210,7 +210,7 @@ class InvitationServiceImpl @Inject()(
 
   private def callBackUrl(psaId: PsaId): String = {
     val encryptedPsaId = crypto.QueryParameterCrypto.encrypt(PlainText(psaId.value)).value
-    config.invitationCallbackUrl.format(JourneyType.INVITE, encryptedPsaId)
+    config.invitationCallbackUrl.format(JourneyType.INVITE.toString, encryptedPsaId)
   }
 
   private def handle[T](request: Future[Either[HttpException, T]])
