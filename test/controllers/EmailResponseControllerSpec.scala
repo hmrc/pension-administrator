@@ -20,6 +20,7 @@ import audit.testdoubles.StubSuccessfulAuditService
 import audit.{AuditService, EmailAuditEvent}
 import base.SpecBase
 import models._
+import models.enumeration.EmailJourneyType
 import org.joda.time.DateTime
 import play.api.inject.bind
 import play.api.libs.json.Json
@@ -45,12 +46,12 @@ class EmailResponseControllerSpec extends SpecBase {
 
           val controller = app.injector.instanceOf[EmailResponseController]
 
-          val result = controller.retrieveStatus(encrypted)(fakeRequest.withBody(Json.toJson(emailEvents)))
+          val result = controller.retrieveStatus(EmailJourneyType.PSA, encrypted)(fakeRequest.withBody(Json.toJson(emailEvents)))
 
           status(result) mustBe OK
-          fakeAuditService.verifySent(EmailAuditEvent(psa, Sent)) mustBe true
-          fakeAuditService.verifySent(EmailAuditEvent(psa, Delivered)) mustBe true
-          fakeAuditService.verifySent(EmailAuditEvent(psa, Opened)) mustBe false
+          fakeAuditService.verifySent(EmailAuditEvent(psa, Sent, EmailJourneyType.PSA)) mustBe true
+          fakeAuditService.verifySent(EmailAuditEvent(psa, Delivered, EmailJourneyType.PSA)) mustBe true
+          fakeAuditService.verifySent(EmailAuditEvent(psa, Opened, EmailJourneyType.PSA)) mustBe false
 
         }
       }
@@ -71,7 +72,7 @@ class EmailResponseControllerSpec extends SpecBase {
 
       val controller = app.injector.instanceOf[EmailResponseController]
 
-      val result = controller.retrieveStatus(encrypted)(fakeRequest.withBody(validJson))
+      val result = controller.retrieveStatus(EmailJourneyType.PSA, encrypted)(fakeRequest.withBody(validJson))
 
       status(result) mustBe BAD_REQUEST
       fakeAuditService.verifyNothingSent mustBe true
@@ -93,7 +94,7 @@ class EmailResponseControllerSpec extends SpecBase {
 
         val controller = app.injector.instanceOf[EmailResponseController]
 
-        val result = controller.retrieveStatus(psa)(fakeRequest.withBody(Json.toJson(emailEvents)))
+        val result = controller.retrieveStatus(EmailJourneyType.PSA, psa)(fakeRequest.withBody(Json.toJson(emailEvents)))
 
         status(result) mustBe FORBIDDEN
         contentAsString(result) mustBe "Malformed PSAID"

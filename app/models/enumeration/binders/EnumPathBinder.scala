@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-package audit
+package models.enumeration.binders
 
-import models.Event
-import uk.gov.hmrc.domain.PsaId
-import models.enumeration.EmailJourneyType
+import play.api.mvc.PathBindable
 
-case class EmailAuditEvent(psaId: PsaId, event: Event, journeyType: EmailJourneyType.Value) extends AuditEvent {
+object EnumPathBinder {
 
-  override def auditType: String = s"${journeyType.toString.toUpperCase}EmailEvent"
+  def pathBinder[T <: Enumeration](enum: T)(implicit stringBinder: PathBindable[String]): PathBindable[T#Value] = new PathBindable[T#Value] {
 
-  override def details: Map[String, String] = Map("psaId" -> psaId.id, "event" -> event.toString)
+    def bind(key: String, value: String): Either[String, T#Value] = {
 
+      enum.values.find(_.toString.toLowerCase == value.toLowerCase) match {
+        case Some(v) => Right(v)
+        case None => Left("Unknown Journey Type '" + value + "'")
+      }
+    }
+
+    override def unbind(key: String, value: T#Value): String = stringBinder.unbind(key, value.toString)
+  }
 }
