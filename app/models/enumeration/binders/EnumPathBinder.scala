@@ -24,12 +24,16 @@ object EnumPathBinder {
 
     def bind(key: String, value: String): Either[String, T#Value] = {
 
-      enum.values.find(_.toString == value) match {
+      enumtByName(enum, value) match {
         case Some(v) => Right(v)
-        case None => Left(s"Unknown Journey Type $value")
+        case None => Left(s"Unknown Enum Type $value")
       }
     }
 
     override def unbind(key: String, value: T#Value): String = stringBinder.unbind(key, value.toString)
+
+    def enumtByName[T <: Enumeration](enum: T, key: String): Option[T#Value] = {
+      enum.values.find(_.toString == key)
+    }
   }
 }
