@@ -23,7 +23,7 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -203,22 +203,6 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
   }
 
-  it should "return UnauthorizedException with message for affinity group not found in enrolments" in {
-
-    recoverToExceptionIf[UnauthorizedException](controller(affinityGroup = None).getName(fakeRequest)) map { ex =>
-      ex.message mustBe "Cannot retrieve user group"
-    }
-
-  }
-
-  it should "return NotFoundException with message when name cannot be retrieved" in {
-
-    recoverToExceptionIf[NotFoundException](controller(affinityGroup = Some(AffinityGroup.Agent)).getName(fakeRequest)) map { ex =>
-      ex.message mustBe "Cannot find name"
-    }
-
-  }
-
   it should "relay response from connector if not OK" in {
 
     fakeAssociationConnector.setPsaMinimalDetailsResponse(
@@ -288,7 +272,7 @@ object AssociationControllerSpec extends MockitoSugar {
 
   }
 
-  val acceptedInvitationRequest = Json.parse(
+  val acceptedInvitationRequest: JsValue = Json.parse(
     """
       |{"pstr":"test-pstr","inviteePsaId":"A7654321","inviterPsaId":"A1234567","declaration":true,"declarationDuties":true}
     """.stripMargin

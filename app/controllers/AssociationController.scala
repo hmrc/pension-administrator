@@ -22,7 +22,6 @@ import models.{AcceptedInvitation, PSAMinimalDetails}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
-import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
@@ -87,33 +86,17 @@ class AssociationController @Inject()(
   def getName: Action[AnyContent] = Action.async {
     implicit request =>
 
-      retrievals.getPsaId flatMap { psaId =>
-        retrievals.getAffinityGroup flatMap { affinityGroup =>
-
-          psaId map { id =>
-
-            affinityGroup map { userGroup =>
-
-              getPSAMinimalDetails(id.id) flatMap {
-                case Right(psaDetails) =>
-
-                  val name = userGroup match {
-                    case AffinityGroup.Individual => psaDetails.individualDetails map { _.fullName }
-                    case AffinityGroup.Organisation => psaDetails.organisationName
-                    case _ => None
-                  }
-
-                  name match {
-                    case Some(nm) => Future.successful(Ok(nm))
-                    case _ => Future.failed(new NotFoundException("Cannot find name"))
-                  }
-
-                case Left(e) => Future.successful(result(e))
-              }
-
-            } getOrElse Future.failed(new UnauthorizedException("Cannot retrieve user group"))
-          } getOrElse Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
-
+      for {
+        maybePsaId <- retrievals.getPsaId
+        maybePsaDetails <- getPSAMinimalDetails(maybePsaId)
+      } yield {
+        maybePsaDetails match {
+          case Right(psaDetails) =>
+            psaDetails
+              .name
+              .map(n => Ok(n))
+              .getOrElse(throw new NotFoundException("PSA minimal details contains neither individual or organisation name"))
+          case Left(e) => result(e)
         }
       }
 
@@ -121,6 +104,15 @@ class AssociationController @Inject()(
 
   private def getPSAMinimalDetails(id: String)(implicit hc: HeaderCarrier): Future[Either[HttpException, PSAMinimalDetails]] = {
     associationConnector.getPSAMinimalDetails(PsaId(id))
+  }
+
+  private def getPSAMinimalDetails(psaId: Option[PsaId])(implicit hc: HeaderCarrier): Future[Either[HttpException, PSAMinimalDetails]] = {
+    psaId map {
+      id =>
+        associationConnector.getPSAMinimalDetails(id)
+    } getOrElse {
+      Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
+    }
   }
 
 }

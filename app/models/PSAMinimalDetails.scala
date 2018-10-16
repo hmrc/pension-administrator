@@ -24,7 +24,15 @@ case class PSAMinimalDetails(
                               isPsaSuspended: Boolean,
                               organisationName: Option[String],
                               individualDetails: Option[IndividualDetails]
-                            )
+                            ) {
+
+  def name: Option[String] = {
+    individualDetails
+      .map(_.fullName)
+      .orElse(organisationName)
+  }
+
+}
 
 object PSAMinimalDetails {
   implicit val psaMinimalDetailsReads: Reads[PSAMinimalDetails] = (
