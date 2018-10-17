@@ -40,8 +40,4 @@ class AuthRetrievals @Inject()(
     }
   }
 
-  def getAffinityGroup(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AffinityGroup]] = {
-    authorised().retrieve(Retrievals.affinityGroup)(Future.successful)
-  }
-
 }
