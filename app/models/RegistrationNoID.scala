@@ -25,6 +25,21 @@ case class ContactDetailsType(phoneNumber: Option[String],
 object ContactDetailsType {
 
   implicit val format: Format[ContactDetailsType] = Json.format[ContactDetailsType]
+
+  val apiWrites: Writes[ContactDetailsType] = {
+    (
+      (__ \ "phoneNumber").write[JsValue] and
+        (__ \ "mobileNumber").write[JsValue] and
+        (__ \ "faxNumber").write[JsValue] and
+        (__ \ "emailAddress").write[JsValue]
+      ) { _ => (
+        JsNull,
+        JsNull,
+        JsNull,
+        JsNull
+      )
+    }
+  }
 }
 
 case class OrganisationName(organisationName: String)
@@ -37,7 +52,7 @@ object OrganisationName {
 case class OrganisationRegistrant(
                                    acknowledgementReference: String,
                                    organisation: OrganisationName,
-                                   address: Address,
+                                   address: InternationalAddress,
                                    contactDetails: ContactDetailsType
                                  )
 
@@ -52,8 +67,8 @@ object OrganisationRegistrant {
         (__ \ "isAnAgent").write[Boolean] and
         (__ \ "isAGroup").write[Boolean] and
         (__ \ "organisation").write[OrganisationName] and
-        (__ \ "address").write[Address] and
-        (__ \ "contactDetails").write[ContactDetailsType]
+        (__ \ "address").write[InternationalAddress] and
+        (__ \ "contactDetails").write(ContactDetailsType.apiWrites)
       ) { o =>
       (
         "PODA",
