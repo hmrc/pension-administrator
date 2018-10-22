@@ -48,15 +48,13 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
   private val dataToEmtp = readJsonFromFile("/data/validRegistrationNoIDOrganisationToEMTP.json").as[OrganisationRegistrant]
 
   private val mockRegistrationConnector = mock[RegistrationConnector]
-  private val mockHeaderUtils = mock[HeaderUtils]
 
   implicit val mat: Materializer = app.materializer
 
   private def registrationController(retrievals: Future[_]): RegistrationController =
     new RegistrationController(
       new FakeAuthConnector(retrievals),
-      mockRegistrationConnector,
-      mockHeaderUtils
+      mockRegistrationConnector
     )
 
   before(reset(mockRegistrationConnector))

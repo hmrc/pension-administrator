@@ -99,7 +99,7 @@ class RegistrationConnectorImpl @Inject()(
       headerCarrierWithDesHeaders, implicitly) map {
       handleResponse(_, schemeAdminRegisterUrl)
     } andThen sendPSARegistrationEvent(
-      withId = false, user, "Organisation", Json.toJson(registerData), _ => Some(false)
+      withId = false, user, "Organisation", Json.toJson(registerWithNoIdData), _ => Some(false)
     )(auditService.sendEvent) andThen logWarning("registrationNoIdOrganisation")
   }
 

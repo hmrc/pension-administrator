@@ -20,27 +20,33 @@ import audit.testdoubles.StubSuccessfulAuditService
 import audit.{AuditService, PSARegistration}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
-import connectors.helper.ConnectorBehaviours
+import org.mockito.Matchers.{any => matchersAny}
+import connectors.helper.{ConnectorBehaviours, HeaderUtils}
 import models._
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import utils.WireMockHelper
+import org.mockito.Mockito._
 
 class RegistrationConnectorSpec extends AsyncFlatSpec
   with JsonFileReader
   with Matchers
   with WireMockHelper
   with EitherValues
+  with MockitoSugar
   with ConnectorBehaviours {
 
   import RegistrationConnectorSpec._
+
+  val mockHeaderUtils = mock[HeaderUtils]
 
   override def beforeEach(): Unit = {
     auditService.reset()
@@ -50,7 +56,8 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
   override protected def portConfigKey: String = "microservice.services.des-hod.port"
 
   override protected def bindings: Seq[GuiceableModule] = Seq[GuiceableModule](
-    bind(classOf[AuditService]).toInstance(auditService)
+    bind(classOf[AuditService]).toInstance(auditService),
+    bind(classOf[HeaderUtils]).toInstance(mockHeaderUtils)
   )
 
   def connector: RegistrationConnector = app.injector.instanceOf[RegistrationConnector]
@@ -319,7 +326,8 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
   }
 
   "registrationNoIdOrganisation" should "handle OK (200)" in {
-
+    when(mockHeaderUtils.getCorrelationId(matchersAny())).thenReturn("correlation Id")
+    when(mockHeaderUtils.desHeader(matchersAny())).thenReturn(Seq(("header-key", "xyz")))
     server.stubFor(
       post(urlEqualTo(registerOrganisationWithoutIdUrl))
         .willReturn(
@@ -374,6 +382,82 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     registerOrganisationWithoutIdUrl
   )
 
+  it should "send a PSARegistration audit event on success" in {
+
+    when(mockHeaderUtils.getCorrelationId(matchersAny())).thenReturn("correlation Id")
+    when(mockHeaderUtils.desHeader(matchersAny())).thenReturn(Seq(("header-key", "xyz")))
+    server.stubFor(
+      post(urlEqualTo(registerOrganisationWithoutIdUrl))
+        .willReturn(
+          ok
+            .withHeader("Content-Type", "application/json")
+            .withBody(registerOrganisationWithoutIdResponse.toString())
+        )
+    )
+
+    connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant) map {
+      _ =>
+       auditService.verifySent(
+          PSARegistration(
+            withId = false,
+            externalId = testOrganisation.externalId,
+            psaType = "Organisation",
+            found = true,
+            isUk = Some(false),
+            status = OK,
+            request = testRegisterWithNoId,
+            response = Some(registerOrganisationWithoutIdResponse)
+          )
+        ) shouldBe true
+    }
+  }
+
+  it should "send a PSARegistration audit event on not found" in {
+
+    when(mockHeaderUtils.getCorrelationId(matchersAny())).thenReturn("correlation Id")
+    when(mockHeaderUtils.desHeader(matchersAny())).thenReturn(Seq(("header-key", "xyz")))
+
+    server.stubFor(
+      post(urlEqualTo(registerOrganisationWithoutIdUrl))
+        .willReturn(
+          notFound
+        )
+    )
+
+    connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant) map {
+      _ =>
+        auditService.verifySent(
+          PSARegistration(
+            withId = false,
+            externalId = testOrganisation.externalId,
+            psaType = "Organisation",
+            found = false,
+            isUk = None,
+            status = NOT_FOUND,
+            request = testRegisterWithNoId,
+            response = None
+          )
+        ) shouldBe true
+    }
+  }
+
+  it should "not send a PSARegistration audit event on failure" in {
+
+    server.stubFor(
+      post(urlEqualTo(registerOrganisationWithoutIdUrl))
+        .willReturn(
+          serverError
+        )
+    )
+
+    recoverToExceptionIf[Upstream5xxResponse](connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant)) map {
+      _ =>
+        auditService.verifyNothingSent shouldBe true
+    }
+
+  }
+
+
 }
 
 object RegistrationConnectorSpec {
@@ -399,6 +483,27 @@ object RegistrationConnectorSpec {
       "organisationName" -> "Test Ltd",
       "organisationType" -> "LLP"
     ))
+
+  val testRegisterWithNoId: JsObject = Json.obj("regime" -> "PODA",
+    "acknowledgementReference" -> "correlation Id",
+    "isAnAgent" -> false,
+    "isAGroup" -> false,
+    "contactDetails" -> Json.obj(
+      "phoneNumber" -> JsNull,
+      "mobileNumber" -> JsNull,
+      "faxNumber" -> JsNull,
+      "emailAddress" -> JsNull
+    ),
+    "organisation" -> Json.obj(
+      "organisationName" -> "Name"
+    ),
+    "address" -> Json.obj(
+      "addressLine1" -> "addressLine1",
+      "countryCode"-> "US"
+  ),
+    "contactDetails" -> Json.obj(
+      "phoneNumber" -> JsNull,"mobileNumber" -> JsNull,"faxNumber" -> JsNull,"emailAddress" ->JsNull
+  ))
 
   val organisationRegistrant = OrganisationRegistrant(
     OrganisationName("Name"),

@@ -18,7 +18,6 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.RegistrationConnector
-import connectors.helper.HeaderUtils
 import models.{Organisation, OrganisationRegistrant, RegisterWithoutIdResponse, SuccessResponse}
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsResultException, JsValue, Json}
@@ -36,8 +35,7 @@ import scala.util.{Failure, Success, Try}
 
 class RegistrationController @Inject()(
                                         override val authConnector: AuthConnector,
-                                        registerConnector: RegistrationConnector,
-                                        headerUtils: HeaderUtils
+                                        registerConnector: RegistrationConnector
                                       ) extends BaseController with ErrorHandler with AuthorisedFunctions {
 
   def registerWithIdIndividual: Action[AnyContent] = Action.async {
@@ -48,11 +46,6 @@ class RegistrationController @Inject()(
     }
   }
 
-  private def handleResponse: PartialFunction[Either[HttpException, JsValue], Result] = {
-    case Right(json) => Ok(Json.toJson[SuccessResponse](json.as[SuccessResponse]))
-    case Left(e: HttpException) => result(e)
-  }
-
   private def retrieveIndividual(fn: (String, models.User) => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
     authorised(ConfidenceLevel.L200 and AffinityGroup.Individual).retrieve(Retrievals.nino and Retrievals.externalId and Retrievals.affinityGroup) {
       case Some(nino) ~ Some(externalId) ~ Some(affinityGroup) =>
@@ -60,10 +53,6 @@ class RegistrationController @Inject()(
       case _ =>
         Future.failed(Upstream4xxResponse("Nino not found in auth record", UNAUTHORIZED, UNAUTHORIZED))
     }
-
-  private def mandatoryPODSData(requiresNameMatch: Boolean = false): JsValue = {
-    Json.obj("regime" -> "PODA", "requiresNameMatch" -> requiresNameMatch, "isAnAgent" -> false)
-  }
 
   def registerWithIdOrganisation: Action[AnyContent] = Action.async {
     implicit request => {
@@ -85,6 +74,15 @@ class RegistrationController @Inject()(
         }
       }
     } recoverWith recoverFromError
+  }
+
+  private def handleResponse: PartialFunction[Either[HttpException, JsValue], Result] = {
+    case Right(json) => Ok(Json.toJson[SuccessResponse](json.as[SuccessResponse]))
+    case Left(e: HttpException) => result(e)
+  }
+
+  private def mandatoryPODSData(requiresNameMatch: Boolean = false): JsValue = {
+    Json.obj("regime" -> "PODA", "requiresNameMatch" -> requiresNameMatch, "isAnAgent" -> false)
   }
 
   def registrationNoIdOrganisation: Action[OrganisationRegistrant] = Action.async(parse.json[OrganisationRegistrant]) {
