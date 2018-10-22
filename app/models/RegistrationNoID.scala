@@ -52,7 +52,7 @@ object OrganisationName {
 case class OrganisationRegistrant(
                                    acknowledgementReference: String,
                                    organisation: OrganisationName,
-                                   address: InternationalAddress,
+                                   address: Address,
                                    contactDetails: ContactDetailsType
                                  )
 
@@ -67,7 +67,7 @@ object OrganisationRegistrant {
         (__ \ "isAnAgent").write[Boolean] and
         (__ \ "isAGroup").write[Boolean] and
         (__ \ "organisation").write[OrganisationName] and
-        (__ \ "address").write[InternationalAddress] and
+        (__ \ "address").write[Address] and
         (__ \ "contactDetails").write(ContactDetailsType.apiWrites)
       ) { o =>
       (
