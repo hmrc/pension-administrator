@@ -19,6 +19,7 @@ package controllers
 import akka.stream.Materializer
 import base.SpecBase
 import connectors.RegistrationConnector
+import connectors.helper.HeaderUtils
 import models._
 import org.joda.time.LocalDate
 import org.mockito.Matchers
@@ -47,13 +48,15 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
   private val dataToEmtp = readJsonFromFile("/data/validRegistrationNoIDOrganisationToEMTP.json").as[OrganisationRegistrant]
 
   private val mockRegistrationConnector = mock[RegistrationConnector]
+  private val mockHeaderUtils = mock[HeaderUtils]
 
   implicit val mat: Materializer = app.materializer
 
   private def registrationController(retrievals: Future[_]): RegistrationController =
     new RegistrationController(
       new FakeAuthConnector(retrievals),
-      mockRegistrationConnector
+      mockRegistrationConnector,
+      mockHeaderUtils
     )
 
   before(reset(mockRegistrationConnector))

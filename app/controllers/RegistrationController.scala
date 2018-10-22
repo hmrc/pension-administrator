@@ -18,9 +18,10 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.RegistrationConnector
-import models.{Organisation, OrganisationRegistrant, SuccessResponse}
+import connectors.helper.HeaderUtils
+import models.{Organisation, OrganisationRegistrant, RegisterWithoutIdResponse, SuccessResponse}
 import play.api.Logger
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.{JsObject, JsResultException, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, Result}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve._
@@ -35,7 +36,8 @@ import scala.util.{Failure, Success, Try}
 
 class RegistrationController @Inject()(
                                         override val authConnector: AuthConnector,
-                                        registerConnector: RegistrationConnector
+                                        registerConnector: RegistrationConnector,
+                                        headerUtils: HeaderUtils
                                       ) extends BaseController with ErrorHandler with AuthorisedFunctions {
 
   def registerWithIdIndividual: Action[AnyContent] = Action.async {
@@ -44,6 +46,23 @@ class RegistrationController @Inject()(
         registerConnector.registerWithIdIndividual(nino, user, mandatoryPODSData()) map handleResponse
       } recoverWith recoverFromError
     }
+  }
+
+  private def handleResponse: PartialFunction[Either[HttpException, JsValue], Result] = {
+    case Right(json) => Ok(Json.toJson[SuccessResponse](json.as[SuccessResponse]))
+    case Left(e: HttpException) => result(e)
+  }
+
+  private def retrieveIndividual(fn: (String, models.User) => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
+    authorised(ConfidenceLevel.L200 and AffinityGroup.Individual).retrieve(Retrievals.nino and Retrievals.externalId and Retrievals.affinityGroup) {
+      case Some(nino) ~ Some(externalId) ~ Some(affinityGroup) =>
+        fn(nino, models.User(externalId, affinityGroup))
+      case _ =>
+        Future.failed(Upstream4xxResponse("Nino not found in auth record", UNAUTHORIZED, UNAUTHORIZED))
+    }
+
+  private def mandatoryPODSData(requiresNameMatch: Boolean = false): JsValue = {
+    Json.obj("regime" -> "PODA", "requiresNameMatch" -> requiresNameMatch, "isAnAgent" -> false)
   }
 
   def registerWithIdOrganisation: Action[AnyContent] = Action.async {
@@ -72,16 +91,16 @@ class RegistrationController @Inject()(
     implicit request => {
       retrieveOrganisation { user =>
         registerConnector.registrationNoIdOrganisation(user, request.body) map {
-          case Right(json) => Ok(json)
+          case Right(jsValue) => {
+            jsValue.validate[RegisterWithoutIdResponse].fold(
+              errors => throw new JsResultException(errors),
+              value => Ok(Json.toJson(value))
+            )
+          }
           case Left(e) => result(e)
         }
       }
-    } recoverWith recoverFromError
-  }
-
-  private def handleResponse: PartialFunction[Either[HttpException, JsValue], Result] = {
-    case Right(json) => Ok(Json.toJson[SuccessResponse](json.as[SuccessResponse]))
-    case Left(e: HttpException) => result(e)
+    }
   }
 
   private def retrieveOrganisation(fn: models.User => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
@@ -91,17 +110,5 @@ class RegistrationController @Inject()(
       case _ =>
         Future.failed(Upstream4xxResponse("Not authorized", UNAUTHORIZED, UNAUTHORIZED))
     }
-
-  private def retrieveIndividual(fn: (String, models.User) => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
-    authorised(ConfidenceLevel.L200 and AffinityGroup.Individual).retrieve(Retrievals.nino and Retrievals.externalId and Retrievals.affinityGroup) {
-      case Some(nino) ~ Some(externalId) ~ Some(affinityGroup) =>
-        fn(nino, models.User(externalId, affinityGroup))
-      case _ =>
-        Future.failed(Upstream4xxResponse("Nino not found in auth record", UNAUTHORIZED, UNAUTHORIZED))
-    }
-
-  private def mandatoryPODSData(requiresNameMatch: Boolean = false): JsValue = {
-    Json.obj("regime" -> "PODA", "requiresNameMatch" -> requiresNameMatch, "isAnAgent" -> false)
-  }
 
 }

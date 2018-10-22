@@ -399,25 +399,10 @@ object RegistrationConnectorSpec {
       "organisationName" -> "Test Ltd",
       "organisationType" -> "LLP"
     ))
-  val testRegisterDataOrganisationWithoutId: JsObject = Json.obj(
-    "regime" -> "PODA",
-    "acknowledgementReference" -> "ackReference",
-    "isAnAgent" -> false,
-    "isAGroup" -> false,
-    "organisation" -> OrganisationName("Name"),
-    "address" -> Json.obj(
-      "line1" -> "addressLine1",
-      "countryCode" -> "US",
-      "addressType" -> "NON-UK"
-    ),
-    "contactDetails" -> ContactDetailsType(None, None)
-  )
 
   val organisationRegistrant = OrganisationRegistrant(
-    "ackReference",
     OrganisationName("Name"),
-    InternationalAddress("addressLine1", None, None, None, "US", None),
-    ContactDetailsType(None, None)
+    InternationalAddress("addressLine1", None, None, None, "US", None)
   )
 
   val auditService = new StubSuccessfulAuditService()

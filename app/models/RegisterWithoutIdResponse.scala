@@ -16,26 +16,11 @@
 
 package models
 
-import play.api.libs.json._
+import play.api.libs.json.Json
 
-case class OrganisationName(organisationName: String)
+case class RegisterWithoutIdResponse(safeId: String,
+                           sapNumber: String)
 
-object OrganisationName {
-
-  implicit val format: Format[OrganisationName] = Json.format[OrganisationName]
+object RegisterWithoutIdResponse {
+  implicit val formats = Json.format[RegisterWithoutIdResponse]
 }
-
-case class OrganisationRegistrant(
-                                   organisation: OrganisationName,
-                                   address: InternationalAddress
-                                 )
-
-object OrganisationRegistrant {
-  implicit val format: Format[OrganisationRegistrant] = Json.format[OrganisationRegistrant]
-}
-
-
-
-
-
-
