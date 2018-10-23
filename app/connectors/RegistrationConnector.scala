@@ -90,7 +90,7 @@ class RegistrationConnectorImpl @Inject()(
     val correlationId = headerUtils.getCorrelationId(hcWithDesHeaders.requestId.map(_.value))
 
     val registerWithNoIdData = mandatoryWithoutIdData(correlationId).as[JsObject] ++
-      Json.toJson(registerData).as[JsObject]
+      Json.toJson(registerData)(OrganisationRegistrant.apiWrites).as[JsObject]
 
     http.POST(schemeAdminRegisterUrl, registerWithNoIdData)(implicitly, implicitly[HttpReads[HttpResponse]], hcWithDesHeaders, implicitly) map {
       handleResponse(_, schemeAdminRegisterUrl)

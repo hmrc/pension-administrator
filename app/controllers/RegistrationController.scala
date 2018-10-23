@@ -101,11 +101,12 @@ class RegistrationController @Inject()(
     }
   }
 
-  private def retrieveOrganisation(fn: models.User => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
+  private def retrieveOrganisation(fn: models.User => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
     authorised().retrieve(Retrievals.externalId and Retrievals.affinityGroup) {
       case Some(externalId) ~ Some(affinityGroup) =>
         fn(models.User(externalId, affinityGroup))
       case _ =>
         Future.failed(Upstream4xxResponse("Not authorized", UNAUTHORIZED, UNAUTHORIZED))
     }
+  }
 }

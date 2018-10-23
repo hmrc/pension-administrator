@@ -17,6 +17,7 @@
 package models
 
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 case class OrganisationName(organisationName: String)
 
@@ -27,11 +28,22 @@ object OrganisationName {
 
 case class OrganisationRegistrant(
                                    organisation: OrganisationName,
-                                   address: InternationalAddress
+                                   address: Address
                                  )
 
 object OrganisationRegistrant {
   implicit val format: Format[OrganisationRegistrant] = Json.format[OrganisationRegistrant]
+  val apiWrites: Writes[OrganisationRegistrant] = {
+    (
+        (__ \ "organisation").write[OrganisationName] and
+          (__ \ "address").write(Address.defaultWrites)
+      ) { o =>
+      (
+        o.organisation,
+        o.address
+      )
+    }
+  }
 }
 
 
