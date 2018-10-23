@@ -16,8 +16,6 @@
 
 package connectors
 
-import java.util.UUID.randomUUID
-
 import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
@@ -87,16 +85,14 @@ class RegistrationConnectorImpl @Inject()(
                                             ec: ExecutionContext,
                                             request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
-    val headerCarrierWithDesHeaders: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+    val hcWithDesHeaders: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
     val schemeAdminRegisterUrl = config.registerWithoutIdOrganisationUrl
+    val correlationId = headerUtils.getCorrelationId(hcWithDesHeaders.requestId.map(_.value))
 
-    val registerWithNoIdData = mandatoryWithoutIdData(
-      headerUtils.getCorrelationId(headerCarrierWithDesHeaders.requestId.map(_.value))
-    ).as[JsObject] ++
+    val registerWithNoIdData = mandatoryWithoutIdData(correlationId).as[JsObject] ++
       Json.toJson(registerData).as[JsObject]
 
-    http.POST(schemeAdminRegisterUrl, registerWithNoIdData)(implicitly, implicitly[HttpReads[HttpResponse]],
-      headerCarrierWithDesHeaders, implicitly) map {
+    http.POST(schemeAdminRegisterUrl, registerWithNoIdData)(implicitly, implicitly[HttpReads[HttpResponse]], hcWithDesHeaders, implicitly) map {
       handleResponse(_, schemeAdminRegisterUrl)
     } andThen sendPSARegistrationEvent(
       withId = false, user, "Organisation", Json.toJson(registerWithNoIdData), _ => Some(false)
@@ -109,17 +105,9 @@ class RegistrationConnectorImpl @Inject()(
       case OK => Right(response.json)
       case CONFLICT => Left(new ConflictException(response.body))
       case FORBIDDEN if response.body.contains("INVALID_SUBMISSION") => Left(new ForbiddenException(response.body))
-      case status => Left(handleErrorResponse("Business Partner Matching", url, response, badResponseSeq))
+      case _ => Left(handleErrorResponse("Business Partner Matching", url, response, badResponseSeq))
     }
   }
-
-  def getCorrelationId(requestId: Option[String]): String = {
-    requestId.getOrElse {
-      Logger.error("No Request Id found while calling register with Id")
-      randomUUID.toString
-    }.replaceAll("(govuk-tax-|-)", "").slice(0, 32)
-  }
-
 }
 
 object RegistrationConnectorImpl {

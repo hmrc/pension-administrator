@@ -20,9 +20,10 @@ import audit.testdoubles.StubSuccessfulAuditService
 import audit.{AuditService, PSARegistration}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
-import org.mockito.Matchers.{any => matchersAny}
 import connectors.helper.{ConnectorBehaviours, HeaderUtils}
 import models._
+import org.mockito.Matchers.{any => matchersAny}
+import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.inject.bind
@@ -34,7 +35,6 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import utils.WireMockHelper
-import org.mockito.Mockito._
 
 class RegistrationConnectorSpec extends AsyncFlatSpec
   with JsonFileReader
@@ -383,9 +383,9 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
   )
 
   it should "send a PSARegistration audit event on success" in {
-
     when(mockHeaderUtils.getCorrelationId(matchersAny())).thenReturn("correlation Id")
     when(mockHeaderUtils.desHeader(matchersAny())).thenReturn(Seq(("header-key", "xyz")))
+
     server.stubFor(
       post(urlEqualTo(registerOrganisationWithoutIdUrl))
         .willReturn(
@@ -454,10 +454,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
       _ =>
         auditService.verifyNothingSent shouldBe true
     }
-
   }
-
-
 }
 
 object RegistrationConnectorSpec {

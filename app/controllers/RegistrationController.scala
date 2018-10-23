@@ -108,5 +108,4 @@ class RegistrationController @Inject()(
       case _ =>
         Future.failed(Upstream4xxResponse("Not authorized", UNAUTHORIZED, UNAUTHORIZED))
     }
-
 }

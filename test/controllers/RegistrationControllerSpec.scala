@@ -19,7 +19,6 @@ package controllers
 import akka.stream.Materializer
 import base.SpecBase
 import connectors.RegistrationConnector
-import connectors.helper.HeaderUtils
 import models._
 import org.joda.time.LocalDate
 import org.mockito.Matchers
