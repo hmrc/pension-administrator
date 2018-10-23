@@ -72,7 +72,7 @@ class InvitationServiceImpl @Inject()(
                   sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
                 }
               case true => Future.successful(Left(new ForbiddenException("The invitation is to a PSA already associated with this scheme")))
-              case _ => Future.successful(Left(new NotFoundException("NOT_FOUND")))
+              case _ => Future.successful(Left(new NotFoundException("The name and PSA Id do not match")))
             }
           }
       }
