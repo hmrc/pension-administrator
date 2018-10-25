@@ -20,16 +20,36 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
+import models.registrationnoid.{RegistrationNoIdIndividualRequest, RegistrationNoIdIndividualResponse}
 import models.{OrganisationRegistrant, User}
 import play.Logger
 import play.api.http.Status._
-import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
+import play.api.libs.functional.syntax._
+import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper}
 
 import scala.concurrent.{ExecutionContext, Future}
+
+@ImplementedBy(classOf[RegistrationConnectorImpl])
+trait RegistrationConnector {
+  def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext,
+    request: RequestHeader): Future[Either[HttpException, JsValue]]
+
+  def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext,
+    request: RequestHeader): Future[Either[HttpException, JsValue]]
+
+  def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext,
+    request: RequestHeader): Future[Either[HttpException, JsValue]]
+}
 
 class RegistrationConnectorImpl @Inject()(
                                            http: HttpClient,
@@ -125,22 +145,41 @@ object RegistrationConnectorImpl {
       )
     )
   }
-}
 
-@ImplementedBy(classOf[RegistrationConnectorImpl])
-trait RegistrationConnector {
-  def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)(implicit
-                                                                                hc: HeaderCarrier,
-                                                                                ec: ExecutionContext,
-                                                                                request: RequestHeader): Future[Either[HttpException, JsValue]]
+  def writesRegistrationNoIdIndividualRequest(acknowledgementReference: String): OWrites[RegistrationNoIdIndividualRequest] = {
 
-  def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)(implicit
-                                                                                 hc: HeaderCarrier,
-                                                                                 ec: ExecutionContext,
-                                                                                 request: RequestHeader): Future[Either[HttpException, JsValue]]
+    new OWrites[RegistrationNoIdIndividualRequest] {
 
-  def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)(implicit
-                                                                                     hc: HeaderCarrier,
-                                                                                     ec: ExecutionContext,
-                                                                                     request: RequestHeader): Future[Either[HttpException, JsValue]]
+      override def writes(registrant: RegistrationNoIdIndividualRequest): JsObject = {
+        Json.obj(
+          "regime" -> "PODA",
+          "acknowledgementReference" -> acknowledgementReference,
+          "isAnAgent" -> JsBoolean(false),
+          "isAGroup" -> JsBoolean(false),
+          "individual" -> Json.obj(
+            "firstName" -> registrant.firstName,
+            "lastName" -> registrant.lastName,
+            "dateOfBirth" -> Json.toJson(registrant.dateOfBirth)
+          ),
+          "address" -> Json.obj(
+            "addressLine1" -> registrant.address.addressLine1,
+            "addressLine2" -> registrant.address.addressLine2,
+            "addressLine3" -> registrant.address.addressLine3.map(JsString).getOrElse[JsValue](JsNull),
+            "addressLine4" -> registrant.address.addressLine4.map(JsString).getOrElse[JsValue](JsNull),
+            "postalCode" -> registrant.address.postcode.map(JsString).getOrElse[JsValue](JsNull),
+            "countryCode" -> registrant.address.country
+          ),
+          "contactDetails" -> Json.obj()
+        )
+      }
+
+    }
+
+  }
+
+  val readsRegistrationNoIdIndividualResponse: Reads[RegistrationNoIdIndividualResponse] = (
+    (__ \ "sapNumber").read[String] and
+      (__ \ "safeId").read[String]
+    )((sapNumber, safeId) => RegistrationNoIdIndividualResponse(sapNumber, safeId))
+
 }

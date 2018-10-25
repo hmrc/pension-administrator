@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package models
+package models.registrationnoid
 
+import connectors.RegistrationConnectorImpl
 import org.joda.time.LocalDate
 import org.scalatest.{FlatSpec, Matchers}
 import play.api.Logger
@@ -28,7 +29,7 @@ class RegistrationNoIdIndividualSpec extends FlatSpec with Matchers {
 
   "RegistrationNoIdIndividualRequest.apiWrites" should "transform a request with full address details" in {
 
-    val actual = Json.toJson(fullAddressRequest)(RegistrationNoIdIndividualRequest.apiWrites(acknowledgementReference))
+    val actual = Json.toJson(fullAddressRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
 
     actual shouldEqual expectedFullAddressJson
 
@@ -36,7 +37,7 @@ class RegistrationNoIdIndividualSpec extends FlatSpec with Matchers {
 
   it should "produce valid JSON for a full address details request" in {
 
-    val actual = Json.toJson(fullAddressRequest)(RegistrationNoIdIndividualRequest.apiWrites(acknowledgementReference))
+    val actual = Json.toJson(fullAddressRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
     val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/registrationWithoutIdRequest.json", actual)
 
     validationFailures shouldBe empty
@@ -45,7 +46,7 @@ class RegistrationNoIdIndividualSpec extends FlatSpec with Matchers {
 
   it should "transform a request with minimal address details" in {
 
-    val actual = Json.toJson(minimalAddressRequest)(RegistrationNoIdIndividualRequest.apiWrites(acknowledgementReference))
+    val actual = Json.toJson(minimalAddressRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
 
     actual shouldEqual expectedMinimalAddressJson
 
@@ -53,7 +54,7 @@ class RegistrationNoIdIndividualSpec extends FlatSpec with Matchers {
 
   it should "produce valid JSON for a minimal address details request" in {
 
-    val actual = Json.toJson(minimalAddressRequest)(RegistrationNoIdIndividualRequest.apiWrites(acknowledgementReference))
+    val actual = Json.toJson(minimalAddressRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
     val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/registrationWithoutIdRequest.json", actual)
 
     validationFailures shouldBe empty
@@ -62,7 +63,7 @@ class RegistrationNoIdIndividualSpec extends FlatSpec with Matchers {
 
   "RegistrationNoIdIndividualResponse.apiReads" should "transform a success response" in {
 
-    val actual = responseJson.validate[RegistrationNoIdIndividualResponse](RegistrationNoIdIndividualResponse.apiReads)
+    val actual = responseJson.validate[RegistrationNoIdIndividualResponse](RegistrationConnectorImpl.readsRegistrationNoIdIndividualResponse)
 
     actual.fold(
       errors => {
@@ -88,13 +89,13 @@ object RegistrationNoIdIndividualSpec {
     "John",
     "Smith",
     new LocalDate(1990, 4, 3),
-    InternationalAddress(
+    Address(
       "100, Sutton Street",
-      Some("Wokingham"),
+      "Wokingham",
       Some("Surrey"),
       Some("London"),
-      "GB",
-      Some("DH1 4EJ")
+      Some("DH1 4EJ"),
+      "GB"
     )
   )
 
@@ -127,13 +128,13 @@ object RegistrationNoIdIndividualSpec {
     "John",
     "Smith",
     new LocalDate(1990, 4, 3),
-    InternationalAddress(
+    Address(
       "100, Sutton Street",
+      "Wokingham",
       None,
       None,
       None,
-      "GB",
-      None
+      "GB"
     )
   )
 
@@ -151,7 +152,7 @@ object RegistrationNoIdIndividualSpec {
       |    },
       |  "address": {
       |    "addressLine1": "100, Sutton Street",
-      |    "addressLine2": " ",
+      |    "addressLine2": "Wokingham",
       |    "addressLine3": null,
       |    "addressLine4": null,
       |    "postalCode": null,
