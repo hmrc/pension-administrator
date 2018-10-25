@@ -16,13 +16,15 @@
 
 package connectors
 
+import audit.{AuditService, InvitationAcceptanceAuditEvent}
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models._
-import play.api.{Logger, LoggerLike}
 import play.api.http.Status._
 import play.api.libs.json._
+import play.api.mvc.RequestHeader
+import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -38,7 +40,7 @@ trait AssociationConnector {
                                           ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]]
 
   def acceptInvitation(invitation: AcceptedInvitation)
-                      (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Unit]]
+                      (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]]
 
 }
 
@@ -47,7 +49,8 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
                                          appConfig: AppConfig,
                                          logger: LoggerLike,
                                          invalidPayloadHandler: InvalidPayloadHandler,
-                                         headerUtils: HeaderUtils) extends AssociationConnector with HttpResponseHelper with ErrorHandler {
+                                         headerUtils: HeaderUtils,
+                                         auditService: AuditService) extends AssociationConnector with HttpResponseHelper with ErrorHandler {
 
   import AssociationConnectorImpl._
 
@@ -94,25 +97,31 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   }
 
-  private def processResponse(response: HttpResponse, url: String) =
+  private def processResponse(acceptedInvitation: AcceptedInvitation,
+                              response: HttpResponse, url: String)(implicit request: RequestHeader, ec: ExecutionContext) = {
+    sendAcceptInvitationAuditEvent(acceptedInvitation, response.status,
+      if (response.body.isEmpty) None else Some(response.json))
     if (response.status == OK) {
       Logger.info(s"POST of $url returned successfully")
       Right(())
     } else {
       processFailureResponse(response, url)
     }
-
-  def acceptInvitation(invitation: AcceptedInvitation)
-                      (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Unit]] = {
-
-    val headerCarrierWithDesHeaders: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
-    val url = appConfig.createPsaAssociationUrl.format(invitation.pstr)
-
-    httpClient.POST[AcceptedInvitation, HttpResponse](url, invitation)(
-      writesAcceptedInvitation, implicitly, headerCarrierWithDesHeaders, implicitly) map (processResponse(_, url))
-
   }
 
+  private def sendAcceptInvitationAuditEvent(acceptedInvitation: AcceptedInvitation,
+                                             status: Int,
+                                             response: Option[JsValue])(implicit request: RequestHeader, ec: ExecutionContext): Unit =
+    auditService.sendEvent(InvitationAcceptanceAuditEvent(acceptedInvitation, status, response))
+
+  def acceptInvitation(acceptedInvitation: AcceptedInvitation)
+                      (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] = {
+    val headerCarrierWithDesHeaders: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+    val url = appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)
+
+    httpClient.POST[AcceptedInvitation, HttpResponse](url, acceptedInvitation)(
+      writesAcceptedInvitation, implicitly, headerCarrierWithDesHeaders, implicitly) map (processResponse(acceptedInvitation,_, url))
+  }
 }
 
 object AssociationConnectorImpl {

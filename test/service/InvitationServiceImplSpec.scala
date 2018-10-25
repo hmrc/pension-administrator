@@ -313,7 +313,7 @@ class FakeAssociationConnector extends AssociationConnector {
   }
 
   override def acceptInvitation(invitation: AcceptedInvitation)
-    (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Unit]] = {
+    (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, requestHeader: RequestHeader): Future[Either[HttpException, Unit]] = {
     throw new NotImplementedError()
   }
 

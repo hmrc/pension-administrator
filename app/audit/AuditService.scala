@@ -48,7 +48,6 @@ class AuditServiceImpl @Inject()(
   def sendEvent[T <: AuditEvent](event: T)(implicit
                                            rh: RequestHeader,
                                            ec: ExecutionContext): Unit = {
-
     val details = rh.toAuditDetails() ++ event.details
     Logger.debug(s"[AuditService][sendEvent] sending ${event.auditType}")
 

@@ -59,7 +59,7 @@ class RegistrationController @Inject()(
       retrieveOrganisation { user =>
         request.body.asJson match {
           case Some(jsBody) =>
-            Try((jsBody \ "utr").convertTo[String], jsBody.convertTo[Organisation]) match {
+            Try(((jsBody \ "utr").convertTo[String], jsBody.convertTo[Organisation])) match {
               case Success((utr, org)) =>
                 val registerWithIdData = mandatoryPODSData(true).as[JsObject] ++ Json.obj("organisation" -> Json.toJson(org))
 

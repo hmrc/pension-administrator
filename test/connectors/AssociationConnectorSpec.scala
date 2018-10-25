@@ -16,9 +16,11 @@
 
 package connectors
 
+import audit.testdoubles.StubSuccessfulAuditService
+import audit.{AuditService, InvitationAcceptanceAuditEvent}
 import com.github.tomakehurst.wiremock.client.WireMock._
-import connectors.helper.ConnectorBehaviours
 import config.AppConfig
+import connectors.helper.ConnectorBehaviours
 import models._
 import org.scalatest._
 import org.slf4j.event.Level
@@ -26,6 +28,8 @@ import play.api.LoggerLike
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
+import play.api.mvc.RequestHeader
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
@@ -40,6 +44,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   import AssociationConnectorSpec._
 
+  private implicit val rh: RequestHeader = FakeRequest("", "")
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private val logger = new StubLogger()
   private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/$psaId"
@@ -47,8 +52,11 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   override protected def portConfigKey: String = "microservice.services.des-hod.port"
 
+  private val auditService = new StubSuccessfulAuditService()
+
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
+      bind[AuditService].toInstance(auditService),
       bind[LoggerLike].toInstance(logger)
     )
 
@@ -222,6 +230,27 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
   }
 
+  it should "correctly send an audit event for a valid request" in {
+    server.stubFor(
+      post(urlEqualTo(acceptInvitationUrl))
+        .withRequestBody(equalToJson(psaAssociationDetailsjsonUKAddress))
+        .willReturn(
+          aResponse()
+            .withStatus(OK)
+            .withHeader("Content-Type", "application/json")
+            .withBody(successResponseJson)
+        )
+    )
+
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
+      pensionAdviserDetails = Some(pensionAdviserDetailUK))
+
+    connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
+
+    val invitationAcceptanceAuditEvent = InvitationAcceptanceAuditEvent(acceptedInvitation, OK, Some(Json.parse(successResponseJson)))
+    auditService.verifySent(invitationAcceptanceAuditEvent) should equal(true)
+  }
+
   it should "correctly submit and handle a valid request for a non-UK address" in {
     server.stubFor(
       post(urlEqualTo(acceptInvitationUrl))
@@ -268,7 +297,25 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should "return not found exception for a 404 response" in {
+  it should "return not found exception and failure response details for a 404 response" in {
+    server.stubFor(
+      post(urlEqualTo(acceptInvitationUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(NOT_FOUND)
+            .withHeader("Content-Type", "application/json")
+            .withBody(failureResponseJson.toString)
+        )
+    )
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
+      pensionAdviserDetails = None)
+
+    connector.acceptInvitation(acceptedInvitation).collect {
+      case Left(_: NotFoundException) => succeed
+    }
+  }
+
+  it should "return not found exception for a 404 response where no response details" in {
     server.stubFor(
       post(urlEqualTo(acceptInvitationUrl))
         .willReturn(
@@ -283,6 +330,27 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     connector.acceptInvitation(acceptedInvitation).collect {
       case Left(_: NotFoundException) => succeed
     }
+  }
+
+  it should "send an audit event with no response for a 404 response" in {
+    server.stubFor(
+      post(urlEqualTo(acceptInvitationUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(NOT_FOUND)
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+    val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
+      pensionAdviserDetails = None)
+
+    connector.acceptInvitation(acceptedInvitation).collect {
+      case Left(_: NotFoundException) => succeed
+    }
+
+    val invitationAcceptanceAuditEvent = InvitationAcceptanceAuditEvent(acceptedInvitation, NOT_FOUND, None)
+    auditService.verifySent(invitationAcceptanceAuditEvent) should equal(true)
+
   }
 
   it should "return bad request exception for a 404 invalid payload response" in {
@@ -436,6 +504,12 @@ object AssociationConnectorSpec extends OptionValues {
     """{
       |	"processingDate": "2001-12-17T09:30:47Z",
       |	"formBundleNumber": "12345678912"
+      |}""".stripMargin
+
+  private val failureResponseJson =
+    """{
+      |	"failureDate": "2001-12-17T09:30:47Z",
+      |	"failureDetails": "bla"
       |}""".stripMargin
 
   private val psaMinimunIndividualDetailPayload = Json.parse(
