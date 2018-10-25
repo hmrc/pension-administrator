@@ -23,10 +23,11 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import utils.AuthRetrievals
@@ -138,7 +139,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     }
   }
 
-  "getEmail" should "return email associated with PSAID for current user" in {
+  "getEmail" should "return email associated with PSAID for authorised user" in {
 
     fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
       psaMinimalDetailsIndividualUser
@@ -170,20 +171,70 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     contentAsString(result) mustBe "bad request"
   }
 
+  "getName" should "return name associated with PSAID for authorised Individual" in {
+
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
+      psaMinimalDetailsIndividualUser
+    )))
+
+    val result = controller().getName(fakeRequest)
+
+    status(result) mustBe OK
+    contentAsString(result) mustBe individual.fullName
+  }
+
+  it should "return name associated with PSAID for authorised Organisation" in {
+
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
+      psaMinimalDetailsOrganisationUser
+    )))
+
+    val result = controller(affinityGroup = Some(AffinityGroup.Organisation)).getName(fakeRequest)
+
+    status(result) mustBe OK
+    contentAsString(result) mustBe "PSA Ltd."
+  }
+
+  it should "return UnauthorizedException with message for psaId not found in enrolments" in {
+
+    recoverToExceptionIf[UnauthorizedException](controller(psaId = None).getName(fakeRequest)) map { ex =>
+      ex.message mustBe "Cannot retrieve enrolment PSAID"
+    }
+
+  }
+
+  it should "relay response from connector if not OK" in {
+
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(
+      Future.successful(Left(new BadRequestException("bad request")))
+    )
+
+    val result = controller().getName(fakeRequest)
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "bad request"
+  }
+
 }
 
 object AssociationControllerSpec extends MockitoSugar {
+
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
+
+  val individual = IndividualDetails("testFirst", Some("testMiddle"), "testLast")
 
   val psaMinimalDetailsIndividualUser = PSAMinimalDetails(
     "test@email.com",
     isPsaSuspended = true,
     None,
-    Some(IndividualDetails(
-      "testFirst",
-      Some("testMiddle"),
-      "testLast"
-    ))
+    Some(individual)
+  )
+
+  val psaMinimalDetailsOrganisationUser = PSAMinimalDetails(
+    "test@email.com",
+    isPsaSuspended = true,
+    Some("PSA Ltd."),
+    None
   )
 
   class FakeAssociationConnector extends AssociationConnector {
@@ -208,7 +259,8 @@ object AssociationControllerSpec extends MockitoSugar {
 
   lazy val mockAuthRetrievals: AuthRetrievals = mock[AuthRetrievals]
 
-  def controller(psaId: Option[PsaId] = Some(PsaId("A2123456"))): AssociationController = {
+  def controller(psaId: Option[PsaId] = Some(PsaId("A2123456")),
+                 affinityGroup: Option[AffinityGroup] = Some(AffinityGroup.Individual)): AssociationController = {
 
     when(mockAuthRetrievals.getPsaId(any(), any()))
       .thenReturn(Future.successful(psaId))
@@ -217,11 +269,9 @@ object AssociationControllerSpec extends MockitoSugar {
 
   }
 
-  val acceptedInvitationRequest = Json.parse(
+  val acceptedInvitationRequest: JsValue = Json.parse(
     """
       |{"pstr":"test-pstr","inviteePsaId":"A7654321","inviterPsaId":"A1234567","declaration":true,"declarationDuties":true}
     """.stripMargin
   )
 }
-
-
