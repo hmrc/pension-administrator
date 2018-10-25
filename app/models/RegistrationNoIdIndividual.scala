@@ -32,26 +32,24 @@ object RegistrationNoIdIndividualRequest {
 
       override def writes(registrant: RegistrationNoIdIndividualRequest): JsObject = {
         Json.obj(
-          //"individualRegistrant" -> Json.obj(
-            "regime" -> "PODA",
-            "acknowledgementReference" -> acknowledgementReference,
-            "isAnAgent" -> JsBoolean(false),
-            "isAGroup" -> JsBoolean(false),
-            "individual" -> Json.obj(
-              "firstName" -> registrant.firstName,
-              "lastName" -> registrant.lastName,
-              "dateOfBirth" -> Json.toJson(registrant.dateOfBirth)
-            ),
-            "address" -> Json.obj(
-              "addressLine1" -> registrant.address.addressLine1,
-              "addressLine2" -> registrant.address.addressLine2.getOrElse[String](" "),
-              "addressLine3" -> registrant.address.addressLine3.map(JsString).getOrElse[JsValue](JsNull),
-              "addressLine4" -> registrant.address.addressLine4.map(JsString).getOrElse[JsValue](JsNull),
-              "postalCode" -> registrant.address.postalCode.map(JsString).getOrElse[JsValue](JsNull),
-              "countryCode" -> registrant.address.countryCode
-            ),
-            "contactDetails" -> Json.obj()
-          //)
+          "regime" -> "PODA",
+          "acknowledgementReference" -> acknowledgementReference,
+          "isAnAgent" -> JsBoolean(false),
+          "isAGroup" -> JsBoolean(false),
+          "individual" -> Json.obj(
+            "firstName" -> registrant.firstName,
+            "lastName" -> registrant.lastName,
+            "dateOfBirth" -> Json.toJson(registrant.dateOfBirth)
+          ),
+          "address" -> Json.obj(
+            "addressLine1" -> registrant.address.addressLine1,
+            "addressLine2" -> registrant.address.addressLine2.getOrElse[String](" "),
+            "addressLine3" -> registrant.address.addressLine3.map(JsString).getOrElse[JsValue](JsNull),
+            "addressLine4" -> registrant.address.addressLine4.map(JsString).getOrElse[JsValue](JsNull),
+            "postalCode" -> registrant.address.postalCode.map(JsString).getOrElse[JsValue](JsNull),
+            "countryCode" -> registrant.address.countryCode
+          ),
+          "contactDetails" -> Json.obj()
         )
       }
 
