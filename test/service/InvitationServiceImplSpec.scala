@@ -19,26 +19,27 @@ package service
 import audit.InvitationAuditEvent
 import config.AppConfig
 import connectors.{AssociationConnector, SchemeConnector}
-import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails}
+import controllers.EmailResponseControllerSpec.fakeAuditService
+import models.enumeration.JourneyType
+import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails, _}
 import org.joda.time.DateTime
+import org.mockito.Matchers.any
+import org.mockito.Mockito.{never, times, verify, when}
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
+import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsBoolean, JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
+import play.api.test.Helpers._
+import repositories.InvitationsCacheRepository
+import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
+import uk.gov.hmrc.domain.PsaId
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException, _}
+import utils.{DateHelper, FakeEmailConnector}
 
 import scala.concurrent.{ExecutionContext, Future}
-import controllers.EmailResponseControllerSpec.{fakeAuditService, psa}
-import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails, _}
-import org.joda.time.LocalDate
-import org.mockito.Matchers.any
-import org.mockito.Mockito.{never, times, verify, when}
-import org.scalatest.mockito.MockitoSugar
-import repositories.InvitationsCacheRepository
-import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http._
-import utils.{DateHelper, FakeEmailConnector}
 
 class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues with MockitoSugar {
 
@@ -47,203 +48,212 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
+
   "registerPSA" should "return successfully when an individual PSA exists and names match" in {
+    running() { app =>
+      val fixture = testFixture(app)
 
-    val fixture = testFixture()
-
-    fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, johnDoe.individualDetails.value.name)).map {
-      response =>
-        verify(fixture.repository, times(1)).insert(any())(any())
-        response.right.value should equal(())
+      fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, johnDoe.individualDetails.value.name)).map {
+        response =>
+          verify(fixture.repository, times(1)).insert(any())(any())
+          response.right.value should equal(())
+      }
     }
-
   }
 
   it should "return successfully when an organisation PSA exists and names match" in {
+    running() { app =>
+      val fixture = testFixture(app)
 
-    val fixture = testFixture()
-
-    fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
-      response =>
-        response.right.value should equal (())
+      fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
+        response =>
+          response.right.value should equal(())
+      }
     }
-
   }
 
   it should "return ConflictException when an organisation PSA exists and names match but invite already exists" in {
+    running() { app =>
+      val fixture = testFixture(app)
 
-    val fixture = testFixture()
-
-    fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
-      response =>
-        verify(fixture.repository, times(1)).insert(any())(any())
-        response.right.value should equal(())
+      fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
+        response =>
+          verify(fixture.repository, times(1)).insert(any())(any())
+          response.right.value should equal(())
+      }
     }
-
   }
 
   it should "audit successfully when an organisation PSA exists and names match" in {
-    val fixture = testFixture()
-    fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
-      _ =>
-        val i = invitation(acmeLtdPsaId, acmeLtd.organisationName.value)
-        fakeAuditService.verifySent(InvitationAuditEvent(i)) should equal(true)
+    running() { app =>
+      val fixture = testFixture(app)
+      fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
+        _ =>
+          val i = invitation(acmeLtdPsaId, acmeLtd.organisationName.value)
+          fakeAuditService.verifySent(InvitationAuditEvent(i)) should equal(true)
+      }
     }
   }
 
   it should "throw BadRequestException if the JSON cannot be parsed as Invitation" in {
+    running() { app =>
+      val fixture = testFixture(app)
 
-    val fixture = testFixture()
-
-    recoverToSucceededIf[BadRequestException] {
-      fixture.invitationService.invitePSA(Json.obj())
+      recoverToSucceededIf[BadRequestException] {
+        fixture.invitationService.invitePSA(Json.obj())
+      }
     }
-
   }
 
   it should "throw ForbiddenException if the Invitation is for a PSA already associated to that scheme" in {
+    running() { app =>
+      val fixture = testFixture(app)
 
-    val fixture = testFixture()
-
-    fixture.invitationService.invitePSA(invitationJson(associatedPsaId, johnDoe.individualDetails.value.name)) map { response =>
-      response.left.value shouldBe a[ForbiddenException]
+      fixture.invitationService.invitePSA(invitationJson(associatedPsaId, johnDoe.individualDetails.value.name)) map { response =>
+        response.left.value shouldBe a[ForbiddenException]
+      }
     }
-
   }
 
   it should "throw InternalServerException if check for association is not a boolean" in {
+    running() { app =>
+      val fixture = testFixture(app)
 
-    val fixture = testFixture()
-
-    fixture.invitationService.invitePSA(invitationJson(invalidResponsePsaId, johnDoe.individualDetails.value.name)) map { response =>
-      response.left.value shouldBe a[InternalServerException]
+      fixture.invitationService.invitePSA(invitationJson(invalidResponsePsaId, johnDoe.individualDetails.value.name)) map { response =>
+        response.left.value shouldBe a[InternalServerException]
+      }
     }
-
   }
 
   it should "relay HttpExceptions throw from SchemeConnector" in {
+    running() { app =>
+      val fixture = testFixture(app)
 
-    val fixture = testFixture()
-
-    fixture.invitationService.invitePSA(invitationJson(exceptionResponsePsaId, johnDoe.individualDetails.value.name)) map { response =>
-      response.left.value shouldBe a[NotFoundException]
+      fixture.invitationService.invitePSA(invitationJson(exceptionResponsePsaId, johnDoe.individualDetails.value.name)) map { response =>
+        response.left.value shouldBe a[NotFoundException]
+      }
     }
-
   }
 
   it should "return NotFoundException if the PSA Id cannot be found" in {
+    running() { app =>
+      val fixture = testFixture(app)
 
-    val fixture = testFixture()
+      fixture.invitationService.invitePSA(invitationJson(notFoundPsaId, "")) map {
+        response =>
+          verify(fixture.repository, never).insert(any())(any())
+          response.left.value shouldBe a[NotFoundException]
+          response.left.value.message should include("NOT_FOUND")
+      }
 
-    fixture.invitationService.invitePSA(invitationJson(notFoundPsaId, "")) map {
-      response =>
-        verify(fixture.repository, never).insert(any())(any())
-        response.left.value shouldBe a[NotFoundException]
-        response.left.value.message should include("NOT_FOUND")
     }
-
   }
 
   it should "return NotFoundException if an individual PSA Id can be found but the name does not match" in {
+    running() { app =>
+      val fixture = testFixture(app)
 
-    val fixture = testFixture()
-
-    fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, "Wrong Name")) map {
-      response =>
-        verify(fixture.repository, never).insert(any())(any())
-        response.left.value shouldBe a[NotFoundException]
-        response.left.value.message should include("The name and PSA Id do not match")
+      fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, "Wrong Name")) map {
+        response =>
+          verify(fixture.repository, never).insert(any())(any())
+          response.left.value shouldBe a[NotFoundException]
+          response.left.value.message should include("The name and PSA Id do not match")
+      }
     }
-
   }
 
   it should "return NotFoundException if an organisation PSA Id can be found but the name does not match" in {
+    running() { app =>
+      val fixture = testFixture(app)
 
-    val fixture = testFixture()
-
-    fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, "Wrong Name")) map {
-      response =>
-        verify(fixture.repository, never).insert(any())(any())
-        response.left.value shouldBe a[NotFoundException]
-        response.left.value.message should include("The name and PSA Id do not match")
+      fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, "Wrong Name")) map {
+        response =>
+          verify(fixture.repository, never).insert(any())(any())
+          response.left.value shouldBe a[NotFoundException]
+          response.left.value.message should include("The name and PSA Id do not match")
+      }
     }
-
   }
 
   it should "match an individual when the invitation includes their middle name" in {
+    running() { app =>
+      val fixture = testFixture(app)
 
-    val fixture = testFixture()
-
-    fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.fullName)) map {
-      response =>
-        verify(fixture.repository, times(1)).insert(any())(any())
-        response.right.value should equal(())
+      fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.fullName)) map {
+        response =>
+          verify(fixture.repository, times(1)).insert(any())(any())
+          response.right.value should equal(())
+      }
     }
-
   }
 
   it should "match an individual when they have a middle name not specified in the invitation" in {
+    running() { app =>
+      val fixture = testFixture(app)
 
-    val fixture = testFixture()
-
-    fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.name)) map {
-      response =>
-        verify(fixture.repository, times(1)).insert(any())(any())
-        response.right.value should equal(())
+      fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.name)) map {
+        response =>
+          verify(fixture.repository, times(1)).insert(any())(any())
+          response.right.value should equal(())
+      }
     }
-
   }
 
   it should "return MongoDBFailedException if insertion failed with RunTimeException from mongodb" in {
-
-    val fixture = testFixture()
-    when(fixture.repository.insert(any())(any())).thenReturn(Future.failed(new RuntimeException("failed to perform DB operation")))
-    fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.name)) map {
-      response =>
-        verify(fixture.repository, times(1)).insert(any())(any())
-        response.left.value shouldBe a[MongoDBFailedException]
-        response.left.value.message should include("failed to perform DB operation")
+    running() { app =>
+      val fixture = testFixture(app)
+      when(fixture.repository.insert(any())(any())).thenReturn(Future.failed(new RuntimeException("failed to perform DB operation")))
+      fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.name)) map {
+        response =>
+          verify(fixture.repository, times(1)).insert(any())(any())
+          response.left.value shouldBe a[MongoDBFailedException]
+          response.left.value.message should include("failed to perform DB operation")
+      }
     }
   }
 
   it should "send an email to the invitee" in {
+    running() { app =>
 
-    import FakeEmailConnector._
+      import FakeEmailConnector._
+      val fixture = testFixture(app)
+      val encryptedPsaId = fixture.crypto.QueryParameterCrypto.encrypt(PlainText(johnDoePsaId.value)).value
 
-    val expectedEmail =
-      SendEmailRequest(
-        List(johnDoeEmail),
-        "pods_psa_invited",
-        Map(
-          "inviteeName" -> johnDoe.individualDetails.value.fullName,
-          "schemeName" -> testSchemeName,
-          "expiryDate" -> DateHelper.formatDate(expiryDate.toLocalDate)
+      val expectedEmail =
+        SendEmailRequest(
+          List(johnDoeEmail),
+          "pods_psa_invited",
+          Map(
+            "inviteeName" -> johnDoe.individualDetails.value.fullName,
+            "schemeName" -> testSchemeName,
+            "expiryDate" -> DateHelper.formatDate(expiryDate.toLocalDate)
+          ),
+          false,
+          Some(fixture.config.invitationCallbackUrl.format(JourneyType.INVITE, encryptedPsaId))
         )
-      )
 
-    val fixture = testFixture()
-
-    fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, johnDoe.individualDetails.value.name)).map {
-      _ =>
-        fixture.emailConnector.sentEmails should containEmail(expectedEmail)
+      fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, johnDoe.individualDetails.value.name)).map {
+        _ =>
+          fixture.emailConnector.sentEmails should containEmail(expectedEmail)
+      }
     }
-
   }
 
 }
 
 object InvitationServiceImplSpec extends MockitoSugar {
 
-  val config: AppConfig = {
-    new GuiceApplicationBuilder().build().injector.instanceOf[AppConfig]
-  }
-
   trait TestFixture {
 
+    def runningApp: Application = new GuiceApplicationBuilder().build()
+
+    val injector = runningApp.injector
+
+    val config: AppConfig = injector.instanceOf[AppConfig]
     val associationConnector: FakeAssociationConnector = new FakeAssociationConnector()
     val repository: InvitationsCacheRepository = mock[InvitationsCacheRepository]
     val fakeSchemeConnector: SchemeConnector = new FakeSchemeConnector()
-
+    val crypto: ApplicationCrypto = injector.instanceOf[ApplicationCrypto]
     val emailConnector: FakeEmailConnector = new FakeEmailConnector()
 
     val invitationService: InvitationServiceImpl =
@@ -253,22 +263,26 @@ object InvitationServiceImplSpec extends MockitoSugar {
         config,
         repository,
         fakeAuditService,
-        fakeSchemeConnector
+        fakeSchemeConnector,
+        crypto
       )
 
     when(repository.insert(any())(any()))
       .thenReturn(Future.successful(true))
   }
 
-  def testFixture(): TestFixture = new TestFixture() {}
+  def testFixture(app: Application): TestFixture = new TestFixture() {
+    override def runningApp: Application = app
+  }
 
   val testSchemeName = "test-scheme"
+  val inviterPsaId = PsaId("A7654321")
 
   def invitation(inviteePsaId: PsaId, inviteeName: String): Invitation =
-    Invitation(testSrn, "test-pstr", testSchemeName, PsaId("A7654321"), inviteePsaId, inviteeName, expiryDate)
+    Invitation(testSrn, "test-pstr", testSchemeName, inviterPsaId, inviteePsaId, inviteeName, expiryDate)
 
   def invitationJson(inviteePsaId: PsaId, inviteeName: String): JsValue =
-    Json.toJson(Invitation(testSrn, "test-pstr", testSchemeName, PsaId("A7654321"), inviteePsaId, inviteeName, expiryDate))
+    Json.toJson(Invitation(testSrn, "test-pstr", testSchemeName, inviterPsaId, inviteePsaId, inviteeName, expiryDate))
 
   val testSrn = SchemeReferenceNumber("S0987654321")
 

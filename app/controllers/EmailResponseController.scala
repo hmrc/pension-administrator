@@ -25,6 +25,7 @@ import play.api.mvc.{Action, BodyParsers, Result}
 import uk.gov.hmrc.crypto.{ApplicationCrypto, Crypted}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import models.enumeration.JourneyType
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -33,7 +34,7 @@ class EmailResponseController @Inject()(
                                          crypto: ApplicationCrypto
                                        ) extends BaseController {
 
-  def retrieveStatus(id: String): Action[JsValue] = Action(BodyParsers.parse.tolerantJson) {
+  def retrieveStatus(journeyType: JourneyType.Name, id: String): Action[JsValue] = Action(BodyParsers.parse.tolerantJson) {
     implicit request =>
       validatePsaId(id) match {
         case Right(psaId) =>
@@ -43,8 +44,8 @@ class EmailResponseController @Inject()(
               valid.events.filterNot(
                 _.event == Opened
               ).foreach { event =>
-                Logger.debug(s"Email Audit event is $event")
-                auditService.sendEvent(EmailAuditEvent(psaId, event.event))
+                Logger.debug(s"Email Audit event coming from $journeyType is $event")
+                auditService.sendEvent(EmailAuditEvent(psaId, event.event, journeyType))
               }
               Ok
             }

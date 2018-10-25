@@ -29,6 +29,7 @@ class AppConfig @Inject()(override val runModeConfiguration: Configuration, envi
   lazy val baseURL: String = baseUrl("des-hod")
   lazy val baseUrlEmail: String = baseUrl("email")
   lazy val baseUrlPensionsScheme: String = baseUrl("pensions-scheme")
+  lazy val baseUrlPensionAdministrator: String = baseUrl("pension-administrator")
 
   lazy val schemeAdminRegistrationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.scheme.administrator.register")}"
   lazy val registerWithoutIdOrganisationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.register.without.id.organisation")}"
@@ -45,5 +46,6 @@ class AppConfig @Inject()(override val runModeConfiguration: Configuration, envi
   lazy val checkAssociationUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.checkPsaAssociation")}"
 
   lazy val invitationExpiryDays: Int = runModeConfiguration.underlying.getInt("invitationExpiryDays")
+  lazy val invitationCallbackUrl: String = s"$baseUrlPensionAdministrator${runModeConfiguration.underlying.getString("serviceUrls.invitation.callback")}"
 
 }

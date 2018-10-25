@@ -17,7 +17,7 @@ POST        /journey-cache/manage-pensions/:id          controllers.ManagePensio
 DELETE      /journey-cache/manage-pensions/:id          controllers.ManagePensionsCacheController.remove(id: String)
 
 
-POST        /email-response/*id                         controllers.EmailResponseController.retrieveStatus(id: String)
+POST        /email-response/:journeyType/*id            controllers.EmailResponseController.retrieveStatus(journeyType: JourneyType.Name, id: String)
 POST        /invite                                     controllers.InvitationController.invite
 
 GET         /invitation/get-for-scheme                  controllers.InvitationsCacheController.getForScheme
