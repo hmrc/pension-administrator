@@ -16,11 +16,11 @@
 
 package connectors
 
-import audit.{AuditService, InvitationAcceptanceAuditEvent}
 import audit.testdoubles.StubSuccessfulAuditService
+import audit.{AuditService, InvitationAcceptanceAuditEvent}
 import com.github.tomakehurst.wiremock.client.WireMock._
-import connectors.helper.ConnectorBehaviours
 import config.AppConfig
+import connectors.helper.ConnectorBehaviours
 import models._
 import org.scalatest._
 import org.slf4j.event.Level
@@ -31,6 +31,7 @@ import play.api.libs.json.Json
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import utils.{StubLogger, WireMockHelper}
 
@@ -206,7 +207,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
-      pensionAdvisorDetail = Some(pensionAdvisorDetailUK))
+      pensionAdviserDetails = Some(pensionAdviserDetailUK))
 
     connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
   }
@@ -224,7 +225,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
-      pensionAdvisorDetail = Some(pensionAdvisorDetailUK))
+      pensionAdviserDetails = Some(pensionAdviserDetailUK))
 
     connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
   }
@@ -242,7 +243,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
-      pensionAdvisorDetail = Some(pensionAdvisorDetailUK))
+      pensionAdviserDetails = Some(pensionAdviserDetailUK))
 
     connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
 
@@ -263,7 +264,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
-      pensionAdvisorDetail = Some(pensionAdvisorDetailInternational))
+      pensionAdviserDetails = Some(pensionAdviserDetailInternational))
 
     connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
   }
@@ -281,7 +282,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
-      pensionAdvisorDetail = None)
+      pensionAdviserDetails = None)
 
     connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
   }
@@ -289,7 +290,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   it should "return ConflictException for a 403 active relationship exists response" in {
     stubServer("""{ "code":"ACTIVE_RELATIONSHIP_EXISTS"}""", FORBIDDEN)
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
-      pensionAdvisorDetail = None)
+      pensionAdviserDetails = None)
 
     connector.acceptInvitation(acceptedInvitation).collect {
       case Left(_: ConflictException) => succeed
@@ -307,7 +308,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
-      pensionAdvisorDetail = None)
+      pensionAdviserDetails = None)
 
     connector.acceptInvitation(acceptedInvitation).collect {
       case Left(_: NotFoundException) => succeed
@@ -324,7 +325,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
-      pensionAdvisorDetail = None)
+      pensionAdviserDetails = None)
 
     connector.acceptInvitation(acceptedInvitation).collect {
       case Left(_: NotFoundException) => succeed
@@ -341,7 +342,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
-      pensionAdvisorDetail = None)
+      pensionAdviserDetails = None)
 
     connector.acceptInvitation(acceptedInvitation).collect {
       case Left(_: NotFoundException) => succeed
@@ -355,7 +356,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   it should "return bad request exception for a 404 invalid payload response" in {
     stubServer("""{ "code":"INVALID_PAYLOAD"}""", BAD_REQUEST)
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
-      pensionAdvisorDetail = None)
+      pensionAdviserDetails = None)
 
     connector.acceptInvitation(acceptedInvitation).collect {
       case Left(_: BadRequestException) => succeed
@@ -365,7 +366,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   it should "log validation failures for a 404 invalid payload response" in {
     stubServer("""{ "code":"INVALID_PAYLOAD"}""", BAD_REQUEST)
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
-      pensionAdvisorDetail = None)
+      pensionAdviserDetails = None)
 
     logger.reset()
     connector.acceptInvitation(acceptedInvitation).map { _ =>
@@ -377,7 +378,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   it should "return BadRequestException for 403 INVALID_INVITER_PSAID responses" in {
     stubServer("""{ "code":"INVALID_INVITER_PSAID"}""", FORBIDDEN)
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
-      pensionAdvisorDetail = None)
+      pensionAdviserDetails = None)
 
     connector.acceptInvitation(acceptedInvitation).collect {
       case Left(e: BadRequestException) if e.message.contains("INVALID_INVITER_PSAID") => succeed
@@ -387,7 +388,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   it should "return BadRequestException for 403 INVALID_INVITEE_PSAID responses" in {
     stubServer("""{ "code":"INVALID_INVITEE_PSAID"}""", FORBIDDEN)
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
-      pensionAdvisorDetail = None)
+      pensionAdviserDetails = None)
 
     connector.acceptInvitation(acceptedInvitation).collect {
       case Left(e: BadRequestException) if e.message.contains("INVALID_INVITEE_PSAID") => succeed
@@ -397,8 +398,9 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
 object AssociationConnectorSpec extends OptionValues {
 
-  private val psaIdInvitee = "A2123456"
-  private val psaId = "A2123456"
+  private val psaIdInvitee = PsaId("A2123456")
+  private val psaId = PsaId("A2123456")
+  private val email = "aaa@aaa.com"
   private val ukAddress = UkAddress(
     addressLine1 = "address line 1",
     addressLine2 = Some("address line 2"),
@@ -412,10 +414,9 @@ object AssociationConnectorSpec extends OptionValues {
     addressLine4 = Some("address line 4"), countryCode = "FR", postalCode = Some("ZZ11ZZ")
   )
   private val pensionAdvisorName = "pension advisor 1"
-  private val contactDetails = ContactDetails(telephone = "9999999", mobileNumber = None, fax = None, email = "aaa@aaa.com")
-  private val pensionAdvisorDetailUK = PensionAdvisorDetail(name = pensionAdvisorName, addressDetail = ukAddress, contactDetail = contactDetails)
-  private val pensionAdvisorDetailInternational = PensionAdvisorDetail(
-    name = pensionAdvisorName, addressDetail = internationalAddress, contactDetail = contactDetails)
+  private val pensionAdviserDetailUK = PensionAdviserDetails(name = pensionAdvisorName, addressDetail = ukAddress, email = email)
+  private val pensionAdviserDetailInternational = PensionAdviserDetails(
+    name = pensionAdvisorName, addressDetail = internationalAddress, email = email)
   private val pstr = "scheme"
 
   private val psaAssociationDetailsjsonUKAddress =
@@ -443,8 +444,7 @@ object AssociationConnectorSpec extends OptionValues {
        |               "countryCode":"${ukAddress.countryCode}"
        |            },
        |            "contactDetails":{
-       |               "telephone":"${contactDetails.telephone}",
-       |               "email":"${contactDetails.email}"
+       |               "email":"${email}"
        |            }
        |         }
        |      }
@@ -476,8 +476,7 @@ object AssociationConnectorSpec extends OptionValues {
        |               "countryCode":"${internationalAddress.countryCode}"
        |            },
        |            "contactDetails":{
-       |               "telephone":"${contactDetails.telephone}",
-       |               "email":"${contactDetails.email}"
+       |               "email":"${email}"
        |            }
        |         }
        |      }

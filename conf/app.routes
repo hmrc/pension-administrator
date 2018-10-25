@@ -1,11 +1,14 @@
 # microservice specific routes
 
-POST        /register-with-no-id/organisation           @controllers.RegistrationController.registrationNoIdOrganisation
+POST        /register-with-no-id/organisation           controllers.RegistrationController.registrationNoIdOrganisation
 POST        /register-with-id/individual                controllers.RegistrationController.registerWithIdIndividual
 POST        /register-with-id/organisation              controllers.RegistrationController.registerWithIdOrganisation
 
+GET         /psa-subscription-details                   controllers.SchemeController.getPsaDetails
 POST        /register-psa                               controllers.SchemeController.registerPSA
 
+GET         /get-name                                   controllers.AssociationController.getName
+GET         /get-email                                  controllers.AssociationController.getEmail
 GET         /get-minimal-psa                            controllers.AssociationController.getMinimalDetails
 POST        /accept-invitation                          controllers.AssociationController.acceptInvitation
 

@@ -51,6 +51,7 @@ class EmailConnectorImpl @Inject()(
     http.POST(appConfig.emailUrl, email).map { response =>
       response.status match {
         case ACCEPTED =>
+          Logger.debug("Email sent successfully")
           EmailSent
         case status =>
           Logger.warn(s"Email API returned non-expected response:$status")

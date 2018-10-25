@@ -24,9 +24,11 @@ import uk.gov.hmrc.play.config.ServicesConfig
 class AppConfig @Inject()(override val runModeConfiguration: Configuration, environment: Environment) extends ServicesConfig {
   override protected def mode: Mode = environment.mode
 
+  lazy val appName: String = runModeConfiguration.underlying.getString("appName")
+
   lazy val baseURL: String = baseUrl("des-hod")
   lazy val baseUrlEmail: String = baseUrl("email")
-  lazy val appName: String = runModeConfiguration.underlying.getString("appName")
+  lazy val baseUrlPensionsScheme: String = baseUrl("pensions-scheme")
 
   lazy val schemeAdminRegistrationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.scheme.administrator.register")}"
   lazy val registerWithoutIdOrganisationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.register.without.id.organisation")}"
@@ -34,10 +36,14 @@ class AppConfig @Inject()(override val runModeConfiguration: Configuration, envi
   lazy val registerWithIdOrganisationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.register.with.id.organisation")}"
   lazy val psaMinimalDetailsUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.psa.minimal.details")}"
   lazy val psaSubscriptionDetailsUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.psa.subscription.details")}"
+
   lazy val createPsaAssociationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.createPsaAssociation")}"
   lazy val desEnvironment: String = runModeConfiguration.getString("microservice.services.des-hod.env").getOrElse("local")
   lazy val authorization: String = "Bearer " + runModeConfiguration.getString("microservice.services.des-hod.authorizationToken").getOrElse("local")
+
   lazy val emailUrl: String = s"$baseUrlEmail${runModeConfiguration.underlying.getString("serviceUrls.email")}"
+  lazy val checkAssociationUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.checkPsaAssociation")}"
+
   lazy val invitationExpiryDays: Int = runModeConfiguration.underlying.getInt("invitationExpiryDays")
 
 }

@@ -18,7 +18,7 @@ package repositories
 
 import java.nio.charset.StandardCharsets
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import models.Invitation
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json._
@@ -32,9 +32,9 @@ import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
-import utils.DateUtils
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
 class InvitationsCacheRepository @Inject()(
@@ -51,8 +51,6 @@ class InvitationsCacheRepository @Inject()(
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
 
-  private def getExpireAt = DateUtils.dateTimeFromDateToMidnightOnDay(DateTime.now(DateTimeZone.UTC), 30)
-
   private case class DataEntry(
                                 inviteePsaId: String,
                                 pstr: String,
@@ -64,13 +62,14 @@ class InvitationsCacheRepository @Inject()(
     def apply(inviteePsaId: String,
               pstr: String,
               data: Array[Byte],
-              lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)): DataEntry = {
+              lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
+              expireAt: DateTime): DataEntry = {
 
       DataEntry(inviteePsaId, pstr, BSONBinary(
         data,
         GenericBinarySubtype),
         lastUpdated,
-        getExpireAt
+        expireAt
       )
 
     }
@@ -93,11 +92,12 @@ class InvitationsCacheRepository @Inject()(
     def applyJsonDataEntry(inviteePsaId: String,
                            pstr: String,
                            data: JsValue,
-                           lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)): JsonDataEntry = {
+                           lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
+                           expireAt: DateTime): JsonDataEntry = {
 
       JsonDataEntry(inviteePsaId, pstr, data,
         lastUpdated,
-        getExpireAt)
+        expireAt)
     }
 
     implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
@@ -106,27 +106,32 @@ class InvitationsCacheRepository @Inject()(
   }
 
   private val expireAt = "expireAt"
-  private val createdIndexName = "dataExpiry"
+  private val dataExpiry = "dataExpiry"
   private val expireAfterSeconds = "expireAfterSeconds"
   private val inviteePsaIdKey = "inviteePsaId"
   private val pstrKey = "pstr"
-  private val compoundIndexName = "inviteePsaId_Pstr"
+  private val uniqueInvitation = "inviteePsaId_Pstr"
   private val pstrIndexName = "pstr"
 
-  ensureIndex(fields = Seq(expireAt), indexName = createdIndexName, ttl = Some(ttl))
-
-  ensureIndex(fields = Seq(inviteePsaIdKey, pstrKey), indexName = compoundIndexName, isUnique = true)
-
-  ensureIndex(fields = Seq(pstrKey), indexName = pstrIndexName)
+  (for {
+    _ <- CollectionDiagnostics.checkIndexTtl(collection, dataExpiry, Some(ttl))
+    _ <- ensureIndex(fields = Seq(expireAt), indexName = dataExpiry, ttl = Some(ttl))
+    _ <- ensureIndex(fields = Seq(inviteePsaIdKey, pstrKey), indexName = uniqueInvitation, isUnique = true)
+    _ <- ensureIndex(fields = Seq(pstrKey), indexName = pstrIndexName)
+  } yield {
+    ()
+  }) recoverWith {
+    case t: Throwable => Future.successful(Logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
+  } andThen {
+    case _ => CollectionDiagnostics.logCollectionInfo(collection)
+  }
 
   private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None, isUnique:Boolean = false): Future[Boolean] = {
-
-    import scala.concurrent.ExecutionContext.Implicits.global
 
     val fieldIndexes = fields.map((_, IndexType.Ascending))
 
     val index = {
-      val defaultIndex = Index(fieldIndexes, Some(indexName), unique = isUnique)
+      val defaultIndex = Index(fieldIndexes, Some(indexName), background = true, unique = isUnique)
       ttl.map(ttl => defaultIndex.copy(options = BSONDocument(expireAfterSeconds -> ttl))).fold(defaultIndex)(identity)
     }
 
@@ -136,8 +141,8 @@ class InvitationsCacheRepository @Inject()(
     }
 
     collection.indexesManager.ensure(index) map{ result =>
-        Logger.debug( indexCreationDescription + s" was successful and result is: $result")
-        result
+      Logger.debug( indexCreationDescription + s" was successful and result is: $result")
+      result
     } recover {
       case e => Logger.error(indexCreationDescription + s" was unsuccessful", e)
         false
@@ -147,7 +152,7 @@ class InvitationsCacheRepository @Inject()(
   def insert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
 
     val (selector, modifier) = if (encrypted) {
-      val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId)).value
+      val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId.value)).value
       val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
 
       val unencrypted = PlainText(Json.stringify(Json.toJson(invitation)))
@@ -155,10 +160,12 @@ class InvitationsCacheRepository @Inject()(
       val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
 
       (BSONDocument(inviteePsaIdKey -> encryptedInviteePsaId, pstrKey -> encryptedPstr),
-        BSONDocument("$set" -> Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray))))
+        BSONDocument("$set" -> Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray, expireAt = invitation.expireAt))))
     } else {
-      val record = JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId, invitation.pstr, Json.toJson(invitation))
-      (BSONDocument(inviteePsaIdKey -> invitation.inviteePsaId, pstrKey -> invitation.pstr),
+      val record = JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId.value,
+                                                    invitation.pstr,
+                                                    Json.toJson(invitation), expireAt = invitation.expireAt)
+      (BSONDocument(inviteePsaIdKey -> invitation.inviteePsaId.value, pstrKey -> invitation.pstr),
         BSONDocument("$set" -> Json.toJson(record)))
     }
     collection.update(selector, modifier, upsert = true)

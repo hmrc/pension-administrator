@@ -1,6 +1,6 @@
 {
   "psaSubscriptionDetails": {
-    "isPSASuspension": true,
+    "isPSASuspension": false,
     "customerIdentificationDetails": {
       "legalStatus": "Individual",
       "idType": "NINO",

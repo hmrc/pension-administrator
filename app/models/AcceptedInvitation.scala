@@ -16,17 +16,24 @@
 
 package models
 
-import play.api.libs.json.{Json, Reads}
+import play.api.libs.json.{Format, Json}
+import uk.gov.hmrc.domain.PsaId
+
+case class PensionAdviserDetails(name: String, addressDetail: Address, email: String)
+
+object PensionAdviserDetails {
+  implicit val formats: Format[PensionAdviserDetails] = Json.format[PensionAdviserDetails]
+}
 
 case class AcceptedInvitation(
-  pstr: String,
-  inviteePsaId: String,
-  inviterPsaId: String,
-  declaration: Boolean,
-  declarationDuties: Boolean,
-  pensionAdvisorDetail: Option[PensionAdvisorDetail]
-)
+                               pstr: String,
+                               inviteePsaId: PsaId,
+                               inviterPsaId: PsaId,
+                               declaration: Boolean,
+                               declarationDuties: Boolean,
+                               pensionAdviserDetails: Option[PensionAdviserDetails]
+                             )
 
 object AcceptedInvitation {
-  implicit val rds : Reads[AcceptedInvitation] = Json.reads[AcceptedInvitation]
+  implicit val formats: Format[AcceptedInvitation] = Json.format[AcceptedInvitation]
 }

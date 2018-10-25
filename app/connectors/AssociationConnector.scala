@@ -25,6 +25,7 @@ import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.{Logger, LoggerLike}
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
@@ -34,7 +35,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
 
-  def getPSAMinimalDetails(psaId: String)(implicit
+  def getPSAMinimalDetails(psaId: PsaId)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]]
 
@@ -53,7 +54,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   import AssociationConnectorImpl._
 
-  def getPSAMinimalDetails(psaId: String)(implicit
+  def getPSAMinimalDetails(psaId: PsaId)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = {
 
@@ -159,14 +160,13 @@ object AssociationConnectorImpl {
 
   val writesAcceptedInvitation: Writes[AcceptedInvitation] = Writes {
     { invite =>
-      val pensionAdviserDetails = invite.pensionAdvisorDetail match {
-        case Some(advisor) => Json.obj(
+      val pensionAdviserDetails = invite.pensionAdviserDetails match {
+        case Some(adviser) => Json.obj(
           "pensionAdviserDetails" -> Json.obj(
-            "name" -> advisor.name,
-            "addressDetails" -> addressWrites.writes(advisor.addressDetail),
+            "name" -> adviser.name,
+            "addressDetails" -> addressWrites.writes(adviser.addressDetail),
             "contactDetails" -> Json.obj(
-              "telephone" -> advisor.contactDetail.telephone,
-              "email" -> advisor.contactDetail.email
+              "email" -> adviser.email
             )
           )
         )

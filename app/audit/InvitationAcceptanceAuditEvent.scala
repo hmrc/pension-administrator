@@ -29,8 +29,8 @@ case class InvitationAcceptanceAuditEvent(acceptedInvitation: AcceptedInvitation
   override def details: Map[String, String] =
     Map(
       "pstr" -> acceptedInvitation.pstr,
-      "inviteePsaId" -> acceptedInvitation.inviteePsaId,
-      "inviterPsaId" -> acceptedInvitation.inviterPsaId,
+      "inviteePsaId" -> acceptedInvitation.inviteePsaId.id,
+      "inviterPsaId" -> acceptedInvitation.inviterPsaId.id,
       "declaration" -> acceptedInvitation.declaration.toString,
       "declarationDuties" -> acceptedInvitation.declarationDuties.toString,
       "response" -> {

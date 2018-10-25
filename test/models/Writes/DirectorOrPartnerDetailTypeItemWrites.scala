@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package models.Reads.Writes
+package models.Writes
 
-import models.{PreviousAddressDetails, Samples}
-import models.DirectorOrPartnerDetailTypeItem
+import models.{DirectorOrPartnerDetailTypeItem, PreviousAddressDetails, Samples}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.Json
 

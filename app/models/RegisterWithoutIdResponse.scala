@@ -16,19 +16,11 @@
 
 package models
 
-import org.joda.time.DateTime
-import play.api.libs.json.{Format, Json, Writes}
-import uk.gov.hmrc.domain.PsaId
+import play.api.libs.json.Json
 
-case class Invitation(srn: SchemeReferenceNumber,
-                      pstr: String,
-                      schemeName: String,
-                      inviterPsaId: PsaId,
-                      inviteePsaId: PsaId,
-                      inviteeName: String,
-                      expireAt: DateTime
-                     )
+case class RegisterWithoutIdResponse(safeId: String,
+                           sapNumber: String)
 
-object Invitation {
-  implicit val formats: Format[Invitation] = Json.format[Invitation]
+object RegisterWithoutIdResponse {
+  implicit val formats = Json.format[RegisterWithoutIdResponse]
 }

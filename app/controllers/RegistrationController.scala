@@ -18,9 +18,9 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.RegistrationConnector
-import models.{Organisation, OrganisationRegistrant, SuccessResponse}
+import models.{Organisation, OrganisationRegistrant, RegisterWithoutIdResponse, SuccessResponse}
 import play.api.Logger
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.{JsObject, JsResultException, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, Result}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve._
@@ -46,12 +46,20 @@ class RegistrationController @Inject()(
     }
   }
 
+  private def retrieveIndividual(fn: (String, models.User) => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
+    authorised(ConfidenceLevel.L200 and AffinityGroup.Individual).retrieve(Retrievals.nino and Retrievals.externalId and Retrievals.affinityGroup) {
+      case Some(nino) ~ Some(externalId) ~ Some(affinityGroup) =>
+        fn(nino, models.User(externalId, affinityGroup))
+      case _ =>
+        Future.failed(Upstream4xxResponse("Nino not found in auth record", UNAUTHORIZED, UNAUTHORIZED))
+    }
+
   def registerWithIdOrganisation: Action[AnyContent] = Action.async {
     implicit request => {
       retrieveOrganisation { user =>
         request.body.asJson match {
           case Some(jsBody) =>
-            Try((jsBody \ "utr").convertTo[String], jsBody.convertTo[Organisation]) match {
+            Try(((jsBody \ "utr").convertTo[String], jsBody.convertTo[Organisation])) match {
               case Success((utr, org)) =>
                 val registerWithIdData = mandatoryPODSData(true).as[JsObject] ++ Json.obj("organisation" -> Json.toJson(org))
 
@@ -68,40 +76,37 @@ class RegistrationController @Inject()(
     } recoverWith recoverFromError
   }
 
-  def registrationNoIdOrganisation: Action[OrganisationRegistrant] = Action.async(parse.json[OrganisationRegistrant]) {
-    implicit request => {
-      retrieveOrganisation { user =>
-        registerConnector.registrationNoIdOrganisation(user, request.body) map {
-          case Right(json) => Ok(json)
-          case Left(e) => result(e)
-        }
-      }
-    } recoverWith recoverFromError
-  }
-
   private def handleResponse: PartialFunction[Either[HttpException, JsValue], Result] = {
     case Right(json) => Ok(Json.toJson[SuccessResponse](json.as[SuccessResponse]))
     case Left(e: HttpException) => result(e)
   }
 
-  private def retrieveOrganisation(fn: models.User => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
+  private def mandatoryPODSData(requiresNameMatch: Boolean = false): JsValue = {
+    Json.obj("regime" -> "PODA", "requiresNameMatch" -> requiresNameMatch, "isAnAgent" -> false)
+  }
+
+  def registrationNoIdOrganisation: Action[OrganisationRegistrant] = Action.async(parse.json[OrganisationRegistrant]) {
+    implicit request => {
+      retrieveOrganisation { user =>
+        registerConnector.registrationNoIdOrganisation(user, request.body) map {
+          case Right(jsValue) => {
+            jsValue.validate[RegisterWithoutIdResponse].fold(
+              errors => throw new JsResultException(errors),
+              value => Ok(Json.toJson(value))
+            )
+          }
+          case Left(e) => result(e)
+        }
+      }
+    }
+  }
+
+  private def retrieveOrganisation(fn: models.User => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
     authorised().retrieve(Retrievals.externalId and Retrievals.affinityGroup) {
       case Some(externalId) ~ Some(affinityGroup) =>
         fn(models.User(externalId, affinityGroup))
       case _ =>
         Future.failed(Upstream4xxResponse("Not authorized", UNAUTHORIZED, UNAUTHORIZED))
     }
-
-  private def retrieveIndividual(fn: (String, models.User) => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
-    authorised(ConfidenceLevel.L200 and AffinityGroup.Individual).retrieve(Retrievals.nino and Retrievals.externalId and Retrievals.affinityGroup) {
-      case Some(nino) ~ Some(externalId) ~ Some(affinityGroup) =>
-        fn(nino, models.User(externalId, affinityGroup))
-      case _ =>
-        Future.failed(Upstream4xxResponse("Nino not found in auth record", UNAUTHORIZED, UNAUTHORIZED))
-    }
-
-  private def mandatoryPODSData(requiresNameMatch: Boolean = false): JsValue = {
-    Json.obj("regime" -> "PODA", "requiresNameMatch" -> requiresNameMatch, "isAnAgent" -> false)
   }
-
 }

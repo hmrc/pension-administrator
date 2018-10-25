@@ -16,23 +16,22 @@
 
 package service
 
+import audit.{AuditService, InvitationAuditEvent}
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
-import connectors.{AssociationConnector, EmailConnector, EmailSent}
-import models.{IndividualDetails, Invitation, PSAMinimalDetails, SendEmailRequest}
+import connectors._
+import models._
 import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException}
-import utils.{DateHelper, FuzzyNameMatcher}
 import repositories.InvitationsCacheRepository
+import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
-import utils.FuzzyNameMatcher
+import utils.{DateHelper, FuzzyNameMatcher}
 
 import scala.annotation.tailrec
-import scala.concurrent
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,7 +49,9 @@ class InvitationServiceImpl @Inject()(
                                        associationConnector: AssociationConnector,
                                        emailConnector: EmailConnector,
                                        config: AppConfig,
-                                       repository: InvitationsCacheRepository
+                                       repository: InvitationsCacheRepository,
+                                       auditService: AuditService,
+                                       schemeConnector: SchemeConnector
                                      ) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
@@ -63,24 +64,30 @@ class InvitationServiceImpl @Inject()(
       },
       {
         invitation =>
-          associationConnector.getPSAMinimalDetails(invitation.inviteePsaId).flatMap {
-            case Right(psaDetails) =>
-              if (doNamesMatch(invitation.inviteeName, psaDetails)) {
-                insertInvitation(invitation).flatMap {
-                  case Right(_) =>
-                    sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
-                  case Left(error) =>
-                    Future.successful(Left(error))
+          handle(associationConnector.getPSAMinimalDetails(invitation.inviteePsaId)){ psaDetails =>
+            handle(isAssociated(invitation.inviteePsaId, SchemeReferenceNumber(invitation.srn))){
+              case false if doNamesMatch(invitation.inviteeName, psaDetails) =>
+                handle(insertInvitation(invitation)){ _ =>
+                  auditService.sendEvent(InvitationAuditEvent(invitation))
+                  sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
                 }
-              }
-              else {
-                Future.successful(Left(new NotFoundException("NOT_FOUND")))
-              }
-            case Left(ex) => Future.successful(Left(ex))
+              case true => Future.successful(Left(new ForbiddenException("The invitation is to a PSA already associated with this scheme")))
+              case _ => Future.successful(Left(new NotFoundException("The name and PSA Id do not match")))
+            }
           }
       }
     )
   }
+
+  private def isAssociated(psaId: PsaId, srn: SchemeReferenceNumber)
+                          (implicit hc: HeaderCarrier, requestHeader: RequestHeader): Future[Either[HttpException, Boolean]] =
+    schemeConnector.checkForAssociation(psaId, srn) map {
+      case Right(json) => json.validate[Boolean].fold(
+        _ => Left(new InternalServerException("Response from pension-scheme cannot be parsed to boolean")),
+        Right(_)
+      )
+      case Left(ex) => Left(ex)
+    }
 
   private def doNamesMatch(inviteeName: String, psaDetails: PSAMinimalDetails): Boolean = {
 
@@ -96,15 +103,14 @@ class InvitationServiceImpl @Inject()(
     matches
   }
 
-  private def insertInvitation(invitation: Invitation): Future[Either[HttpException, Unit]] = {
+
+  private def insertInvitation(invitation: Invitation): Future[Either[HttpException, Unit]] =
     repository.insert(invitation).map(_ => Right(())) recover {
       case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
     }
-  }
 
-  private def doOrganisationNamesMatch(inviteeName: String, organisationName: String): Boolean = {
+  private def doOrganisationNamesMatch(inviteeName: String, organisationName: String): Boolean =
     FuzzyNameMatcher.matches(inviteeName, organisationName)
-  }
 
   @tailrec
   private def doIndividualNamesMatch(inviteeName: String, individualDetails: IndividualDetails, matchFullName: Boolean): Boolean = {
@@ -175,7 +181,7 @@ class InvitationServiceImpl @Inject()(
                               (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
 
     val name = psaDetails.individualDetails.map(_.fullName).getOrElse(psaDetails.organisationName.getOrElse(""))
-    val expiryDate = DateHelper.formatDate(LocalDate.now().plusDays(config.invitationExpiryDays))
+    val expiryDate = DateHelper.formatDate(invitation.expireAt.toLocalDate)
 
     val email = SendEmailRequest(
       List(psaDetails.email),
@@ -194,6 +200,16 @@ class InvitationServiceImpl @Inject()(
         ()
     }
 
+  }
+
+  private def handle[T](request: Future[Either[HttpException, T]])
+                       (f: T => Future[Either[HttpException, Unit]]): Future[Either[HttpException, Unit]] = {
+    request flatMap {
+      case Right(n) =>
+        f(n)
+      case Left(error) =>
+        Future.successful(Left(error))
+    }
   }
 
 }

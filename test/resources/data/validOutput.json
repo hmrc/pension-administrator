@@ -15,6 +15,9 @@
     "addressType": "NON-UK"
   },
   "contactDetails": {
-    "phoneNumber": "01332752856"
+    "phoneNumber":null,
+    "mobileNumber":null,
+    "faxNumber":null,
+    "emailAddress":null
   }
 }

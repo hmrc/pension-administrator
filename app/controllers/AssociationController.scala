@@ -18,24 +18,28 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.AssociationConnector
-import models.AcceptedInvitation
+import models.{AcceptedInvitation, PSAMinimalDetails}
+import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
-import uk.gov.hmrc.http.BadRequestException
+import uk.gov.hmrc.domain.PsaId
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import utils.ErrorHandler
+import utils.{AuthRetrievals, ErrorHandler}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class AssociationController @Inject()(
-                                       associationConnector: AssociationConnector
+                                       associationConnector: AssociationConnector,
+                                       retrievals: AuthRetrievals
                                      ) extends BaseController with ErrorHandler {
   def getMinimalDetails: Action[AnyContent] = Action.async {
     implicit request =>
       val psaId = request.headers.get("psaId")
       psaId match {
         case Some(id) =>
-          associationConnector.getPSAMinimalDetails(id).map {
+          getPSAMinimalDetails(id).map {
             case Right(psaDetails) => Ok(Json.toJson(psaDetails))
             case Left(e) => result(e)
           }
@@ -47,6 +51,7 @@ class AssociationController @Inject()(
   def acceptInvitation: Action[AnyContent] = Action.async {
     implicit request =>
       val feJson = request.body.asJson
+      Logger.debug(s"[Accept-Invitation-Incoming-Payload]$feJson")
 
       feJson match {
         case Some(acceptedInvitationJsValue) =>
@@ -66,4 +71,48 @@ class AssociationController @Inject()(
 
       }
   }
+
+  def getEmail: Action[AnyContent] = Action.async {
+    implicit request =>
+      retrievals.getPsaId flatMap {
+        case Some(psaId) => getPSAMinimalDetails(psaId.id) map {
+          case Right(psaDetails) => Ok(psaDetails.email)
+          case Left(e) => result(e)
+        }
+        case _ => Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
+      }
+  }
+
+  def getName: Action[AnyContent] = Action.async {
+    implicit request =>
+
+      for {
+        maybePsaId <- retrievals.getPsaId
+        maybePsaDetails <- getPSAMinimalDetails(maybePsaId)
+      } yield {
+        maybePsaDetails match {
+          case Right(psaDetails) =>
+            psaDetails
+              .name
+              .map(n => Ok(n))
+              .getOrElse(throw new NotFoundException("PSA minimal details contains neither individual or organisation name"))
+          case Left(e) => result(e)
+        }
+      }
+
+  }
+
+  private def getPSAMinimalDetails(id: String)(implicit hc: HeaderCarrier): Future[Either[HttpException, PSAMinimalDetails]] = {
+    associationConnector.getPSAMinimalDetails(PsaId(id))
+  }
+
+  private def getPSAMinimalDetails(psaId: Option[PsaId])(implicit hc: HeaderCarrier): Future[Either[HttpException, PSAMinimalDetails]] = {
+    psaId map {
+      id =>
+        associationConnector.getPSAMinimalDetails(id)
+    } getOrElse {
+      Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
+    }
+  }
+
 }
