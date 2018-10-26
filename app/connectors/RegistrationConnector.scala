@@ -20,11 +20,10 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest, RegistrationNoIdIndividualResponse}
+import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
 import models.User
 import play.Logger
 import play.api.http.Status._
-import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
@@ -51,7 +50,7 @@ trait RegistrationConnector {
     request: RequestHeader): Future[Either[HttpException, JsValue]]
 
   def registrationNoIdIndividual(registrationRequest: RegistrationNoIdIndividualRequest)
-    (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegistrationNoIdIndividualResponse]]
+    (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]]
 
 }
 
@@ -134,7 +133,7 @@ class RegistrationConnectorImpl @Inject()(
   }
 
   def registrationNoIdIndividual(registrationRequest: RegistrationNoIdIndividualRequest)
-    (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegistrationNoIdIndividualResponse]] = ???
+    (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = ???
 
 }
 
@@ -184,10 +183,5 @@ object RegistrationConnectorImpl {
     }
 
   }
-
-  val readsRegistrationNoIdIndividualResponse: Reads[RegistrationNoIdIndividualResponse] = (
-    (__ \ "sapNumber").read[String] and
-      (__ \ "safeId").read[String]
-    )((sapNumber, safeId) => RegistrationNoIdIndividualResponse(sapNumber, safeId))
 
 }

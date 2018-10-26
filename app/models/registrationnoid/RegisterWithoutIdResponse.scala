@@ -16,11 +16,11 @@
 
 package models.registrationnoid
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class RegisterWithoutIdResponse(safeId: String,
                            sapNumber: String)
 
 object RegisterWithoutIdResponse {
-  implicit val formats = Json.format[RegisterWithoutIdResponse]
+  implicit val formats: OFormat[RegisterWithoutIdResponse] = Json.format[RegisterWithoutIdResponse]
 }

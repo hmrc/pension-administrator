@@ -24,9 +24,3 @@ case class RegistrationNoIdIndividualRequest(firstName: String, lastName: String
 object RegistrationNoIdIndividualRequest {
   implicit val formats: Format[RegistrationNoIdIndividualRequest] = Json.format[RegistrationNoIdIndividualRequest]
 }
-
-case class RegistrationNoIdIndividualResponse(sapNumber: String, safeId: String)
-
-object RegistrationNoIdIndividualResponse {
-  implicit val formats: Format[RegistrationNoIdIndividualResponse] = Json.format[RegistrationNoIdIndividualResponse]
-}
