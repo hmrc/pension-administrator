@@ -187,7 +187,7 @@ class InvitationsCacheRepository @Inject()(
   def getByKeys(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Option[List[Invitation]]] = {
     if (encrypted) {
       val encryptedMapOfKeys = encryptKeys(mapOfKeys)
-      val queryBuilder = collection.find(BSONDocument(encryptedMapOfKeys))
+      val queryBuilder = collection.find(encryptedMapOfKeys)
       queryBuilder.cursor[DataEntry](ReadPreference.primary).collect[List]().map { de =>
         val listOfInvitationsJson = de.map {
           dataEntry =>
