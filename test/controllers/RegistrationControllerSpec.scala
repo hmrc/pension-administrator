@@ -20,7 +20,7 @@ import akka.stream.Materializer
 import base.SpecBase
 import connectors.RegistrationConnector
 import models._
-import models.registrationnoid.OrganisationRegistrant
+import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
 import org.joda.time.LocalDate
 import org.mockito.Matchers
 import org.mockito.Matchers._
@@ -46,6 +46,10 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
   private val dataFromFrontend = readJsonFromFile("/data/validRegistrationNoIDOrganisationFE.json")
   private val dataToEmtp = readJsonFromFile("/data/validRegistrationNoIDOrganisationToEMTP.json").as[OrganisationRegistrant]
+
+  private val individualNoIdFrontend = readJsonFromFile("/data/validRegNoIdIndividualFE.json")
+  private val individualNoIdToConnector = individualNoIdFrontend.as[RegistrationNoIdIndividualRequest]
+  private val individualNoIdToEmtp = readJsonFromFile("/data/validRegNoIdIndividualToEtmp.json")
 
   private val mockRegistrationConnector = mock[RegistrationConnector]
 
@@ -409,8 +413,85 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
           .registrationNoIdOrganisation(any(), Matchers.eq(dataToEmtp))(any(), any(), any())
       }
     }
-
   }
+
+  "registrationNoIdIndividual" must {
+
+    def fakeRequest(data: JsValue): FakeRequest[JsValue] = FakeRequest("POST", "/").withBody(data)
+
+    "return OK with successful response from connector" in {
+      val successResponse: RegisterWithoutIdResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890")
+
+      when(mockRegistrationConnector.registrationNoIdIndividual(any(), Matchers.eq(individualNoIdToConnector))(any(), any(), any()))
+        .thenReturn(Future.successful(Right(successResponse)))
+
+      val result = call(registrationController(individualNoIdRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
+
+      ScalaFutures.whenReady(result) { _ =>
+        status(result) mustBe OK
+        verify(mockRegistrationConnector, times(1)).registrationNoIdIndividual(any(), Matchers.eq(individualNoIdToConnector))(any(), any(), any())
+      }
+    }
+
+    "return result from registration when connector returns failure" in {
+
+      val connectorFailureGen: Gen[HttpException] = Gen.oneOf(Seq(
+        new BadRequestException("INVALID_PAYLOAD"),
+        new NotFoundException("NOT FOUND"),
+        new ConflictException("CONFLICT")
+      ))
+
+      forAll(connectorFailureGen) { connectorFailure =>
+
+        when(mockRegistrationConnector.registrationNoIdIndividual(any(), Matchers.eq(individualNoIdToConnector))(any(), any(), any()))
+          .thenReturn(Future.successful(Left(connectorFailure)))
+
+        val result = call(registrationController(individualNoIdRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
+
+        ScalaFutures.whenReady(result) { _ =>
+          status(result) mustBe connectorFailure.responseCode
+        }
+
+      }
+
+    }
+
+    "throw Upstream4xxResponse when auth all retrievals are not present" in {
+
+      val retrievals = new ~(None, Some(AffinityGroup.Organisation))
+
+      val result = call(registrationController(Future.successful(retrievals)).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
+
+      ScalaFutures.whenReady(result.failed) { e =>
+        e mustBe a[Upstream4xxResponse]
+        e.getMessage mustBe "Not authorized"
+      }
+    }
+
+
+    "throw Upstream5xxResponse when given Upstream5xxResponse from connector" in {
+
+      val failureResponse = Json.obj(
+        "code" -> "SERVER_ERROR",
+        "reason" -> "DES is currently experiencing problems that require live service intervention."
+      )
+
+      when(mockRegistrationConnector.registrationNoIdIndividual(any(), Matchers.eq(individualNoIdToConnector))(any(), any(), any()))
+        .thenReturn(Future.failed(Upstream5xxResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
+
+      val result = call(registrationController(individualNoIdRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
+
+      ScalaFutures.whenReady(result.failed) { e =>
+        e mustBe a[Upstream5xxResponse]
+        e.getMessage mustBe failureResponse.toString()
+
+        verify(mockRegistrationConnector, times(1))
+          .registrationNoIdIndividual(any(), Matchers.eq(individualNoIdToConnector))(any(), any(), any())
+      }
+    }
+  }
+
+
 
 }
 
@@ -436,6 +517,14 @@ object RegistrationControllerSpec {
       new ~(
         Some(externalId),
         Some(AffinityGroup.Organisation)
+      )
+    )
+
+  private val individualNoIdRetrievals =
+    Future.successful(
+      new ~(
+        Some(externalId),
+        Some(AffinityGroup.Individual)
       )
     )
 
