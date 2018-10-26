@@ -109,7 +109,7 @@ class RegistrationConnectorImpl @Inject()(
                                             ec: ExecutionContext,
                                             request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
-    val hcWithDesHeaders: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+    val hcWithDesHeaders: HeaderCarrier = headerCarrier.withExtraHeaders(headerUtils.desHeader(headerCarrier): _*)
     val schemeAdminRegisterUrl = config.registerWithoutIdOrganisationUrl
     val correlationId = headerUtils.getCorrelationId(hcWithDesHeaders.requestId.map(_.value))
 
@@ -136,9 +136,29 @@ class RegistrationConnectorImpl @Inject()(
   override def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
     (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = {
 
-    //val url = config.registerWithoutIdIndividualUrl
+    val hcWithDesHeaders: HeaderCarrier = hc.withExtraHeaders(headerUtils.desHeader(hc): _*)
+    val acknowledgementReference = headerUtils.getCorrelationId(hcWithDesHeaders.requestId.map(_.value))
 
-    ???
+    val url = config.registerWithoutIdIndividualUrl
+    val body = Json.toJson(registrationRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
+
+    http.POST(url, body)(implicitly, httpResponseReads, hcWithDesHeaders, implicitly) map {
+      response =>
+        response.status match {
+          case OK =>
+            Json.parse(response.body).validate[RegisterWithoutIdResponse].fold(
+              invalid =>
+                Left(
+                  new BadGatewayException(
+                    "Invalid register without Id individual JSON response returned from DES: " +
+                    JsResultException(invalid).getMessage
+                  )
+                ),
+              valid => Right(valid)
+            )
+          case _ => ???
+        }
+    }
 
   }
 
