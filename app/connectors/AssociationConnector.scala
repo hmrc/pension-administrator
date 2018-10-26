@@ -21,8 +21,7 @@ import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models._
-import play.Logger
-import play.api.LoggerLike
+import play.api.{Logger, LoggerLike}
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
