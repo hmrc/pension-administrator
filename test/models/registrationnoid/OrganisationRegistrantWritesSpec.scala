@@ -16,6 +16,7 @@
 
 package models.registrationnoid
 
+import connectors.RegistrationConnectorImpl
 import org.scalatest.{MustMatchers, WordSpec}
 import play.api.libs.json.Json
 
@@ -37,13 +38,13 @@ class OrganisationRegistrantWritesSpec extends WordSpec with MustMatchers {
             |    "addressLine2": "line 2",
             |    "addressLine3": "line 3",
             |    "addressLine4": "line4",
-            |    "country": "DE"
+            |    "countryCode": "DE"
             |  }
             |}
           """.stripMargin
         )
 
-        val result = Json.toJson(orgRegistrant)(OrganisationRegistrant.apiWrites)
+        val result = Json.toJson(orgRegistrant)(RegistrationConnectorImpl.writesOrganisationRegistrant)
 
         result mustBe expectedJsValue
       }

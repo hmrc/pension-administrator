@@ -20,10 +20,11 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
+import models.registrationnoid._
 import models.User
 import play.Logger
 import play.api.http.Status._
+import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
@@ -49,7 +50,7 @@ trait RegistrationConnector {
     ec: ExecutionContext,
     request: RequestHeader): Future[Either[HttpException, JsValue]]
 
-  def registrationNoIdIndividual(registrationRequest: RegistrationNoIdIndividualRequest)
+  def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
     (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]]
 
 }
@@ -113,7 +114,7 @@ class RegistrationConnectorImpl @Inject()(
     val correlationId = headerUtils.getCorrelationId(hcWithDesHeaders.requestId.map(_.value))
 
     val registerWithNoIdData = mandatoryWithoutIdData(correlationId).as[JsObject] ++
-      Json.toJson(registerData)(OrganisationRegistrant.apiWrites).as[JsObject]
+      Json.toJson(registerData)(writesOrganisationRegistrant).as[JsObject]
 
     http.POST(schemeAdminRegisterUrl, registerWithNoIdData)(implicitly, implicitly[HttpReads[HttpResponse]], hcWithDesHeaders, implicitly) map {
       handleResponse(_, schemeAdminRegisterUrl)
@@ -132,8 +133,14 @@ class RegistrationConnectorImpl @Inject()(
     }
   }
 
-  def registrationNoIdIndividual(registrationRequest: RegistrationNoIdIndividualRequest)
-    (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = ???
+  override def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
+    (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = {
+
+    //val url = config.registerWithoutIdIndividualUrl
+
+    ???
+
+  }
 
 }
 
@@ -182,6 +189,27 @@ object RegistrationConnectorImpl {
 
     }
 
+  }
+
+  val writesAddress: OWrites[Address] = (
+    (JsPath \ "addressLine1").write[String] and
+      (JsPath \ "addressLine2").write[String] and
+      (JsPath \ "addressLine3").writeNullable[String] and
+      (JsPath \ "addressLine4").writeNullable[String] and
+      (JsPath \ "postalCode").writeNullable[String] and
+      (JsPath \ "countryCode").write[String]
+    )(address => (address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, address.postcode, address.country))
+
+  val writesOrganisationRegistrant: Writes[OrganisationRegistrant] = {
+    (
+      (__ \ "organisation").write[OrganisationName] and
+        (__ \ "address").write[Address](RegistrationConnectorImpl.writesAddress)
+      ) { o =>
+      (
+        o.organisation,
+        o.address
+      )
+    }
   }
 
 }
