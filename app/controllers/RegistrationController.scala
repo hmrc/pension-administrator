@@ -18,7 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.RegistrationConnector
-import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse}
+import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
 import models.{Organisation, SuccessResponse}
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsResultException, JsValue, Json}
@@ -55,9 +55,10 @@ class RegistrationController @Inject()(
         Future.failed(Upstream4xxResponse("Nino not found in auth record", UNAUTHORIZED, UNAUTHORIZED))
     }
 
+
   def registerWithIdOrganisation: Action[AnyContent] = Action.async {
     implicit request => {
-      retrieveOrganisation { user =>
+      retrieveUser { user =>
         request.body.asJson match {
           case Some(jsBody) =>
             Try(((jsBody \ "utr").convertTo[String], jsBody.convertTo[Organisation])) match {
@@ -88,7 +89,7 @@ class RegistrationController @Inject()(
 
   def registrationNoIdOrganisation: Action[OrganisationRegistrant] = Action.async(parse.json[OrganisationRegistrant]) {
     implicit request => {
-      retrieveOrganisation { user =>
+      retrieveUser { user =>
         registerConnector.registrationNoIdOrganisation(user, request.body) map {
           case Right(jsValue) => {
             jsValue.validate[RegisterWithoutIdResponse].fold(
@@ -102,7 +103,19 @@ class RegistrationController @Inject()(
     }
   }
 
-  private def retrieveOrganisation(fn: models.User => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
+  def registrationNoIdIndividual: Action[RegistrationNoIdIndividualRequest] = Action.async(parse.json[RegistrationNoIdIndividualRequest]) {
+    implicit request => {
+      retrieveUser { user =>
+        registerConnector.registrationNoIdIndividual(user, request.body) map {
+          case Right(response) => Ok(Json.toJson(response))
+          case Left(e) => result(e)
+        }
+      }
+    }
+  }
+
+
+  private def retrieveUser(fn: models.User => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
     authorised().retrieve(Retrievals.externalId and Retrievals.affinityGroup) {
       case Some(externalId) ~ Some(affinityGroup) =>
         fn(models.User(externalId, affinityGroup))
