@@ -457,8 +457,8 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  "registrationNoIdIndividual" should "return a success response on receiving a 200 Ok" in {
-
+//  "registrationNoIdIndividual" should "return a success response on receiving a 200 Ok" in {
+//
 //    server
 //      .stubFor(
 //        post(urlEqualTo(""))
@@ -473,10 +473,10 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 //              .withBody("")
 //          )
 //      )
-
-    pending
-
-  }
+//
+//    pending
+//
+//  }
 
 }
 
