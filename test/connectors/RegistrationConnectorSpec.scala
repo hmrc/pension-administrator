@@ -22,7 +22,8 @@ import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.{ConnectorBehaviours, HeaderUtils}
 import models.User
-import models.registrationnoid.{Address, OrganisationName, OrganisationRegistrant}
+import models.registrationnoid.{Address, OrganisationName, OrganisationRegistrant, RegistrationNoIdIndividualRequest}
+import org.joda.time.LocalDate
 import org.mockito.Matchers.{any => matchersAny}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -334,13 +335,13 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         .willReturn(
           ok
             .withHeader("Content-Type", "application/json")
-            .withBody(registerOrganisationWithoutIdResponse.toString())
+            .withBody(registerWithoutIdResponse.toString())
         )
     )
 
     connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant).map {
       response =>
-        response.right.value shouldBe registerOrganisationWithoutIdResponse
+        response.right.value shouldBe registerWithoutIdResponse
     }
 
     pending
@@ -393,7 +394,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         .willReturn(
           ok
             .withHeader("Content-Type", "application/json")
-            .withBody(registerOrganisationWithoutIdResponse.toString())
+            .withBody(registerWithoutIdResponse.toString())
         )
     )
 
@@ -408,7 +409,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             isUk = Some(false),
             status = OK,
             request = testRegisterWithNoId,
-            response = Some(registerOrganisationWithoutIdResponse)
+            response = Some(registerWithoutIdResponse)
           )
         ) shouldBe true
     }
@@ -458,26 +459,31 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-//  "registrationNoIdIndividual" should "return a success response on receiving a 200 Ok" in {
-//
+  "registrationNoIdIndividual" should "return a success response on receiving a 200 Ok" in {
+
+    pending
+
 //    server
 //      .stubFor(
-//        post(urlEqualTo(""))
-//          .withHeader("Authorization", matching("^.*$"))
+//        post(urlEqualTo(registerIndividualWithoutIdUrl))
+//          .withHeader("Authorization", matching("^.+$"))
 //          .withHeader("Content-Type", equalTo("application/json"))
-//          .withHeader("Environment", matching("^.*$"))
-//          .withRequestBody(equalToJson(""))
+//          .withHeader("Environment", matching("^.+$"))
+//          .withRequestBody(equalToJson(Json.stringify(registerIndividualWithoutIdRequestJson)))
 //          .willReturn(
 //            aResponse()
 //              .withStatus(OK)
 //              .withHeader("Content-Type", "application/json")
-//              .withBody("")
+//              .withBody(Json.stringify(registerWithoutIdResponse))
 //          )
 //      )
 //
-//    pending
-//
-//  }
+//    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
+//      response =>
+//        response.right.value shouldBe registerWithoutIdResponse
+//    }
+
+  }
 
 }
 
@@ -491,6 +497,7 @@ object RegistrationConnectorSpec {
   val registerIndividualWithIdUrl = s"/registration/individual/nino/$testNino"
   val registerOrganisationWithIdUrl = s"/registration/organisation/utr/$testUtr"
   val registerOrganisationWithoutIdUrl = "/registration/02.00.00/organisation"
+  val registerIndividualWithoutIdUrl = "/registration/02.00.00/individual"
 
   val testOrganisation: User = User("test-external-id", AffinityGroup.Organisation)
   val testIndividual: User = User("test-external-id", AffinityGroup.Individual)
@@ -505,7 +512,8 @@ object RegistrationConnectorSpec {
       "organisationType" -> "LLP"
     ))
 
-  val testRegisterWithNoId: JsObject = Json.obj("regime" -> "PODA",
+  val testRegisterWithNoId: JsObject = Json.obj(
+    "regime" -> "PODA",
     "acknowledgementReference" -> "correlation Id",
     "isAnAgent" -> false,
     "isAGroup" -> false,
@@ -521,7 +529,7 @@ object RegistrationConnectorSpec {
     "address" -> Json.obj(
       "addressLine1" -> "addressLine1",
       "addressLine2" -> "addressLine2",
-      "country"-> "US"
+      "countryCode"-> "US"
   ),
     "contactDetails" -> Json.obj(
       "phoneNumber" -> JsNull,"mobileNumber" -> JsNull,"faxNumber" -> JsNull,"emailAddress" ->JsNull
@@ -537,7 +545,7 @@ object RegistrationConnectorSpec {
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
-  val registerOrganisationWithoutIdResponse: JsValue = Json.obj(
+  val registerWithoutIdResponse: JsValue = Json.obj(
     "sapNumber" -> "1234567890",
     "safeId" -> "XE0001234567890"
   )
@@ -609,5 +617,23 @@ object RegistrationConnectorSpec {
       "reason" -> s"Reason for $code"
     ).toString()
   }
+
+  val registerIndividualWithoutIdRequest =
+    RegistrationNoIdIndividualRequest(
+      "test-first-name",
+      "test-last-name",
+      new LocalDate(2000, 1, 1),
+      Address(
+        "test-address-line-1",
+        "test-address-line-2",
+        None,
+        None,
+        None,
+        "XX"
+      )
+    )
+
+  val registerIndividualWithoutIdRequestJson: JsValue =
+    Json.toJson(registerIndividualWithoutIdRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest("correlation Id"))
 
 }

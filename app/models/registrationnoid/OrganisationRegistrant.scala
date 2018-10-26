@@ -16,7 +16,6 @@
 
 package models.registrationnoid
 
-import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 case class OrganisationName(organisationName: String)
@@ -33,15 +32,4 @@ case class OrganisationRegistrant(
 
 object OrganisationRegistrant {
   implicit val format: Format[OrganisationRegistrant] = Json.format[OrganisationRegistrant]
-  val apiWrites: Writes[OrganisationRegistrant] = {
-    (
-        (__ \ "organisation").write[OrganisationName] and
-          (__ \ "address").write[Address]
-      ) { o =>
-      (
-        o.organisation,
-        o.address
-      )
-    }
-  }
 }
