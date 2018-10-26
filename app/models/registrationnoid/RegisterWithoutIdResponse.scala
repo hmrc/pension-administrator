@@ -16,17 +16,11 @@
 
 package models.registrationnoid
 
-import org.joda.time.LocalDate
-import play.api.libs.json._
+import play.api.libs.json.Json
 
-case class RegistrationNoIdIndividualRequest(firstName: String, lastName: String, dateOfBirth: LocalDate, address: Address)
+case class RegisterWithoutIdResponse(safeId: String,
+                           sapNumber: String)
 
-object RegistrationNoIdIndividualRequest {
-  implicit val formats: Format[RegistrationNoIdIndividualRequest] = Json.format[RegistrationNoIdIndividualRequest]
-}
-
-case class RegistrationNoIdIndividualResponse(sapNumber: String, safeId: String)
-
-object RegistrationNoIdIndividualResponse {
-  implicit val formats: Format[RegistrationNoIdIndividualResponse] = Json.format[RegistrationNoIdIndividualResponse]
+object RegisterWithoutIdResponse {
+  implicit val formats = Json.format[RegisterWithoutIdResponse]
 }

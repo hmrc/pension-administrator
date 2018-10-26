@@ -20,8 +20,8 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.registrationnoid.{RegistrationNoIdIndividualRequest, RegistrationNoIdIndividualResponse}
-import models.{OrganisationRegistrant, User}
+import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest, RegistrationNoIdIndividualResponse}
+import models.User
 import play.Logger
 import play.api.http.Status._
 import play.api.libs.functional.syntax._
@@ -49,6 +49,10 @@ trait RegistrationConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext,
     request: RequestHeader): Future[Either[HttpException, JsValue]]
+
+  def registrationNoIdIndividual(registrationRequest: RegistrationNoIdIndividualRequest)
+    (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegistrationNoIdIndividualResponse]]
+
 }
 
 class RegistrationConnectorImpl @Inject()(
@@ -128,6 +132,10 @@ class RegistrationConnectorImpl @Inject()(
       case _ => Left(handleErrorResponse("Business Partner Matching", url, response, badResponseSeq))
     }
   }
+
+  def registrationNoIdIndividual(registrationRequest: RegistrationNoIdIndividualRequest)
+    (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegistrationNoIdIndividualResponse]] = ???
+
 }
 
 object RegistrationConnectorImpl {

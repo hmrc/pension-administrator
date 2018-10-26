@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package models
+package models.registrationnoid
 
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 case class OrganisationName(organisationName: String)
 
@@ -36,7 +36,7 @@ object OrganisationRegistrant {
   val apiWrites: Writes[OrganisationRegistrant] = {
     (
         (__ \ "organisation").write[OrganisationName] and
-          (__ \ "address").write(Address.defaultWrites)
+          (__ \ "address").write[Address]
       ) { o =>
       (
         o.organisation,
@@ -45,9 +45,3 @@ object OrganisationRegistrant {
     }
   }
 }
-
-
-
-
-
-

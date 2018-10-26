@@ -18,7 +18,8 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.RegistrationConnector
-import models.{Organisation, OrganisationRegistrant, RegisterWithoutIdResponse, SuccessResponse}
+import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse}
+import models.{Organisation, SuccessResponse}
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsResultException, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, Result}
