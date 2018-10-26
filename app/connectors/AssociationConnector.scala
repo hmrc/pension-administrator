@@ -21,10 +21,10 @@ import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models._
+import play.api.{Logger, LoggerLike}
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -119,8 +119,12 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
     val headerCarrierWithDesHeaders: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
     val url = appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)
 
-    httpClient.POST[AcceptedInvitation, HttpResponse](url, acceptedInvitation)(
-      writesAcceptedInvitation, implicitly, headerCarrierWithDesHeaders, implicitly) map (processResponse(acceptedInvitation,_, url))
+    val acceptedInvitationJsValue = Json.toJson(acceptedInvitation)(writesAcceptedInvitation)
+
+    Logger.debug(s"[Accept-Invitation-Outgoing-Payload] - ${acceptedInvitationJsValue.toString()}")
+
+    httpClient.POST[JsValue, HttpResponse](url, acceptedInvitationJsValue)(
+      implicitly, implicitly, headerCarrierWithDesHeaders, implicitly) map (processResponse(acceptedInvitation,_, url))
   }
 }
 
