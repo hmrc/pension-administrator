@@ -3,6 +3,7 @@
 POST        /register-with-no-id/organisation           controllers.RegistrationController.registrationNoIdOrganisation
 POST        /register-with-id/individual                controllers.RegistrationController.registerWithIdIndividual
 POST        /register-with-id/organisation              controllers.RegistrationController.registerWithIdOrganisation
+POST        /register-with-no-id/individual             controllers.RegistrationController.registrationNoIdIndividual
 
 GET         /psa-subscription-details                   controllers.SchemeController.getPsaDetails
 POST        /register-psa                               controllers.SchemeController.registerPSA
