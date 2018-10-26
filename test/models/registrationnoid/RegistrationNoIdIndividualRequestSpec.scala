@@ -23,9 +23,9 @@ import play.api.Logger
 import play.api.libs.json.{JsResultException, JsValue, Json}
 import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl}
 
-class RegistrationNoIdIndividualSpec extends FlatSpec with Matchers {
+class RegistrationNoIdIndividualRequestSpec extends FlatSpec with Matchers {
 
-  import RegistrationNoIdIndividualSpec._
+  import RegistrationNoIdIndividualRequestSpec._
 
   "RegistrationNoIdIndividualRequest.apiWrites" should "transform a request with full address details" in {
 
@@ -63,7 +63,7 @@ class RegistrationNoIdIndividualSpec extends FlatSpec with Matchers {
 
   "RegistrationNoIdIndividualResponse.apiReads" should "transform a success response" in {
 
-    val actual = responseJson.validate[RegistrationNoIdIndividualResponse](RegistrationConnectorImpl.readsRegistrationNoIdIndividualResponse)
+    val actual = responseJson.validate[RegisterWithoutIdResponse]
 
     actual.fold(
       errors => {
@@ -81,7 +81,7 @@ class RegistrationNoIdIndividualSpec extends FlatSpec with Matchers {
 
 // scalastyle:off magic.number
 
-object RegistrationNoIdIndividualSpec {
+object RegistrationNoIdIndividualRequestSpec {
 
   val acknowledgementReference = "test-acknowledgement-reference"
 
@@ -173,7 +173,7 @@ object RegistrationNoIdIndividualSpec {
     """.stripMargin
   )
 
-  val expectedResponse = RegistrationNoIdIndividualResponse("1234567890", "XE0001234567890")
+  val expectedResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890")
 
   val invalidPayloadHandler: InvalidPayloadHandler = new InvalidPayloadHandlerImpl(Logger)
 

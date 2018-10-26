@@ -20,6 +20,7 @@ import akka.stream.Materializer
 import base.SpecBase
 import connectors.RegistrationConnector
 import models._
+import models.registrationnoid.OrganisationRegistrant
 import org.joda.time.LocalDate
 import org.mockito.Matchers
 import org.mockito.Matchers._

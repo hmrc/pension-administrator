@@ -16,7 +16,8 @@
 
 package audit
 
-import models.{OrganisationRegistrant, SuccessResponse, UkAddress, User}
+import models.registrationnoid.OrganisationRegistrant
+import models.{SuccessResponse, UkAddress, User}
 import play.api.Logger
 import play.api.http.Status
 import play.api.libs.json.JsValue

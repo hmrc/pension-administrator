@@ -19,27 +19,8 @@ package models.registrationnoid
 import org.joda.time.LocalDate
 import play.api.libs.json._
 
-case class Address(
-  addressLine1: String,
-  addressLine2: String,
-  addressLine3: Option[String],
-  addressLine4: Option[String],
-  postcode: Option[String],
-  country: String
-)
-
-object Address {
-  implicit val formats: Format[Address] = Json.format[Address]
-}
-
 case class RegistrationNoIdIndividualRequest(firstName: String, lastName: String, dateOfBirth: LocalDate, address: Address)
 
 object RegistrationNoIdIndividualRequest {
   implicit val formats: Format[RegistrationNoIdIndividualRequest] = Json.format[RegistrationNoIdIndividualRequest]
-}
-
-case class RegistrationNoIdIndividualResponse(sapNumber: String, safeId: String)
-
-object RegistrationNoIdIndividualResponse {
-  implicit val formats: Format[RegistrationNoIdIndividualResponse] = Json.format[RegistrationNoIdIndividualResponse]
 }

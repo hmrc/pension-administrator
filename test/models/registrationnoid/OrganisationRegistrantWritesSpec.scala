@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package models.Writes
+package models.registrationnoid
 
-import models._
 import org.scalatest.{MustMatchers, WordSpec}
 import play.api.libs.json.Json
 
@@ -26,7 +25,7 @@ class OrganisationRegistrantWritesSpec extends WordSpec with MustMatchers {
     "parse correctly to a valid DES format" when {
       "we have a correct organisation registrant " in {
         val orgRegistrant = OrganisationRegistrant(OrganisationName("test company name"),
-          InternationalAddress("line 1", Some("line 2"), Some("line 3"), Some("line4"), "DE", None))
+          Address("line 1", "line 2", Some("line 3"), Some("line4"), None, "DE"))
         val expectedJsValue = Json.parse(
           """
             |{
@@ -38,7 +37,7 @@ class OrganisationRegistrantWritesSpec extends WordSpec with MustMatchers {
             |    "addressLine2": "line 2",
             |    "addressLine3": "line 3",
             |    "addressLine4": "line4",
-            |    "countryCode": "DE"
+            |    "country": "DE"
             |  }
             |}
           """.stripMargin
@@ -50,4 +49,5 @@ class OrganisationRegistrantWritesSpec extends WordSpec with MustMatchers {
       }
     }
   }
+
 }

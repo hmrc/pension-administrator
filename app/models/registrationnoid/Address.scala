@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-package models
+package models.registrationnoid
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Format, Json}
 
-case class RegisterWithoutIdResponse(safeId: String,
-                           sapNumber: String)
+case class Address(
+  addressLine1: String,
+  addressLine2: String,
+  addressLine3: Option[String],
+  addressLine4: Option[String],
+  postcode: Option[String],
+  country: String
+)
 
-object RegisterWithoutIdResponse {
-  implicit val formats = Json.format[RegisterWithoutIdResponse]
+object Address {
+  implicit val formats: Format[Address] = Json.format[Address]
 }
