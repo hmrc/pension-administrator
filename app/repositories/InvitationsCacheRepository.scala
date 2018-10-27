@@ -100,10 +100,13 @@ class InvitationsCacheRepository @Inject()(
   private val inviteePsaIdKey = "inviteePsaId"
   private val pstrKey = "pstr"
   private val compoundIndexName = "inviteePsaId_Pstr"
+  private val pstrIndexName = "pstr"
 
   ensureIndex(Seq(fieldName), createdIndexName, Some(ttl))
 
   ensureIndex(Seq(inviteePsaIdKey, pstrKey), compoundIndexName, Some(ttl))
+
+  ensureIndex(Seq(pstrKey), pstrIndexName, Some(ttl))
 
   private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int]): Future[Boolean] = {
 
