@@ -38,7 +38,7 @@ class RegistrationNoIdIndividualRequestSpec extends FlatSpec with Matchers {
   it should "produce valid JSON for a full address details request" in {
 
     val actual = Json.toJson(fullAddressRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
-    val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/registrationWithoutIdRequest.json", actual)
+    val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/registrationWithoutIdRequest.json")(actual)
 
     validationFailures shouldBe empty
 
@@ -55,7 +55,7 @@ class RegistrationNoIdIndividualRequestSpec extends FlatSpec with Matchers {
   it should "produce valid JSON for a minimal address details request" in {
 
     val actual = Json.toJson(minimalAddressRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
-    val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/registrationWithoutIdRequest.json", actual)
+    val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/registrationWithoutIdRequest.json")(actual)
 
     validationFailures shouldBe empty
 

@@ -111,7 +111,7 @@ class DesConnectorImpl @Inject()(
 
   private def logFailures(endpoint: String, data: JsValue, schemaPath: String): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
     case Success(Left(e: BadRequestException)) if e.message.contains("INVALID_PAYLOAD") =>
-      invalidPayloadHandler.logFailures(schemaPath, data)
+      invalidPayloadHandler.logFailures(schemaPath)(data)
     case Success(Left(e: HttpResponse)) => Logger.warn(s"$endpoint received error response from DES", e)
   }
 

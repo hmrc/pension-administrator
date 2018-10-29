@@ -29,9 +29,9 @@ import scala.collection.JavaConverters._
 @ImplementedBy(classOf[InvalidPayloadHandlerImpl])
 trait InvalidPayloadHandler {
 
-  def getFailures(schemaFileName: String, json: JsValue): Set[ValidationFailure]
+  def getFailures(schemaFileName: String)(json: JsValue): Set[ValidationFailure]
 
-  def logFailures(schemaFileName: String, json: JsValue): Unit
+  def logFailures(schemaFileName: String)(json: JsValue): Unit
 
 }
 
@@ -43,7 +43,7 @@ class InvalidPayloadHandlerImpl @Inject()(logger: LoggerLike) extends InvalidPay
     factory.getSchema(schemaUrl)
   }
 
-  override def getFailures(schemaFileName: String, json: JsValue): Set[ValidationFailure] = {
+  override def getFailures(schemaFileName: String)(json: JsValue): Set[ValidationFailure] = {
 
     val schema = loadSchema(schemaFileName)
     getFailures(schema, json)
@@ -65,7 +65,7 @@ class InvalidPayloadHandlerImpl @Inject()(logger: LoggerLike) extends InvalidPay
 
   }
 
-  override def logFailures(schemaFileName: String, json: JsValue): Unit = {
+  override def logFailures(schemaFileName: String)(json: JsValue): Unit = {
 
     val schema = loadSchema(schemaFileName)
     logFailures(schema, json)
