@@ -29,7 +29,7 @@ import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import utils.{ErrorHandler, HttpResponseHelper}
+import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -59,7 +59,8 @@ class RegistrationConnectorImpl @Inject()(
                                            http: HttpClient,
                                            config: AppConfig,
                                            auditService: AuditService,
-                                           headerUtils: HeaderUtils
+                                           headerUtils: HeaderUtils,
+                                           invalidPayloadHandler: InvalidPayloadHandler
                                          ) extends RegistrationConnector with HttpResponseHelper with ErrorHandler with RegistrationAuditService {
 
   import RegistrationConnectorImpl._
@@ -139,24 +140,32 @@ class RegistrationConnectorImpl @Inject()(
     val hcWithDesHeaders: HeaderCarrier = hc.withExtraHeaders(headerUtils.desHeader(hc): _*)
     val acknowledgementReference = headerUtils.getCorrelationId(hcWithDesHeaders.requestId.map(_.value))
 
+    val schema = "/resources/schemas/registrationWithoutIdRequest.json"
+    val method = "POST"
     val url = config.registerWithoutIdIndividualUrl
-    val body = Json.toJson(registrationRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
+    val apiWrites = RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference)
+    val body = Json.toJson(registrationRequest)(apiWrites)
+
+    Logger.debug("Registration Without Id Individual request\n" + Json.prettyPrint(body))
 
     http.POST(url, body)(implicitly, httpResponseReads, hcWithDesHeaders, implicitly) map {
       response =>
+        Logger.debug(s"Registration Without Id Individual response. Status=${response.status}\n${response.body}")
+
         response.status match {
           case OK =>
-            Json.parse(response.body).validate[RegisterWithoutIdResponse].fold(
-              invalid =>
-                Left(
-                  new BadGatewayException(
-                    "Invalid register without Id individual JSON response returned from DES: " +
-                    JsResultException(invalid).getMessage
-                  )
-                ),
-              valid => Right(valid)
-            )
-          case _ => ???
+            val onInvalid = invalidPayloadHandler.logFailures(schema) _
+            Right(parseAndValidateJson[RegisterWithoutIdResponse](response.body, method, url, onInvalid))
+
+          case BAD_REQUEST if response.body.contains("INVALID_PAYLOAD") =>
+            invalidPayloadHandler.logFailures(schema)(body)
+            Left(new BadRequestException(upstreamResponseMessage(method, url, BAD_REQUEST, response.body)))
+
+          case FORBIDDEN if response.body.contains("INVALID_SUBMISSION") =>
+            Left(new BadRequestException(upstreamResponseMessage(method, url, BAD_REQUEST, response.body)))
+
+          case _ =>
+            Left(handleErrorResponse("Register without Id Individual", url, response, Seq.empty))
         }
     }
 

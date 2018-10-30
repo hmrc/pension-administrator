@@ -24,7 +24,6 @@ import connectors.helper.ConnectorBehaviours
 import models.User
 import models.registrationnoid._
 import org.joda.time.LocalDate
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
@@ -35,14 +34,13 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.RequestId
-import utils.WireMockHelper
+import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl, StubLogger, WireMockHelper}
 
 class RegistrationConnectorSpec extends AsyncFlatSpec
   with JsonFileReader
   with Matchers
   with WireMockHelper
   with EitherValues
-  with MockitoSugar
   with ConnectorBehaviours {
 
   import RegistrationConnectorSpec._
@@ -55,7 +53,8 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
   override protected def portConfigKey: String = "microservice.services.des-hod.port"
 
   override protected def bindings: Seq[GuiceableModule] = Seq[GuiceableModule](
-    bind(classOf[AuditService]).toInstance(auditService)
+    bind(classOf[AuditService]).toInstance(auditService),
+    bind(classOf[InvalidPayloadHandler]).toInstance(invalidPayloadHandler)
   )
 
   def connector: RegistrationConnector = app.injector.instanceOf[RegistrationConnector]
@@ -473,6 +472,163 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
   }
 
+  it should "return a BadGatewayException if the DES response is not JSON" in {
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withHeader("Content-Type", "application/json")
+              .withBody("abc")
+          )
+      )
+
+    recoverToSucceededIf[BadGatewayException] {
+      connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)
+    }
+
+  }
+
+  it should "throw a BadGatewayException if the JSON returned by DES is not valid" in {
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withHeader("Content-Type", "application/json")
+              .withBody("{}")
+          )
+      )
+
+    recoverToSucceededIf[BadGatewayException] {
+      connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)
+    }
+
+  }
+
+  it should "log validation failures if the JSON returned by DES is not valid" in {
+
+    stubLogger.reset()
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withHeader("Content-Type", "application/json")
+              .withBody("{}")
+          )
+      )
+
+    recoverToExceptionIf[BadGatewayException](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
+      _ =>
+      stubLogger.getLogEntries.size shouldBe 1
+    }
+
+  }
+
+  it should "handle 400 Bad Request INVALID_PAYLOAD" in {
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(BAD_REQUEST)
+              .withBody(errorResponse("INVALID_PAYLOAD"))
+          )
+      )
+
+    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include ("INVALID_PAYLOAD")
+    }
+
+  }
+
+  it should "log validation failures on receiving 400 Bad Request INVALID_PAYLOAD" in {
+
+    stubLogger.reset()
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(BAD_REQUEST)
+              .withBody(errorResponse("INVALID_PAYLOAD"))
+          )
+      )
+
+    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
+      _ =>
+        stubLogger.getLogEntries.size shouldBe 1
+    }
+
+  }
+
+  it should "return 400 Bad Request INVALID_SUBMISSION when DES returns 403 Forbidden INVALID_SUBMISSION" in {
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(FORBIDDEN)
+              .withBody(errorResponse("INVALID_SUBMISSION"))
+          )
+      )
+
+    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include ("INVALID_SUBMISSION")
+    }
+
+  }
+
+  it should "return 502 Bad Gateway when DES returns a 500 response" in {
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(INTERNAL_SERVER_ERROR)
+          )
+      )
+
+    recoverToExceptionIf[Upstream5xxResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
+      ex =>
+        ex.reportAs shouldBe BAD_GATEWAY
+    }
+
+  }
+
+  it should "return 502 Bad Gateway when DES returns a 503 response" in {
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(SERVICE_UNAVAILABLE)
+          )
+      )
+
+    recoverToExceptionIf[Upstream5xxResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
+      ex =>
+        ex.reportAs shouldBe BAD_GATEWAY
+    }
+
+  }
+
 }
 
 // scalastyle:off magic.number
@@ -531,7 +687,9 @@ object RegistrationConnectorSpec {
     Address("addressLine1", "addressLine2", None, None, None, "US")
   )
 
+  val stubLogger = new StubLogger()
   val auditService = new StubSuccessfulAuditService()
+  val invalidPayloadHandler = new InvalidPayloadHandlerImpl(stubLogger)
 
   implicit val hc: HeaderCarrier = HeaderCarrier(requestId = Some(RequestId(testCorrelationId)))
   implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")

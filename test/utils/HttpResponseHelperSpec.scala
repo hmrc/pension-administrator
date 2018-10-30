@@ -16,14 +16,19 @@
 
 package utils
 
+import org.mockito.Matchers._
+import org.mockito.Mockito._
 import org.scalacheck.Gen
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatest.{FlatSpec, Matchers}
 import play.api.http.Status._
-import play.api.libs.json.{Json, JsValue}
+import play.api.libs.json.{JsValue, Json, OFormat}
 import uk.gov.hmrc.http._
 
-class HttpResponseHelperSpec extends FlatSpec with Matchers with GeneratorDrivenPropertyChecks {
+// scalastyle:off magic.number
+
+class HttpResponseHelperSpec extends FlatSpec with Matchers with GeneratorDrivenPropertyChecks with MockitoSugar {
 
   import HttpResponseHelperSpec._
 
@@ -46,9 +51,7 @@ class HttpResponseHelperSpec extends FlatSpec with Matchers with GeneratorDriven
   }
 
   it should "transform any other 4xx into Upstream4xxResponse" in {
-    // scalastyle:off magic.number
     val userErrors = for (n <- Gen.choose(400, 499) suchThat (n => n != 400 && n != 404)) yield n
-    // scalastyle:on magic.number
     forAll(userErrors) {
       userError =>
         val ex = the[Upstream4xxResponse] thrownBy fixture()(responseFor(userError))
@@ -70,7 +73,6 @@ class HttpResponseHelperSpec extends FlatSpec with Matchers with GeneratorDriven
 
   it should "transform any other status into an UnrecognisedHttpResponseException" in {
     val statuses = for (n <- Gen.choose(0, 1000) suchThat(n => n < 400 || n >= 600)) yield n
-    val errorSeq = Seq()
 
     forAll(statuses) {
       status =>
@@ -78,16 +80,79 @@ class HttpResponseHelperSpec extends FlatSpec with Matchers with GeneratorDriven
     }
   }
 
+  "parseJson" should "return the correct JsValue given a JSON string" in {
+    fixture.parseJson("{}", testMethod, testUrl) shouldBe Json.obj()
+  }
+
+  it should "throw BadGatewayException given a non-JSON string" in {
+
+    a[BadGatewayException] should be thrownBy {
+      fixture.parseJson("not-json", testMethod, testUrl)
+    }
+
+  }
+
+  "validateJson" should "return the correct object given valid JSON" in {
+
+    val expected = Dummy("test-name")
+    val json = Json.toJson(expected)
+
+    fixture.validateJson(json, testMethod, testUrl, _ => ()) shouldBe expected
+
+  }
+
+  it should "throw BadGatewayException given invalid JSON" in {
+
+    val json = Json.parse("{}")
+
+    a[BadGatewayException] shouldBe thrownBy {
+      fixture.validateJson(json, testMethod, testUrl, _ => ())
+    }
+
+  }
+
+  it should "invoke the onInvalid function given invalid JSON" in {
+
+    val json = Json.parse("{}")
+    val onInvalid = mock[OnInvalidFunction]
+
+    doNothing().when(onInvalid).onInvalid(any())
+
+    a[BadGatewayException] shouldBe thrownBy {
+      fixture.validateJson(json, testMethod, testUrl, onInvalid.onInvalid)
+    }
+
+    verify(onInvalid).onInvalid(any())
+
+  }
+
 }
 
 object HttpResponseHelperSpec {
 
-  def fixture(errorSeq : Seq[String]=Seq()): HttpResponse => HttpException = {
-    new HttpResponseHelper {}.handleErrorResponse("test-mnethod", "test-url", _ ,errorSeq)
+  val testMethod = "test-method"
+  val testUrl = "test-url"
+
+  def fixture: HttpResponseHelper = {
+    new HttpResponseHelper {}
+  }
+
+  def fixture(errorSeq : Seq[String] = Seq()): HttpResponse => HttpException = {
+    fixture.handleErrorResponse(testMethod, testUrl, _ ,errorSeq)
   }
 
   def responseFor(status: Int, body:Option[String]=None): HttpResponse = {
     HttpResponse(status, None, Map.empty, Some(s"Message for ${body.getOrElse(status)}"))
+  }
+
+  case class Dummy(name: String)
+
+  implicit val formatsDummy: OFormat[Dummy] = Json.format[Dummy]
+
+  trait OnInvalidFunction {
+
+    def onInvalid(json: JsValue): Unit
+
   }
 
 }

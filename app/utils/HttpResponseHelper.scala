@@ -16,8 +16,10 @@
 
 package utils
 
-import uk.gov.hmrc.http._
+import com.fasterxml.jackson.core.JsonParseException
 import play.api.http.Status._
+import play.api.libs.json.{JsResultException, JsValue, Json, Reads}
+import uk.gov.hmrc.http._
 
 trait HttpResponseHelper extends HttpErrorFunctions {
 
@@ -36,6 +38,40 @@ trait HttpResponseHelper extends HttpErrorFunctions {
       case _ =>
         throw new UnrecognisedHttpResponseException(methodContext, url, response)
     }
+
+  def parseJson(json: String, method: String, url: String): JsValue = {
+
+    try {
+      Json.parse(json)
+    }
+    catch {
+      case _: JsonParseException => throw new BadGatewayException(s"$method to $url returned a response that was not JSON")
+    }
+
+  }
+
+  def validateJson[T](json: JsValue, method: String, url: String, onInvalid: JsValue => Unit)
+    (implicit reads: Reads[T]): T = {
+
+    json.validate[T].fold(
+      invalid => {
+        onInvalid(json)
+        throw new BadGatewayException(
+          s"$method to $url returned invalid JSON" +
+            JsResultException(invalid).getMessage
+        )
+      },
+      identity
+    )
+
+  }
+
+  def parseAndValidateJson[T](json: String, method: String, url: String, onInvalid: JsValue => Unit)
+    (implicit reads: Reads[T]): T = {
+
+    validateJson(parseJson(json, method, url), method, url, onInvalid)
+
+  }
 
 }
 
