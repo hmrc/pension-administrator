@@ -17,7 +17,8 @@
 package models
 
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, Json, OFormat, Reads}
+import play.api.libs.json.{Json, JsPath, OFormat, Reads}
+import play.api.libs.json.JsObject
 
 case class OrganisationDetailType(name: String, crnNumber: Option[String] = None,
                                   vatRegistrationNumber: Option[String] = None, payeReference: Option[String] = None) extends PSADetail
@@ -37,13 +38,13 @@ object OrganisationDetailType {
 
   val partnershipApiReads: Reads[OrganisationDetailType] = (
     (JsPath \ "partnershipDetails" \ "companyName").read[String] and
-      (JsPath \ "partnershipVat" \ "vat").readNullable[String] and
-      (JsPath \ "partnershipPaye" \ "paye").readNullable[String]
-    ) ((name, vatRegistrationNumber, payeEmployerReferenceNumber) =>
+      (JsPath \ "partnershipVat").readNullable[PartnershipVat] and
+      (JsPath \ "partnershipPaye").readNullable[PartnershipPaye]
+    ) ((name, partnershipVat, partnershipPaye) =>
     OrganisationDetailType(name,
       None,
-      vatRegistrationNumber,
-      payeEmployerReferenceNumber))
+      partnershipVat.flatMap(_.vat),
+      partnershipPaye.flatMap(_.paye)))
 
   val CompanyApiReads: Reads[OrganisationDetailType] = (
     (JsPath \ "businessDetails" \ "companyName").read[String] and
@@ -53,4 +54,17 @@ object OrganisationDetailType {
     OrganisationDetailType(name, vatRegistrationNumber = companyDetails.flatMap(c => c.flatMap(c => c._1)),
       payeReference = companyDetails.flatMap(c => c.flatMap(c => c._2)),
       crnNumber = crnNumber))
+}
+
+
+case class PartnershipVat(vat: Option[String])
+
+object PartnershipVat {
+  implicit val formats: OFormat[PartnershipVat] = Json.format[PartnershipVat]
+}
+
+case class PartnershipPaye(paye: Option[String])
+
+object PartnershipPaye {
+  implicit val formats: OFormat[PartnershipPaye] = Json.format[PartnershipPaye]
 }

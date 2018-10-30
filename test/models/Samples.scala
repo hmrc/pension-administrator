@@ -60,8 +60,10 @@ trait Samples {
     correspondenceCommonDetail = correspondenceCommonDetails,
     previousAddressDetail = PreviousAddressDetails(isPreviousAddressLast12Month = false))
 
-  val companySample = OrganisationDetailType("Company Test", vatRegistrationNumber = Some("VAT11111"),
+  val companySample = OrganisationDetailType("Test Name", vatRegistrationNumber = Some("VAT11111"),
     payeReference = Some("PAYE11111"), crnNumber = Some("CRN11111"))
+
+  val partnershipSample = OrganisationDetailType("Test Partnership", crnNumber = Some("CRN11111"))
 
   val individualSample = IndividualDetailType(firstName = "John", middleName = Some("Does Does"), lastName = "Doe", dateOfBirth = LocalDate.parse("2019-01-31"))
 
