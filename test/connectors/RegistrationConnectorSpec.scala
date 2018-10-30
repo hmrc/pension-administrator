@@ -24,7 +24,6 @@ import connectors.helper.ConnectorBehaviours
 import models.User
 import models.registrationnoid._
 import org.joda.time.LocalDate
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
@@ -42,7 +41,6 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
   with Matchers
   with WireMockHelper
   with EitherValues
-  with MockitoSugar
   with ConnectorBehaviours {
 
   import RegistrationConnectorSpec._

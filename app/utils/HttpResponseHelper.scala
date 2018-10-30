@@ -61,7 +61,7 @@ trait HttpResponseHelper extends HttpErrorFunctions {
             JsResultException(invalid).getMessage
         )
       },
-      valid => valid
+      identity
     )
 
   }
