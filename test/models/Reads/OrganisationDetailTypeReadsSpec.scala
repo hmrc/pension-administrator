@@ -26,6 +26,70 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
 
   "A JSON Payload containing organisation detials" must {
 
+
+    "Reading optional keys from Json for partnershipPaye " must {
+
+      "We dont have optional parent of VAT registration number" in {
+
+        val partnershipDetailsWithoutOption = Json.obj(
+          "partnershipPaye" -> Json.obj("paye" -> JsString("PAYE11111"), "hasPaye" -> JsBoolean(true)),
+          "partnershipDetails" -> Json.obj("companyName" -> JsString("Company Test")))
+
+        val result = partnershipDetailsWithoutOption.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
+
+        result.vatRegistrationNumber mustBe None
+      }
+
+      "We have optional parent and dont have VAT registration number" in {
+
+        val partnershipDetailsWithoutOption = Json.obj(
+          "partnershipVat" -> Json.obj("hasPaye" -> JsBoolean(false)),
+          "partnershipPaye" -> Json.obj("paye" -> JsString("PAYE11111"), "hasPaye" -> JsBoolean(true)),
+          "partnershipDetails" -> Json.obj("companyName" -> JsString("Company Test")))
+        val result = partnershipDetailsWithoutOption.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
+
+        result.vatRegistrationNumber mustBe None
+      }
+
+      "We have VAT registration number" in {
+        val result = partnershipDetails.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
+
+        result.vatRegistrationNumber mustBe companySample.vatRegistrationNumber
+      }
+
+    }
+
+    "Reading optional keys from Json for partnershipPaye " must {
+
+      "We dont have optional parent of Paye number" in {
+
+        val partnershipDetailsWithoutOption = Json.obj("partnershipVat" -> Json.obj("vat" -> JsString("VAT11111"), "hasVat" -> JsBoolean(true)),
+          "partnershipDetails" -> Json.obj("companyName" -> JsString("Company Test")))
+
+        val result = partnershipDetailsWithoutOption.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
+
+        result.payeReference mustBe None
+      }
+
+      "We have optional parent and dont have Paye number" in {
+
+        val partnershipDetailsWithoutOption = Json.obj("partnershipVat" -> Json.obj("vat" -> JsString("VAT11111"), "hasVat" -> JsBoolean(true)),
+          "partnershipPaye" -> Json.obj("hasPaye" -> JsBoolean(true)),
+          "partnershipDetails" -> Json.obj("companyName" -> JsString("Company Test")))
+        val result = partnershipDetailsWithoutOption.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
+
+        result.payeReference mustBe None
+      }
+
+      "We have Paye number" in {
+        val result = partnershipDetails.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
+
+        result.payeReference mustBe companySample.payeReference
+      }
+
+    }
+
+
     Seq(("Company", companyDetails), ("Partnership", partnershipDetails)).foreach { entityType =>
       val (orgType, orgData) = entityType
       s"Map correctly to a $orgType OrganisationDetailType model" when {
@@ -86,7 +150,7 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
 object OrganisationDetailTypeReadsSpec {
   private val companyDetails = Json.obj("companyDetails" -> Json.obj("vatRegistrationNumber" -> JsString("VAT11111"),
     "payeEmployerReferenceNumber" -> JsString("PAYE11111")),
-    "companyRegistrationNumber" -> JsString("CRN11111"), "businessDetails" -> Json.obj("companyName" -> JsString("Company Test")))
+    "companyRegistrationNumber" -> JsString("CRN11111"), "businessDetails" -> Json.obj("companyName" -> JsString("Test Name")))
 
   private def orgDetailWithoutVat(entityType: String) = {
     if (entityType == "Partnership") {
@@ -106,5 +170,5 @@ object OrganisationDetailTypeReadsSpec {
 
   private val partnershipDetails = Json.obj("partnershipVat" -> Json.obj("vat" -> JsString("VAT11111"), "hasVat" -> JsBoolean(true)),
     "partnershipPaye" -> Json.obj("paye" -> JsString("PAYE11111"), "hasPaye" -> JsBoolean(true)),
-    "partnershipDetails" -> Json.obj("companyName" -> JsString("Company Test")))
+    "partnershipDetails" -> Json.obj("companyName" -> JsString("Test Name")))
 }
