@@ -16,8 +16,8 @@
 
 package models
 
-import java.time.LocalDate
 
+import org.joda.time.LocalDate
 import play.api.libs.json.{Json, OFormat}
 
 case class PsaToBeRemovedFromScheme(psaId: String, pstr: String, removalDate: LocalDate)
