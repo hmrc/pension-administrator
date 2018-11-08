@@ -7,6 +7,7 @@ POST        /register-with-no-id/individual             controllers.Registration
 
 GET         /psa-subscription-details                   controllers.SchemeController.getPsaDetails
 POST        /register-psa                               controllers.SchemeController.registerPSA
+POST        /remove-psa                                 controllers.SchemeController.removePsa
 
 GET         /get-name                                   controllers.AssociationController.getName
 GET         /get-email                                  controllers.AssociationController.getEmail

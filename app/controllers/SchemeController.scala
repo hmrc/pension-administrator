@@ -18,8 +18,9 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.{DesConnector, SchemeConnector}
+import models.PsaToBeRemovedFromScheme
 import play.api.Logger
-import play.api.libs.json.Json
+import play.api.libs.json.{JsResultException, Json}
 import play.api.mvc._
 import service.SchemeService
 import uk.gov.hmrc.http._
@@ -59,5 +60,13 @@ class SchemeController @Inject()(schemeService: SchemeService, schemeConnector: 
         case _ => Future.failed(new BadRequestException("No PSA Id in the header for get minimal details"))
       }
 
+  }
+
+  def removePsa: Action[PsaToBeRemovedFromScheme] = Action.async(parse.json[PsaToBeRemovedFromScheme]) {
+    implicit request =>
+      schemeConnector.removePSA(request.body)map {
+        case Right(_) =>  NoContent
+        case Left(e) => result(e)
+      }
   }
 }

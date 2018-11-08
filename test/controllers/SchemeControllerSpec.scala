@@ -16,7 +16,9 @@
 
 package controllers
 
-import base.JsonFileReader
+import akka.stream.Materializer
+import base.{JsonFileReader, SpecBase}
+import models.PsaToBeRemovedFromScheme
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.http.Status.BAD_GATEWAY
@@ -25,7 +27,8 @@ import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import service.SchemeService
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.domain.PsaId
+import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.FakeDesConnector
 import utils.testhelpers.PsaSubscriptionBuilder._
 
@@ -167,11 +170,96 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
     status(result) mustBe NOT_FOUND
     contentAsString(result) mustBe "not found"
   }
-  
+
+  "removePSA" should "return OK when service returns successfully" in {
+
+    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+    status(result) mustBe NO_CONTENT
+
+  }
+
+  it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
+
+    fakeDesConnector.setRemovePsaResponse(
+      Future.successful(Left(new BadRequestException("bad request")))
+    )
+
+    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "bad request"
+  }
+
+  it should "return CONFLICT when service returns CONFLICT" in {
+
+    fakeDesConnector.setRemovePsaResponse(
+      Future.successful(Left(new ConflictException("conflict")))
+    )
+
+    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+
+    status(result) mustBe CONFLICT
+    contentAsString(result) mustBe "conflict"
+  }
+
+  it should "return NOT_FOUND when service returns NOT_FOUND" in {
+
+    fakeDesConnector.setRemovePsaResponse(
+      Future.successful(Left(new NotFoundException("not found")))
+    )
+
+    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+
+    status(result) mustBe NOT_FOUND
+    contentAsString(result) mustBe "not found"
+  }
+
+  it should "return Forbidden when service return Forbidden" in {
+
+    fakeDesConnector.setRemovePsaResponse(
+      Future.successful(Left(new ForbiddenException("forbidden")))
+    )
+
+    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+
+    status(result) mustBe FORBIDDEN
+    contentAsString(result) mustBe "forbidden"
+  }
+
+
+  it should "throw Upstream5xxResponse when service throws Upstream5xxResponse" in {
+
+    fakeDesConnector.setRemovePsaResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+
+    recoverToSucceededIf[Upstream5xxResponse] {
+      call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+    }
+  }
+
+  it should "throw UpStream4xxResponse when service throws UpStream4xxResponse" in {
+
+    fakeDesConnector.setRemovePsaResponse(Future.failed(Upstream4xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+
+    recoverToSucceededIf[Upstream4xxResponse] {
+      call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+    }
+  }
+
+  it should "throw Exception when service throws any unknown Exception" in {
+
+    fakeDesConnector.setRemovePsaResponse(Future.failed(new Exception("Unknown Exception")))
+
+    recoverToSucceededIf[Exception] {
+      controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
+    }
+  }
+
 }
 
-object SchemeControllerSpec {
-  def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
+object SchemeControllerSpec extends SpecBase {
+
+  implicit val mat: Materializer = app.materializer
+  override def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
   class FakeSchemeService extends SchemeService {
 
@@ -193,4 +281,12 @@ object SchemeControllerSpec {
   val fakeSchemeService = new FakeSchemeService
   val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
   val controller = new SchemeController(fakeSchemeService, fakeDesConnector)
+
+  val psaId = PsaId("A7654321")
+  val pstr: String = "123456789AB"
+  val removeDate: LocalDate = LocalDate.parse("2018-02-01")
+  private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removeDate)
+  private val removePsaJson: JsValue = Json.toJson(removePsaDataModel)
+
+  def removePsaFakeRequest(data: JsValue): FakeRequest[JsValue] = FakeRequest("DELETE", "/").withBody(data)
 }
