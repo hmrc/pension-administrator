@@ -23,7 +23,7 @@ import connectors.helper.HeaderUtils
 import models.{PsaSubscription, PsaToBeRemovedFromScheme}
 import play.Logger
 import play.api.http.Status._
-import play.api.libs.json.{JsError, JsResultException, JsSuccess, JsValue}
+import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -46,9 +46,9 @@ trait DesConnector {
                                                request: RequestHeader): Future[Either[HttpException, PsaSubscription]]
 
   def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
-                                                        headerCarrier: HeaderCarrier,
-                                                        ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, JsValue]]
+                                         headerCarrier: HeaderCarrier,
+                                         ec: ExecutionContext,
+                                         request: RequestHeader): Future[Either[HttpException, JsValue]]
 }
 
 class DesConnectorImpl @Inject()(
@@ -90,19 +90,32 @@ class DesConnectorImpl @Inject()(
 
   }
 
-  def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
-                                                        headerCarrier: HeaderCarrier,
-                                                        ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = ???
+  override def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
+                                                                 headerCarrier: HeaderCarrier,
+                                                                 ec: ExecutionContext,
+                                                                 request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
+    val removePsaSchema = "/resources/schemas/removePsa.json"
+
+    val removePsaUrl = config.removePsaUrl.format(psaToBeRemoved.psaId, psaToBeRemoved.pstr)
+
+    val data: JsValue = Json.obj("ceaseDate" -> psaToBeRemoved.removalDate.toString)
+
+    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+
+    http.POST[JsValue, HttpResponse](removePsaUrl, data)(implicitly, implicitly, hc, implicitly) map {
+      handlePostResponse(_, removePsaUrl) } andThen logFailures("remove PSA", data, removePsaSchema)
+  }
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
 
-    val badResponseSeq = Seq("INVALID_CORRELATION_ID", "INVALID_PAYLOAD")
+    val badResponseSeq = Seq("INVALID_CORRELATION_ID", "INVALID_PAYLOAD", "INVALID_PSTR", "INVALID_PSAID")
+    val forbiddenResponseSeq = Seq("INVALID_BUSINESS_PARTNER", "NO_RELATIONSHIP_EXISTS", "NO_OTHER_ASSOCIATED_PSA", "FUTURE_CEASE_DATE", "PSAID_NOT_ACTIVE")
 
     response.status match {
       case OK => Right(response.json)
       case CONFLICT if response.body.contains("DUPLICATE_SUBMISSION") => Left(new ConflictException(response.body))
-      case FORBIDDEN if response.body.contains("INVALID_BUSINESS_PARTNER") => Left(new ForbiddenException(response.body))
+      case FORBIDDEN if forbiddenResponseSeq.exists(response.body.contains(_)) => Left(new ForbiddenException(response.body))
       case _ => Left(handleErrorResponse("Subscription", url, response, badResponseSeq))
     }
 
