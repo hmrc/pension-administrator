@@ -171,20 +171,20 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
     contentAsString(result) mustBe "not found"
   }
 
-  "ceasePSA" should "return OK when service returns successfully" in {
+  "removePSA" should "return OK when service returns successfully" in {
 
-    val result = call(controller.ceasePsa, ceasePsaFakeRequest(ceasePsaJson))
+    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
     status(result) mustBe NO_CONTENT
 
   }
 
   it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
 
-    fakeDesConnector.setCeasePsaResponse(
+    fakeDesConnector.setRemovePsaResponse(
       Future.successful(Left(new BadRequestException("bad request")))
     )
 
-    val result = call(controller.ceasePsa, ceasePsaFakeRequest(ceasePsaJson))
+    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
 
     status(result) mustBe BAD_REQUEST
     contentAsString(result) mustBe "bad request"
@@ -192,11 +192,11 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
 
   it should "return CONFLICT when service returns CONFLICT" in {
 
-    fakeDesConnector.setCeasePsaResponse(
+    fakeDesConnector.setRemovePsaResponse(
       Future.successful(Left(new ConflictException("conflict")))
     )
 
-    val result = call(controller.ceasePsa, ceasePsaFakeRequest(ceasePsaJson))
+    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
 
     status(result) mustBe CONFLICT
     contentAsString(result) mustBe "conflict"
@@ -204,11 +204,11 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
 
   it should "return NOT_FOUND when service returns NOT_FOUND" in {
 
-    fakeDesConnector.setCeasePsaResponse(
+    fakeDesConnector.setRemovePsaResponse(
       Future.successful(Left(new NotFoundException("not found")))
     )
 
-    val result = call(controller.ceasePsa, ceasePsaFakeRequest(ceasePsaJson))
+    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
 
     status(result) mustBe NOT_FOUND
     contentAsString(result) mustBe "not found"
@@ -216,11 +216,11 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
 
   it should "return Forbidden when service return Forbidden" in {
 
-    fakeDesConnector.setCeasePsaResponse(
+    fakeDesConnector.setRemovePsaResponse(
       Future.successful(Left(new ForbiddenException("forbidden")))
     )
 
-    val result = call(controller.ceasePsa, ceasePsaFakeRequest(ceasePsaJson))
+    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
 
     status(result) mustBe FORBIDDEN
     contentAsString(result) mustBe "forbidden"
@@ -229,25 +229,25 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
 
   it should "throw Upstream5xxResponse when service throws Upstream5xxResponse" in {
 
-    fakeDesConnector.setCeasePsaResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+    fakeDesConnector.setRemovePsaResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
     recoverToSucceededIf[Upstream5xxResponse] {
-      call(controller.ceasePsa, ceasePsaFakeRequest(ceasePsaJson))
+      call(controller.removePsa, removePsaFakeRequest(removePsaJson))
     }
   }
 
   it should "throw UpStream4xxResponse when service throws UpStream4xxResponse" in {
 
-    fakeDesConnector.setCeasePsaResponse(Future.failed(Upstream4xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+    fakeDesConnector.setRemovePsaResponse(Future.failed(Upstream4xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
     recoverToSucceededIf[Upstream4xxResponse] {
-      call(controller.ceasePsa, ceasePsaFakeRequest(ceasePsaJson))
+      call(controller.removePsa, removePsaFakeRequest(removePsaJson))
     }
   }
 
   it should "throw Exception when service throws any unknown Exception" in {
 
-    fakeDesConnector.setCeasePsaResponse(Future.failed(new Exception("Unknown Exception")))
+    fakeDesConnector.setRemovePsaResponse(Future.failed(new Exception("Unknown Exception")))
 
     recoverToSucceededIf[Exception] {
       controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
@@ -284,9 +284,9 @@ object SchemeControllerSpec extends SpecBase {
 
   val psaId = PsaId("A7654321")
   val pstr: String = "123456789AB"
-  val ceaseDate: LocalDate = LocalDate.parse("2018-02-01")
-  private val ceasePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, ceaseDate)
-  private val ceasePsaJson: JsValue = Json.toJson(ceasePsaDataModel)
+  val removeDate: LocalDate = LocalDate.parse("2018-02-01")
+  private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removeDate)
+  private val removePsaJson: JsValue = Json.toJson(removePsaDataModel)
 
-  def ceasePsaFakeRequest(data: JsValue): FakeRequest[JsValue] = FakeRequest("DELETE", "/").withBody(data)
+  def removePsaFakeRequest(data: JsValue): FakeRequest[JsValue] = FakeRequest("DELETE", "/").withBody(data)
 }

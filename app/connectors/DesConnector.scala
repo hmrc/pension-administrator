@@ -45,7 +45,7 @@ trait DesConnector {
                                                ec: ExecutionContext,
                                                request: RequestHeader): Future[Either[HttpException, PsaSubscription]]
 
-  def ceasePSA(psaToBeCeased: PsaToBeRemovedFromScheme)(implicit
+  def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
                                                         headerCarrier: HeaderCarrier,
                                                         ec: ExecutionContext,
                                                         request: RequestHeader): Future[Either[HttpException, JsValue]]
@@ -90,7 +90,7 @@ class DesConnectorImpl @Inject()(
 
   }
 
-  def ceasePSA(psaToBeCeased: PsaToBeRemovedFromScheme)(implicit
+  def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
                                                         headerCarrier: HeaderCarrier,
                                                         ec: ExecutionContext,
                                                         request: RequestHeader): Future[Either[HttpException, JsValue]] = ???
