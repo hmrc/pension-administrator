@@ -16,14 +16,13 @@
 
 package connectors
 
-import java.time.LocalDate
-
 import audit.{AuditService, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import connectors.helper.ConnectorBehaviours
 import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
+import org.joda.time.LocalDate
 import org.scalatest._
 import org.slf4j.event.Level
 import play.api.LoggerLike
@@ -391,7 +390,7 @@ object DesConnectorSpec extends JsonFileReader {
   val srn = SchemeReferenceNumber("S0987654321")
   val psaId = PsaId("A7654321")
   val pstr: String = PSTR("123456789AB")
-  val ceaseDate: LocalDate = LocalDate.of(2018,2,1)
+  val ceaseDate: LocalDate = LocalDate.now()
 
   private val ceasePsaData: JsValue = Json.obj("ceaseDate" -> ceaseDate.toString)
   private val ceasePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, ceaseDate)
