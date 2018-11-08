@@ -32,11 +32,11 @@ class FakeDesConnector extends DesConnector {
 
   private var registerPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
   private var getPsaResponse: Future[Either[HttpException, PsaSubscription]] = Future.successful(Right(psaSubscription))
-  private var ceasePsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(ceasePsaResponseJson))
+  private var removePsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(removePsaResponseJson))
 
   def setRegisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.registerPsaResponse = response
   def setPsaDetailsResponse(response: Future[Either[HttpException, PsaSubscription]]): Unit = this.getPsaResponse = response
-  def setCeasePsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.ceasePsaResponse = response
+  def setRemovePsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.removePsaResponse = response
 
   override def registerPSA(registerData: JsValue)(implicit
                                                   headerCarrier: HeaderCarrier,
@@ -48,10 +48,10 @@ class FakeDesConnector extends DesConnector {
                                                         ec: ExecutionContext,
                                                         request: RequestHeader): Future[Either[HttpException, PsaSubscription]] = getPsaResponse
 
-  def ceasePSA(psaToBeCeased: PsaToBeRemovedFromScheme)(implicit
+  def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
                                                         headerCarrier: HeaderCarrier,
                                                         ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = ceasePsaResponse
+                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = removePsaResponse
 
 }
 
@@ -64,5 +64,5 @@ object FakeDesConnector {
       "psaId" -> "A21999999"
     )
 
-  val ceasePsaResponseJson: JsValue = Json.obj("processingDate" -> LocalDate.now)
+  val removePsaResponseJson: JsValue = Json.obj("processingDate" -> LocalDate.now)
 }

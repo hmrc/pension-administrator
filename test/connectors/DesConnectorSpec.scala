@@ -190,32 +190,32 @@ class DesConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  "DesConnector ceasePSA" should "handle OK (200)" in {
-    val successResponse = FakeDesConnector.ceasePsaResponseJson
+  "DesConnector removePSA" should "handle OK (200)" in {
+    val successResponse = FakeDesConnector.removePsaResponseJson
     server.stubFor(
-      post(urlEqualTo(ceasePsaUrl))
+      post(urlEqualTo(removePsaUrl))
         .withHeader("Content-Type", equalTo("application/json"))
-        .withRequestBody(equalToJson(Json.stringify(ceasePsaData)))
+        .withRequestBody(equalToJson(Json.stringify(removePsaData)))
         .willReturn(
           ok(Json.stringify(successResponse))
             .withHeader("Content-Type", "application/json")
         )
     )
-    connector.ceasePSA(ceasePsaDataModel).map { response =>
+    connector.removePSA(removePsaDataModel).map { response =>
       response.right.value shouldBe successResponse
     }
   }
 
   it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
     server.stubFor(
-      post(urlEqualTo(ceasePsaUrl))
+      post(urlEqualTo(removePsaUrl))
         .willReturn(
           badRequest
             .withHeader("Content-Type", "application/json")
             .withBody(errorResponse("INVALID_CORRELATION_ID"))
         )
     )
-    connector.ceasePSA(ceasePsaDataModel).map {
+    connector.removePSA(removePsaDataModel).map {
       response =>
         response.left.value shouldBe a[BadRequestException]
         response.left.value.message should include("INVALID_CORRELATION_ID")
@@ -224,14 +224,14 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   it should "return a BadRequestException for a 400 INVALID_PSTR response" in {
     server.stubFor(
-      post(urlEqualTo(ceasePsaUrl))
+      post(urlEqualTo(removePsaUrl))
         .willReturn(
           badRequest
             .withHeader("Content-Type", "application/json")
             .withBody(errorResponse("INVALID_PSTR"))
         )
     )
-    connector.ceasePSA(ceasePsaDataModel).map {
+    connector.removePSA(removePsaDataModel).map {
       response =>
         response.left.value shouldBe a[BadRequestException]
         response.left.value.message should include("INVALID_PSTR")
@@ -240,14 +240,14 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   it should "return a BadRequestException for a 400 INVALID_PSAID response" in {
     server.stubFor(
-      post(urlEqualTo(ceasePsaUrl))
+      post(urlEqualTo(removePsaUrl))
         .willReturn(
           badRequest
             .withHeader("Content-Type", "application/json")
             .withBody(errorResponse("INVALID_PSAID"))
         )
     )
-    connector.ceasePSA(ceasePsaDataModel).map {
+    connector.removePSA(removePsaDataModel).map {
       response =>
         response.left.value shouldBe a[BadRequestException]
         response.left.value.message should include("INVALID_PSAID")
@@ -256,7 +256,7 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
     server.stubFor(
-      post(urlEqualTo(ceasePsaUrl))
+      post(urlEqualTo(removePsaUrl))
         .willReturn(
           badRequest
             .withHeader("Content-Type", "application/json")
@@ -265,7 +265,7 @@ class DesConnectorSpec extends AsyncFlatSpec
     )
 
     logger.reset()
-    connector.ceasePSA(ceasePsaDataModel).map {
+    connector.removePSA(removePsaDataModel).map {
       _ =>
         logger.getLogEntries.size shouldBe 1
         logger.getLogEntries.head.level shouldBe Level.WARN
@@ -274,7 +274,7 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   it should "return a ForbiddenException for a 403 NO_RELATIONSHIP_EXISTS response" in {
     server.stubFor(
-      post(urlEqualTo(ceasePsaUrl))
+      post(urlEqualTo(removePsaUrl))
         .willReturn(
           forbidden
             .withHeader("Content-Type", "application/json")
@@ -282,7 +282,7 @@ class DesConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.ceasePSA(ceasePsaDataModel).map {
+    connector.removePSA(removePsaDataModel).map {
       response =>
         response.left.value shouldBe a[ForbiddenException]
         response.left.value.message should include("NO_RELATIONSHIP_EXISTS")
@@ -291,7 +291,7 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   it should "return a ForbiddenException for a 403 NO_OTHER_ASSOCIATED_PSA response" in {
     server.stubFor(
-      post(urlEqualTo(ceasePsaUrl))
+      post(urlEqualTo(removePsaUrl))
         .willReturn(
           forbidden
             .withHeader("Content-Type", "application/json")
@@ -299,7 +299,7 @@ class DesConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.ceasePSA(ceasePsaDataModel).map {
+    connector.removePSA(removePsaDataModel).map {
       response =>
         response.left.value shouldBe a[ForbiddenException]
         response.left.value.message should include("NO_OTHER_ASSOCIATED_PSA")
@@ -308,7 +308,7 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   it should "return a ForbiddenException for a 403 FUTURE_CEASE_DATE response" in {
     server.stubFor(
-      post(urlEqualTo(ceasePsaUrl))
+      post(urlEqualTo(removePsaUrl))
         .willReturn(
           forbidden
             .withHeader("Content-Type", "application/json")
@@ -316,7 +316,7 @@ class DesConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.ceasePSA(ceasePsaDataModel).map {
+    connector.removePSA(removePsaDataModel).map {
       response =>
         response.left.value shouldBe a[ForbiddenException]
         response.left.value.message should include("FUTURE_CEASE_DATE")
@@ -325,7 +325,7 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   it should "return a ForbiddenException for a 403 PSAID_NOT_ACTIVE response" in {
     server.stubFor(
-      post(urlEqualTo(ceasePsaUrl))
+      post(urlEqualTo(removePsaUrl))
         .willReturn(
           forbidden
             .withHeader("Content-Type", "application/json")
@@ -333,7 +333,7 @@ class DesConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.ceasePSA(ceasePsaDataModel).map {
+    connector.removePSA(removePsaDataModel).map {
       response =>
         response.left.value shouldBe a[ForbiddenException]
         response.left.value.message should include("PSAID_NOT_ACTIVE")
@@ -342,7 +342,7 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
     server.stubFor(
-      post(urlEqualTo(ceasePsaUrl))
+      post(urlEqualTo(removePsaUrl))
         .willReturn(
           aResponse()
             .withStatus(CONFLICT)
@@ -350,7 +350,7 @@ class DesConnectorSpec extends AsyncFlatSpec
             .withBody(errorResponse("DUPLICATE_SUBMISSION"))
         )
     )
-    connector.ceasePSA(ceasePsaDataModel).map {
+    connector.removePSA(removePsaDataModel).map {
       response =>
         response.left.value shouldBe a[ConflictException]
         response.left.value.message should include("DUPLICATE_SUBMISSION")
@@ -359,7 +359,7 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   it should "return not found exception and failure response details for a 404 response" in {
     server.stubFor(
-      post(urlEqualTo(ceasePsaUrl))
+      post(urlEqualTo(removePsaUrl))
         .willReturn(
           aResponse()
             .withStatus(NOT_FOUND)
@@ -368,14 +368,14 @@ class DesConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.ceasePSA(ceasePsaDataModel).collect {
+    connector.removePSA(removePsaDataModel).collect {
       case Left(_: NotFoundException) => succeed
     }
   }
 
   it should behave like errorHandlerForPostApiFailures(
-    connector.ceasePSA(ceasePsaDataModel),
-    ceasePsaUrl
+    connector.removePSA(removePsaDataModel),
+    removePsaUrl
   )
 
 }
@@ -390,14 +390,14 @@ object DesConnectorSpec extends JsonFileReader {
   val srn = SchemeReferenceNumber("S0987654321")
   val psaId = PsaId("A7654321")
   val pstr: String = PSTR("123456789AB")
-  val ceaseDate: LocalDate = LocalDate.now()
+  val removalDate: LocalDate = LocalDate.now()
 
-  private val ceasePsaData: JsValue = Json.obj("ceaseDate" -> ceaseDate.toString)
-  private val ceasePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, ceaseDate)
+  private val removePsaData: JsValue = Json.obj("ceaseDate" -> removalDate.toString)
+  private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removalDate)
 
   val registerPsaUrl = "/pension-online/subscription"
   val psaSubscriptionDetailsUrl = s"/pension-online/psa-subscription-details/$psaId"
-  val ceasePsaUrl = s"/pension-online/cease-psa/psaid/$psaId/pstr/$pstr"
+  val removePsaUrl = s"/pension-online/cease-psa/psaid/$psaId/pstr/$pstr"
 
   private def errorResponse(code: String) =
     Json.stringify(

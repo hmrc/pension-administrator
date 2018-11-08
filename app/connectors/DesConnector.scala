@@ -45,7 +45,7 @@ trait DesConnector {
                                                ec: ExecutionContext,
                                                request: RequestHeader): Future[Either[HttpException, PsaSubscription]]
 
-  def ceasePSA(psaToBeCeased: PsaToBeRemovedFromScheme)(implicit
+  def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
                                          headerCarrier: HeaderCarrier,
                                          ec: ExecutionContext,
                                          request: RequestHeader): Future[Either[HttpException, JsValue]]
@@ -90,21 +90,21 @@ class DesConnectorImpl @Inject()(
 
   }
 
-  override def ceasePSA(psaToBeCeased: PsaToBeRemovedFromScheme)(implicit
+  override def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
                                                                  headerCarrier: HeaderCarrier,
                                                                  ec: ExecutionContext,
                                                                  request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
-    val ceasePsaSchema = "/resources/schemas/ceasePsa.json"
+    val removePsaSchema = "/resources/schemas/removePsa.json"
 
-    val ceasePsaUrl = config.ceasePsaUrl.format(psaToBeCeased.psaId, psaToBeCeased.pstr)
+    val removePsaUrl = config.removePsaUrl.format(psaToBeRemoved.psaId, psaToBeRemoved.pstr)
 
-    val data: JsValue = Json.obj("ceaseDate" -> psaToBeCeased.removalDate.toString)
+    val data: JsValue = Json.obj("ceaseDate" -> psaToBeRemoved.removalDate.toString)
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
-    http.POST[JsValue, HttpResponse](ceasePsaUrl, data)(implicitly, implicitly, hc, implicitly) map {
-      handlePostResponse(_, ceasePsaUrl) } andThen logFailures("cease PSA", data, ceasePsaSchema)
+    http.POST[JsValue, HttpResponse](removePsaUrl, data)(implicitly, implicitly, hc, implicitly) map {
+      handlePostResponse(_, removePsaUrl) } andThen logFailures("remove PSA", data, removePsaSchema)
   }
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
