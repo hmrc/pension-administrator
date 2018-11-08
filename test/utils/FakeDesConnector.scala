@@ -17,7 +17,7 @@
 package utils
 
 import connectors.DesConnector
-import models.PsaSubscription
+import models.{PsaSubscription, PsaToBeRemovedFromScheme}
 import org.joda.time.LocalDate
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
@@ -32,9 +32,11 @@ class FakeDesConnector extends DesConnector {
 
   private var registerPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
   private var getPsaResponse: Future[Either[HttpException, PsaSubscription]] = Future.successful(Right(psaSubscription))
+  private var ceasePsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(ceasePsaResponseJson))
 
   def setRegisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.registerPsaResponse = response
   def setPsaDetailsResponse(response: Future[Either[HttpException, PsaSubscription]]): Unit = this.getPsaResponse = response
+  def setCeasePsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.ceasePsaResponse = response
 
   override def registerPSA(registerData: JsValue)(implicit
                                                   headerCarrier: HeaderCarrier,
@@ -45,6 +47,12 @@ class FakeDesConnector extends DesConnector {
                                                         headerCarrier: HeaderCarrier,
                                                         ec: ExecutionContext,
                                                         request: RequestHeader): Future[Either[HttpException, PsaSubscription]] = getPsaResponse
+
+  def ceasePSA(psaToBeCeased: PsaToBeRemovedFromScheme)(implicit
+                                                        headerCarrier: HeaderCarrier,
+                                                        ec: ExecutionContext,
+                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = ceasePsaResponse
+
 }
 
 object FakeDesConnector {
@@ -55,4 +63,6 @@ object FakeDesConnector {
       "formBundle" -> "1121313",
       "psaId" -> "A21999999"
     )
+
+  val ceasePsaResponseJson: JsValue = Json.obj("processingDate" -> LocalDate.now)
 }

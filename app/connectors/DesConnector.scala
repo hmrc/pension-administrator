@@ -20,7 +20,7 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.PsaSubscription
+import models.{PsaSubscription, PsaToBeRemovedFromScheme}
 import play.Logger
 import play.api.http.Status._
 import play.api.libs.json.{JsError, JsResultException, JsSuccess, JsValue}
@@ -44,6 +44,11 @@ trait DesConnector {
                                                headerCarrier: HeaderCarrier,
                                                ec: ExecutionContext,
                                                request: RequestHeader): Future[Either[HttpException, PsaSubscription]]
+
+  def ceasePSA(psaToBeCeased: PsaToBeRemovedFromScheme)(implicit
+                                                        headerCarrier: HeaderCarrier,
+                                                        ec: ExecutionContext,
+                                                        request: RequestHeader): Future[Either[HttpException, JsValue]]
 }
 
 class DesConnectorImpl @Inject()(
@@ -84,6 +89,11 @@ class DesConnectorImpl @Inject()(
       implicitly) map { handleGetResponse(_, subscriptionDetailsUrl) } andThen logWarning("PSA subscription details")
 
   }
+
+  def ceasePSA(psaToBeCeased: PsaToBeRemovedFromScheme)(implicit
+                                                        headerCarrier: HeaderCarrier,
+                                                        ec: ExecutionContext,
+                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = ???
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
 
