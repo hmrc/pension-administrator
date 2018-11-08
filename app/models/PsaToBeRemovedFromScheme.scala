@@ -16,12 +16,12 @@
 
 package models
 
-import java.time.LocalDate
 
-import play.api.libs.json.{Format, Json}
+import org.joda.time.LocalDate
+import play.api.libs.json.{Json, OFormat}
 
 case class PsaToBeRemovedFromScheme(psaId: String, pstr: String, removalDate: LocalDate)
 
 object PsaToBeRemovedFromScheme {
-  implicit val formats: Format[PsaToBeRemovedFromScheme] = Json.format[PsaToBeRemovedFromScheme]
+  implicit val formats: OFormat[PsaToBeRemovedFromScheme] = Json.format[PsaToBeRemovedFromScheme]
 }

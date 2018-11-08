@@ -16,11 +16,10 @@
 
 package controllers
 
-import java.time.LocalDate
-
 import akka.stream.Materializer
 import base.{JsonFileReader, SpecBase}
 import models.PsaToBeRemovedFromScheme
+import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.http.Status.BAD_GATEWAY
 import play.api.libs.json.{JsResultException, JsValue, Json}
@@ -285,7 +284,7 @@ object SchemeControllerSpec extends SpecBase {
 
   val psaId = PsaId("A7654321")
   val pstr: String = "123456789AB"
-  val ceaseDate: LocalDate = LocalDate.of(2018,2,1)
+  val ceaseDate: LocalDate = LocalDate.parse("2018-02-01")
   private val ceasePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, ceaseDate)
   private val ceasePsaJson: JsValue = Json.toJson(ceasePsaDataModel)
 
