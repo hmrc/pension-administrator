@@ -146,7 +146,7 @@ class RegistrationConnectorImpl @Inject()(
     val apiWrites = RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference)
     val body = Json.toJson(registrationRequest)(apiWrites)
 
-    Logger.debug("Registration Without Id Individual request\n" + Json.prettyPrint(body))
+    Logger.debug(s"Registration Without Id Individual request body: ${Json.prettyPrint(body)}) headers: $hcWithDesHeaders")
 
     http.POST(url, body)(implicitly, httpResponseReads, hcWithDesHeaders, implicitly) map {
       response =>
