@@ -456,7 +456,6 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
           .withHeader("Authorization", matching("^.+$"))
           .withHeader("Content-Type", equalTo("application/json"))
           .withHeader("Environment", matching("^.+$"))
-          .withRequestBody(equalToJson(Json.stringify(registerIndividualWithoutIdRequestJson)))
           .willReturn(
             aResponse()
               .withStatus(OK)
