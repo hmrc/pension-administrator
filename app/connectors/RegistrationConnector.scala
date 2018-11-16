@@ -135,10 +135,12 @@ class RegistrationConnectorImpl @Inject()(
   }
 
   override def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
-    (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = {
+                                         (implicit hc: HeaderCarrier,
+                                          ec: ExecutionContext,
+                                          request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = {
+    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = desHeader)
 
-    val hcWithDesHeaders: HeaderCarrier = hc.withExtraHeaders(headerUtils.desHeader(hc): _*)
-    val acknowledgementReference = headerUtils.getCorrelationId(hcWithDesHeaders.requestId.map(_.value))
+    val acknowledgementReference = headerUtils.getCorrelationId(hc.requestId.map(_.value))
 
     val schema = "/resources/schemas/registrationWithoutIdRequest.json"
     val method = "POST"
@@ -146,9 +148,9 @@ class RegistrationConnectorImpl @Inject()(
     val apiWrites = RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference)
     val body = Json.toJson(registrationRequest)(apiWrites)
 
-    Logger.debug(s"Registration Without Id Individual request body: ${Json.prettyPrint(body)}) headers: $hcWithDesHeaders")
+    Logger.debug(s"Registration Without Id Individual request body: ${Json.prettyPrint(body)}) headers: ${desHeader.toString()}")
 
-    http.POST(url, body)(implicitly, httpResponseReads, hcWithDesHeaders, implicitly) map {
+    http.POST(url, body, desHeader)(implicitly, httpResponseReads, HeaderCarrier(), implicitly) map {
       response =>
         Logger.debug(s"Registration Without Id Individual response. Status=${response.status}\n${response.body}")
 
