@@ -110,14 +110,13 @@ class RegistrationConnectorImpl @Inject()(
                                             ec: ExecutionContext,
                                             request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
-    val hcWithDesHeaders: HeaderCarrier = headerCarrier.withExtraHeaders(headerUtils.desHeader(headerCarrier): _*)
     val schemeAdminRegisterUrl = config.registerWithoutIdOrganisationUrl
-    val correlationId = headerUtils.getCorrelationId(hcWithDesHeaders.requestId.map(_.value))
+    val correlationId = headerUtils.getCorrelationId(headerCarrier.requestId.map(_.value))
 
     val registerWithNoIdData = mandatoryWithoutIdData(correlationId).as[JsObject] ++
       Json.toJson(registerData)(writesOrganisationRegistrant).as[JsObject]
 
-    http.POST(schemeAdminRegisterUrl, registerWithNoIdData)(implicitly, implicitly[HttpReads[HttpResponse]], hcWithDesHeaders, implicitly) map {
+    http.POST(schemeAdminRegisterUrl, registerWithNoIdData, desHeader)(implicitly, implicitly[HttpReads[HttpResponse]], HeaderCarrier(), implicitly) map {
       handleResponse(_, schemeAdminRegisterUrl)
     } andThen sendPSARegistrationEvent(
       withId = false, user, "Organisation", Json.toJson(registerWithNoIdData), _ => Some(false)
@@ -138,7 +137,6 @@ class RegistrationConnectorImpl @Inject()(
                                          (implicit hc: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = {
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = desHeader)
 
     val acknowledgementReference = headerUtils.getCorrelationId(hc.requestId.map(_.value))
 
@@ -170,9 +168,7 @@ class RegistrationConnectorImpl @Inject()(
             Left(handleErrorResponse("Register without Id Individual", url, response, Seq.empty))
         }
     }
-
   }
-
 }
 
 object RegistrationConnectorImpl {
