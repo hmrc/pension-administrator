@@ -100,10 +100,12 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   }
 
-  private def processResponse(acceptedInvitation: AcceptedInvitation,
-                              response: HttpResponse, url: String)(implicit request: RequestHeader, ec: ExecutionContext) = {
+  private def processResponse(acceptedInvitation: AcceptedInvitation, response: HttpResponse, url: String)(
+    implicit request: RequestHeader, ec: ExecutionContext) : Either[HttpException, Unit] = {
+
     sendAcceptInvitationAuditEvent(acceptedInvitation, response.status,
-      if (response.body.isEmpty) None else Some(response.json))
+      if (response.body.isEmpty) None else Some(response.json))(auditService.sendEvent)
+
     if (response.status == OK) {
       Logger.info(s"POST of $url returned successfully")
       Right(())
@@ -111,11 +113,6 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
       processFailureResponse(response, url)
     }
   }
-
-  private def sendAcceptInvitationAuditEvent(acceptedInvitation: AcceptedInvitation,
-                                             status: Int,
-                                             response: Option[JsValue])(implicit request: RequestHeader, ec: ExecutionContext): Unit =
-    auditService.sendEvent(InvitationAcceptanceAuditEvent(acceptedInvitation, status, response))
 
   def acceptInvitation(acceptedInvitation: AcceptedInvitation)
                       (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] = {

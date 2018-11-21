@@ -16,10 +16,10 @@
 
 package audit
 
-import models.PSAMinimalDetails
+import models.{AcceptedInvitation, PSAMinimalDetails}
 import play.api.Logger
 import play.api.http.Status
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HttpException
 
@@ -49,7 +49,15 @@ trait AssociationAuditService {
         )
       )
     case Failure(t) =>
-      Logger.error("Error in registration connector", t)
+      Logger.error("Error in AssociationConnector connector", t)
+  }
+
+  def sendAcceptInvitationAuditEvent(acceptedInvitation: AcceptedInvitation, status: Int,
+                                     response: Option[JsValue])(sendEvent: InvitationAcceptanceAuditEvent => Unit)
+                                   (implicit rh: RequestHeader, ec: ExecutionContext): Unit = {
+
+    sendEvent(InvitationAcceptanceAuditEvent(acceptedInvitation, status, response))
+
   }
 
 }
