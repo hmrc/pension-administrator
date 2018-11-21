@@ -86,7 +86,7 @@ trait RegistrationAuditService {
         )
       )
     case Failure(t) =>
-      Logger.error("Error in registration connector", t)
+      println("Error in registration connector", t)
 
   }
 
