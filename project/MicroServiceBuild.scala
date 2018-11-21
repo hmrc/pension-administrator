@@ -34,19 +34,7 @@ object MicroServiceBuild extends Build with MicroService {
   private val bootstrapVersion = "0.31.0"
   private val jsonSchemaValidatorVersion = "0.1.19"
   private val playJsonPathVersion = "2.5.0"
-
-
-  /*
-  Compile dependencies
-"uk.gov.hmrc" %% "bootstrap-play-26"       % `latest-version`,
-"uk.gov.hmrc" %% "simple-reactivemongo"    % `latest-version`
-Test dependencies
-"uk.gov.hmrc"      %% "reactivemongo-test"       % `latest-version`     % Test,
-"org.scalatest"    %% "scalatest"                % "3.0.x"              % Test,
-"org.scalatestplus.play" %% "scalatestplus-play" % "3.1.x"              % Test,
-"com.typesafe.play"      %% "play-test"          % PlayVersion.current  % Test,
-
-   */
+  
 
   val compile = Seq(
     "uk.gov.hmrc" %% "simple-reactivemongo" % simpleReactiveMongoVersion,
