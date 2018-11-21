@@ -23,25 +23,43 @@ object MicroServiceBuild extends Build with MicroService {
   val appName = "pension-administrator"
 
   override lazy val appDependencies: Seq[ModuleID] = compile ++ test()
-  private val scalaTestPlusPlayVersion = "2.0.1"
+  private val scalaTestPlusPlayVersion = "3.1.2"
   private val mockitoAllVersion = "1.10.19"
-  private val wireMockVersion = "2.18.0"
+  private val wireMockVersion = "2.19.0"
   private val scalacheckVersion = "1.14.0"
   private val domainVersion = "5.2.0"
   private val scalacheckGenRegexp = "0.1.1"
+  private val scalaTestVersion = "3.0.5"
+  private val simpleReactiveMongoVersion = "7.3.0-play-26"
+  private val bootstrapVersion = "0.31.0"
+  private val jsonSchemaValidatorVersion = "0.1.19"
+  private val playJsonPathVersion = "2.5.0"
+
+
+  /*
+  Compile dependencies
+"uk.gov.hmrc" %% "bootstrap-play-26"       % `latest-version`,
+"uk.gov.hmrc" %% "simple-reactivemongo"    % `latest-version`
+Test dependencies
+"uk.gov.hmrc"      %% "reactivemongo-test"       % `latest-version`     % Test,
+"org.scalatest"    %% "scalatest"                % "3.0.x"              % Test,
+"org.scalatestplus.play" %% "scalatestplus-play" % "3.1.x"              % Test,
+"com.typesafe.play"      %% "play-test"          % PlayVersion.current  % Test,
+
+   */
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "play-reactivemongo" % "6.2.0",
+    "uk.gov.hmrc" %% "simple-reactivemongo" % simpleReactiveMongoVersion,
     ws,
-    "uk.gov.hmrc" %% "bootstrap-play-25" % "3.3.0",
-    "com.networknt" % "json-schema-validator" % "0.1.19",
-    "com.josephpconley" %% "play-jsonpath" % "2.5.0",
+    "uk.gov.hmrc" %% "bootstrap-play-26" % bootstrapVersion,
+    "com.networknt" % "json-schema-validator" % jsonSchemaValidatorVersion,
+    "com.josephpconley" %% "play-jsonpath" % playJsonPathVersion,
     "uk.gov.hmrc" %% "domain" % domainVersion
   )
 
   def test(scope: String = "test,it") = Seq(
-    "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % scope,
-    "org.scalatest" %% "scalatest" % "3.0.4" % scope,
+    "uk.gov.hmrc" %% "hmrctest" % "3.2.0" % scope,
+    "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
     "org.pegdown" % "pegdown" % "1.6.0" % scope,
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % scope,
     "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
