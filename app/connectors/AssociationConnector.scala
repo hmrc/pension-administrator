@@ -16,15 +16,15 @@
 
 package connectors
 
-import audit.{AssociationAuditService, AuditService, InvitationAcceptanceAuditEvent}
+import audit.{AssociationAuditService, AuditService}
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models._
-import play.api.{Logger, LoggerLike}
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
+import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient

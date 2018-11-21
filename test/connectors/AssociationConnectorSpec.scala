@@ -211,8 +211,9 @@ class AssociationConnectorSpec extends AsyncFlatSpec
       auditService.verifySent(
         MinimalPSADetails(
           psaId = psaId.id,
-          status = OK,
-          response = Some(Json.toJson(psaMinimalDetailsIndividualUser))
+          psaName = psaMinimalDetailsIndividualUser.name,
+          isPsaSuspended = Some(psaMinimalDetailsIndividualUser.isPsaSuspended),
+          status = OK
         )
       ) shouldBe true
 
@@ -232,8 +233,9 @@ class AssociationConnectorSpec extends AsyncFlatSpec
       auditService.verifySent(
         MinimalPSADetails(
           psaId = psaId.id,
-          status = NOT_FOUND,
-          response = None
+          psaName = None,
+          isPsaSuspended = None,
+          status = NOT_FOUND
         )
       ) shouldBe true
     }

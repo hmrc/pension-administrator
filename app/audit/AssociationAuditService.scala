@@ -36,16 +36,18 @@ trait AssociationAuditService {
       sendEvent(
         MinimalPSADetails(
           psaId = psaId,
-          status = Status.OK,
-          response = Some(Json.toJson(psaMinimalDetails))
+          psaName = psaMinimalDetails.name,
+          isPsaSuspended = Some(psaMinimalDetails.isPsaSuspended),
+          status = Status.OK
         )
       )
     case Success(Left(e)) =>
       sendEvent(
         MinimalPSADetails(
           psaId = psaId,
-          status = e.responseCode,
-          response = None
+          psaName = None,
+          isPsaSuspended = None,
+          status = e.responseCode
         )
       )
     case Failure(t) =>

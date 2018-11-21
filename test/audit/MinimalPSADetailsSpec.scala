@@ -17,24 +17,23 @@
 package audit
 
 import org.scalatest.{FlatSpec, Matchers}
-import play.api.libs.json.Json
 
 class MinimalPSADetailsSpec extends FlatSpec with Matchers {
 
   "MinimalPSADetails.details" should "output the correct map of data" in {
 
-    val response = Json.obj("name" -> "response")
-
     val event = MinimalPSADetails(
       psaId = "A2500001",
-      status = 0,
-      response = Some(response)
+      psaName = Some("John Doe"),
+      isPsaSuspended = Some(false),
+      status = 200
     )
 
     val expected: Map[String, String] = Map(
       "PSAID" -> "A2500001",
-      "status" -> "0",
-      "response" -> Json.stringify(response)
+      "PSAName" -> "John Doe",
+      "isPsaSuspended" -> "false",
+      "status" -> "200"
     )
 
     event.auditType shouldBe "GetMinPSADetails"
