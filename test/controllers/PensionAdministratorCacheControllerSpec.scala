@@ -51,7 +51,8 @@ class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers
                                                    repo: PensionAdministratorCacheRepository,
                                                    authConnector: AuthConnector,
                                                    encrypted: Boolean
-                                                 ) extends PensionAdministratorCacheController(configuration(encrypted), repo, authConnector)
+                                                 ) extends PensionAdministratorCacheController(configuration(encrypted), repo,
+                                                            authConnector, stubControllerComponents())
 
   def controller(repo: PensionAdministratorCacheRepository, authConnector: AuthConnector, encrypted: Boolean): PensionAdministratorCacheController = {
     new PensionAdministratorCacheControllerImpl(repo, authConnector, encrypted)

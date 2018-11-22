@@ -47,7 +47,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
   private val repo = mock[InvitationsCacheRepository]
   private val authConnector: AuthConnector = mock[AuthConnector]
 
-  def controller: InvitationsCacheController = new InvitationsCacheController(configuration, repo, authConnector)
+  def controller: InvitationsCacheController = new InvitationsCacheController(configuration, repo, authConnector, stubControllerComponents())
 
   // scalastyle:off method.length
   def validCacheControllerWithInsert(): Unit = {

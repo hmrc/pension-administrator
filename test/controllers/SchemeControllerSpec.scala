@@ -22,6 +22,7 @@ import models.PsaToBeRemovedFromScheme
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.http.Status.BAD_GATEWAY
+import play.api.libs.json.JodaWrites._
 import play.api.libs.json.{JsResultException, JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
@@ -280,7 +281,7 @@ object SchemeControllerSpec extends SpecBase {
     )
   val fakeSchemeService = new FakeSchemeService
   val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
-  val controller = new SchemeController(fakeSchemeService, fakeDesConnector)
+  val controller = new SchemeController(fakeSchemeService, fakeDesConnector, stubControllerComponents())
 
   val psaId = PsaId("A7654321")
   val pstr: String = "123456789AB"
