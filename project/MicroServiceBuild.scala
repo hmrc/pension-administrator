@@ -32,12 +32,12 @@ object MicroServiceBuild extends Build with MicroService {
   private val bootstrapVersion = "0.32.0"
   private val playJsonVersion = "2.6.10"
   private val scalaTestVersion = "3.0.5"
-  private val reactiveMongoVersion = "6.2.0"
+  private val reactiveMongoVersion = "7.4.0-play-26"
   private val jsonSchemeValidatorVersion = "0.1.19"
   private val jsonPathVersion = "2.5.0"
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "play-reactivemongo" % reactiveMongoVersion,
+    "uk.gov.hmrc" %% "simple-reactivemongo" % reactiveMongoVersion,
     "com.typesafe.play" %% "play-json" % playJsonVersion,
     "com.typesafe.play" %% "play-json-joda" % playJsonVersion,
       ws,
@@ -49,6 +49,7 @@ object MicroServiceBuild extends Build with MicroService {
 
   def test(scope: String = "test,it") = Seq(
     "uk.gov.hmrc" %% "bootstrap-play-26" % bootstrapVersion % Test classifier "tests",
+    "uk.gov.hmrc"            %% "reactivemongo-test"         % "4.2.0-play-26"      % Test,
     "uk.gov.hmrc" %% "hmrctest" % "3.2.0" % scope,
     "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
     "org.pegdown" % "pegdown" % "1.6.0" % scope,
