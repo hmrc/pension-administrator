@@ -213,10 +213,10 @@ class AssociationConnectorSpec extends AsyncFlatSpec
           psaId = psaId.id,
           psaName = psaMinimalDetailsIndividualUser.name,
           isPsaSuspended = Some(psaMinimalDetailsIndividualUser.isPsaSuspended),
-          status = OK
+          status = OK,
+          response = Some(Json.toJson(psaMinimalDetailsIndividualUser))
         )
       ) shouldBe true
-
     }
   }
 
@@ -235,7 +235,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
           psaId = psaId.id,
           psaName = None,
           isPsaSuspended = None,
-          status = NOT_FOUND
+          status = NOT_FOUND,
+          response = None
         )
       ) shouldBe true
     }

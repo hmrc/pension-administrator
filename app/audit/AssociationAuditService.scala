@@ -38,7 +38,8 @@ trait AssociationAuditService {
           psaId = psaId,
           psaName = psaMinimalDetails.name,
           isPsaSuspended = Some(psaMinimalDetails.isPsaSuspended),
-          status = Status.OK
+          status = Status.OK,
+          response = Some(Json.toJson(psaMinimalDetails))
         )
       )
     case Success(Left(e)) =>
@@ -47,7 +48,8 @@ trait AssociationAuditService {
           psaId = psaId,
           psaName = None,
           isPsaSuspended = None,
-          status = e.responseCode
+          status = e.responseCode,
+          response = None
         )
       )
     case Failure(t) =>
