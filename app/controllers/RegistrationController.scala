@@ -22,11 +22,11 @@ import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdRespons
 import models.{Organisation, SuccessResponse}
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsResultException, JsValue, Json}
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, Upstream4xxResponse}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.{BackendController, BaseController}
 import utils.ErrorHandler
 import utils.validationUtils._
 
@@ -36,8 +36,9 @@ import scala.util.{Failure, Success, Try}
 
 class RegistrationController @Inject()(
                                         override val authConnector: AuthConnector,
-                                        registerConnector: RegistrationConnector
-                                      ) extends BaseController with ErrorHandler with AuthorisedFunctions {
+                                        registerConnector: RegistrationConnector,
+                                        cc: ControllerComponents
+                                      ) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 
   def registerWithIdIndividual: Action[AnyContent] = Action.async {
     implicit request => {

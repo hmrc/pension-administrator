@@ -18,21 +18,22 @@ package controllers
 
 import audit.{AuditService, EmailAuditEvent}
 import com.google.inject.Inject
+import models.enumeration.JourneyType
 import models.{EmailEvents, Opened}
 import play.api.Logger
 import play.api.libs.json.JsValue
-import play.api.mvc.{Action, BodyParsers, Result}
+import play.api.mvc.{Action, BodyParsers, ControllerComponents, Result}
 import uk.gov.hmrc.crypto.{ApplicationCrypto, Crypted}
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import models.enumeration.JourneyType
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class EmailResponseController @Inject()(
                                          auditService: AuditService,
-                                         crypto: ApplicationCrypto
-                                       ) extends BaseController {
+                                         crypto: ApplicationCrypto,
+                                         cc: ControllerComponents
+                                       ) extends BackendController(cc) {
 
   def retrieveStatus(journeyType: JourneyType.Name, id: String): Action[JsValue] = Action(BodyParsers.parse.tolerantJson) {
     implicit request =>

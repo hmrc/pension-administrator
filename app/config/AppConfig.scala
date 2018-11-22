@@ -17,19 +17,17 @@
 package config
 
 import com.google.inject.Inject
-import play.api.Mode.Mode
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-class AppConfig @Inject()(override val runModeConfiguration: Configuration, environment: Environment) extends ServicesConfig {
-  override protected def mode: Mode = environment.mode
+class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Environment, servicesConfig: ServicesConfig) {
 
   lazy val appName: String = runModeConfiguration.underlying.getString("appName")
 
-  lazy val baseURL: String = baseUrl("des-hod")
-  lazy val baseUrlEmail: String = baseUrl("email")
-  lazy val baseUrlPensionsScheme: String = baseUrl("pensions-scheme")
-  lazy val baseUrlPensionAdministrator: String = baseUrl("pension-administrator")
+  lazy val baseURL: String = servicesConfig.baseUrl("des-hod")
+  lazy val baseUrlEmail: String = servicesConfig.baseUrl("email")
+  lazy val baseUrlPensionsScheme: String = servicesConfig.baseUrl("pensions-scheme")
+  lazy val baseUrlPensionAdministrator: String = servicesConfig.baseUrl("pension-administrator")
 
   lazy val schemeAdminRegistrationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.scheme.administrator.register")}"
   lazy val registerWithoutIdOrganisationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.register.without.id.organisation")}"
