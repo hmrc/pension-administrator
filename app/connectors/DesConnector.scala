@@ -57,7 +57,7 @@ class DesConnectorImpl @Inject()(
                                      auditService: AuditService,
                                      invalidPayloadHandler: InvalidPayloadHandler,
                                      headerUtils: HeaderUtils
-                                   ) extends DesConnector with HttpResponseHelper with ErrorHandler {
+                                   ) extends DesConnector with HttpResponseHelper with ErrorHandler with DesAuditService {
 
   override def registerPSA(registerData: JsValue)(implicit
                                                   headerCarrier: HeaderCarrier,
@@ -86,8 +86,8 @@ class DesConnectorImpl @Inject()(
     http.GET[HttpResponse](subscriptionDetailsUrl)(
       implicitly[HttpReads[HttpResponse]],
       implicitly[HeaderCarrier](hc),
-      implicitly) map { handleGetResponse(_, subscriptionDetailsUrl) } andThen logWarning("PSA subscription details")
-
+      implicitly) map { handleGetResponse(_, subscriptionDetailsUrl, psaId) } andThen
+      sendPSADetailsEvent(psaId)(auditService.sendEvent) andThen logWarning("PSA subscription details")
   }
 
   override def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
@@ -121,12 +121,12 @@ class DesConnectorImpl @Inject()(
 
   }
 
-  private def handleGetResponse(response: HttpResponse, url: String): Either[HttpException, PsaSubscription] = {
+  private def handleGetResponse(response: HttpResponse, url: String, psaId: String)(
+    implicit ec: ExecutionContext, request: RequestHeader): Either[HttpException, PsaSubscription] = {
 
     val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATION_ID")
-
     response.status match {
-      case OK => Right(validateJson(response.json))
+      case OK => Right(validateJson(response.json, psaId))
       case status => Left(handleErrorResponse("PSA Subscription details", url, response, badResponseSeq))
     }
 
@@ -138,7 +138,8 @@ class DesConnectorImpl @Inject()(
     case Success(Left(e: HttpResponse)) => Logger.warn(s"$endpoint received error response from DES", e)
   }
 
-  private def validateJson(json: JsValue): PsaSubscription ={
+  private def validateJson(json: JsValue, psaId: String)(
+    implicit ec: ExecutionContext, request: RequestHeader): PsaSubscription ={
     json.validate[PsaSubscription] match {
       case JsSuccess(value, _) => value
       case JsError(errors) => throw new JsResultException(errors)

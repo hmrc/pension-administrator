@@ -126,7 +126,17 @@ object PsaContactDetails {
 case class PsaSubscription(isSuspended: Boolean, customerIdentification: CustomerIdentification,
                            organisationOrPartner: Option[OrganisationOrPartner], individual: Option[IndividualDetailType], address: CorrespondenceAddress,
                            contact: PsaContactDetails, isSameAddressForLast12Months: Boolean, previousAddress: Option[CorrespondenceAddress],
-                           directorsOrPartners: Option[Seq[DirectorOrPartner]], pensionAdvisor: Option[PensionAdvisor])
+                           directorsOrPartners: Option[Seq[DirectorOrPartner]], pensionAdvisor: Option[PensionAdvisor]){
+
+
+  def name: Option[String] = {
+    (individual, organisationOrPartner) match {
+      case (Some(ind),None) => Some(Seq(ind.firstName,ind.middleName.getOrElse(),ind.lastName).mkString(" "))
+      case (None, Some(org)) => Some(org.name)
+      case _ => None
+    }
+  }
+}
 
 object PsaSubscription {
   implicit val writes : Writes[PsaSubscription] = Json.writes[PsaSubscription]

@@ -17,6 +17,7 @@
 package models.Reads.PsaSubscriptionDetails
 
 import models._
+import utils.testhelpers.PsaSubscriptionBuilder._
 import models.PsaSubscription._
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
@@ -84,6 +85,21 @@ class PsaSubscriptionReadsSpec extends WordSpec with MustMatchers with OptionVal
           psa => psa.as[PsaSubscription].pensionAdvisor mustBe (psa \ "psaSubscriptionDetails" \ "declarationDetails" \ "pensionAdvisorDetails").asOpt[PensionAdvisor]
         }
       }
+    }
+  }
+
+  "PsaSubscription" should {
+
+    "return correct name for individual" in {
+      psaSubscription.name mustBe Some("abcdefghijkl abcdefghijkl abcdefjkl")
+    }
+
+    "return correct name for OrganisationOrPartner" in {
+      psaSubscription.copy(individual= None, organisationOrPartner = Some(organisationOrPartner)).name mustBe Some("organization name")
+    }
+
+    "return none for name if OrganisationOrPartner and individual are not present" in {
+      psaSubscription.copy(individual= None, organisationOrPartner = None).name mustBe None
     }
   }
 }

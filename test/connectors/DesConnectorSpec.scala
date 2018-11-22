@@ -16,9 +16,9 @@
 
 package connectors
 
-import audit.{AuditService, StubSuccessfulAuditService}
+import audit.{AuditService, PSADetails, StubSuccessfulAuditService}
 import base.JsonFileReader
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.{serverError, _}
 import config.AppConfig
 import connectors.helper.ConnectorBehaviours
 import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
@@ -47,6 +47,11 @@ class DesConnectorSpec extends AsyncFlatSpec
   with ConnectorBehaviours{
 
   import DesConnectorSpec._
+
+  override def beforeEach(): Unit = {
+    auditService.reset()
+    super.beforeEach()
+  }
 
   override protected def portConfigKey: String = "microservice.services.des-hod.port"
 
@@ -188,6 +193,89 @@ class DesConnectorSpec extends AsyncFlatSpec
       ex =>
         ex.leftSide shouldBe a[JsResultException]
     }
+  }
+
+  it should "send a GetPSADetails audit event on success" in {
+
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          ok(psaSubscriptionData.toString())
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    connector.getPSASubscriptionDetails(psaId.value).map { _ =>
+      auditService.verifySent(
+        PSADetails(
+          psaId = psaId.value,
+          psaName = Some("abcdefghijkl abcdefghijkl abcdefjkl"),
+          status = OK,
+          response = Some(Json.toJson(psaSubscription))
+        )
+      ) shouldBe true
+    }
+  }
+
+  it should "send a GetPSADetails audit event on not found" in {
+
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          notFound()
+        )
+    )
+
+    connector.getPSASubscriptionDetails(psaId.value).map { _ =>
+        auditService.verifySent(
+          PSADetails(
+            psaId = psaId.value,
+            psaName = None,
+            status = NOT_FOUND,
+            response = None
+          )
+        ) shouldBe true
+    }
+  }
+
+
+  it should "not send a GetPSADetails audit event on JsResultException if the API response cannot be converted to PsaSubscription" in {
+
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          ok(invalidPsaSubscriptionResponse.toString())
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    recoverToExceptionIf[JsResultException](connector.getPSASubscriptionDetails(psaId.value)) map { _ =>
+      auditService.verifyNothingSent shouldBe true
+    }
+  }
+
+  it should "not send a GetPSADetails audit event on failure" in {
+
+    val failureResponse = Json.obj(
+      "code" -> "INVALID_PAYLOAD",
+      "reason" -> "Submission has not passed validation. Invalid PAYLOAD"
+    )
+
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .willReturn(
+          serverError
+            .withBody(failureResponse.toString)
+        )
+    )
+
+    recoverToExceptionIf[Upstream5xxResponse](connector.getPSASubscriptionDetails(psaId.value)) map {_ =>
+      auditService.verifyNothingSent shouldBe true
+    }
+
   }
 
   "DesConnector removePSA" should "handle OK (200)" in {
