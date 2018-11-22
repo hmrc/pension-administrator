@@ -337,8 +337,6 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
       response =>
         response.right.value shouldBe registerWithoutIdResponseJson
     }
-
-    pending
   }
 
   it should "handle FORBIDDEN (403) - INVALID_SUBMISSION" in {
