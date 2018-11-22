@@ -49,7 +49,7 @@ class InvitationsCacheRepository @Inject()(
   // scalastyle:off magic.number
   private val ttl = 0
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
-  private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
+  private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
 
   private case class DataEntry(
                                 inviteePsaId: String,

@@ -17,7 +17,7 @@
 package controllers
 
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, RawBuffer}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, RawBuffer}
 import play.api.{Configuration, Logger}
 import repositories.PensionAdministratorCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
@@ -29,8 +29,9 @@ import scala.concurrent.Future
 abstract class PensionAdministratorCacheController(
                                               config: Configuration,
                                               repository: PensionAdministratorCacheRepository,
-                                              val authConnector: AuthConnector
-                                            ) extends BaseController with AuthorisedFunctions {
+                                              val authConnector: AuthConnector,
+                                              cc : ControllerComponents
+                                            ) extends BaseController(cc) with AuthorisedFunctions {
 
   private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
 

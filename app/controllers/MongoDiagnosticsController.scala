@@ -21,18 +21,20 @@ import java.util.Date
 
 import javax.inject.Inject
 import play.api.Configuration
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.Cursor
 import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.bson.{BSONDocument, BSONString}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.{BackendBaseController, BackendController, BaseController}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.postfixOps
 
-class MongoDiagnosticsController @Inject()(config: Configuration, component: ReactiveMongoComponent) extends BaseController {
+class MongoDiagnosticsController @Inject()(config: Configuration,
+                                           component: ReactiveMongoComponent,
+                                           controllerComponents: ControllerComponents) extends BackendController(controllerComponents) {
 
   // scalastyle:off magic.number
   private val banner = Seq.fill(50)("-").mkString

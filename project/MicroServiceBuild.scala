@@ -34,10 +34,10 @@ object MicroServiceBuild extends Build with MicroService {
   private val bootstrapVersion = "0.31.0"
   private val jsonSchemaValidatorVersion = "0.1.19"
   private val playJsonPathVersion = "2.5.0"
-  
+
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "simple-reactivemongo" % simpleReactiveMongoVersion,
+    "uk.gov.hmrc" %% "play-reactivemongo" % "6.2.0",
     ws,
     "uk.gov.hmrc" %% "bootstrap-play-26" % bootstrapVersion,
     "com.networknt" % "json-schema-validator" % jsonSchemaValidatorVersion,
