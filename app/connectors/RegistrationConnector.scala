@@ -20,11 +20,12 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.registrationnoid._
 import models.User
+import models.registrationnoid._
 import play.Logger
 import play.api.http.Status._
 import play.api.libs.functional.syntax._
+import play.api.libs.json.JodaWrites._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._

@@ -18,6 +18,7 @@ import play.core.PlayVersion
 import play.sbt.PlayImport._
 import sbt._
 
+
 object MicroServiceBuild extends Build with MicroService {
 
   val appName = "pension-administrator"
@@ -30,15 +31,17 @@ object MicroServiceBuild extends Build with MicroService {
   private val domainVersion = "5.2.0"
   private val scalacheckGenRegexp = "0.1.1"
   private val scalaTestVersion = "3.0.5"
-  private val simpleReactiveMongoVersion = "7.3.0-play-26"
+  private val playReactiveMongoVersion = "6.2.0"
   private val bootstrapVersion = "0.31.0"
   private val jsonSchemaValidatorVersion = "0.1.19"
   private val playJsonPathVersion = "2.5.0"
 
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "play-reactivemongo" % "6.2.0",
+    "uk.gov.hmrc" %% "play-reactivemongo" % playReactiveMongoVersion,
     ws,
+    "com.typesafe.play" %% "play-json" % "2.6.10",
+    "com.typesafe.play" %% "play-json-joda" % "2.6.10",
     "uk.gov.hmrc" %% "bootstrap-play-26" % bootstrapVersion,
     "com.networknt" % "json-schema-validator" % jsonSchemaValidatorVersion,
     "com.josephpconley" %% "play-jsonpath" % playJsonPathVersion,

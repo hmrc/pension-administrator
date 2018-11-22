@@ -18,7 +18,10 @@ package models
 
 import org.joda.time.LocalDate
 import play.api.libs.functional.syntax._
+import play.api.libs.json.JodaReads._
 import play.api.libs.json.{JsPath, Json, Reads, Writes}
+import play.api.libs.json.JodaWrites._
+
 
 case class CorrespondenceAddress(addressLine1: String, addressLine2: String, addressLine3: Option[String], addressLine4: Option[String], countryCode: String, postalCode: Option[String])
 
