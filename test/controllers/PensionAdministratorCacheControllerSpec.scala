@@ -24,21 +24,20 @@ import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{MustMatchers, WordSpec}
-import org.scalatestplus.play.OneAppPerSuite
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Configuration
+import play.api.libs.json.JodaWrites._
 import play.api.libs.json.Json
 import play.api.mvc.ControllerComponents
-import play.api.test.{FakeRequest, Injecting}
 import play.api.test.Helpers._
+import play.api.test.{FakeRequest, Injecting}
 import repositories.PensionAdministratorCacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
-import play.api.libs.json.JodaWrites._
-import play.api.libs.json.JodaReads._
 
 import scala.concurrent.Future
 
-class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers with MockitoSugar with Injecting with OneAppPerSuite {
+class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers with MockitoSugar with Injecting with GuiceOneAppPerSuite {
 
   implicit lazy val mat: Materializer = app.materializer
 

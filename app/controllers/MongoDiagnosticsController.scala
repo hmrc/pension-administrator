@@ -112,17 +112,19 @@ class MongoDiagnosticsController @Inject()(config: Configuration,
 
     import collection.BatchCommands.AggregationFramework.{Group, MinField}
 
-    collection.aggregatorContext(
+    collection.aggregate(
       Group(BSONString(""))("minLastUpdated" -> MinField("lastUpdated"))
-    ).prepared.cursor.collect[Seq](0, Cursor.FailOnError[Seq[BSONDocument]]()).
-    map {
-      docs =>
-        docs.headOption.flatMap{ doc =>
-         doc.getAs[Date]("minLastUpdated") map {date =>
-              dateFormat.format(date)
-          }
-        } getOrElse("<none>")
+    ) map {
+      result =>
+        result.firstBatch.headOption.flatMap {
+          head =>
+            head.getAs[Date]("minLastUpdated") map {
+              date =>
+                dateFormat.format(date)
+            }
+        }.getOrElse("<none>")
     }
+
   }
 
   def ids(collection: BSONCollection): Future[String] = {

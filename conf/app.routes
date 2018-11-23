@@ -23,7 +23,7 @@ POST        /email-response/:journeyType/*id            controllers.EmailRespons
 POST        /invite                                     controllers.InvitationController.invite
 
 GET         /invitation/get-for-scheme                  controllers.InvitationsCacheController.getForScheme
-GET         /invitation/get-for-inviMicrotee                 controllers.InvitationsCacheController.getForInvitee
+GET         /invitation/get-for-invitee                 controllers.InvitationsCacheController.getForInvitee
 GET         /invitation/get                             controllers.InvitationsCacheController.get
 POST        /invitation/add                             controllers.InvitationsCacheController.add
 DELETE      /invitation                                 controllers.InvitationsCacheController.remove

@@ -188,7 +188,7 @@ class InvitationsCacheRepository @Inject()(
     if (encrypted) {
       val encryptedMapOfKeys = encryptKeys(mapOfKeys)
       val queryBuilder = collection.find(encryptedMapOfKeys)
-      queryBuilder.cursor[DataEntry](ReadPreference.primary).collect[List](0, Cursor.FailOnError[List[DataEntry]]()).map { de =>
+      queryBuilder.cursor[DataEntry](ReadPreference.primary).collect[List]().map { de =>
         val listOfInvitationsJson = de.map {
           dataEntry =>
             val dataAsString = new String(dataEntry.data.byteArray, StandardCharsets.UTF_8)
@@ -199,7 +199,7 @@ class InvitationsCacheRepository @Inject()(
       }
     } else {
       val queryBuilder = collection.find(mapOfKeys)
-      queryBuilder.cursor[JsonDataEntry](ReadPreference.primary).collect[List](0, Cursor.FailOnError[List[JsonDataEntry]]()).map { de =>
+      queryBuilder.cursor[JsonDataEntry](ReadPreference.primary).collect[List]().map { de =>
         val listOfInvitationsJson = de.map {
           dataEntry =>
             dataEntry.data

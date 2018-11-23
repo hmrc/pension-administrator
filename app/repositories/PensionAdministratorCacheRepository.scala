@@ -45,6 +45,7 @@ abstract class PensionAdministratorCacheRepository(
   implicitly
 ) {
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
+  private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
 
   private case class DataEntry(
                                 id: String,
@@ -117,9 +118,6 @@ abstract class PensionAdministratorCacheRepository(
   }
 
   def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
-
-    val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
-
     val document: JsValue = {
       if (encrypted) {
         val unencrypted = PlainText(Json.stringify(data))
@@ -137,7 +135,6 @@ abstract class PensionAdministratorCacheRepository(
 
   def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
     if (encrypted) {
-      val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
       collection.find(BSONDocument("id" -> id)).one[DataEntry].map {
         _.map {
           dataEntry =>
