@@ -27,7 +27,7 @@ import play.api.Configuration
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import play.api.test.{FakeRequest, Injecting}
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import reactivemongo.bson.BSONDocument
 import reactivemongo.core.errors.DatabaseException
@@ -42,7 +42,7 @@ import scala.concurrent.Future
 class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers with MockitoSugar {
   val app = new GuiceApplicationBuilder().configure("run.mode" -> "Test").build()
   implicit lazy val mat: Materializer = app.materializer
-  val cc = app.injector.instanceOf[ControllerComponents]
+  private val cc = app.injector.instanceOf[ControllerComponents]
 
   private def configuration = Configuration("mongodb.pension-administrator-cache.maxSize" -> 512000)
 

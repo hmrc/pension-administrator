@@ -32,9 +32,8 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json._
-import play.api.mvc.ControllerComponents
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.test.{FakeRequest, Injecting}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
