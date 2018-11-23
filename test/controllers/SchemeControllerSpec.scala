@@ -24,7 +24,7 @@ import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.http.Status.BAD_GATEWAY
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json.{JsResultException, JsValue, Json}
-import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
+import play.api.mvc.{AnyContentAsEmpty, ControllerComponents, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import service.SchemeService
@@ -281,7 +281,7 @@ object SchemeControllerSpec extends SpecBase {
     )
   val fakeSchemeService = new FakeSchemeService
   val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
-  val controller = new SchemeController(fakeSchemeService, fakeDesConnector, stubControllerComponents())
+  val controller = new SchemeController(fakeSchemeService, fakeDesConnector, controllerComponents)
 
   val psaId = PsaId("A7654321")
   val pstr: String = "123456789AB"

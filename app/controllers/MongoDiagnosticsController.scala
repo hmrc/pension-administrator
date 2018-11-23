@@ -114,7 +114,7 @@ class MongoDiagnosticsController @Inject()(config: Configuration,
 
     collection.aggregatorContext(
       Group(BSONString(""))("minLastUpdated" -> MinField("lastUpdated"))
-    ).prepared.cursor.collect[Seq](-1, Cursor.FailOnError[Seq[BSONDocument]]()).
+    ).prepared.cursor.collect[Seq](0, Cursor.FailOnError[Seq[BSONDocument]]()).
     map {
       docs =>
         docs.headOption.flatMap{ doc =>

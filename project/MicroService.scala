@@ -34,6 +34,7 @@ trait MicroService {
     .settings(
       RoutesKeys.routesImport ++= Seq("models.enumeration.JourneyType"),
       libraryDependencies ++= appDependencies,
+      dependencyOverrides ++= MicroServiceBuild.overrides,
       retrieveManaged := true,
       evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
       PlayKeys.devSettings += "play.server.http.port" -> "8205"

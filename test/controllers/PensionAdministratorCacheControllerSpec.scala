@@ -27,15 +27,18 @@ import org.scalatest.{MustMatchers, WordSpec}
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Configuration
 import play.api.libs.json.Json
-import play.api.test.FakeRequest
+import play.api.mvc.ControllerComponents
+import play.api.test.{FakeRequest, Injecting}
 import play.api.test.Helpers._
 import repositories.PensionAdministratorCacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
+import play.api.libs.json.JodaWrites._
+import play.api.libs.json.JodaReads._
 
 import scala.concurrent.Future
 
-class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers with MockitoSugar with OneAppPerSuite {
+class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers with MockitoSugar with Injecting with OneAppPerSuite {
 
   implicit lazy val mat: Materializer = app.materializer
 
@@ -52,7 +55,7 @@ class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers
                                                    authConnector: AuthConnector,
                                                    encrypted: Boolean
                                                  ) extends PensionAdministratorCacheController(configuration(encrypted), repo,
-                                                            authConnector, stubControllerComponents())
+                                                            authConnector, inject[ControllerComponents])
 
   def controller(repo: PensionAdministratorCacheRepository, authConnector: AuthConnector, encrypted: Boolean): PensionAdministratorCacheController = {
     new PensionAdministratorCacheControllerImpl(repo, authConnector, encrypted)
@@ -181,7 +184,7 @@ class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers
         val result = controller(repo, authConnector, encrypted).lastUpdated("foo")(FakeRequest())
 
         status(result) mustEqual OK
-        contentAsJson(result) mustEqual Json.toJson(date.getMillis)
+        contentAsJson(result) mustEqual Json.toJson(date)
       }
 
       "return 404 when the data doesn't exist" in {
