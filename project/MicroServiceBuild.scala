@@ -35,30 +35,33 @@ object MicroServiceBuild extends Build with MicroService {
   private val reactiveMongoVersion = "7.4.0-play-26"
   private val jsonSchemeValidatorVersion = "0.1.19"
   private val jsonPathVersion = "2.5.0"
+  private val reactiveMongoTestVersion = "4.2.0-play-26"
+  private val hmrcTestVersion = "3.2.0"
+  private val pegDownVersion = "1.6.0"
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "simple-reactivemongo" % reactiveMongoVersion,
-    "com.typesafe.play" %% "play-json" % playJsonVersion,
-    "com.typesafe.play" %% "play-json-joda" % playJsonVersion,
-      ws,
-    "uk.gov.hmrc" %% "bootstrap-play-26" % bootstrapVersion,
-    "com.networknt" % "json-schema-validator" % jsonSchemeValidatorVersion,
-    "com.josephpconley" %% "play-jsonpath" % jsonPathVersion,
-    "uk.gov.hmrc" %% "domain" % domainVersion
+    ws,
+    "uk.gov.hmrc"             %% "simple-reactivemongo"   % reactiveMongoVersion,
+    "com.typesafe.play"       %% "play-json"              % playJsonVersion,
+    "com.typesafe.play"       %% "play-json-joda"         % playJsonVersion,
+    "uk.gov.hmrc"             %% "bootstrap-play-26"      % bootstrapVersion,
+    "com.networknt"           %  "json-schema-validator"  % jsonSchemeValidatorVersion,
+    "com.josephpconley"       %% "play-jsonpath"          % jsonPathVersion,
+    "uk.gov.hmrc"             %% "domain"                 % domainVersion
   )
 
-  def test(scope: String = "test,it") = Seq(
-    "uk.gov.hmrc" %% "bootstrap-play-26" % bootstrapVersion % Test classifier "tests",
-    "uk.gov.hmrc"            %% "reactivemongo-test"         % "4.2.0-play-26"      % Test,
-    "uk.gov.hmrc" %% "hmrctest" % "3.2.0" % scope,
-    "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
-    "org.pegdown" % "pegdown" % "1.6.0" % scope,
-    "org.scalacheck" %% "scalacheck" % scalacheckVersion % scope,
-    "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
-    "org.scalatestplus.play" %% "scalatestplus-play" % scalaTestPlusPlayVersion % scope,
-    "org.mockito" % "mockito-all" % mockitoAllVersion % scope,
-    "com.github.tomakehurst" % "wiremock" % wireMockVersion % scope,
-    "wolfendale" %% "scalacheck-gen-regexp" % scalacheckGenRegexp % scope
+  def test(scope: String = "test,it"): Seq[ModuleID] = Seq(
+    "uk.gov.hmrc"                 %% "bootstrap-play-26"            % bootstrapVersion          % Test classifier "tests",
+    "uk.gov.hmrc"                 %% "reactivemongo-test"           % reactiveMongoTestVersion  % Test,
+    "uk.gov.hmrc"                 %% "hmrctest"                     % hmrcTestVersion           % scope,
+    "org.scalatest"               %% "scalatest"                    % scalaTestVersion          % scope,
+    "org.pegdown"                  % "pegdown"                      % pegDownVersion            % scope,
+    "org.scalacheck"              %% "scalacheck"                   % scalacheckVersion         % scope,
+    "com.typesafe.play"           %% "play-test"                    % PlayVersion.current       % scope,
+    "org.scalatestplus.play"      %% "scalatestplus-play"           % scalaTestPlusPlayVersion  % scope,
+    "org.mockito"                  % "mockito-all"                  % mockitoAllVersion         % scope,
+    "com.github.tomakehurst"       % "wiremock"                     % wireMockVersion           % scope,
+    "wolfendale"                  %% "scalacheck-gen-regexp"        % scalacheckGenRegexp       % scope
   )
 
   // Fixes a transitive dependency clash between wiremock and scalatestplus-play
