@@ -19,6 +19,7 @@ package connectors
 import audit.testdoubles.StubSuccessfulAuditService
 import audit.{AuditService, PSARegistration}
 import base.JsonFileReader
+import com.fasterxml.jackson.core.JsonParseException
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours
 import models.User
@@ -337,8 +338,6 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
       response =>
         response.right.value shouldBe registerWithoutIdResponseJson
     }
-
-    pending
   }
 
   it should "handle FORBIDDEN (403) - INVALID_SUBMISSION" in {
@@ -467,67 +466,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
       response =>
-        response.right.value shouldBe registerWithoutIdResponse
-    }
-
-  }
-
-  it should "return a BadGatewayException if the DES response is not JSON" in {
-
-    server
-      .stubFor(
-        post(urlEqualTo(registerIndividualWithoutIdUrl))
-          .willReturn(
-            aResponse()
-              .withStatus(OK)
-              .withHeader("Content-Type", "application/json")
-              .withBody("abc")
-          )
-      )
-
-    recoverToSucceededIf[BadGatewayException] {
-      connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)
-    }
-
-  }
-
-  it should "throw a BadGatewayException if the JSON returned by DES is not valid" in {
-
-    server
-      .stubFor(
-        post(urlEqualTo(registerIndividualWithoutIdUrl))
-          .willReturn(
-            aResponse()
-              .withStatus(OK)
-              .withHeader("Content-Type", "application/json")
-              .withBody("{}")
-          )
-      )
-
-    recoverToSucceededIf[BadGatewayException] {
-      connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)
-    }
-
-  }
-
-  it should "log validation failures if the JSON returned by DES is not valid" in {
-
-    stubLogger.reset()
-
-    server
-      .stubFor(
-        post(urlEqualTo(registerIndividualWithoutIdUrl))
-          .willReturn(
-            aResponse()
-              .withStatus(OK)
-              .withHeader("Content-Type", "application/json")
-              .withBody("{}")
-          )
-      )
-
-    recoverToExceptionIf[BadGatewayException](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
-      _ =>
-      stubLogger.getLogEntries.size shouldBe 1
+        response.right.value shouldBe registerWithoutIdResponseJson
     }
 
   }
@@ -552,27 +491,6 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
   }
 
-  it should "log validation failures on receiving 400 Bad Request INVALID_PAYLOAD" in {
-
-    stubLogger.reset()
-
-    server
-      .stubFor(
-        post(urlEqualTo(registerIndividualWithoutIdUrl))
-          .willReturn(
-            aResponse()
-              .withStatus(BAD_REQUEST)
-              .withBody(errorResponse("INVALID_PAYLOAD"))
-          )
-      )
-
-    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
-      _ =>
-        stubLogger.getLogEntries.size shouldBe 1
-    }
-
-  }
-
   it should "return 400 Bad Request INVALID_SUBMISSION when DES returns 403 Forbidden INVALID_SUBMISSION" in {
 
     server
@@ -587,7 +505,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
       response =>
-        response.left.value shouldBe a[BadRequestException]
+        response.left.value shouldBe a[ForbiddenException]
         response.left.value.message should include ("INVALID_SUBMISSION")
     }
 

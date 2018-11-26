@@ -28,7 +28,8 @@ case class PSARegistration(
                             request: JsValue,
                             response: Option[JsValue]
                           ) extends AuditEvent {
-  override def auditType: String = "PSARegistration"
+
+  override def auditType: String = if(withId) "PSARegistration" else "PSARegWithoutId"
 
   override def details: Map[String, String] =
     Map(

@@ -52,7 +52,7 @@ trait RegistrationConnector {
     request: RequestHeader): Future[Either[HttpException, JsValue]]
 
   def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
-    (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]]
+    (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]]
 
 }
 
@@ -137,7 +137,7 @@ class RegistrationConnectorImpl @Inject()(
   override def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
                                          (implicit hc: HeaderCarrier,
                                           ec: ExecutionContext,
-                                          request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = {
+                                          request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     val acknowledgementReference = headerUtils.getCorrelationId(hc.requestId.map(_.value))
 
@@ -150,25 +150,10 @@ class RegistrationConnectorImpl @Inject()(
     Logger.debug(s"Registration Without Id Individual request body: ${Json.prettyPrint(body)}) headers: ${desHeader.toString()}")
 
     http.POST(url, body, desHeader)(implicitly, httpResponseReads, HeaderCarrier(), implicitly) map {
-      response =>
-        Logger.debug(s"Registration Without Id Individual response. Status=${response.status}\n${response.body}")
-
-        response.status match {
-          case OK =>
-            val onInvalid = invalidPayloadHandler.logFailures(schema) _
-            Right(parseAndValidateJson[RegisterWithoutIdResponse](response.body, method, url, onInvalid))
-
-          case BAD_REQUEST if response.body.contains("INVALID_PAYLOAD") =>
-            invalidPayloadHandler.logFailures(schema)(body)
-            Left(new BadRequestException(upstreamResponseMessage(method, url, BAD_REQUEST, response.body)))
-
-          case FORBIDDEN if response.body.contains("INVALID_SUBMISSION") =>
-            Left(new BadRequestException(upstreamResponseMessage(method, url, BAD_REQUEST, response.body)))
-
-          case _ =>
-            Left(handleErrorResponse("Register without Id Individual", url, response, Seq.empty))
-        }
-    }
+      handleResponse(_, url)
+    } andThen sendPSARegistrationEvent(
+      withId = false, user, "Individual", Json.toJson(body), _ => Some(false)
+    )(auditService.sendEvent) andThen logWarning("registrationNoIdIndividual")
   }
 }
 
