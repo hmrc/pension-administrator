@@ -56,7 +56,7 @@ class MongoDiagnosticsController @Inject()(config: Configuration,
 
     val db = component.mongoConnector.db()
 
-    db.collectionNames flatMap  {
+    db.collectionNames flatMap {
       names =>
         Future.traverse(names) {
           name =>
@@ -112,19 +112,12 @@ class MongoDiagnosticsController @Inject()(config: Configuration,
 
     import collection.BatchCommands.AggregationFramework.{Group, MinField}
 
-    collection.aggregate(
-      Group(BSONString(""))("minLastUpdated" -> MinField("lastUpdated"))
-    ) map {
-      result =>
-        result.firstBatch.headOption.flatMap {
-          head =>
-            head.getAs[Date]("minLastUpdated") map {
-              date =>
-                dateFormat.format(date)
-            }
-        }.getOrElse("<none>")
-    }
-
+    collection.aggregatorContext[BSONDocument](Group(BSONString(""))("minLastUpdated" -> MinField("lastUpdated")))
+      .prepared.cursor.collect[Seq](-1, Cursor.FailOnError[Seq[BSONDocument]]()).map(docs => {
+      docs.head.getAs[Date]("minLastUpdated").map {
+        date => dateFormat.format(date)
+      }.getOrElse("<none>")
+    })
   }
 
   def ids(collection: BSONCollection): Future[String] = {
