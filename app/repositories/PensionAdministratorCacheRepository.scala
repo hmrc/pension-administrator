@@ -44,7 +44,7 @@ abstract class PensionAdministratorCacheRepository(
   component.mongoConnector.db,
   implicitly
 ) {
-  private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
+  private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
 
   private case class DataEntry(
