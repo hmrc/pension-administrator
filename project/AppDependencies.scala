@@ -18,11 +18,10 @@ import play.core.PlayVersion
 import play.sbt.PlayImport._
 import sbt._
 
-object MicroServiceBuild extends Build with MicroService {
+object AppDependencies {
 
   val appName = "pension-administrator"
 
-  override lazy val appDependencies: Seq[ModuleID] = compile ++ test()
   private val scalaTestPlusPlayVersion = "3.1.2"
   private val mockitoAllVersion = "1.10.19"
   private val wireMockVersion = "2.19.0"
