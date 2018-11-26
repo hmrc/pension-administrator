@@ -174,7 +174,7 @@ abstract class PensionAdministratorCacheRepository(
   def remove(id: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     Logger.warn(s"Removing row from collection ${collection.name} externalId:$id")
     val selector = BSONDocument("id" -> id)
-    collection.remove(selector).map(_.ok)
+    collection.delete().one(selector).map(_.ok)
   }
 
 }
