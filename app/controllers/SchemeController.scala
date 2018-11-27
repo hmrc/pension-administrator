@@ -17,20 +17,22 @@
 package controllers
 
 import com.google.inject.Inject
-import connectors.{DesConnector, SchemeConnector}
+import connectors.DesConnector
 import models.PsaToBeRemovedFromScheme
 import play.api.Logger
-import play.api.libs.json.{JsResultException, Json}
+import play.api.libs.json.Json
 import play.api.mvc._
 import service.SchemeService
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.ErrorHandler
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class SchemeController @Inject()(schemeService: SchemeService, schemeConnector: DesConnector) extends BaseController with ErrorHandler {
+class SchemeController @Inject()(schemeService: SchemeService,
+                                 schemeConnector: DesConnector,
+                                 cc: ControllerComponents) extends BackendController(cc) with ErrorHandler {
 
   def registerPSA: Action[AnyContent] = Action.async {
     implicit request => {
