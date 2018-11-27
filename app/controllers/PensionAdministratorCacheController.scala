@@ -23,16 +23,15 @@ import play.api.{Configuration, Logger}
 import repositories.PensionAdministratorCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import scala.concurrent.ExecutionContext.Implicits.global
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 abstract class PensionAdministratorCacheController(
                                               config: Configuration,
                                               repository: PensionAdministratorCacheRepository,
                                               val authConnector: AuthConnector,
                                               cc: ControllerComponents
-                                            ) extends BackendController(cc) with AuthorisedFunctions {
+                                            )(implicit ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
 

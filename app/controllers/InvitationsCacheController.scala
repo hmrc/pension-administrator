@@ -26,7 +26,6 @@ import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,7 +34,7 @@ class InvitationsCacheController @Inject()(
                                             repository: InvitationsCacheRepository,
                                             val authConnector: AuthConnector,
                                             cc: ControllerComponents
-                                          ) extends BackendController(cc) with AuthorisedFunctions {
+                                          )(implicit ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
 

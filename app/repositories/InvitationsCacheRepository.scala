@@ -34,13 +34,12 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
 class InvitationsCacheRepository @Inject()(
                                             component: ReactiveMongoComponent,
                                             config: Configuration
-                                          ) extends ReactiveRepository[JsValue, BSONObjectID](
+                                          )(implicit ec: ExecutionContext) extends ReactiveRepository[JsValue, BSONObjectID](
   config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
   component.mongoConnector.db,
   implicitly
