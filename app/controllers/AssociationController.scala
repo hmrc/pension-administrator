@@ -27,14 +27,13 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{AuthRetrievals, ErrorHandler}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class AssociationController @Inject()(
                                        associationConnector: AssociationConnector,
                                        retrievals: AuthRetrievals,
                                        cc: ControllerComponents
-                                     ) extends BackendController(cc) with ErrorHandler {
+                                     )(implicit ec: ExecutionContext) extends BackendController(cc) with ErrorHandler {
   def getMinimalDetails: Action[AnyContent] = Action.async {
     implicit request =>
       val psaId = request.headers.get("psaId")

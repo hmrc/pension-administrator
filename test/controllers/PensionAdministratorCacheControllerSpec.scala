@@ -34,7 +34,7 @@ import play.api.test.{FakeRequest, Injecting}
 import repositories.PensionAdministratorCacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
-
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers with MockitoSugar with Injecting with GuiceOneAppPerSuite {
