@@ -36,6 +36,13 @@ trait RegistrationAuditService {
     )
   }
 
+  def noIdIsUk(organisation: OrganisationRegistrant)(response: JsValue): Option[Boolean] = {
+    organisation.address match {
+      case _: UkAddress => Some(true)
+      case _ => Some(false)
+    }
+  }
+
   def withIdIsUk(response: JsValue): Option[Boolean] = {
 
     response.validate[SuccessResponse].fold(

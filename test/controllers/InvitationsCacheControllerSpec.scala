@@ -26,7 +26,7 @@ import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.Configuration
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import reactivemongo.bson.BSONDocument
@@ -40,16 +40,14 @@ import utils.testhelpers.InvitationBuilder._
 import scala.concurrent.Future
 
 class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers with MockitoSugar {
-  val app = new GuiceApplicationBuilder().configure("run.mode" -> "Test").build()
-  implicit lazy val mat: Materializer = app.materializer
-  private val cc = app.injector.instanceOf[ControllerComponents]
+  implicit lazy val mat: Materializer = new GuiceApplicationBuilder().configure("run.mode" -> "Test").build().materializer
 
   private def configuration = Configuration("mongodb.pension-administrator-cache.maxSize" -> 512000)
 
   private val repo = mock[InvitationsCacheRepository]
   private val authConnector: AuthConnector = mock[AuthConnector]
 
-  def controller: InvitationsCacheController = new InvitationsCacheController(configuration, repo, authConnector, cc)
+  def controller: InvitationsCacheController = new InvitationsCacheController(configuration, repo, authConnector)
 
   // scalastyle:off method.length
   def validCacheControllerWithInsert(): Unit = {

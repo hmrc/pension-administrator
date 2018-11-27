@@ -17,17 +17,19 @@
 package config
 
 import com.google.inject.Inject
+import play.api.Mode.Mode
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.play.config.ServicesConfig
 
-class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Environment, servicesConfig: ServicesConfig) {
+class AppConfig @Inject()(override val runModeConfiguration: Configuration, environment: Environment) extends ServicesConfig {
+  override protected def mode: Mode = environment.mode
 
   lazy val appName: String = runModeConfiguration.underlying.getString("appName")
 
-  lazy val baseURL: String = servicesConfig.baseUrl("des-hod")
-  lazy val baseUrlEmail: String = servicesConfig.baseUrl("email")
-  lazy val baseUrlPensionsScheme: String = servicesConfig.baseUrl("pensions-scheme")
-  lazy val baseUrlPensionAdministrator: String = servicesConfig.baseUrl("pension-administrator")
+  lazy val baseURL: String = baseUrl("des-hod")
+  lazy val baseUrlEmail: String = baseUrl("email")
+  lazy val baseUrlPensionsScheme: String = baseUrl("pensions-scheme")
+  lazy val baseUrlPensionAdministrator: String = baseUrl("pension-administrator")
 
   lazy val schemeAdminRegistrationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.scheme.administrator.register")}"
   lazy val registerWithoutIdOrganisationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.register.without.id.organisation")}"
@@ -39,8 +41,8 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
   lazy val removePsaUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.remove.psa")}"
 
   lazy val createPsaAssociationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.createPsaAssociation")}"
-  lazy val desEnvironment: String = runModeConfiguration.getOptional[String]("microservice.services.des-hod.env").getOrElse("local")
-  lazy val authorization: String = "Bearer " + runModeConfiguration.getOptional[String]("microservice.services.des-hod.authorizationToken").getOrElse("local")
+  lazy val desEnvironment: String = runModeConfiguration.getString("microservice.services.des-hod.env").getOrElse("local")
+  lazy val authorization: String = "Bearer " + runModeConfiguration.getString("microservice.services.des-hod.authorizationToken").getOrElse("local")
 
   lazy val emailUrl: String = s"$baseUrlEmail${runModeConfiguration.underlying.getString("serviceUrls.email")}"
   lazy val checkAssociationUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.checkPsaAssociation")}"
