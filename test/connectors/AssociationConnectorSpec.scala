@@ -17,7 +17,7 @@
 package connectors
 
 import audit.testdoubles.StubSuccessfulAuditService
-import audit.{AuditService, InvitationAcceptanceAuditEvent, MinimalPSADetails}
+import audit.{AuditService, InvitationAcceptanceAuditEvent, MinimalPSADetailsEvent}
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import connectors.RegistrationConnectorSpec.auditService
@@ -209,7 +209,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
     connector.getPSAMinimalDetails(psaId).map { response =>
       auditService.verifySent(
-        MinimalPSADetails(
+        MinimalPSADetailsEvent(
           psaId = psaId.id,
           psaName = psaMinimalDetailsIndividualUser.name,
           isPsaSuspended = Some(psaMinimalDetailsIndividualUser.isPsaSuspended),
@@ -231,7 +231,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
     connector.getPSAMinimalDetails(psaId).map { response =>
       auditService.verifySent(
-        MinimalPSADetails(
+        MinimalPSADetailsEvent(
           psaId = psaId.id,
           psaName = None,
           isPsaSuspended = None,

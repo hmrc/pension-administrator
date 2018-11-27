@@ -18,11 +18,11 @@ package audit
 
 import play.api.libs.json.{JsValue, Json, OFormat}
 
-case class MinimalPSADetails(psaId: String,
-                             psaName: Option[String],
-                             isPsaSuspended: Option[Boolean],
-                             status: Int,
-                             response: Option[JsValue]
+case class MinimalPSADetailsEvent(psaId: String,
+                                  psaName: Option[String],
+                                  isPsaSuspended: Option[Boolean],
+                                  status: Int,
+                                  response: Option[JsValue]
                             ) extends AuditEvent {
 
   override def auditType: String = "GetMinPSADetails"
@@ -42,6 +42,6 @@ case class MinimalPSADetails(psaId: String,
     )
 }
 
-object MinimalPSADetails {
-  implicit val formatsPSASubscription: OFormat[MinimalPSADetails] = Json.format[MinimalPSADetails]
+object MinimalPSADetailsEvent {
+  implicit val formatsPSASubscription: OFormat[MinimalPSADetailsEvent] = Json.format[MinimalPSADetailsEvent]
 }

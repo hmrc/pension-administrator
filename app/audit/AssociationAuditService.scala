@@ -28,13 +28,13 @@ import scala.util.{Failure, Success, Try}
 
 trait AssociationAuditService {
 
-  def sendGetMinimalPSADetailsEvent(psaId: String)(sendEvent: MinimalPSADetails => Unit)
+  def sendGetMinimalPSADetailsEvent(psaId: String)(sendEvent: MinimalPSADetailsEvent => Unit)
                                    (implicit rh: RequestHeader, ec: ExecutionContext):
   PartialFunction[Try[Either[HttpException, PSAMinimalDetails]], Unit] = {
 
     case Success(Right(psaMinimalDetails)) =>
       sendEvent(
-        MinimalPSADetails(
+        MinimalPSADetailsEvent(
           psaId = psaId,
           psaName = psaMinimalDetails.name,
           isPsaSuspended = Some(psaMinimalDetails.isPsaSuspended),
@@ -44,7 +44,7 @@ trait AssociationAuditService {
       )
     case Success(Left(e)) =>
       sendEvent(
-        MinimalPSADetails(
+        MinimalPSADetailsEvent(
           psaId = psaId,
           psaName = None,
           isPsaSuspended = None,
