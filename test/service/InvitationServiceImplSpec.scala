@@ -314,8 +314,7 @@ class FakeAssociationConnector extends AssociationConnector {
   import InvitationServiceImplSpec._
 
   def getPSAMinimalDetails(psaId: PsaId)
-                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext,
-                           request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {
+                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = {
 
     psaId match {
       case `johnDoePsaId` | `associatedPsaId` => Future.successful(Right(johnDoe))
