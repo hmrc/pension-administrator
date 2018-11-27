@@ -425,7 +425,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       val successResponse: RegisterWithoutIdResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890")
 
       when(mockRegistrationConnector.registrationNoIdIndividual(any(), Matchers.eq(individualNoIdToConnector))(any(), any(), any()))
-        .thenReturn(Future.successful(Right(Json.toJson(successResponse))))
+        .thenReturn(Future.successful(Right(successResponse)))
 
       val result = call(registrationController(individualNoIdRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
 
