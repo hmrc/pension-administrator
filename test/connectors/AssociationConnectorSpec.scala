@@ -17,10 +17,9 @@
 package connectors
 
 import audit.testdoubles.StubSuccessfulAuditService
-import audit.{AuditService, InvitationAcceptanceAuditEvent, MinimalPSADetailsEvent}
+import audit.{AuditService, InvitationAcceptanceAuditEvent}
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
-import connectors.RegistrationConnectorSpec.auditService
 import connectors.helper.ConnectorBehaviours
 import models._
 import org.scalatest._
@@ -50,11 +49,6 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   private val logger = new StubLogger()
   private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/$psaId"
   private val acceptInvitationUrl = s"/pension-online/psa-association/pstr/$pstr"
-
-  override def beforeEach(): Unit = {
-    auditService.reset()
-    super.beforeEach()
-  }
 
   override protected def portConfigKey: String = "microservice.services.des-hod.port"
 
@@ -197,73 +191,6 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should "send a GetMinPSADetails audit event on success" in {
-
-    server.stubFor(
-      get(urlEqualTo(psaMinimalDetailsUrl))
-        .willReturn(
-          ok(psaMinimunIndividualDetailPayload.toString())
-            .withHeader("Content-Type", "application/json")
-        )
-    )
-
-    connector.getPSAMinimalDetails(psaId).map { response =>
-      auditService.verifySent(
-        MinimalPSADetailsEvent(
-          psaId = psaId.id,
-          psaName = psaMinimalDetailsIndividualUser.name,
-          isPsaSuspended = Some(psaMinimalDetailsIndividualUser.isPsaSuspended),
-          status = OK,
-          response = Some(Json.toJson(psaMinimalDetailsIndividualUser))
-        )
-      ) shouldBe true
-    }
-  }
-
-  it should "send a GetMinPSADetails audit event on not found" in {
-
-    server.stubFor(
-      post(urlEqualTo(psaMinimalDetailsUrl))
-        .willReturn(
-          notFound
-        )
-    )
-
-    connector.getPSAMinimalDetails(psaId).map { response =>
-      auditService.verifySent(
-        MinimalPSADetailsEvent(
-          psaId = psaId.id,
-          psaName = None,
-          isPsaSuspended = None,
-          status = NOT_FOUND,
-          response = None
-        )
-      ) shouldBe true
-    }
-  }
-
-  it should "not send a GetMinPSADetails audit event on failure" in {
-
-    val errorResponse =
-      """{
-        |	"code": "SERVER_ERROR",
-        |	"reason": "DES is currently experiencing problems that require live service intervention."
-        |}""".stripMargin
-
-    server.stubFor(
-      get(urlEqualTo(psaMinimalDetailsUrl))
-        .willReturn(
-          serverError().withBody(Json.parse(errorResponse).toString)
-        )
-    )
-
-    recoverToExceptionIf[Upstream5xxResponse](connector.getPSAMinimalDetails(psaId)) map {
-      _ =>
-        auditService.verifyNothingSent shouldBe true
-    }
-
-  }
-
   "acceptInvitation" should "check headers" in {
     val correlationId = hc.requestId.map(_.value).getOrElse("test-correlation-id")
     server.stubFor(
@@ -318,12 +245,10 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = false, inviterPsaId = psaId,
       pensionAdviserDetails = Some(pensionAdviserDetailUK))
 
-    connector.acceptInvitation(acceptedInvitation).map{ response =>
+    connector.acceptInvitation(acceptedInvitation).map(_.isRight shouldBe true)
 
-      response.isRight shouldBe true
-      auditService.verifySent(InvitationAcceptanceAuditEvent(acceptedInvitation, OK, Some(Json.parse(successResponseJson)))) should equal(true)
-
-    }
+    val invitationAcceptanceAuditEvent = InvitationAcceptanceAuditEvent(acceptedInvitation, OK, Some(Json.parse(successResponseJson)))
+    auditService.verifySent(invitationAcceptanceAuditEvent) should equal(true)
   }
 
   it should "correctly submit and handle a valid request for a non-UK address" in {
@@ -419,9 +344,13 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
       pensionAdviserDetails = None)
 
-    connector.acceptInvitation(acceptedInvitation).map { _ =>
-      auditService.verifySent(InvitationAcceptanceAuditEvent(acceptedInvitation, NOT_FOUND, None)) should equal(true)
+    connector.acceptInvitation(acceptedInvitation).collect {
+      case Left(_: NotFoundException) => succeed
     }
+
+    val invitationAcceptanceAuditEvent = InvitationAcceptanceAuditEvent(acceptedInvitation, NOT_FOUND, None)
+    auditService.verifySent(invitationAcceptanceAuditEvent) should equal(true)
+
   }
 
   it should "return bad request exception for a 404 invalid payload response" in {
