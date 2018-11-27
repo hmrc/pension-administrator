@@ -54,7 +54,7 @@ class InvitationServiceImpl @Inject()(
                                        auditService: AuditService,
                                        schemeConnector: SchemeConnector,
                                        crypto: ApplicationCrypto
-                                     )(implicit val ec: ExecutionContext) extends InvitationService {
+                                     )(implicit ec: ExecutionContext) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
                         (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
