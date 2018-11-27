@@ -34,6 +34,7 @@ import uk.gov.hmrc.http._
 import utils.{DateHelper, FuzzyNameMatcher}
 
 import scala.annotation.tailrec
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 case class MongoDBFailedException(exceptionMesage: String) extends HttpException(exceptionMesage, INTERNAL_SERVER_ERROR)
@@ -54,7 +55,7 @@ class InvitationServiceImpl @Inject()(
                                        auditService: AuditService,
                                        schemeConnector: SchemeConnector,
                                        crypto: ApplicationCrypto
-                                     )(implicit ec: ExecutionContext) extends InvitationService {
+                                     ) extends InvitationService {
 
   override def invitePSA(jsValue: JsValue)
                         (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {

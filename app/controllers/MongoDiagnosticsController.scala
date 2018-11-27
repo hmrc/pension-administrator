@@ -28,12 +28,13 @@ import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.bson.{BSONDocument, BSONString}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.language.postfixOps
 
 class MongoDiagnosticsController @Inject()(config: Configuration,
                                            component: ReactiveMongoComponent,
-                                           cc: ControllerComponents)(implicit ec: ExecutionContext) extends BackendController(cc) {
+                                           cc: ControllerComponents) extends BackendController(cc) {
 
   // scalastyle:off magic.number
   private val banner = Seq.fill(50)("-").mkString
