@@ -265,7 +265,7 @@ object AssociationControllerSpec extends MockitoSugar {
     when(mockAuthRetrievals.getPsaId(any(), any()))
       .thenReturn(Future.successful(psaId))
 
-    new AssociationController(fakeAssociationConnector, mockAuthRetrievals, stubControllerComponents())
+    new AssociationController(fakeAssociationConnector, mockAuthRetrievals)
 
   }
 

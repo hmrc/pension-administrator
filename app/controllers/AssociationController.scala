@@ -21,10 +21,10 @@ import connectors.AssociationConnector
 import models.{AcceptedInvitation, PSAMinimalDetails}
 import play.api.Logger
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import utils.{AuthRetrievals, ErrorHandler}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -32,9 +32,8 @@ import scala.concurrent.Future
 
 class AssociationController @Inject()(
                                        associationConnector: AssociationConnector,
-                                       retrievals: AuthRetrievals,
-                                       cc: ControllerComponents
-                                     ) extends BackendController(cc) with ErrorHandler {
+                                       retrievals: AuthRetrievals
+                                     ) extends BaseController with ErrorHandler {
   def getMinimalDetails: Action[AnyContent] = Action.async {
     implicit request =>
       val psaId = request.headers.get("psaId")

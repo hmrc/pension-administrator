@@ -119,6 +119,6 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar{
   }
 
   val fakeInvitationService = new FakeInvitationService
-  val controller = new InvitationController(fakeInvitationService, stubControllerComponents())
+  val controller = new InvitationController(fakeInvitationService)
 
 }

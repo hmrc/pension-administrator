@@ -17,10 +17,9 @@
 package models.Reads.PsaSubscriptionDetails
 
 import org.joda.time.LocalDate
-import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen
-import play.api.libs.json.JodaWrites._
-import play.api.libs.json.{JsArray, JsObject, Json}
+import org.scalacheck.Arbitrary._
+import play.api.libs.json.{JsArray, JsBoolean, JsObject, Json}
 
 trait PsaSubscriptionDetailsGenerators {
   val legalStatus: Gen[String] = Gen.oneOf("Individual","Partnership","Limited Company")
