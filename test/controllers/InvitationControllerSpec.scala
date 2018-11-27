@@ -26,7 +26,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import service.InvitationService
 import uk.gov.hmrc.http._
-import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationControllerSpec extends AsyncFlatSpec with MustMatchers  {

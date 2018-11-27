@@ -32,7 +32,7 @@ import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.FakeDesConnector
 import utils.testhelpers.PsaSubscriptionBuilder._
-import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.concurrent.{ExecutionContext, Future}
 
 class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMatchers {

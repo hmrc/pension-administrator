@@ -37,7 +37,6 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
-import scala.concurrent.ExecutionContext.Implicits.global
 import utils.FakeAuthConnector
 
 import scala.concurrent.Future
