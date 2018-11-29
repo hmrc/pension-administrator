@@ -167,7 +167,9 @@ class RegistrationConnectorImpl @Inject()(
           case _ =>
             Left(handleErrorResponse("Register without Id Individual", url, response, Seq.empty))
         }
-    }
+    } andThen sendPSARegWithoutIdEvent(
+      withId = false, user, "Individual", Json.toJson(registrationRequest), _ => Some(false)
+    )(auditService.sendEvent) andThen logWarning("registrationNoIdIndividual")
   }
 }
 
