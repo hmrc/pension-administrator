@@ -249,7 +249,8 @@ object AssociationControllerSpec extends MockitoSugar {
 
     def getPSAMinimalDetails(psaId: PsaId)(implicit
                                             headerCarrier: HeaderCarrier,
-                                            ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = minimalPsaDetailsResponse
+                                            ec: ExecutionContext,
+                                            request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = minimalPsaDetailsResponse
 
     override def acceptInvitation(invitation: AcceptedInvitation)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader):
     Future[Either[HttpException, Unit]] = acceptInvitationResponse
@@ -265,7 +266,7 @@ object AssociationControllerSpec extends MockitoSugar {
     when(mockAuthRetrievals.getPsaId(any(), any()))
       .thenReturn(Future.successful(psaId))
 
-    new AssociationController(fakeAssociationConnector, mockAuthRetrievals, stubControllerComponents())
+    new AssociationController(fakeAssociationConnector, mockAuthRetrievals)
 
   }
 

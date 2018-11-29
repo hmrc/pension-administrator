@@ -17,8 +17,7 @@
 package models
 
 import org.joda.time.DateTime
-import play.api.libs.json.JodaWrites._
-import play.api.libs.json._
+import play.api.libs.json.{Format, Json, Writes}
 import uk.gov.hmrc.domain.PsaId
 
 case class Invitation(srn: SchemeReferenceNumber,
@@ -31,9 +30,5 @@ case class Invitation(srn: SchemeReferenceNumber,
                      )
 
 object Invitation {
-  implicit val jodaDateFormat = new Format[DateTime] {
-    override def reads(json: JsValue): JsResult[DateTime] = JodaReads.DefaultJodaDateTimeReads.reads(json)
-    override def writes(o: DateTime): JsValue = JodaDateTimeNumberWrites.writes(o)
-  }
   implicit val formats: Format[Invitation] = Json.format[Invitation]
 }

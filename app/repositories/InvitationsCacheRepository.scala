@@ -24,7 +24,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json._
 import play.api.{Configuration, Logger}
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.{Cursor, ReadPreference}
+import reactivemongo.api.ReadPreference
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.Subtype.GenericBinarySubtype
 import reactivemongo.bson.{BSONBinary, BSONDocument, BSONObjectID}
@@ -48,8 +48,8 @@ class InvitationsCacheRepository @Inject()(
   private val encryptionKey: String = "manage.json.encryption"
   // scalastyle:off magic.number
   private val ttl = 0
-  private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
-  private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
+  private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
+  private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
 
   private case class DataEntry(
                                 inviteePsaId: String,
@@ -188,7 +188,7 @@ class InvitationsCacheRepository @Inject()(
     if (encrypted) {
       val encryptedMapOfKeys = encryptKeys(mapOfKeys)
       val queryBuilder = collection.find(encryptedMapOfKeys)
-      queryBuilder.cursor[DataEntry](ReadPreference.primary).collect[List](-1, Cursor.FailOnError[List[DataEntry]]()).map { de =>
+      queryBuilder.cursor[DataEntry](ReadPreference.primary).collect[List]().map { de =>
         val listOfInvitationsJson = de.map {
           dataEntry =>
             val dataAsString = new String(dataEntry.data.byteArray, StandardCharsets.UTF_8)
@@ -199,7 +199,7 @@ class InvitationsCacheRepository @Inject()(
       }
     } else {
       val queryBuilder = collection.find(mapOfKeys)
-      queryBuilder.cursor[JsonDataEntry](ReadPreference.primary).collect[List](-1, Cursor.FailOnError[List[JsonDataEntry]]()).map { de =>
+      queryBuilder.cursor[JsonDataEntry](ReadPreference.primary).collect[List]().map { de =>
         val listOfInvitationsJson = de.map {
           dataEntry =>
             dataEntry.data
@@ -229,6 +229,6 @@ class InvitationsCacheRepository @Inject()(
     } else {
       mapOfKeys
     }
-    collection.delete().one(selector).map(_.ok)
+    collection.remove(selector).map(_.ok)
   }
 }

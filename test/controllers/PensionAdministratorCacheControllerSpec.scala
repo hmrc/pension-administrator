@@ -24,20 +24,18 @@ import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{MustMatchers, WordSpec}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatestplus.play.OneAppPerSuite
 import play.api.Configuration
-import play.api.libs.json.JodaWrites._
 import play.api.libs.json.Json
-import play.api.mvc.ControllerComponents
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.test.{FakeRequest, Injecting}
 import repositories.PensionAdministratorCacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
 
 import scala.concurrent.Future
 
-class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers with MockitoSugar with Injecting with GuiceOneAppPerSuite {
+class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers with MockitoSugar with OneAppPerSuite {
 
   implicit lazy val mat: Materializer = app.materializer
 
@@ -53,8 +51,7 @@ class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers
                                                    repo: PensionAdministratorCacheRepository,
                                                    authConnector: AuthConnector,
                                                    encrypted: Boolean
-                                                 ) extends PensionAdministratorCacheController(configuration(encrypted), repo,
-                                                            authConnector, inject[ControllerComponents])
+                                                 ) extends PensionAdministratorCacheController(configuration(encrypted), repo, authConnector)
 
   def controller(repo: PensionAdministratorCacheRepository, authConnector: AuthConnector, encrypted: Boolean): PensionAdministratorCacheController = {
     new PensionAdministratorCacheControllerImpl(repo, authConnector, encrypted)
@@ -183,7 +180,7 @@ class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers
         val result = controller(repo, authConnector, encrypted).lastUpdated("foo")(FakeRequest())
 
         status(result) mustEqual OK
-        contentAsJson(result) mustEqual Json.toJson(date)
+        contentAsJson(result) mustEqual Json.toJson(date.getMillis)
       }
 
       "return 404 when the data doesn't exist" in {

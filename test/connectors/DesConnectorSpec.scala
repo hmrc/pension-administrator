@@ -37,8 +37,6 @@ import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.{FakeDesConnector, StubLogger, WireMockHelper}
 import utils.testhelpers.PsaSubscriptionBuilder._
-import play.api.libs.json.JodaWrites._
-import play.api.libs.json.JodaReads._
 
 class DesConnectorSpec extends AsyncFlatSpec
   with Matchers
