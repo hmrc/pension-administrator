@@ -17,20 +17,19 @@
 package controllers
 
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, RawBuffer}
+import play.api.mvc.{Action, AnyContent}
 import play.api.{Configuration, Logger}
 import repositories.PensionAdministratorCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 abstract class PensionAdministratorCacheController(
                                               config: Configuration,
                                               repository: PensionAdministratorCacheRepository,
                                               val authConnector: AuthConnector
-                                            ) extends BaseController with AuthorisedFunctions {
+                                            )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
 
   private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
 

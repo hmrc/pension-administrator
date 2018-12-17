@@ -44,6 +44,7 @@ abstract class PensionAdministratorCacheRepository(
   component.mongoConnector.db,
   implicitly
 ) {
+  private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
 
   private case class DataEntry(
@@ -117,9 +118,6 @@ abstract class PensionAdministratorCacheRepository(
   }
 
   def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
-
-    val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
-
     val document: JsValue = {
       if (encrypted) {
         val unencrypted = PlainText(Json.stringify(data))
@@ -137,7 +135,6 @@ abstract class PensionAdministratorCacheRepository(
 
   def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
     if (encrypted) {
-      val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
       collection.find(BSONDocument("id" -> id)).one[DataEntry].map {
         _.map {
           dataEntry =>

@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package controllers
+package bindings.provider
 
-import com.google.inject.Inject
+import javax.inject.{Inject, Provider}
 import play.api.Configuration
-import repositories.ManagePensionsCacheRepository
-import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.crypto.ApplicationCrypto
 
-import scala.concurrent.ExecutionContext
-
-class ManagePensionsCacheController @Inject()(
-                                          config: Configuration,
-                                          repository: ManagePensionsCacheRepository,
-                                          authConnector: AuthConnector
-                                 )(implicit ec: ExecutionContext) extends PensionAdministratorCacheController(config, repository, authConnector)
+class ApplicationCryptoProvider @Inject()(configuration: Configuration) extends Provider[ApplicationCrypto] {
+  def get(): ApplicationCrypto = new ApplicationCrypto(configuration.underlying)
+}

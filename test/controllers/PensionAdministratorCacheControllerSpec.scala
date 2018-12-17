@@ -32,6 +32,7 @@ import play.api.test.Helpers._
 import repositories.PensionAdministratorCacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Future
 

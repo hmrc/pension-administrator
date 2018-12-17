@@ -36,6 +36,7 @@ import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{BadRequestException, UnauthorizedException}
 import utils.testhelpers.InvitationBuilder._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Future
 
