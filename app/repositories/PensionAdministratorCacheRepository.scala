@@ -30,7 +30,6 @@ import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 abstract class PensionAdministratorCacheRepository(
@@ -39,7 +38,7 @@ abstract class PensionAdministratorCacheRepository(
                                               component: ReactiveMongoComponent,
                                               encryptionKey: String,
                                               config: Configuration
-                                            ) extends ReactiveRepository[JsValue, BSONObjectID](
+                                            )(implicit ec: ExecutionContext) extends ReactiveRepository[JsValue, BSONObjectID](
   index,
   component.mongoConnector.db,
   implicitly
@@ -92,8 +91,6 @@ abstract class PensionAdministratorCacheRepository(
   }
 
   private def ensureIndex(field: String, indexName: String, ttl: Option[Int]): Future[Boolean] = {
-
-    import scala.concurrent.ExecutionContext.Implicits.global
 
     val defaultIndex: Index = Index(Seq((field, IndexType.Ascending)), Some(indexName))
 

@@ -30,14 +30,13 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import utils.ErrorHandler
 import utils.validationUtils._
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 class RegistrationController @Inject()(
                                         override val authConnector: AuthConnector,
                                         registerConnector: RegistrationConnector
-                                      ) extends BaseController with ErrorHandler with AuthorisedFunctions {
+                                      )(implicit val ec: ExecutionContext) extends BaseController with ErrorHandler with AuthorisedFunctions {
 
   def registerWithIdIndividual: Action[AnyContent] = Action.async {
     implicit request => {
