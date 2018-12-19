@@ -19,18 +19,13 @@ package controllers
 import com.google.inject.Inject
 import models.Invitation
 import play.api.Configuration
-import play.api.mvc.{Action, AnyContent}
-import repositories.InvitationsCacheRepository
-import service.MongoDBFailedException
-import models.Invitation
-import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import repositories.InvitationsCacheRepository
+import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -38,7 +33,7 @@ class InvitationsCacheController @Inject()(
                                             config: Configuration,
                                             repository: InvitationsCacheRepository,
                                             val authConnector: AuthConnector
-                                          ) extends BaseController with AuthorisedFunctions {
+                                          )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
 
   private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
 

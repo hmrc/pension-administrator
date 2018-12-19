@@ -34,13 +34,12 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
 class InvitationsCacheRepository @Inject()(
                                             component: ReactiveMongoComponent,
                                             config: Configuration
-                                          ) extends ReactiveRepository[JsValue, BSONObjectID](
+                                          )(implicit val ec: ExecutionContext) extends ReactiveRepository[JsValue, BSONObjectID](
   config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
   component.mongoConnector.db,
   implicitly
@@ -49,7 +48,7 @@ class InvitationsCacheRepository @Inject()(
   // scalastyle:off magic.number
   private val ttl = 0
   private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
-  private val jsonCrypto: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config)
+  private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
 
   private case class DataEntry(
                                 inviteePsaId: String,

@@ -27,12 +27,12 @@ import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import models.enumeration.JourneyType
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
 class EmailResponseController @Inject()(
                                          auditService: AuditService,
                                          crypto: ApplicationCrypto
-                                       ) extends BaseController {
+                                       )(implicit val ec: ExecutionContext) extends BaseController {
 
   def retrieveStatus(journeyType: JourneyType.Name, id: String): Action[JsValue] = Action(BodyParsers.parse.tolerantJson) {
     implicit request =>
