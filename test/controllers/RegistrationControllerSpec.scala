@@ -18,6 +18,7 @@ package controllers
 
 import akka.stream.Materializer
 import base.SpecBase
+import config.AppConfig
 import connectors.RegistrationConnector
 import models._
 import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
@@ -30,6 +31,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -37,6 +39,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.FakeAuthConnector
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -49,21 +52,29 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
   private val individualNoIdFrontend = readJsonFromFile("/data/validRegNoIdIndividualFE.json")
   private val individualNoIdToConnector = individualNoIdFrontend.as[RegistrationNoIdIndividualRequest]
-  private val individualNoIdToEmtp = readJsonFromFile("/data/validRegNoIdIndividualToEtmp.json")
 
   private val mockRegistrationConnector = mock[RegistrationConnector]
 
   implicit val mat: Materializer = app.materializer
 
-  private def registrationController(retrievals: Future[_]): RegistrationController =
+  private def appConfig(isManualIvEnabled: Boolean) = {
+    new GuiceApplicationBuilder().configure(
+      Map(
+        "features.is-iv-enabled" -> isManualIvEnabled
+      )
+    ).build().injector.instanceOf[AppConfig]
+  }
+
+  private def registrationController(retrievals: Future[_], isManualIvEnabled: Boolean = true): RegistrationController =
     new RegistrationController(
       new FakeAuthConnector(retrievals),
-      mockRegistrationConnector
+      mockRegistrationConnector,
+      appConfig(isManualIvEnabled)
     )
 
   before(reset(mockRegistrationConnector))
 
-  "registerWithIdIndividual" must {
+  "registerWithIdIndividual with manual IV enabled" must {
 
     val mandatoryRequestData = Json.obj("regime" -> "PODA", "requiresNameMatch" -> false, "isAnAgent" -> false)
     val requestBody = Json.obj("nino" -> nino)
@@ -207,6 +218,124 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       }
     }
   }
+
+  "registerWithIdIndividual with manual IV disabled" must {
+
+    val inputRequestData = Json.obj("regime" -> "PODA", "requiresNameMatch" -> false, "isAnAgent" -> false)
+
+    "return OK when the registration with id is successful for Individual" in {
+
+      val successResponse = Json.toJson(readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json").as[SuccessResponse])
+
+      when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(inputRequestData))(any(), any(), any()))
+        .thenReturn(Future.successful(Right(successResponse)))
+
+      val result = registrationController(individualRetrievalsWithNino, isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+
+      ScalaFutures.whenReady(result) { _ =>
+        status(result) mustBe OK
+        contentAsJson(result) mustEqual successResponse
+      }
+    }
+
+    "return result from registration when connector returns failure" in {
+
+      val connectorFailureGen: Gen[HttpException] = Gen.oneOf(Seq(
+        new BadRequestException("INVALID_PAYLOAD"),
+        new NotFoundException("NOT FOUND"),
+        new ConflictException("CONFLICT")
+      ))
+
+      forAll(connectorFailureGen) { connectorFailure =>
+
+        when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(inputRequestData))(any(), any(), any()))
+          .thenReturn(Future.successful(Left(connectorFailure)))
+
+        val result = registrationController(individualRetrievalsWithNino, isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+
+        ScalaFutures.whenReady(result) { _ =>
+          status(result) mustBe connectorFailure.responseCode
+        }
+
+      }
+
+    }
+
+    "throw Exception when authorisation retrievals fails" in {
+
+      val retrievals = InsufficientConfidenceLevel()
+
+      val result = registrationController(Future.failed(retrievals), isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+
+      ScalaFutures.whenReady(result.failed) { e =>
+        e mustBe a[Exception]
+        e.getMessage mustBe retrievals.msg
+      }
+    }
+
+    "throw Upstream4xxResponse when auth all retrievals are not present" in {
+
+      val retrievalsGen = Gen.oneOf(Seq(
+        new ~(new ~(None, None), None),
+        new ~(new ~(None, None), Some(AffinityGroup.Individual)),
+        new ~(new ~(None, Some(externalId)), Some(AffinityGroup.Individual)),
+        new ~(new ~(None, Some(externalId)), None),
+        new ~(new ~(Some(nino), None), Some(AffinityGroup.Individual)),
+        new ~(new ~(Some(nino), None), None),
+        new ~(new ~(Some(nino), Some(externalId)), None)
+      ))
+
+      forAll(retrievalsGen) { retrievals =>
+
+        val result = registrationController(Future.successful(retrievals), isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+
+        ScalaFutures.whenReady(result.failed) { e =>
+          e mustBe a[Upstream4xxResponse]
+          e.getMessage mustBe "Nino not found in auth record"
+        }
+
+      }
+
+    }
+
+    "throw Upstream5xxResponse when given Upstream5xxResponse from connector" in {
+
+      val failureResponse = Json.obj(
+        "code" -> "SERVER_ERROR",
+        "reason" -> "DES is currently experiencing problems that require live service intervention."
+      )
+
+      when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(inputRequestData))(any(), any(), any()))
+        .thenReturn(Future.failed(Upstream5xxResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
+
+      val result = registrationController(individualRetrievalsWithNino, isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+
+      ScalaFutures.whenReady(result.failed) { e =>
+        e mustBe a[Upstream5xxResponse]
+        e.getMessage mustBe failureResponse.toString()
+
+        verify(mockRegistrationConnector, times(1))
+          .registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(inputRequestData))(any(), any(), any())
+      }
+    }
+
+    "throw Exception when any other exception returned from connector" in {
+
+      when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(inputRequestData))(any(), any(), any()))
+        .thenReturn(Future.failed(new Exception("Generic Exception")))
+
+      val result = registrationController(individualRetrievalsWithNino, isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+
+      ScalaFutures.whenReady(result.failed) { e =>
+        e mustBe a[Exception]
+        e.getMessage mustBe "Generic Exception"
+
+        verify(mockRegistrationConnector, times(1))
+          .registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(inputRequestData))(any(), any(), any())
+      }
+    }
+  }
+
 
   "registerWithIdOrganisation" must {
 
@@ -527,7 +656,17 @@ object RegistrationControllerSpec {
 
   private val nino = "test-nino"
   private val externalId = "test-external-id"
-  private val fakeRequest = FakeRequest("POST", "/")
+
+  private val individualRetrievalsWithNino =
+    Future.successful(
+      new ~(
+        new ~(
+          Some(nino),
+          Some(externalId)
+        ),
+        Some(AffinityGroup.Individual)
+      )
+    )
 
   private val organisationRetrievals =
     Future.successful(
