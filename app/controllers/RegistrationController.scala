@@ -40,20 +40,22 @@ class RegistrationController @Inject()(
 
   def registerWithIdIndividual: Action[AnyContent] = Action.async {
     implicit request => {
-      retrieveIndividual { (nino, user) =>
-        registerConnector.registerWithIdIndividual(nino, user, mandatoryPODSData()) map handleResponse
+      retrieveUser { user =>
+        request.body.asJson match {
+          case Some(jsBody) =>
+            Try((jsBody \ "nino").convertTo[String]) match {
+              case Success(nino) =>
+                registerConnector.registerWithIdIndividual(nino, user, mandatoryPODSData()) map handleResponse
+              case Failure(e) =>
+                Logger.warn(s"Bad Request returned from frontend for Register With Id Individual $e")
+                Future.failed(new BadRequestException(s"Bad Request returned from frontend for Register With Id Individual $e"))
+            }
+          case _ =>
+            Future.failed(new BadRequestException("No request body received for register with Id Individual"))
+        }
       } recoverWith recoverFromError
     }
   }
-
-  private def retrieveIndividual(fn: (String, models.User) => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
-    authorised(ConfidenceLevel.L200 and AffinityGroup.Individual).retrieve(Retrievals.nino and Retrievals.externalId and Retrievals.affinityGroup) {
-      case Some(nino) ~ Some(externalId) ~ Some(affinityGroup) =>
-        fn(nino, models.User(externalId, affinityGroup))
-      case _ =>
-        Future.failed(Upstream4xxResponse("Nino not found in auth record", UNAUTHORIZED, UNAUTHORIZED))
-    }
-
 
   def registerWithIdOrganisation: Action[AnyContent] = Action.async {
     implicit request => {
