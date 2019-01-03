@@ -35,7 +35,7 @@ class FeatureSwitchManagementServiceProductionImpl @Inject()(override val runMod
                                                              environment: Environment) extends
   FeatureSwitchManagementService with ServicesConfig {
 
-  override protected def mode:Mode = environment.mode
+  override protected def mode: Mode = environment.mode
 
   override def change(name: String, newValue: Boolean): Boolean =
     runModeConfiguration.getBoolean(s"features.$name").getOrElse(false)
@@ -48,17 +48,22 @@ class FeatureSwitchManagementServiceProductionImpl @Inject()(override val runMod
 
 @Singleton
 class FeatureSwitchManagementServiceTestImpl @Inject()(override val runModeConfiguration: Configuration,
-                                                             environment: Environment) extends
+                                                       environment: Environment) extends
   FeatureSwitchManagementService with ServicesConfig {
 
   private lazy val featureSwitches: ArrayBuffer[FeatureSwitch] = new ArrayBuffer[FeatureSwitch]()
 
-  override protected def mode:Mode = environment.mode
+  override protected def mode: Mode = environment.mode
 
   override def change(name: String, newValue: Boolean): Boolean = {
-    reset(name)
-    featureSwitches += FeatureSwitch(name, newValue)
-    get(name)
+    val featureSwitchExists = runModeConfiguration.getBoolean(s"features.$name").getOrElse(false)
+    if (featureSwitchExists) {
+      reset(name)
+      featureSwitches += FeatureSwitch(name, newValue)
+      get(name)
+    } else {
+      newValue
+    }
   }
 
   override def get(name: String): Boolean =

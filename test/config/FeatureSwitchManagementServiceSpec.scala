@@ -62,6 +62,14 @@ class FeatureSwitchManagementServiceSpec extends PlaySpec {
         fs.get("is-hub-enabled") mustEqual true
       }
 
+      "return the toggle value without doing anything if toggle doesn't exist in config" in {
+        val injector = new GuiceApplicationBuilder().build().injector
+        val fs = new FeatureSwitchManagementServiceTestImpl(
+          injector.instanceOf[Configuration], injector.instanceOf[Environment]
+        )
+        fs.change("is-hub-enabled", newValue = false) mustEqual false
+      }
+
       "change the feature toggle value from true to false" in {
         val fs = new FeatureSwitchManagementServiceTestImpl(
           config, environment
