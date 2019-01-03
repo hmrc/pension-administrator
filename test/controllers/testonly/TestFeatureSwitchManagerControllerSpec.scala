@@ -51,13 +51,13 @@ class TestFeatureSwitchManagerControllerSpec extends SpecBase with MockitoSugar 
 
     "toggle off is called" must {
       "return No Content if the toggle value is changed successfully" in {
-        when(fakeFeatureSwitchManagerService.change("test-toggle", newValue = false)).thenReturn(false)
+        when(fakeFeatureSwitchManagerService.change("test-toggle", newValue = false)).thenReturn(true)
         val result = controller.toggleOff("test-toggle")(fakeRequest)
         status(result) mustBe NO_CONTENT
       }
 
       "return Expectation Failed if changing the toggle value is failed" in {
-        when(fakeFeatureSwitchManagerService.change("test-toggle", newValue = false)).thenReturn(true)
+        when(fakeFeatureSwitchManagerService.change("test-toggle", newValue = false)).thenReturn(false)
         val result = controller.toggleOff("test-toggle")(fakeRequest)
         status(result) mustBe EXPECTATION_FAILED
       }

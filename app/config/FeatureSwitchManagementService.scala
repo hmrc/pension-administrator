@@ -61,9 +61,8 @@ class FeatureSwitchManagementServiceTestImpl @Inject()(override val runModeConfi
       reset(name)
       featureSwitches += FeatureSwitch(name, newValue)
       get(name)
-    } else {
-      newValue
     }
+    true
   }
 
   override def get(name: String): Boolean =
