@@ -17,12 +17,13 @@
 package controllers
 
 import com.google.inject.Inject
+import config.AppConfig
 import connectors.RegistrationConnector
 import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
 import models.{Organisation, SuccessResponse}
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsResultException, JsValue, Json}
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, Upstream4xxResponse}
@@ -35,15 +36,41 @@ import scala.util.{Failure, Success, Try}
 
 class RegistrationController @Inject()(
                                         override val authConnector: AuthConnector,
-                                        registerConnector: RegistrationConnector
+                                        registerConnector: RegistrationConnector,
+                                        config: AppConfig
                                       )(implicit val ec: ExecutionContext) extends BaseController with ErrorHandler with AuthorisedFunctions {
 
   def registerWithIdIndividual: Action[AnyContent] = Action.async {
     implicit request => {
-      retrieveIndividual { (nino, user) =>
-        registerConnector.registerWithIdIndividual(nino, user, mandatoryPODSData()) map handleResponse
-      } recoverWith recoverFromError
+      if(config.isManualIVEnabled){
+        registerWithIdManualIVEnabled
+      }else {
+        registerWithIdManualIVDisabled
+      }
     }
+  }
+
+  private def registerWithIdManualIVEnabled(implicit request: Request[AnyContent]) = {
+    retrieveUser { user =>
+      request.body.asJson match {
+        case Some(jsBody) =>
+          Try((jsBody \ "nino").convertTo[String]) match {
+            case Success(nino) =>
+              registerConnector.registerWithIdIndividual(nino, user, mandatoryPODSData()) map handleResponse
+            case Failure(e) =>
+              Logger.warn(s"Bad Request returned from frontend for Register With Id Individual $e")
+              Future.failed(new BadRequestException(s"Bad Request returned from frontend for Register With Id Individual $e"))
+          }
+        case _ =>
+          Future.failed(new BadRequestException("No request body received for register with Id Individual"))
+      }
+    } recoverWith recoverFromError
+  }
+
+  private def registerWithIdManualIVDisabled(implicit request: Request[AnyContent]) = {
+    retrieveIndividual { (nino, user) =>
+      registerConnector.registerWithIdIndividual(nino, user, mandatoryPODSData()) map handleResponse
+    } recoverWith recoverFromError
   }
 
   private def retrieveIndividual(fn: (String, models.User) => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
@@ -53,7 +80,6 @@ class RegistrationController @Inject()(
       case _ =>
         Future.failed(Upstream4xxResponse("Nino not found in auth record", UNAUTHORIZED, UNAUTHORIZED))
     }
-
 
   def registerWithIdOrganisation: Action[AnyContent] = Action.async {
     implicit request => {
