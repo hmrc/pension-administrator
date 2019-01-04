@@ -56,8 +56,8 @@ class FeatureSwitchManagementServiceTestImpl @Inject()(override val runModeConfi
   override protected def mode: Mode = environment.mode
 
   override def change(name: String, newValue: Boolean): Boolean = {
-    val featureSwitchExists = runModeConfiguration.getBoolean(s"features.$name").getOrElse(false)
-    if (featureSwitchExists) {
+    val featureSwitch = runModeConfiguration.getBoolean(s"features.$name")
+    if (featureSwitch.nonEmpty) {
       reset(name)
       featureSwitches += FeatureSwitch(name, newValue)
       get(name)
@@ -72,8 +72,8 @@ class FeatureSwitchManagementServiceTestImpl @Inject()(override val runModeConfi
     }
 
   override def reset(name: String): Unit = {
-    featureSwitches - FeatureSwitch(name, false)
-    featureSwitches - FeatureSwitch(name, true)
+    featureSwitches -= FeatureSwitch(name, false)
+    featureSwitches -= FeatureSwitch(name, true)
   }
 }
 

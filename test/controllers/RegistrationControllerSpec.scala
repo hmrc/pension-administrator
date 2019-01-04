@@ -18,7 +18,7 @@ package controllers
 
 import akka.stream.Materializer
 import base.SpecBase
-import config.AppConfig
+import config.FeatureSwitchManagementService
 import connectors.RegistrationConnector
 import models._
 import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
@@ -31,7 +31,6 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -57,19 +56,19 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
   implicit val mat: Materializer = app.materializer
 
-  private def appConfig(isManualIvEnabled: Boolean) = {
-    new GuiceApplicationBuilder().configure(
-      Map(
-        "features.is-iv-enabled" -> isManualIvEnabled
-      )
-    ).build().injector.instanceOf[AppConfig]
+  private def fakeFeatureSwitchManagerService(isIvEnabled: Boolean): FeatureSwitchManagementService = new FeatureSwitchManagementService {
+    override def change(name: String, newValue: Boolean): Boolean = ???
+
+    override def get(name: String): Boolean = isIvEnabled
+
+    override def reset(name: String): Unit = ???
   }
 
   private def registrationController(retrievals: Future[_], isManualIvEnabled: Boolean = true): RegistrationController =
     new RegistrationController(
       new FakeAuthConnector(retrievals),
       mockRegistrationConnector,
-      appConfig(isManualIvEnabled)
+      fakeFeatureSwitchManagerService(isManualIvEnabled)
     )
 
   before(reset(mockRegistrationConnector))
