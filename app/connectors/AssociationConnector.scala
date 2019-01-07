@@ -77,7 +77,10 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
     response.status match {
       case OK =>
         response.json.validate[PSAMinimalDetails].fold(
-          _ => Left(new BadRequestException("INVALID PAYLOAD")),
+          _ => {
+            invalidPayloadHandler.logFailures("/resources/schemas/getPSAMinimalDetails.json")(response.json)
+            Left(new BadRequestException("INVALID PAYLOAD"))
+          },
           value =>
             Right(value)
         )
