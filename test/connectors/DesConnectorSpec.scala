@@ -378,6 +378,172 @@ class DesConnectorSpec extends AsyncFlatSpec
     removePsaUrl
   )
 
+  "DesConnector deregisterPSA" should "handle OK (200)" in {
+    val successResponse = FakeDesConnector.deregisterPsaResponseJson
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .withRequestBody(equalToJson(Json.stringify(deregisterPsaData)))
+        .willReturn(
+          ok(Json.stringify(successResponse))
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+    connector.deregisterPSA(psaId.id).map { response =>
+      response.right.value shouldBe successResponse
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_CORRELATION_ID"))
+        )
+    )
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_CORRELATION_ID")
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_IDTYPE response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_IDTYPE"))
+        )
+    )
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_IDTYPE")
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_IDVALUE response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_IDVALUE"))
+        )
+    )
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_IDVALUE")
+    }
+  }
+
+  it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody("INVALID_PAYLOAD")
+        )
+    )
+
+    logger.reset()
+    connector.deregisterPSA(psaId.id).map {
+      _ =>
+        logger.getLogEntries.size shouldBe 1
+        logger.getLogEntries.head.level shouldBe Level.WARN
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 ACTIVE_RELATIONSHIP_EXISTS response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("ACTIVE_RELATIONSHIP_EXISTS"))
+        )
+    )
+
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("ACTIVE_RELATIONSHIP_EXISTS")
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 ALREADY_DEREGISTERED response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("ALREADY_DEREGISTERED"))
+        )
+    )
+
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("ALREADY_DEREGISTERED")
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 INVALID_DEREGISTRATION_DATE response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_DEREGISTRATION_DATE"))
+        )
+    )
+
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("INVALID_DEREGISTRATION_DATE")
+    }
+  }
+
+  it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(CONFLICT)
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("DUPLICATE_SUBMISSION"))
+        )
+    )
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[ConflictException]
+        response.left.value.message should include("DUPLICATE_SUBMISSION")
+    }
+  }
+
+  it should "return not found exception and failure response details for a 404 response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(NOT_FOUND)
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("NOT_FOUND"))
+        )
+    )
+
+    connector.deregisterPSA(psaId.id).collect {
+      case Left(_: NotFoundException) => succeed
+    }
+  }
+
 }
 
 object DesConnectorSpec extends JsonFileReader {
@@ -394,10 +560,12 @@ object DesConnectorSpec extends JsonFileReader {
 
   private val removePsaData: JsValue = Json.obj("ceaseDate" -> removalDate.toString)
   private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removalDate)
+  private val deregisterPsaData: JsValue = Json.obj("deregistrationDate" -> LocalDate.now(), "reason" -> "1")
 
   val registerPsaUrl = "/pension-online/subscription"
   val psaSubscriptionDetailsUrl = s"/pension-online/psa-subscription-details/$psaId"
   val removePsaUrl = s"/pension-online/cease-psa/psaid/$psaId/pstr/$pstr"
+  val deregisterPsaUrl = s"/pension-online/deregistration/psaid/$psaId"
 
   private def errorResponse(code: String) =
     Json.stringify(
