@@ -70,4 +70,12 @@ class SchemeController @Inject()(schemeService: SchemeService,
         case Left(e) => result(e)
       }
   }
+
+  def deregisterPsa(psaId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      schemeConnector.deregisterPSA(psaId).map {
+        case Right(_) => NoContent
+        case Left(e) => result(e)
+      }
+  }
 }
