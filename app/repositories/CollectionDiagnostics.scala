@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package repositories
 
 import play.api.Logger
 import reactivemongo.play.json.collection.JSONCollection
-
 import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.concurrent.Future
 
 case class IndexDef(name: String, fields: Seq[String], unique: Boolean, ttl: Option[Int])

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -314,7 +314,8 @@ class FakeAssociationConnector extends AssociationConnector {
   import InvitationServiceImplSpec._
 
   def getPSAMinimalDetails(psaId: PsaId)
-                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = {
+                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext,
+                           request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {
 
     psaId match {
       case `johnDoePsaId` | `associatedPsaId` => Future.successful(Right(johnDoe))

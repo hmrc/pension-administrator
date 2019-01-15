@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,14 @@ class SchemeController @Inject()(schemeService: SchemeService,
     implicit request =>
       schemeConnector.removePSA(request.body)map {
         case Right(_) =>  NoContent
+        case Left(e) => result(e)
+      }
+  }
+
+  def deregisterPsa(psaId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      schemeConnector.deregisterPSA(psaId).map {
+        case Right(_) => NoContent
         case Left(e) => result(e)
       }
   }

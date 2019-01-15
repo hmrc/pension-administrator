@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.FakeDesConnector
 import utils.testhelpers.PsaSubscriptionBuilder._
-
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMatchers {
@@ -255,6 +255,89 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
     }
   }
 
+  "deregisterPSA" should "return OK when service returns successfully" in {
+
+    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+    status(result) mustBe NO_CONTENT
+
+  }
+
+  it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(
+      Future.successful(Left(new BadRequestException("bad request")))
+    )
+
+    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "bad request"
+  }
+
+  it should "return CONFLICT when service returns CONFLICT" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(
+      Future.successful(Left(new ConflictException("conflict")))
+    )
+
+    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+
+    status(result) mustBe CONFLICT
+    contentAsString(result) mustBe "conflict"
+  }
+
+  it should "return NOT_FOUND when service returns NOT_FOUND" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(
+      Future.successful(Left(new NotFoundException("not found")))
+    )
+
+    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+
+    status(result) mustBe NOT_FOUND
+    contentAsString(result) mustBe "not found"
+  }
+
+  it should "return Forbidden when service return Forbidden" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(
+      Future.successful(Left(new ForbiddenException("forbidden")))
+    )
+
+    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+
+    status(result) mustBe FORBIDDEN
+    contentAsString(result) mustBe "forbidden"
+  }
+
+
+  it should "throw Upstream5xxResponse when service throws Upstream5xxResponse" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+
+    recoverToSucceededIf[Upstream5xxResponse] {
+      call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+    }
+  }
+
+  it should "throw UpStream4xxResponse when service throws UpStream4xxResponse" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(Future.failed(Upstream4xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+
+    recoverToSucceededIf[Upstream4xxResponse] {
+      call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+    }
+  }
+
+  it should "throw Exception when service throws any unknown Exception" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(Future.failed(new Exception("Unknown Exception")))
+
+    recoverToSucceededIf[Exception] {
+      call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+    }
+  }
+
 }
 
 object SchemeControllerSpec extends SpecBase {
@@ -290,4 +373,6 @@ object SchemeControllerSpec extends SpecBase {
   private val removePsaJson: JsValue = Json.toJson(removePsaDataModel)
 
   def removePsaFakeRequest(data: JsValue): FakeRequest[JsValue] = FakeRequest("DELETE", "/").withBody(data)
+
+  def deregisterPsaFakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("DELETE", "/")
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import config.AppConfig
 import connectors._
 import models._
 import models.enumeration.JourneyType
-import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json._
@@ -34,7 +33,6 @@ import uk.gov.hmrc.http._
 import utils.{DateHelper, FuzzyNameMatcher}
 
 import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 case class MongoDBFailedException(exceptionMesage: String) extends HttpException(exceptionMesage, INTERNAL_SERVER_ERROR)
@@ -83,7 +81,7 @@ class InvitationServiceImpl @Inject()(
   }
 
   private def isAssociated(psaId: PsaId, srn: SchemeReferenceNumber)
-                          (implicit hc: HeaderCarrier, requestHeader: RequestHeader): Future[Either[HttpException, Boolean]] =
+                          (implicit hc: HeaderCarrier, requestHeader: RequestHeader, ec: ExecutionContext): Future[Either[HttpException, Boolean]] =
     schemeConnector.checkForAssociation(psaId, srn) map {
       case Right(json) => json.validate[Boolean].fold(
         _ => Left(new InternalServerException("Response from pension-scheme cannot be parsed to boolean")),
@@ -107,7 +105,7 @@ class InvitationServiceImpl @Inject()(
   }
 
 
-  private def insertInvitation(invitation: Invitation): Future[Either[HttpException, Unit]] =
+  private def insertInvitation(invitation: Invitation)(implicit ec: ExecutionContext): Future[Either[HttpException, Unit]] =
     repository.insert(invitation).map(_ => Right(())) recover {
       case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
     }
@@ -214,7 +212,7 @@ class InvitationServiceImpl @Inject()(
   }
 
   private def handle[T](request: Future[Either[HttpException, T]])
-                       (f: T => Future[Either[HttpException, Unit]]): Future[Either[HttpException, Unit]] = {
+                       (f: T => Future[Either[HttpException, Unit]])(implicit ec: ExecutionContext): Future[Either[HttpException, Unit]] = {
     request flatMap {
       case Right(n) =>
         f(n)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
   lazy val psaMinimalDetailsUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.psa.minimal.details")}"
   lazy val psaSubscriptionDetailsUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.psa.subscription.details")}"
   lazy val removePsaUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.remove.psa")}"
+  lazy val deregisterPsaUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.deregister.psa")}"
 
   lazy val createPsaAssociationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.createPsaAssociation")}"
   lazy val desEnvironment: String = runModeConfiguration.getOptional[String]("microservice.services.des-hod.env").getOrElse("local")
@@ -47,5 +48,7 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
 
   lazy val invitationExpiryDays: Int = runModeConfiguration.underlying.getInt("invitationExpiryDays")
   lazy val invitationCallbackUrl: String = s"$baseUrlPensionAdministrator${runModeConfiguration.underlying.getString("serviceUrls.invitation.callback")}"
+
+  lazy val isManualIVEnabled: Boolean = runModeConfiguration.getBoolean("features.is-iv-enabled").getOrElse(false)
 
 }

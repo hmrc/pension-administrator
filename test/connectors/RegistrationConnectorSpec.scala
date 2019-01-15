@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import models.User
 import models.registrationnoid._
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
+import play.api.http.Status
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
@@ -337,8 +338,6 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
       response =>
         response.right.value shouldBe registerWithoutIdResponseJson
     }
-
-    pending
   }
 
   it should "handle FORBIDDEN (403) - INVALID_SUBMISSION" in {
@@ -379,7 +378,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     registerOrganisationWithoutIdUrl
   )
 
-  it should "send a PSARegistration audit event on success" in {
+  it should "send a PSARegWithoutId audit event on success" in {
 
     server.stubFor(
       post(urlEqualTo(registerOrganisationWithoutIdUrl))
@@ -407,7 +406,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should "send a PSARegistration audit event on not found" in {
+  it should "send a PSARegWithoutId audit event on not found" in {
 
     server.stubFor(
       post(urlEqualTo(registerOrganisationWithoutIdUrl))
@@ -433,7 +432,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should "not send a PSARegistration audit event on failure" in {
+  it should "not send a PSARegWithoutId audit event on failure" in {
 
     server.stubFor(
       post(urlEqualTo(registerOrganisationWithoutIdUrl))
@@ -627,6 +626,87 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         ex.reportAs shouldBe BAD_GATEWAY
     }
 
+  }
+
+  it should "send a PSARegWithoutId audit event on success" in {
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .withHeader("Authorization", matching("^.+$"))
+          .withHeader("Content-Type", equalTo("application/json"))
+          .withHeader("Environment", matching("^.+$"))
+          .withRequestBody(equalToJson(Json.stringify(registerIndividualWithoutIdRequestJson)))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withHeader("Content-Type", "application/json")
+              .withBody(Json.stringify(registerWithoutIdResponseJson))
+          )
+      )
+
+    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
+      _ =>
+        auditService.verifySent(
+          PSARegistration(
+            withId = false,
+            externalId = testIndividual.externalId,
+            psaType = "Individual",
+            found = true,
+            isUk = Some(false),
+            status = OK,
+            request = Json.toJson(registerIndividualWithoutIdRequest),
+            response = Some(registerWithoutIdResponseJson)
+          )
+        ) shouldBe true
+    }
+  }
+
+  it should "send a PSARegWithoutId audit event on not found" in {
+
+   server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(BAD_REQUEST)
+              .withBody(errorResponse("INVALID_PAYLOAD"))
+          )
+      )
+
+    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
+      _ =>
+        auditService.verifySent(
+          PSARegistration(
+            withId = false,
+            externalId = testIndividual.externalId,
+            psaType = "Individual",
+            found = false,
+            isUk = None,
+            status = BAD_REQUEST,
+            request = Json.toJson(registerIndividualWithoutIdRequest),
+            response = None
+          )
+        ) shouldBe true
+    }
+  }
+
+  it should "not send a PSARegWithoutId audit event on failure" in {
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(INTERNAL_SERVER_ERROR)
+          )
+      )
+
+    recoverToExceptionIf[Upstream5xxResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
+      ex =>
+        ex.reportAs shouldBe BAD_GATEWAY
+        auditService.verifyNothingSent shouldBe true
+    }
   }
 
 }

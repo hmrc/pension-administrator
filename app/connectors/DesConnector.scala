@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.{PsaSubscription, PsaToBeRemovedFromScheme}
+import org.joda.time.LocalDate
 import play.Logger
 import play.api.http.Status._
 import play.api.libs.json._
@@ -49,6 +50,11 @@ trait DesConnector {
                                          headerCarrier: HeaderCarrier,
                                          ec: ExecutionContext,
                                          request: RequestHeader): Future[Either[HttpException, JsValue]]
+
+  def deregisterPSA(psaId: String)(implicit
+                                   headerCarrier: HeaderCarrier,
+                                   ec: ExecutionContext,
+                                   request: RequestHeader): Future[Either[HttpException, JsValue]]
 }
 
 class DesConnectorImpl @Inject()(
@@ -107,10 +113,28 @@ class DesConnectorImpl @Inject()(
       handlePostResponse(_, removePsaUrl) } andThen logFailures("remove PSA", data, removePsaSchema)
   }
 
+  override def deregisterPSA(psaId: String)(implicit
+                                                                   headerCarrier: HeaderCarrier,
+                                                                   ec: ExecutionContext,
+                                                                   request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
+    val deregisterPsaSchema = "/resources/schemas/deregisterPsa.json"
+
+    val deregisterPsaUrl = config.deregisterPsaUrl.format(psaId)
+
+    val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString(), "reason" -> "1")
+
+    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+
+    http.POST[JsValue, HttpResponse](deregisterPsaUrl, data)(implicitly, implicitly, hc, implicitly) map {
+      handlePostResponse(_, deregisterPsaUrl) } andThen logFailures("deregister PSA", data, deregisterPsaSchema)
+  }
+
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
 
-    val badResponseSeq = Seq("INVALID_CORRELATION_ID", "INVALID_PAYLOAD", "INVALID_PSTR", "INVALID_PSAID")
-    val forbiddenResponseSeq = Seq("INVALID_BUSINESS_PARTNER", "NO_RELATIONSHIP_EXISTS", "NO_OTHER_ASSOCIATED_PSA", "FUTURE_CEASE_DATE", "PSAID_NOT_ACTIVE")
+    val badResponseSeq = Seq("INVALID_CORRELATION_ID", "INVALID_PAYLOAD", "INVALID_PSTR", "INVALID_PSAID", "INVALID_IDTYPE", "INVALID_IDVALUE")
+    val forbiddenResponseSeq = Seq("INVALID_BUSINESS_PARTNER", "NO_RELATIONSHIP_EXISTS", "NO_OTHER_ASSOCIATED_PSA", "FUTURE_CEASE_DATE",
+      "PSAID_NOT_ACTIVE", "ACTIVE_RELATIONSHIP_EXISTS", "ALREADY_DEREGISTERED", "INVALID_DEREGISTRATION_DATE")
 
     response.status match {
       case OK => Right(response.json)

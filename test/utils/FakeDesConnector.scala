@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,12 @@ class FakeDesConnector extends DesConnector {
   private var registerPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
   private var getPsaResponse: Future[Either[HttpException, PsaSubscription]] = Future.successful(Right(psaSubscription))
   private var removePsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(removePsaResponseJson))
+  private var deregisterPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(deregisterPsaResponseJson))
 
   def setRegisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.registerPsaResponse = response
   def setPsaDetailsResponse(response: Future[Either[HttpException, PsaSubscription]]): Unit = this.getPsaResponse = response
   def setRemovePsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.removePsaResponse = response
+  def setDeregisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.deregisterPsaResponse = response
 
   override def registerPSA(registerData: JsValue)(implicit
                                                   headerCarrier: HeaderCarrier,
@@ -54,6 +56,9 @@ class FakeDesConnector extends DesConnector {
                                                         ec: ExecutionContext,
                                                         request: RequestHeader): Future[Either[HttpException, JsValue]] = removePsaResponse
 
+  override def deregisterPSA(psaId: String)(implicit headerCarrier: HeaderCarrier,
+                                            ec: ExecutionContext,
+                                            request: RequestHeader): Future[Either[HttpException, JsValue]] = deregisterPsaResponse
 }
 
 object FakeDesConnector {
@@ -66,4 +71,5 @@ object FakeDesConnector {
     )
 
   val removePsaResponseJson: JsValue = Json.obj("processingDate" -> LocalDate.now)
+  val deregisterPsaResponseJson: JsValue = Json.obj("processingDate" -> LocalDate.now)
 }

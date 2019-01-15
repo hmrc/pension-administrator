@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import utils.AuthRetrievals
-
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMatchers {
@@ -249,7 +249,8 @@ object AssociationControllerSpec extends MockitoSugar {
 
     def getPSAMinimalDetails(psaId: PsaId)(implicit
                                             headerCarrier: HeaderCarrier,
-                                            ec: ExecutionContext): Future[Either[HttpException, PSAMinimalDetails]] = minimalPsaDetailsResponse
+                                            ec: ExecutionContext,
+                                            request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = minimalPsaDetailsResponse
 
     override def acceptInvitation(invitation: AcceptedInvitation)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader):
     Future[Either[HttpException, Unit]] = acceptInvitationResponse

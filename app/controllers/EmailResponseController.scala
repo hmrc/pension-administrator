@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import play.api.mvc._
 import uk.gov.hmrc.crypto.{ApplicationCrypto, Crypted}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class EmailResponseController @Inject()(

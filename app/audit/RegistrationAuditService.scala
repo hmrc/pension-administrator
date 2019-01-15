@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package audit
 
-import models.registrationnoid.OrganisationRegistrant
+import models.registrationnoid.RegisterWithoutIdResponse
 import models.{SuccessResponse, UkAddress, User}
 import play.api.Logger
 import play.api.http.Status
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HttpException
 
@@ -53,34 +53,47 @@ trait RegistrationAuditService {
                               (implicit request: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
 
     case Success(Right(json)) =>
-      sendEvent(
-        PSARegistration(
-          withId = withId,
-          externalId = user.externalId,
-          psaType = psaType,
-          found = true,
-          isUk = isUk(json),
-          status = Status.OK,
-          request = registerData,
-          response = Some(json)
-        )
-      )
+      sendAuditEvent(withId, user.externalId, psaType, true, isUk(json), Status.OK, registerData, Some(json))(sendEvent)
+
     case Success(Left(e)) =>
-      sendEvent(
-        PSARegistration(
-          withId = withId,
-          externalId = user.externalId,
-          psaType = psaType,
-          found = false,
-          isUk = None,
-          status = e.responseCode,
-          request = registerData,
-          response = None
-        )
-      )
+      sendAuditEvent(withId, user.externalId, psaType, false, None, e.responseCode, registerData, None)(sendEvent)
+
     case Failure(t) =>
       Logger.error("Error in registration connector", t)
 
+  }
+
+
+  def sendPSARegWithoutIdEvent(withId: Boolean, user: User, psaType: String, registerData: JsValue, isUk: JsValue => Option[Boolean])
+                              (sendEvent: PSARegistration => Unit)
+                              (implicit request: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, RegisterWithoutIdResponse]], Unit] = {
+
+    case Success(Right(registerWithoutIdResponse)) =>
+      sendAuditEvent(withId, user.externalId, psaType, true, isUk(Json.toJson(registerWithoutIdResponse)),
+        Status.OK, registerData, Some(Json.toJson(registerWithoutIdResponse)))(sendEvent)
+
+    case Success(Left(e)) =>
+      sendAuditEvent(withId, user.externalId, psaType, false, None, e.responseCode, registerData, None)(sendEvent)
+
+    case Failure(t) =>
+      Logger.error("Error in registration connector", t)
+
+  }
+
+  private def sendAuditEvent(withId: Boolean, externalId: String, psaType: String, found : Boolean, isUk:Option[Boolean],
+                             status : Int, request:JsValue, response:Option[JsValue])(sendEvent: PSARegistration => Unit): Unit = {
+    sendEvent(
+      PSARegistration(
+        withId = withId,
+        externalId = externalId,
+        psaType = psaType,
+        found = found,
+        isUk = isUk,
+        status = status,
+        request = request,
+        response = response
+      )
+    )
   }
 
 }
