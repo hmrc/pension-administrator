@@ -18,6 +18,9 @@ GET         /journey-cache/manage-pensions/:id          controllers.ManagePensio
 POST        /journey-cache/manage-pensions/:id          controllers.ManagePensionsCacheController.save(id: String)
 DELETE      /journey-cache/manage-pensions/:id          controllers.ManagePensionsCacheController.remove(id: String)
 
+GET         /journey-cache/psa/:id                      controllers.PSACacheController.get(id: String)
+POST        /journey-cache/psa/:id                      controllers.PSACacheController.save(id: String)
+DELETE      /journey-cache/psa/:id                      controllers.PSACacheController.remove(id: String)
 
 POST        /email-response/:journeyType/*id            controllers.EmailResponseController.retrieveStatus(journeyType: JourneyType.Name, id: String)
 POST        /invite                                     controllers.InvitationController.invite
