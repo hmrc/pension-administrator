@@ -40,7 +40,6 @@ import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.FakeAuthConnector
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfter with GeneratorDrivenPropertyChecks {
