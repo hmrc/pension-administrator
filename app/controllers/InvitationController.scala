@@ -17,16 +17,17 @@
 package controllers
 
 import com.google.inject.Inject
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import service.InvitationService
 import uk.gov.hmrc.http.BadRequestException
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.ErrorHandler
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Future}
 
-import scala.concurrent.{ExecutionContext, Future}
-
-class InvitationController @Inject()(invitationService: InvitationService
-                                    )(implicit val ec: ExecutionContext)extends BaseController with ErrorHandler {
+class InvitationController @Inject()(invitationService: InvitationService,
+                                     cc: ControllerComponents
+                                    )extends BackendController(cc) with ErrorHandler {
 
   def invite(): Action[AnyContent] = Action.async {
     implicit request =>

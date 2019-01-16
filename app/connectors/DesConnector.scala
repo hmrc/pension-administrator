@@ -122,7 +122,7 @@ class DesConnectorImpl @Inject()(
 
     val deregisterPsaUrl = config.deregisterPsaUrl.format(psaId)
 
-    val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now(), "reason" -> "1")
+    val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 

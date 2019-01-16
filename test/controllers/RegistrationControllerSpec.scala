@@ -31,6 +31,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import play.api.libs.json.JodaWrites._
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -68,6 +69,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
     new RegistrationController(
       new FakeAuthConnector(retrievals),
       mockRegistrationConnector,
+      controllerComponents,
       fakeFeatureSwitchManagerService(isManualIvEnabled)
     )
 
