@@ -38,7 +38,10 @@ trait SchemeConnector {
                                                                       headerCarrier: HeaderCarrier,
                                                                       ec: ExecutionContext,
                                                                       request: RequestHeader): Future[Either[HttpException, JsValue]]
-
+  def listOfSchemes(psaId: String)(implicit
+                                   headerCarrier: HeaderCarrier,
+                                   ec: ExecutionContext,
+                                   request: RequestHeader): Future[Either[HttpException, JsValue]]
 }
 
 class SchemeConnectorImpl @Inject()(
@@ -69,4 +72,21 @@ class SchemeConnectorImpl @Inject()(
 
   }
 
+  def listOfSchemes(psaId: String)(implicit
+                                   headerCarrier: HeaderCarrier,
+                                   ec: ExecutionContext,
+                                   request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
+    val headers: Seq[(String, String)] = Seq(("psaId", psaId), ("Content-Type", "application/json"))
+
+    implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headers: _*)
+
+    http.GET[HttpResponse](config.listOfSchemesUrl)(implicitly, hc, implicitly) map { response =>
+      val badResponse = Seq("Bad Request with missing parameter PSA Id")
+      response.status match {
+        case OK => Right(response.json)
+        case _ => Left(handleErrorResponse(s"List schemes with headers: ${hc.headers}", config.listOfSchemesUrl, response, badResponse))
+      }
+    }
+  }
 }

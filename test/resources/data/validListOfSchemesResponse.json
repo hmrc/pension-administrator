@@ -1,0 +1,14 @@
+{
+  "processingDate": "2001-12-17T09:30:47Z",
+  "totalSchemesRegistered": "1",
+  "schemeDetail": [
+    {
+      "name": "abcdefghi",
+      "referenceNumber": "S1000000456",
+      "schemeStatus": "Pending",
+      "pstr": "10000678RE",
+      "relationShip": "Primary",
+      "underAppeal": "Yes"
+    }
+  ]
+}
