@@ -28,23 +28,21 @@ import scala.concurrent.ExecutionContext
 class DeregistrationController @Inject()(
                                           schemeConnector: SchemeConnector
                                         )(implicit val ec: ExecutionContext) extends BaseController with ErrorHandler {
-  private[controllers] def parseSchemes(jsValue: JsValue): Seq[String] = {
+  private[controllers] def parseSchemes(jsValue: JsValue): Seq[String] =
     (JsPath \ "schemeDetail") (jsValue).head.validate[JsArray] match {
-      case JsSuccess(value, _) =>
-        value.value.map(scheme => (JsPath \ "schemeStatus") (scheme).head.as[String])
+      case JsSuccess(jsArray, _) =>
+        jsArray.value.map(scheme => (JsPath \ "schemeStatus") (scheme).head.as[String])
       case JsError(ex) =>
         throw new RuntimeException("Unable to read schemes:" + ex.toString)
     }
-  }
 
   def canDeregister(psaId: String): Action[AnyContent] = Action.async {
-    implicit request => {
+    implicit request =>
       schemeConnector.listOfSchemes(psaId).map {
         case Right(jsValue) =>
           Ok(Json.toJson(!parseSchemes(jsValue).exists(_ != "Wound-up")))
         case Left(e) =>
           result(e)
       }
-    }
   }
 }
