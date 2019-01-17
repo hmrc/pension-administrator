@@ -41,8 +41,7 @@ class DeregistrationController @Inject()(
     implicit request => {
       schemeConnector.listOfSchemes(psaId).map {
         case Right(jsValue) =>
-          val schemes = parseSchemes(jsValue).filter(_ != "Wound-up")
-          Ok(Json.toJson(schemes.isEmpty))
+          Ok(Json.toJson(!parseSchemes(jsValue).exists(_ != "Wound-up")))
         case Left(e) =>
           result(e)
       }
