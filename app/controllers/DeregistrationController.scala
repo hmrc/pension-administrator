@@ -18,44 +18,34 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.SchemeConnector
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json._
 import play.api.mvc._
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import utils.ErrorHandler
-import utils.validationUtils._
 
 import scala.concurrent.ExecutionContext
 
 class DeregistrationController @Inject()(
                                           schemeConnector: SchemeConnector
                                         )(implicit val ec: ExecutionContext) extends BaseController with ErrorHandler {
-
-  private case class SchemeDetail(name: String, referenceNumber: String, schemeStatus: String, openDate: Option[String],
-                                  pstr: Option[String] = None, relationShip: Option[String], underAppeal: Option[String] = None)
-
-  private object SchemeDetail {
-    implicit val format: OFormat[SchemeDetail] = Json.format[SchemeDetail]
-  }
-
-  private case class ListOfSchemes(processingDate: String, totalSchemesRegistered: String,
-                                   schemeDetail: Option[List[SchemeDetail]] = None)
-
-  private object ListOfSchemes {
-    implicit val format: OFormat[ListOfSchemes] = Json.format[ListOfSchemes]
+  private[controllers] def parseSchemes(jsValue: JsValue): Seq[String] = {
+    (JsPath \ "schemeDetail") (jsValue).head.validate[JsArray] match {
+      case JsSuccess(value, _) =>
+        value.value.map(scheme => (JsPath \ "schemeStatus") (scheme).head.as[String])
+      case JsError(ex) =>
+        throw new RuntimeException("Unable to read schemes:" + ex.toString)
+    }
   }
 
   def canDeregister(psaId: String): Action[AnyContent] = Action.async {
     implicit request => {
-
       schemeConnector.listOfSchemes(psaId).map {
         case Right(jsValue) =>
-          val schemes = jsValue.convertTo[ListOfSchemes].schemeDetail.toSeq.flatten
-              .filter(_.schemeStatus != "Wound-up")
+          val schemes = parseSchemes(jsValue).filter(_ != "Wound-up")
           Ok(Json.toJson(schemes.isEmpty))
         case Left(e) =>
           result(e)
       }
-
     }
   }
 }

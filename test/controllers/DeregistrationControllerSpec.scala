@@ -19,7 +19,6 @@ package controllers
 import akka.stream.Materializer
 import base.{JsonFileReader, SpecBase}
 import connectors.SchemeConnector
-import controllers.DeregistrationControllerSpec.psaId
 import org.mockito.Matchers
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -28,7 +27,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.libs.json._
 import play.api.test.Helpers._
-import uk.gov.hmrc.http.{BadRequestException, NotFoundException}
+import uk.gov.hmrc.http.BadRequestException
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -88,6 +87,11 @@ class DeregistrationControllerSpec extends SpecBase with MockitoSugar with Befor
         .thenReturn(Future.successful(Left(new BadRequestException("bad request"))))
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
       status(result) mustBe BAD_REQUEST
+    }
+
+    "return seq of scheme statuses from parsed schemes" in {
+      val result = deregistrationController.parseSchemes(validListSchemesIncWoundUpResponse)
+      result mustBe Seq("Wound-up", "Open")
     }
   }
 }
