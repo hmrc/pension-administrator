@@ -17,6 +17,7 @@
 package connectors
 
 import audit.{AuditService, StubSuccessfulAuditService}
+import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import connectors.helper.ConnectorBehaviours
@@ -25,11 +26,11 @@ import org.scalatest._
 import play.api.LoggerLike
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json.JsBoolean
+import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, Upstream4xxResponse}
 import utils.{StubLogger, WireMockHelper}
 
 class SchemeConnectorSpec extends AsyncFlatSpec
@@ -89,16 +90,58 @@ class SchemeConnectorSpec extends AsyncFlatSpec
 
   }
 
+  "SchemeConnector listSchemes" should "handle OK (200)" in {
+    server.stubFor(
+      get(urlEqualTo(listSchemesUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .withHeader("psaId", equalTo(psaId.value))
+        .willReturn(
+          ok(Json.stringify(validListOfSchemeResponse))
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    connector.listOfSchemes(psaId.id) map { response =>
+      response.right.value shouldBe validListOfSchemeResponse
+    }
+  }
+
+  it should "throw Upstream4xx Exception when DES/ETMP throws BadRequestException" in {
+    server.stubFor(
+      get(urlEqualTo(listSchemesUrl))
+        .willReturn(
+          badRequest()
+        )
+    )
+
+    recoverToSucceededIf[Upstream4xxResponse] {
+      connector.listOfSchemes(psaId.id)
+    }
+  }
+
+  it should "return a NotFoundException Exception when DES/ETMP throws NotFoundException" in {
+    server.stubFor(
+      get(urlEqualTo(listSchemesUrl))
+        .willReturn(
+          notFound()
+        )
+    )
+
+    connector.listOfSchemes(psaId.id).map { response =>
+      response.left.value shouldBe a[NotFoundException]
+    }
+  }
 }
 
-object SchemeConnectorSpec {
-
+object SchemeConnectorSpec extends JsonFileReader {
+  private val validListOfSchemeResponse = readJsonFromFile("/data/validListOfSchemesResponse.json")
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val rh: RequestHeader = FakeRequest("", "")
 
   val auditService = new StubSuccessfulAuditService()
   val logger = new StubLogger()
   val checkForAssociationUrl = "/pensions-scheme/is-psa-associated"
+  val listSchemesUrl = "/pensions-scheme/list-of-schemes"
   val srn = SchemeReferenceNumber("S0987654321")
   val psaId = PsaId("A7654321")
 
