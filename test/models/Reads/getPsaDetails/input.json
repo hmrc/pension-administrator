@@ -1,0 +1,18 @@
+{
+  "processingDate":"2001-12-17T09:30:47Z",
+  "psaSubscriptionDetails":{
+    "isPSASuspension":false,
+    "customerIdentificationDetails":{
+      "legalStatus":"Limited Company",
+      "idType":"UTR",
+      "idNumber":"0123456789",
+      "noIdentifier":false
+    },
+    "organisationOrPartnerDetails":{
+      "name":"Acme Ltd",
+      "crnNumber":"AB123456",
+      "vatRegistrationNumber":"123456789",
+      "payeReference":"123AB45678"
+    }
+  }
+}
