@@ -9,6 +9,19 @@
       "companyName" : "Test Ltd",
       "uniqueTaxReferenceNumber" : "1234567891"
     },
+    "individualDetails" : {
+      "firstName" : "Stephen",
+      "lastName" : "Wood"
+    },
+    "individualDateOfBirth" : "2001-02-02",
+    "individualAddress" : {
+      "addressLine1" : "100 SuttonStreet",
+      "addressLine2" : "Wokingham",
+      "addressLine3" : "Surrey",
+      "addressLine4" : "London",
+      "postalCode" : "DH14EJ",
+      "countryCode" : "GB"
+    },
     "companyAddressId" : {
       "addressLine1" : "100 SuttonStreet",
       "addressLine2" : "Wokingham",

@@ -76,6 +76,38 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
 
         (transformedJson \ "companyDetails" \ "payeEmployerReferenceNumber").as[String] mustBe "123AB45678"
       }
+      
+      "we have first name" in {
+        val transformedJson = inputJson.transform(jsonTransformer()).asOpt.value
+
+        (transformedJson \ "individualDetails" \ "firstName").as[String] mustBe "John"
+      }
+
+      "we have last name" in {
+        val transformedJson = inputJson.transform(jsonTransformer()).asOpt.value
+
+        (transformedJson \ "individualDetails" \ "lastName").as[String] mustBe "Doe"
+      }
+
+      "we don't have middle name" in {
+        val transformedJson = inputJson.transform(jsonTransformer()).asOpt.value
+        (transformedJson \ "individualDetails" \ "middleName").asOpt[String] mustBe None
+      }
+
+      "we have a middle name" in {
+        val vatJson = inputJson.transform(
+          updateJson(__ \ 'psaSubscriptionDetails \ 'individualDetails,"middleName","A")).asOpt.value
+
+        val transformedJson = vatJson.transform(jsonTransformer()).asOpt.value
+
+        (transformedJson \ "individualDetails" \ "middleName").as[String] mustBe "A"
+      }
+
+      "we have date of birth" in {
+        val transformedJson = inputJson.transform(jsonTransformer()).asOpt.value
+
+        (transformedJson \ "individualDateOfBirth").as[String] mustBe "1947-03-29"
+      }
 
       "transform the input json to user answers" in {
         val transformedJson = inputJson.transform(jsonTransformer()).asOpt.value
@@ -91,7 +123,9 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
     (if ((jsonFromDES \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").asOpt[String].contains("UTR")) {
       (__ \ 'businessDetails \ 'uniqueTaxReferenceNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
     } else doNothing) and
-      getOrganisationOrPartnerDetails reduce
+      getOrganisationOrPartnerDetails and
+      individualDetails and
+      getCorrespondenceAddress(jsonFromDES) reduce
 
   private def getOrganisationOrPartnerDetails: Reads[JsObject] = {
     val organisationOrPartnerDetailsPath = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails
@@ -101,6 +135,41 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
       ((__ \ 'companyDetails \ 'vatRegistrationNumber).json.copyFrom((organisationOrPartnerDetailsPath \ 'vatRegistrationNumber).json.pick)
         orElse doNothing) and
       (__ \ 'companyDetails \ 'payeEmployerReferenceNumber).json.copyFrom((organisationOrPartnerDetailsPath \ 'payeReference).json.pick) reduce
+  }
+
+  private def getAddress(addressPath: JsPath) = {
+    (addressPath \ 'addressLine1).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line1).json.pick) and
+      (addressPath \ 'addressLine2).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line2).json.pick) and
+      ((addressPath \ 'addressLine3).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line3).json.pick)
+        orElse doNothing) and
+      ((addressPath \ 'addressLine4).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line4).json.pick)
+        orElse doNothing) and
+      ((addressPath \ 'postalCode).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'postalCode).json.pick)
+        orElse doNothing) and
+      (addressPath \ 'countryCode).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'countryCode).json.pick)
+  }
+
+  private def getCorrespondenceAddress(jsonFromDES: JsValue): Reads[JsObject] = {
+    val legalStatus = (jsonFromDES \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").as[String]
+
+    val addressPath: JsPath = legalStatus match {
+      case "Individual" =>
+        __ \ 'individualAddress
+      case "Limited Company" =>
+        __ \ 'companyAddressId
+      case "Partnership" =>
+        __ \ 'companyAddressId
+    }
+    getAddress(addressPath) reduce
+  }
+
+  private def individualDetails: Reads[JsObject] = {
+    val individualDetailsPath = __ \ 'psaSubscriptionDetails \ 'individualDetails
+      (__ \ 'individualDetails \ 'firstName).json.copyFrom((individualDetailsPath \ 'firstName).json.pick) and
+      ((__ \ 'individualDetails \ 'middleName).json.copyFrom((individualDetailsPath \ 'middleName).json.pick)
+        orElse doNothing) and
+      (__ \ 'individualDetails \ 'lastName).json.copyFrom((individualDetailsPath \ 'lastName).json.pick) and
+        (__ \ 'individualDateOfBirth).json.copyFrom((individualDetailsPath \ 'dateOfBirth).json.pick) reduce
   }
 }
 
@@ -115,25 +184,53 @@ object CustomerIdentificationDetailsTypeReadsSpec {
         "companyRegistrationNumber": "AB123456",
         "companyDetails": {
           "payeEmployerReferenceNumber": "123AB45678"
-        }
+        },
+        "companyAddressId": {
+          "addressLine1": "100 SuttonStreet",
+          "addressLine2": "Wokingham",
+          "addressLine3": "Surrey",
+          "addressLine4": "London",
+          "postalCode": "DH14EJ",
+          "countryCode": "GB"
+        },
+        "individualDetails": {
+          "firstName": "John",
+          "lastName": "Doe"
+        },
+        "individualDateOfBirth": "1947-03-29"
       }"""
   )
 
   val inputJson: JsValue = Json.parse(
     """{
-        "processingDate":"2001-12-17T09:30:47Z",
-        "psaSubscriptionDetails":{
-          "isPSASuspension":false,
-          "customerIdentificationDetails":{
-            "legalStatus":"Limited Company",
-            "idType":"UTR",
-            "idNumber":"0123456789",
-            "noIdentifier":false
+        "processingDate": "2001-12-17T09:30:47Z",
+        "psaSubscriptionDetails": {
+          "isPSASuspension": false,
+          "customerIdentificationDetails": {
+            "legalStatus": "Limited Company",
+            "idType": "UTR",
+            "idNumber": "0123456789",
+            "noIdentifier": false
           },
-          "organisationOrPartnerDetails":{
-            "name":"Acme Ltd",
-            "crnNumber":"AB123456",
-            "payeReference":"123AB45678"
+          "individualDetails": {
+            "title": "Mr",
+            "firstName": "John",
+            "lastName": "Doe",
+            "dateOfBirth": "1947-03-29"
+          },
+          "organisationOrPartnerDetails": {
+            "name": "Acme Ltd",
+            "crnNumber": "AB123456",
+            "payeReference": "123AB45678"
+          },
+          "correspondenceAddressDetails": {
+            "nonUKAddress": false,
+            "line1": "100 SuttonStreet",
+            "line2": "Wokingham",
+            "line3": "Surrey",
+            "line4": "London",
+            "postalCode": "DH14EJ",
+            "countryCode": "GB"
           }
         }
       }"""
