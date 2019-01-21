@@ -38,13 +38,41 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
         (transformedJson \ "businessDetails" \ "companyName").as[String] mustBe "Acme Ltd"
       }
 
-      "we have a utr" in {
-        val jsonTransformer = (__ \ 'businessDetails \ 'uniqueTaxReferenceNumber).json.
-          copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
+      "we have idType utr we correctly map the utr number" in {
+        println("\n\n\n id type : "+((JsPath \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").json.pick))
+        val transform = (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").json.pick
+
+        val jsonTransformer = (if ((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idType).read[String] == "UTR") {
+          (__ \ 'businessDetails \ 'uniqueTaxReferenceNumber).json.
+            copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
+        } else {
+          (__).json.put(Json.obj())
+        })
 
         val transformedJson = inputJson.transform(jsonTransformer).asOpt.value
 
-        (transformedJson \ "businessDetails" \ "uniqueTaxReferenceNumber").as[String] mustBe "0123456789"
+        (transformedJson \ "businessDetails" \ "uniqueTaxReferenceNumber").asOpt[String] mustBe "0123456789"
+      }
+
+      "we don't have an idtype utr" in {
+        val jsonTransformer = (__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails).json.update(__.read[JsObject].map(o => o ++ Json.obj("idType" -> "NINO")))
+
+        val transformedJson = inputJson.transform(jsonTransformer).asOpt.value
+
+        println("\n\n transformedJson : " + transformedJson)
+
+        val idType = (__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idType).read[String]
+
+        val transformId = if ((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idType).read[String] == "UTR") {
+          (__ \ 'businessDetails \ 'uniqueTaxReferenceNumber).json.
+            copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
+        } else {
+          (__).json.put(Json.obj())
+        }
+
+        val idTransformJson = transformedJson.transform(transformId).asOpt.value
+
+        (transformedJson \ "businessDetails" \ "uniqueTaxReferenceNumber").asOpt[String] mustBe None
       }
 
       "we have a crn" in {
@@ -56,11 +84,28 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
         (transformedJson \ "companyRegistrationNumber").as[String] mustBe "AB123456"
       }
 
-      "we have a vat" in {
+      "we don't have vat" in {
         val jsonTransformer = (__ \ 'companyDetails \ 'vatRegistrationNumber).json.
-          copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber).json.pick)
+          copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber).json.pick) orElse (
+          (__).json.put(Json.obj())
+          )
 
         val transformedJson = inputJson.transform(jsonTransformer).asOpt.value
+        (transformedJson \ "companyDetails" \ "vatRegistrationNumber").asOpt[String] mustBe None
+      }
+
+      "we have a vat" in {
+        val jsonTransformerVat = (__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails).json.update(
+          __.read[JsObject].map { o => o ++ Json.obj("vatRegistrationNumber" -> "123456789") }
+        )
+        val vatJson = inputJson.transform(jsonTransformerVat).asOpt.value
+
+        val jsonTransformer = (__ \ 'companyDetails \ 'vatRegistrationNumber).json.
+          copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber).json.pick) orElse (
+          (__).json.put(Json.obj())
+          )
+
+        val transformedJson = vatJson.transform(jsonTransformer).asOpt.value
 
         (transformedJson \ "companyDetails" \ "vatRegistrationNumber").as[String] mustBe "123456789"
       }
@@ -77,7 +122,6 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
 
       "transform the input json to user answers" in {
         val result = userAnswersTransformer(inputJson).asOpt.value
-
         result mustBe expectedJson
       }
     }
@@ -85,14 +129,22 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
 
   private def userAnswersTransformer(inputJsValue: JsValue) = {
 
+    def doNothing = {
+      (__).json.put(Json.obj())
+    }
+
     val jsonTransformer = ((__ \ 'businessDetails \ 'companyName).json.copyFrom(
       (__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'name).json.pick) and
-      (__ \ 'businessDetails \ 'uniqueTaxReferenceNumber).json.
-        copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick) and
+      (if ((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idType).read[String] == "UTR") {
+        (__ \ 'businessDetails \ 'uniqueTaxReferenceNumber).json.
+          copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
+      } else {
+        doNothing
+      }) and
       (__ \ 'companyRegistrationNumber).json.
         copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'crnNumber).json.pick) and
-      (__ \ 'companyDetails \ 'vatRegistrationNumber).json.
-        copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber).json.pick) and
+      ((__ \ 'companyDetails \ 'vatRegistrationNumber).json.
+        copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber).json.pick) orElse doNothing) and
       (__ \ 'companyDetails \ 'payeEmployerReferenceNumber).json.
         copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'payeReference).json.pick)
       ).reduce
@@ -104,33 +156,36 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
 
 object CustomerIdentificationDetailsTypeReadsSpec {
 
-  val expectedJson = Json.obj(
-    "businessDetails" -> Json.obj(
-      "companyName" -> "Acme Ltd",
-      "uniqueTaxReferenceNumber" -> "0123456789"
-    ),
-    "companyRegistrationNumber" -> "AB123456",
-    "companyDetails" -> Json.obj(
-      "vatRegistrationNumber" -> "123456789",
-      "payeEmployerReferenceNumber" -> "123AB45678"
-    )
+  val expectedJson = Json.parse(
+    """{
+        "businessDetails": {
+          "companyName": "Acme Ltd",
+          "uniqueTaxReferenceNumber": "0123456789"
+        },
+        "companyRegistrationNumber": "AB123456",
+        "companyDetails": {
+          "payeEmployerReferenceNumber": "123AB45678"
+        }
+      }"""
   )
 
-  val inputJson = Json.obj(
-    "psaSubscriptionDetails" -> Json.obj(
-      "isPSASuspension" -> false,
-      "customerIdentificationDetails" -> Json.obj(
-        "legalStatus" -> "Limited Company",
-        "idType" -> "UTR",
-        "idNumber" -> "0123456789",
-        "noIdentifier" -> false
-      ),
-      "organisationOrPartnerDetails" -> Json.obj(
-        "name" -> "Acme Ltd",
-        "crnNumber" -> "AB123456",
-        "vatRegistrationNumber" -> "123456789",
-        "payeReference" -> "123AB45678"
-      )
-    )
+  val inputJson = Json.parse(
+    """{
+        "processingDate":"2001-12-17T09:30:47Z",
+        "psaSubscriptionDetails":{
+          "isPSASuspension":false,
+          "customerIdentificationDetails":{
+            "legalStatus":"Limited Company",
+            "idType":"UTR",
+            "idNumber":"0123456789",
+            "noIdentifier":false
+          },
+          "organisationOrPartnerDetails":{
+            "name":"Acme Ltd",
+            "crnNumber":"AB123456",
+            "payeReference":"123AB45678"
+          }
+        }
+      }"""
   )
 }
