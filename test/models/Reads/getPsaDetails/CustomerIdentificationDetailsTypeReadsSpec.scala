@@ -147,7 +147,7 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
       getOrganisationOrPartnerDetails and
       individualDetails and
       getCorrespondenceAddress(jsonFromDES) and
-      contactAddress reduce
+      contactDetails reduce
 
   private def getOrganisationOrPartnerDetails: Reads[JsObject] = {
     val organisationOrPartnerDetailsPath = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails
@@ -193,8 +193,8 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
       (__ \ 'individualDetails \ 'lastName).json.copyFrom((individualDetailsPath \ 'lastName).json.pick) and
         (__ \ 'individualDateOfBirth).json.copyFrom((individualDetailsPath \ 'dateOfBirth).json.pick) reduce
   }
-  
-  private def contactAddress: Reads[JsObject] = {
+
+  private def contactDetails: Reads[JsObject] = {
     val contactAddressPath = __ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails
     (__ \ 'contactDetails \ 'phone).json.copyFrom((contactAddressPath \ 'telephone).json.pick) and
       ((__ \ 'contactDetails \ 'email).json.copyFrom((contactAddressPath \ 'email).json.pick)
