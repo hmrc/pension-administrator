@@ -109,6 +109,27 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
         (transformedJson \ "individualDateOfBirth").as[String] mustBe "1947-03-29"
       }
 
+      "we have telephone" in {
+        val transformedJson = inputJson.transform(jsonTransformer()).asOpt.value
+
+        (transformedJson \ "contactDetails" \ "phone").as[String] mustBe "12345"
+      }
+
+      "we don't have email" in {
+        val transformedJson = inputJson.transform(jsonTransformer()).asOpt.value
+
+        (transformedJson \ "contactDetails" \ "email").asOpt[String] mustBe None
+      }
+
+      "we have email" in {
+        val vatJson = inputJson.transform(
+          updateJson(__ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails,"email","test@test.com")).asOpt.value
+
+        val transformedJson = vatJson.transform(jsonTransformer()).asOpt.value
+
+        (transformedJson \ "contactDetails" \ "email").as[String] mustBe "test@test.com"
+      }
+
       "transform the input json to user answers" in {
         val transformedJson = inputJson.transform(jsonTransformer()).asOpt.value
 
@@ -125,7 +146,8 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
     } else doNothing) and
       getOrganisationOrPartnerDetails and
       individualDetails and
-      getCorrespondenceAddress(jsonFromDES) reduce
+      getCorrespondenceAddress(jsonFromDES) and
+      contactAddress reduce
 
   private def getOrganisationOrPartnerDetails: Reads[JsObject] = {
     val organisationOrPartnerDetailsPath = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails
@@ -171,6 +193,13 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
       (__ \ 'individualDetails \ 'lastName).json.copyFrom((individualDetailsPath \ 'lastName).json.pick) and
         (__ \ 'individualDateOfBirth).json.copyFrom((individualDetailsPath \ 'dateOfBirth).json.pick) reduce
   }
+  
+  private def contactAddress: Reads[JsObject] = {
+    val contactAddressPath = __ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails
+    (__ \ 'contactDetails \ 'phone).json.copyFrom((contactAddressPath \ 'telephone).json.pick) and
+      ((__ \ 'contactDetails \ 'email).json.copyFrom((contactAddressPath \ 'email).json.pick)
+        orElse doNothing) reduce
+  }
 }
 
 object CustomerIdentificationDetailsTypeReadsSpec {
@@ -192,6 +221,9 @@ object CustomerIdentificationDetailsTypeReadsSpec {
           "addressLine4": "London",
           "postalCode": "DH14EJ",
           "countryCode": "GB"
+        },
+        "contactDetails" : {
+          "phone" : "12345"
         },
         "individualDetails": {
           "firstName": "John",
@@ -222,6 +254,11 @@ object CustomerIdentificationDetailsTypeReadsSpec {
             "name": "Acme Ltd",
             "crnNumber": "AB123456",
             "payeReference": "123AB45678"
+          },
+          "correspondenceContactDetails": {
+            "telephone": "12345",
+            "mobileNumber": " ",
+            "fax": " "
           },
           "correspondenceAddressDetails": {
             "nonUKAddress": false,
