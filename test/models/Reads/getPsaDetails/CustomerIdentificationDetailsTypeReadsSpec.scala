@@ -158,7 +158,7 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
       case "Limited Company" =>
         __ \ 'companyAddressId
       case "Partnership" =>
-        __ \ 'companyAddressId
+        __ \ 'partnershipContactAddress
     }
     getAddress(addressPath) reduce
   }
