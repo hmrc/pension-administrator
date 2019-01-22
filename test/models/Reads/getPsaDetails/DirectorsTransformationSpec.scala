@@ -66,9 +66,8 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         getDirectorcontactDetails reduce
 
 
-      val getDirectors: Reads[JsArray] = __.read(Reads.seq(getDirector)).map {
-        JsArray(_)
-      }
+      val getDirectors: Reads[JsArray] = __.read(Reads.seq(getDirector)).map(JsArray(_))
+
 
       lazy val transformedJson = desDirector.transform(getDirector).asOpt.value
 
@@ -147,7 +146,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
           val directors = JsArray(Seq(desDirector, desDirector, desDirector, desDirector))
 
           val transformedJson = directors.transform(getDirectors).asOpt.value
-          
+
           (transformedJson \ 0 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
           (transformedJson \ 1 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
           (transformedJson \ 2 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]

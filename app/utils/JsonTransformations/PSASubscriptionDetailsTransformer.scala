@@ -22,14 +22,14 @@ import play.api.libs.json.Reads._
 
 object PSASubscriptionDetailsTransformer {
   def doNothing: Reads[JsObject] = __.json.put(Json.obj())
-
+  
   def transformToUserAnswers(jsonFromDES: JsValue): Reads[JsObject] =
     (if ((jsonFromDES \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").asOpt[String].contains("UTR")) {
       (__ \ 'businessDetails \ 'uniqueTaxReferenceNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
     } else doNothing) and
       getOrganisationOrPartnerDetails and
       getIndividualDetails and
-      getCorrespondenceAddress(jsonFromDES) and
+      getCorrespondenceAddress and
       getContactDetails reduce
 
   private def getOrganisationOrPartnerDetails: Reads[JsObject] = {
@@ -42,7 +42,7 @@ object PSASubscriptionDetailsTransformer {
       (__ \ 'companyDetails \ 'payeEmployerReferenceNumber).json.copyFrom((organisationOrPartnerDetailsPath \ 'payeReference).json.pick) reduce
   }
 
-  def getAddress(userAnswersPath: JsPath, desAddressPath: JsPath) = {
+  def getAddress(userAnswersPath: JsPath, desAddressPath: JsPath): Reads[JsObject] = {
     (userAnswersPath \ 'addressLine1).json.copyFrom((desAddressPath \ 'line1).json.pick) and
       (userAnswersPath \ 'addressLine2).json.copyFrom((desAddressPath \ 'line2).json.pick) and
       ((userAnswersPath \ 'addressLine3).json.copyFrom((desAddressPath \ 'line3).json.pick)
@@ -54,18 +54,18 @@ object PSASubscriptionDetailsTransformer {
       (userAnswersPath \ 'countryCode).json.copyFrom((desAddressPath \ 'countryCode).json.pick) reduce
   }
 
-  private def getCorrespondenceAddress(jsonFromDES: JsValue): Reads[JsObject] = {
-    val legalStatus = (jsonFromDES \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").as[String]
 
-    val addressPath: JsPath = legalStatus match {
-      case "Individual" =>
-        __ \ 'individualAddress
-      case "Limited Company" =>
-        __ \ 'companyAddressId
-      case "Partnership" =>
-        __ \ 'partnershipContactAddress
-    }
-    getAddress(addressPath, __ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails)
+  val getCorrespondenceAddress: Reads[JsObject] = {
+    (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap(
+      legalStatus => {
+        val path: JsPath = legalStatus match {
+          case "Individual" => __ \ 'individualAddress
+          case "Limited Company" => __ \ 'companyAddressId
+          case "Partnership" => __ \ 'partnershipContactAddress
+        }
+        getAddress(path, __ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails)
+      }
+    )
   }
 
   private def getIndividualDetails: Reads[JsObject] = {
