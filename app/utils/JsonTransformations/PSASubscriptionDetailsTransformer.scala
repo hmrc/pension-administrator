@@ -28,7 +28,7 @@ object PSASubscriptionDetailsTransformer {
       ((__ \ 'companyRegistrationNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'crnNumber).json.pick)
         orElse doNothing) and
       getOrganisationOrPartnerDetails(jsonFromDES).orElse(getIndividualDetails) and
-      getPayeAndVat(jsonFromDES) and
+      getPayeAndVat and
       getCorrespondenceAddress and
       getContactDetails(jsonFromDES) and
       getAddressYears(jsonFromDES) and
@@ -46,29 +46,26 @@ object PSASubscriptionDetailsTransformer {
     } else doNothing
   }
 
-  private def getPayeAndVat(jsonFromDES: JsValue): Reads[JsObject] = {
-    val legalStatus = (jsonFromDES \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").as[String]
+
+  val getPayeAndVat : Reads[JsObject] = {
     val vatRegistrationNumber = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber
     val paye = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'payeReference
-    legalStatus match {
+
+    (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
       case "Limited Company" =>
         (__ \ 'companyDetails \ 'vatRegistrationNumber).json.copyFrom(vatRegistrationNumber.json.pick) and
           (__ \ 'companyDetails \ 'payeEmployerReferenceNumber).json.copyFrom(paye.json.pick) reduce
       case "Partnership" =>
-        val vatValue = (jsonFromDES \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails" \ "vatRegistrationNumber").asOpt[String]
-        val payeValue = (jsonFromDES \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails" \ "payeReference").asOpt[String]
-        val vatReads = if(vatValue.isEmpty){
-            (__ \ 'partnershipVat \ 'hasVat).json.put(JsBoolean(false))
-        } else {
+        val vatReads = (__ \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails" \ "vatRegistrationNumber").read[String].flatMap { _ =>
           (__ \ 'partnershipVat \ 'vat).json.copyFrom(vatRegistrationNumber.json.pick) and
             (__ \ 'partnershipVat \ 'hasVat).json.put(JsBoolean(true)) reduce
-        }
-        val payeReads = if(payeValue.isEmpty){
-          (__ \ 'partnershipPaye \ 'hasPaye).json.put(JsBoolean(false))
-        } else {
+        } orElse (__ \ 'partnershipVat \ 'hasVat).json.put(JsBoolean(false))
+
+        val payeReads = (__ \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails" \ "payeReference").read[String].flatMap { _ =>
           (__ \ 'partnershipPaye \ 'paye).json.copyFrom(paye.json.pick) and
             (__ \ 'partnershipPaye \ 'hasPaye).json.put(JsBoolean(true)) reduce
-        }
+        } orElse (__ \ 'partnershipPaye \ 'hasPaye).json.put(JsBoolean(false))
+
         vatReads and payeReads reduce
       case "Individual" => doNothing
     }
