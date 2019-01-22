@@ -1,0 +1,51 @@
+{
+  "_id" : ObjectId("5c46f4199c73fa313716b0c5"),
+  "id" : "Ext-050c85a0-130c-4289-b2b3-1ce232711d97",
+  "data" : {
+    "index" : "",
+    "areYouInUK" : true,
+    "individualDetails" : {
+      "firstName" : "Stephen",
+      "lastName" : "Wood"
+    },
+    "individualAddress" : {
+      "addressLine1" : "100 SuttonStreet",
+      "addressLine2" : "Wokingham",
+      "addressLine3" : "Surrey",
+      "addressLine4" : "London",
+      "postalCode" : "DH14EJ",
+      "countryCode" : "GB"
+    },
+    "registrationInfo" : {
+      "legalStatus" : "Individual",
+      "sapNumber" : "1234567890",
+      "noIdentifier" : false,
+      "customerType" : "UK",
+      "idType" : "NINO",
+      "idNumber" : "CS700100A"
+    },
+    "individualContactAddress" : {
+      "addressLine1" : "100 SuttonStreet",
+      "addressLine2" : "Wokingham",
+      "addressLine3" : "Surrey",
+      "addressLine4" : "London",
+      "postcode" : "DH14EJ",
+      "country" : "GB"
+    },
+    "individualAddressYears" : "under_a_year",
+    "individualPreviousAddress" : {
+      "addressLine1" : "10 Other Place",
+      "addressLine2" : "Some District",
+      "addressLine3" : "Anytown",
+      "addressLine4" : "Somerset",
+      "postcode" : "ZZ1 1ZZ",
+      "country" : "GB"
+    },
+    "individualContactDetails" : {
+      "email" : "s@S.com",
+      "phone" : "57548"
+    },
+    "individualDateOfBirth" : "2001-02-02"
+  },
+  "lastUpdated" : ISODate("2019-01-22T10:45:32.143Z")
+}
