@@ -1,12 +1,12 @@
 {
-  "_id" : ObjectId("5c46fd149c73fa313716b0c6"),
-  "id" : "Ext-d5f92a52-c613-4fc1-93c2-4f6679e608a3",
+  "_id" : ObjectId("5c4709759c73fa313716b0c7"),
+  "id" : "Ext-050c85a0-130c-4289-b2b3-1ce232711d97",
   "data" : {
-    "businessDetails" : {
+    "partnershipDetails" : {
       "companyName" : "Test Ltd",
-      "uniqueTaxReferenceNumber" : "2243556789"
+      "uniqueTaxReferenceNumber" : "1234567890"
     },
-    "companyContactAddress" : {
+    "partnershipContactAddress" : {
       "addressLine1" : "100 SuttonStreet",
       "addressLine2" : "Wokingham",
       "addressLine3" : "Surrey",
@@ -14,24 +14,27 @@
       "postcode" : "DH14EJ",
       "country" : "GB"
     },
-    "companyAddressYears" : "under_a_year",
-    "companyPreviousAddress" : {
-      "addressLine1" : "3 Other Place",
+    "partnershipAddressYears" : "under_a_year",
+    "partnershipPreviousAddress" : {
+      "addressLine1" : "2 Other Place",
       "addressLine2" : "Some District",
       "addressLine3" : "Anytown",
       "addressLine4" : "Somerset",
       "postcode" : "ZZ1 1ZZ",
       "country" : "GB"
     },
-    "contactDetails" : {
+    "partnershipContactDetails" : {
       "email" : "test@test.com",
-      "phone" : "325346"
+      "phone" : "436367"
     },
-    "companyDetails" : {
-      "vatRegistrationNumber" : "142125323",
-      "payeEmployerReferenceNumber" : "214325436"
+    "partnershipVat" : {
+      "hasVat" : true,
+      "vat" : "123456789"
     },
-    "companyRegistrationNumber" : "12345678"
+    "partnershipPaye" : {
+      "hasPaye" : true,
+      "paye" : "123AB56789"
+    }
   },
-  "lastUpdated" : ISODate("2019-01-22T11:28:24.016Z")
+  "lastUpdated" : ISODate("2019-01-22T12:17:41.060Z")
 }
