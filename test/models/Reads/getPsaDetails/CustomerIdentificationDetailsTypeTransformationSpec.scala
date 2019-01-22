@@ -26,8 +26,34 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
   import CustomerIdentificationDetailsTypeTransformationSpec._
 
   lazy val transformedJson = individualInputJson.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(individualInputJson)).asOpt.value
+
+  "registrationInfo" must {
+    "map correctly into user answers" when {
+
+      "we have legal status" in {
+        (transformedJson \ "registrationInfo" \ "legalStatus").as[String] mustBe "Individual"
+      }
+
+      "we have customerType" in {
+        (transformedJson \ "registrationInfo" \ "customerType").as[String] mustBe "UK"
+      }
+
+      "we have idType" in {
+        (transformedJson \ "registrationInfo" \ "idType").as[String] mustBe "NINO"
+      }
+
+      "we have idNumber" in {
+        (transformedJson \ "registrationInfo" \ "idNumber").as[String] mustBe "AB123456C"
+      }
+    }
+
+  }
   "individual" must {
     "map correctly into individual user answers" when {
+
+      "we have nino" in {
+        (transformedJson \ "individualNino").as[String] mustBe "AB123456C"
+      }
 
       "we have first name" in {
         (transformedJson \ "individualDetails" \ "firstName").as[String] mustBe "John"
@@ -503,6 +529,14 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                   "companyName" : "Acme Partnership",
                   "uniqueTaxReferenceNumber" : "0123456789"
               },
+              "registrationInfo" : {
+                  "legalStatus" : "Partnership",
+                  "sapNumber" : "",
+                  "noIdentifier" : false,
+                  "customerType" : "UK",
+                  "idType" : "UTR",
+                  "idNumber" : "0123456789"
+              },
               "partnershipContactAddress" : {
                   "addressLine1" : "Flat 1",
                   "addressLine2" : "Waterloo House",
@@ -540,6 +574,14 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
           "businessDetails" : {
             "uniqueTaxReferenceNumber" : "0123456789",
              "companyName" : "Global Pensions Ltd"
+          },
+          "registrationInfo" : {
+            "legalStatus" : "Limited Company",
+            "sapNumber" : "",
+            "noIdentifier" : false,
+            "customerType" : "UK",
+            "idType" : "UTR",
+            "idNumber" : "0123456789"
           },
           "companyRegistrationNumber" : "AB123456",
           "companyDetails" : {
@@ -658,6 +700,32 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
               "postalCode": "TF3 4DC",
               "countryCode": "GB"
             }
+          },
+          "declarationDetails": {
+            "box1": true,
+            "box2": true,
+            "box3": true,
+            "box4": true,
+            "box6": true,
+            "box7": true,
+            "pensionAdvisorDetails": {
+              "name": "Acme Pensions Ltd",
+              "addressDetails": {
+                "nonUKAddress": false,
+                "line1": "10 London Road",
+                "line2": "Oldpark",
+                "line3": "Telford",
+                "line4": "Shropshire",
+                "postalCode": "TF2 4RR",
+                "countryCode": "GB"
+              },
+              "contactDetails": {
+                "telephone": "0044-0987654232",
+                "mobileNumber": "0044-09876542335",
+                "fax": "0044-098765423353",
+                "email": "acme_pensions@test.com"
+              }
+            }
           }
         }
       }
@@ -666,6 +734,15 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
   val expectedIndividualJson: JsValue = Json.parse(
     """
      {
+     "registrationInfo" : {
+       "legalStatus" : "Individual",
+       "sapNumber" : "",
+       "noIdentifier" : false,
+       "customerType" : "UK",
+       "idType" : "NINO",
+       "idNumber" : "AB123456C"
+     },
+     "individualNino" : "AB123456C",
      "individualDetails" : {
        "firstName" : "John",
        "middleName": "Robert",
@@ -681,8 +758,8 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
        "countryCode" : "GB"
      },
      "individualContactDetails" : {
-        "email" : "robert@test.com",
-        "phone" : "0151 6551234 "
+        "phone" : "0151 6551234 ",
+        "email" : "robert@test.com"
       },
      "individualAddressYears" : "under_a_year",
      "individualPreviousAddress" : {
@@ -692,7 +769,20 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
        "addressLine4" : "Shrop",
        "postcode" : "TF3 4DC",
        "country" : "GB"
-     }
+     },
+     "adviserDetails" : {
+             "name" : "Acme Pensions Ltd",
+             "email" : "acme_pensions@test.com",
+             "phone" : "0044-0987654232"
+     },
+     "adviserAddress" : {
+             "addressLine1" : "10 London Road",
+             "addressLine2" : "Oldpark",
+             "addressLine3" : "Telford",
+             "addressLine4" : "Shropshire",
+             "postcode" : "TF2 4RR",
+             "country" : "GB"
+      }
    }
     """.stripMargin
   )

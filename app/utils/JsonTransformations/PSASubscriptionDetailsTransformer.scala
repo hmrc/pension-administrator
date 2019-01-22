@@ -24,14 +24,16 @@ object PSASubscriptionDetailsTransformer {
   val doNothing: Reads[JsObject] = __.json.put(Json.obj())
 
   def transformToUserAnswers(jsonFromDES: JsValue): Reads[JsObject] =
-      getUtr and
+    getRegistrationInfo and
+      getNinoOrUtr and
       getCrn and
       getOrganisationOrPartnerDetails.orElse(getIndividualDetails) and
       getPayeAndVat and
       getCorrespondenceAddress and
       getContactDetails and
       getAddressYears and
-      getPreviousAddress reduce
+      getPreviousAddress and
+      getAdviser reduce
 
   private val getOrganisationOrPartnerDetails: Reads[JsObject] = {
     returnPathBasedOnLegalStatus(__, __ \ 'businessDetails, __ \ 'partnershipDetails).flatMap { orgPath =>
@@ -39,15 +41,28 @@ object PSASubscriptionDetailsTransformer {
     }
   }
 
+  private val getRegistrationInfo: Reads[JsObject] = {
+    (__ \ "psaSubscriptionDetails" \ "correspondenceAddressDetails" \ "nonUKAddress").read[Boolean].flatMap { flag =>
+      (__ \ 'registrationInfo \ 'legalStatus).json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").json.pick) and
+        (__ \ 'registrationInfo \ 'sapNumber).json.put(JsString("")) and
+        (__ \ 'registrationInfo \ 'noIdentifier).json.put(JsBoolean(false)) and
+        (__ \ 'registrationInfo \ 'customerType).json.put(if (flag) JsString("NON-UK") else JsString("UK")) and
+        (__ \ 'registrationInfo \ 'idType).json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").json.pick) and
+        (__ \ 'registrationInfo \ 'idNumber).json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idNumber").json.pick) reduce
+    }
+  }
+
   private val getCrn = ((__ \ 'companyRegistrationNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'crnNumber).json.pick)
     orElse doNothing)
 
-  private val getUtr: Reads[JsObject] = {
-    returnPathBasedOnLegalStatus(__, __ \ 'businessDetails, __ \ 'partnershipDetails).flatMap { userAnswersPath =>
+  private val getNinoOrUtr: Reads[JsObject] = {
+    returnPathBasedOnLegalStatus(__ \ 'individualNino, __ \ 'businessDetails, __ \ 'partnershipDetails).flatMap { userAnswersPath =>
       (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").read[String].flatMap { value =>
         if (value.contains("UTR")) {
           (userAnswersPath \ 'uniqueTaxReferenceNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
-        } else doNothing
+        } else {
+          userAnswersPath.json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
+        }
       }
     }
   }
@@ -159,5 +174,18 @@ object PSASubscriptionDetailsTransformer {
     returnPathBasedOnLegalStatus(__ \ 'individualPreviousAddress, __ \ 'companyPreviousAddress, __ \ 'partnershipPreviousAddress).flatMap {
       getDifferentAddress(_, __ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress)
     }
+  }
+
+  private val getAdviser: Reads[JsObject] = {
+    ((__ \ 'adviserDetails \ 'name).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'name).json.pick)
+      orElse doNothing) and
+      ((__ \ 'adviserDetails \ 'email).json.copyFrom(
+        (__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'contactDetails \ 'email).json.pick)
+        orElse doNothing) and
+      ((__ \ 'adviserDetails \ 'phone).json.copyFrom(
+        (__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'contactDetails \ 'telephone).json.pick)
+        orElse doNothing) and
+      (getDifferentAddress(__ \ 'adviserAddress, __ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'addressDetails)
+        orElse doNothing) reduce
   }
 }
