@@ -28,7 +28,7 @@ object PSASubscriptionDetailsTransformer {
       (__ \ 'businessDetails \ 'uniqueTaxReferenceNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
     } else doNothing) and
       getOrganisationOrPartnerDetails.orElse(getIndividualDetails) and
-      getCorrespondenceAddress(jsonFromDES) and
+      getCorrespondenceAddress and
       getContactDetails(jsonFromDES) and
       getAddressYears(jsonFromDES) and
       getPreviousAddress(jsonFromDES) reduce
@@ -68,17 +68,14 @@ object PSASubscriptionDetailsTransformer {
       (userAnswersPath \ 'country).json.copyFrom((desAddressPath \ 'countryCode).json.pick) reduce
   }
 
-  private def getCorrespondenceAddress(jsonFromDES: JsValue): Reads[JsObject] = {
-    val legalStatus = (jsonFromDES \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").as[String]
+  
+  val getCorrespondenceAddress: Reads[JsObject] = {
     val inputAddressPath = __ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails
 
-    legalStatus match {
-      case "Individual" =>
-        getAddress(__ \ 'individualContactAddress, inputAddressPath)
-      case "Limited Company" =>
-        getDifferentAddress(__ \ 'companyContactAddress, inputAddressPath)
-      case "Partnership" =>
-        getDifferentAddress(__ \ 'partnershipContactAddress, inputAddressPath)
+    (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
+      case "Individual" => getAddress(__ \ 'individualContactAddress, inputAddressPath)
+      case "Limited Company" => getDifferentAddress(__ \ 'companyContactAddress, inputAddressPath)
+      case "Partnership" => getDifferentAddress(__ \ 'partnershipContactAddress, inputAddressPath)
     }
   }
 
