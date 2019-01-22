@@ -1,245 +1,35 @@
 {
-  "_id" : ObjectId("5c41c9d89c73fa313716b0bd"),
-  "id" : "Ext-050c85a0-130c-4289-b2b3-1ce232711d97",
-  "data" : {
-    "index" : "",
-    "areYouInUK" : true,
-    "businessType" : "limitedCompany",
-    "businessDetails" : {
-      "companyName" : "Test Ltd",
-      "uniqueTaxReferenceNumber" : "1234567891"
-    },
-    "individualDetails" : {
-      "firstName" : "Stephen",
-      "lastName" : "Wood"
-    },
-    "individualDateOfBirth" : "2001-02-02",
-    "individualAddress" : {
-      "addressLine1" : "100 SuttonStreet",
-      "addressLine2" : "Wokingham",
-      "addressLine3" : "Surrey",
-      "addressLine4" : "London",
-      "postalCode" : "DH14EJ",
-      "countryCode" : "GB"
-    },
-    "companyAddressId" : {
-      "addressLine1" : "100 SuttonStreet",
-      "addressLine2" : "Wokingham",
-      "addressLine3" : "Surrey",
-      "addressLine4" : "London",
-      "postalCode" : "DH14EJ",
-      "countryCode" : "GB"
-    },
-    "registrationInfo" : {
-      "legalStatus" : "Limited Company",
-      "sapNumber" : "1234567890",
-      "noIdentifier" : false,
-      "customerType" : "UK",
-      "idType" : "UTR",
-      "idNumber" : "1234567891"
-    },
-    "lastPage" : {
-      "method" : "GET",
-      "url" : "/register-as-pension-scheme-administrator/register/adviser/adviser-address-manual"
-    },
-    "companySameContactAddressId" : true,
-    "companyContactAddress" : {
-      "addressLine1" : "100 SuttonStreet",
-      "addressLine2" : "Wokingham",
-      "addressLine3" : "Surrey",
-      "addressLine4" : "London",
-      "postcode" : "DH14EJ",
-      "country" : "GB"
-    },
-    "companyAddressYears" : "under_a_year",
-    "companyAddressList" : {
-      "addressLine1" : "3 Other Place",
-      "addressLine2" : "Some District",
-      "addressLine3" : "Anytown",
-      "addressLine4" : "Somerset",
-      "postalCode" : "ZZ1 1ZZ",
-      "countryCode" : "GB"
-    },
-    "companyPreviousAddress" : {
-      "addressLine1" : "3 Other Place",
-      "addressLine2" : "Some District",
-      "addressLine3" : "Anytown",
-      "addressLine4" : "Somerset",
-      "postcode" : "ZZ1 1ZZ",
-      "country" : "GB"
-    },
-    "contactDetails" : {
-      "email" : "test@test.com",
-      "phone" : "12345"
-    },
-    "companyDetails" : {
-      "vatRegistrationNumber" : "123456789",
-      "payeEmployerReferenceNumber" : "1234"
-    },
-    "companyRegistrationNumber" : "12345678",
-    "directors" : [
-      {
-        "directorDetails" : {
-          "firstName" : "ewt",
-          "middleName" : "dsg",
-          "lastName" : "wry",
-          "dateOfBirth" : "2010-02-22",
-          "isDeleted" : false
-        },
-        "directorNino" : {
-          "hasNino" : true,
-          "nino" : "CS700100A"
-        },
-        "directorUtr" : {
-          "hasUtr" : true,
-          "utr" : "1234567890"
-        },
-        "companyDirectorAddressList" : {
-          "addressLine1" : "2 Other Place",
-          "addressLine2" : "Some District",
-          "addressLine3" : "Anytown",
-          "addressLine4" : "Somerset",
-          "postalCode" : "ZZ1 1ZZ",
-          "countryCode" : "GB"
-        },
-        "directorAddress" : {
-          "addressLine1" : "2 Other Place",
-          "addressLine2" : "Some District",
-          "addressLine3" : "Anytown",
-          "addressLine4" : "Somerset",
-          "postcode" : "ZZ1 1ZZ",
-          "country" : "GB"
-        },
-        "directorAddressYears" : "under_a_year",
-        "directorPreviousAddressList" : {
-          "addressLine1" : "2 Other Place",
-          "addressLine2" : "Some District",
-          "addressLine3" : "Anytown",
-          "addressLine4" : "Somerset",
-          "postalCode" : "ZZ1 1ZZ",
-          "countryCode" : "GB"
-        },
-        "directorPreviousAddress" : {
-          "addressLine1" : "2 Other Place",
-          "addressLine2" : "Some District",
-          "addressLine3" : "Anytown",
-          "addressLine4" : "Somerset",
-          "postcode" : "ZZ1 1ZZ",
-          "country" : "GB"
-        },
-        "directorContactDetails" : {
-          "email" : "s@S.com",
-          "phone" : "436"
-        },
-        "isDirectorComplete" : true
-      }
-    ],
-    "declaration" : true,
-    "declarationWorkingKnowledge" : "adviser",
-    "adviserDetails" : {
-      "name" : "wqr",
-      "email" : "test@s.com",
-      "phone" : "436"
-    },
-    "adviserAddressPostCodeLookup" : [
-      {
-        "addressLine1" : "10 Other Place",
-        "addressLine2" : "Some District",
-        "addressLine3" : "Anytown",
-        "addressLine4" : "Somerset",
-        "postalCode" : "ZZ1 1ZZ",
-        "countryCode" : "UK"
-      },
-      {
-        "addressLine1" : "2 Other Place",
-        "addressLine2" : "Some District",
-        "addressLine3" : "Anytown",
-        "addressLine4" : "Somerset",
-        "postalCode" : "ZZ1 1ZZ",
-        "countryCode" : "UK"
-      },
-      {
-        "addressLine1" : "3 Other Place",
-        "addressLine2" : "Some District",
-        "addressLine3" : "Anytown",
-        "addressLine4" : "Somerset",
-        "postalCode" : "ZZ1 1ZZ",
-        "countryCode" : "UK"
-      },
-      {
-        "addressLine1" : "4 Other Place",
-        "addressLine2" : "Some District",
-        "addressLine3" : "Anytown",
-        "addressLine4" : "Somerset",
-        "postalCode" : "ZZ1 1ZZ",
-        "countryCode" : "UK"
-      },
-      {
-        "addressLine1" : "5 Other Place",
-        "addressLine2" : "Some District",
-        "addressLine3" : "Anytown",
-        "addressLine4" : "Somerset",
-        "postalCode" : "ZZ1 1ZZ",
-        "countryCode" : "UK"
-      },
-      {
-        "addressLine1" : "6 Other Place",
-        "addressLine2" : "Some District",
-        "addressLine3" : "Anytown",
-        "addressLine4" : "Somerset",
-        "postalCode" : "ZZ1 1ZZ",
-        "countryCode" : "UK"
-      },
-      {
-        "addressLine1" : "8 Other Place",
-        "addressLine2" : "Some District",
-        "addressLine3" : "Anytown",
-        "addressLine4" : "Somerset",
-        "postalCode" : "ZZ1 1ZZ",
-        "countryCode" : "UK"
-      },
-      {
-        "addressLine1" : "9 Other Place",
-        "addressLine2" : "Some District",
-        "addressLine3" : "Anytown",
-        "addressLine4" : "Somerset",
-        "postalCode" : "ZZ1 1ZZ",
-        "countryCode" : "UK"
-      },
-      {
-        "addressLine1" : "Flat 1",
-        "addressLine2" : "7 Other Place",
-        "addressLine3" : "Some District",
-        "addressLine4" : "Somerset",
-        "postalCode" : "ZZ1 1ZZ",
-        "countryCode" : "UK"
-      },
-      {
-        "addressLine1" : "Flat 2",
-        "addressLine2" : "7 Other Place",
-        "addressLine3" : "Some District",
-        "addressLine4" : "Somerset",
-        "postalCode" : "ZZ1 1ZZ",
-        "countryCode" : "UK"
-      },
-      {
-        "addressLine1" : "Flat 3",
-        "addressLine2" : "7 Other Place",
-        "addressLine3" : "Some District",
-        "addressLine4" : "Somerset",
-        "postalCode" : "ZZ1 1ZZ",
-        "countryCode" : "UK"
-      }
-    ],
-    "adviserAddressList" : {
-      "addressLine1" : "3 Other Place",
-      "addressLine2" : "Some District",
-      "addressLine3" : "Anytown",
-      "addressLine4" : "Somerset",
-      "postalCode" : "ZZ1 1ZZ",
-      "countryCode" : "GB"
-    }
+  "businessDetails": {
+    "uniqueTaxReferenceNumber": "0123456789",
+    "companyName": "Acme Ltd",
   },
-  "lastUpdated" : ISODate("2019-01-18T12:45:20.073Z")
+  "companyRegistrationNumber": "AB123456",
+  "companyDetails": {
+    "payeEmployerReferenceNumber": "123AB45678"
+  },
+  "individualDetails": {
+    "firstName": "John",
+    "lastName": "Doe"
+  },
+  "companyAddressId": {
+    "addressLine1": "100 SuttonStreet",
+    "addressLine2": "Wokingham",
+    "addressLine3": "Surrey",
+    "addressLine4": "London",
+    "postalCode": "DH14EJ",
+    "countryCode": "GB"
+  },
+  "contactDetails": {
+    "phone": "12345"
+  },
+  "individualDateOfBirth": "1947-03-29",
+  "companyAddressYears": "under_a_year",
+  "companyPreviousAddress": {
+    "addressLine1": "3 Other Place",
+    "addressLine2": "Some District",
+    "addressLine3": "Anytown",
+    "addressLine4": "Somerset",
+    "postcode": "MN21 EF",
+    "country": "GB"
+  }
 }
-

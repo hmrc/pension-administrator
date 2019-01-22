@@ -27,10 +27,11 @@ object PSASubscriptionDetailsTransformer {
     (if ((jsonFromDES \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").asOpt[String].contains("UTR")) {
       (__ \ 'businessDetails \ 'uniqueTaxReferenceNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
     } else doNothing) and
-      getOrganisationOrPartnerDetails and
-      getIndividualDetails and
-      getCorrespondenceAddress and
-      getContactDetails reduce
+      getOrganisationOrPartnerDetails.orElse(getIndividualDetails) and
+      getCorrespondenceAddress(jsonFromDES) and
+      getContactDetails(jsonFromDES) and
+      getAddressYears(jsonFromDES) and
+      getPreviousAddress(jsonFromDES) reduce
 
   private def getOrganisationOrPartnerDetails: Reads[JsObject] = {
     val organisationOrPartnerDetailsPath = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails
@@ -55,17 +56,30 @@ object PSASubscriptionDetailsTransformer {
   }
 
 
-  val getCorrespondenceAddress: Reads[JsObject] = {
-    (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap(
-      legalStatus => {
-        val path: JsPath = legalStatus match {
-          case "Individual" => __ \ 'individualAddress
-          case "Limited Company" => __ \ 'companyAddressId
-          case "Partnership" => __ \ 'partnershipContactAddress
-        }
-        getAddress(path, __ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails)
-      }
-    )
+  def getDifferentAddress(userAnswersPath: JsPath, desAddressPath: JsPath): Reads[JsObject] = {
+    (userAnswersPath \ 'addressLine1).json.copyFrom((desAddressPath \ 'line1).json.pick) and
+      (userAnswersPath \ 'addressLine2).json.copyFrom((desAddressPath \ 'line2).json.pick) and
+      ((userAnswersPath \ 'addressLine3).json.copyFrom((desAddressPath \ 'line3).json.pick)
+        orElse doNothing) and
+      ((userAnswersPath \ 'addressLine4).json.copyFrom((desAddressPath \ 'line4).json.pick)
+        orElse doNothing) and
+      ((userAnswersPath \ 'postcode).json.copyFrom((desAddressPath \ 'postalCode).json.pick)
+        orElse doNothing) and
+      (userAnswersPath \ 'country).json.copyFrom((desAddressPath \ 'countryCode).json.pick) reduce
+  }
+
+  private def getCorrespondenceAddress(jsonFromDES: JsValue): Reads[JsObject] = {
+    val legalStatus = (jsonFromDES \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").as[String]
+    val inputAddressPath = __ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails
+
+    legalStatus match {
+      case "Individual" =>
+        getAddress(__ \ 'individualContactAddress, inputAddressPath)
+      case "Limited Company" =>
+        getDifferentAddress(__ \ 'companyContactAddress, inputAddressPath)
+      case "Partnership" =>
+        getDifferentAddress(__ \ 'partnershipContactAddress, inputAddressPath)
+    }
   }
 
   private def getIndividualDetails: Reads[JsObject] = {
@@ -77,10 +91,45 @@ object PSASubscriptionDetailsTransformer {
       (__ \ 'individualDateOfBirth).json.copyFrom((individualDetailsPath \ 'dateOfBirth).json.pick) reduce
   }
 
-  private def getContactDetails: Reads[JsObject] = {
+  private def getContact(userAnswersPath: JsPath): Reads[JsObject] = {
     val contactAddressPath = __ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails
-    (__ \ 'contactDetails \ 'phone).json.copyFrom((contactAddressPath \ 'telephone).json.pick) and
-      ((__ \ 'contactDetails \ 'email).json.copyFrom((contactAddressPath \ 'email).json.pick)
+    (userAnswersPath \ 'phone).json.copyFrom((contactAddressPath \ 'telephone).json.pick) and
+      ((userAnswersPath \ 'email).json.copyFrom((contactAddressPath \ 'email).json.pick) //TODO: Mandatory in frontend but optional in DES
         orElse doNothing) reduce
+  }
+
+  private def returnPathBasedOnLegalStatus(jsonFromDES: JsValue, individualPath: JsPath, companyPath: JsPath, partnershipPath: JsPath): JsPath = {
+    val legalStatus = (jsonFromDES \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").as[String]
+    legalStatus match {
+      case "Individual" =>
+        individualPath
+      case "Limited Company" =>
+        companyPath
+      case "Partnership" =>
+        partnershipPath
+    }
+  }
+
+  private def getContactDetails(jsonFromDES: JsValue): Reads[JsObject] = {
+    val contactPath = returnPathBasedOnLegalStatus(jsonFromDES, __ \ 'individualContactDetails, __ \ 'contactDetails, __ \ 'contactDetails)
+    getContact(contactPath)
+  }
+
+  private def getAddressYears(jsonFromDES: JsValue): Reads[JsObject] = {
+    val isPreviousAddressLast12Month = (jsonFromDES \ "psaSubscriptionDetails" \ "previousAddressDetails" \ "isPreviousAddressLast12Month").as[Boolean]
+    val addressYearsValue = if (isPreviousAddressLast12Month) {
+      JsString("under_a_year")
+    } else {
+      JsString("over_a_year")
+    }
+
+    returnPathBasedOnLegalStatus(jsonFromDES,
+      __ \ 'individualAddressYears, __ \ 'companyAddressYears, __ \ 'partnershipAddressYears).json.put(addressYearsValue)
+  }
+
+  private def getPreviousAddress(jsonFromDES: JsValue): Reads[JsObject] = {
+    val previousAddressPath: JsPath = returnPathBasedOnLegalStatus(jsonFromDES,
+      __ \ 'individualPreviousAddress, __ \ 'companyPreviousAddress, __ \ 'partnershipPreviousAddress)
+    getDifferentAddress(previousAddressPath, __ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress)
   }
 }
