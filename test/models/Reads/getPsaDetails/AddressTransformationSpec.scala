@@ -16,31 +16,16 @@
 
 package models.Reads.getPsaDetails
 
-import models.Reads.getPsaDetails.CustomerIdentificationDetailsTypeTransformationSpec.{inputJson, updateJson}
+import models.Reads.getPsaDetails.CustomerIdentificationDetailsTypeTransformationSpec.updateJson
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
+import play.api.libs.json._
+import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 
 
 class AddressTransformationSpec extends WordSpec with MustMatchers with OptionValues {
   "A DES payload containing an address" must {
-
-    def doNothing: Reads[JsObject] = __.json.put(Json.obj())
-
-    def getAddress(userAnswersPath: JsPath, desAddressPath: JsPath) = {
-      (userAnswersPath \ 'addressLine1).json.copyFrom((desAddressPath \ 'line1).json.pick) and
-        (userAnswersPath \ 'addressLine2).json.copyFrom((desAddressPath \ 'line2).json.pick) and
-        ((userAnswersPath \ 'addressLine3).json.copyFrom((desAddressPath \ 'line3).json.pick)
-          orElse doNothing) and
-        ((userAnswersPath \ 'addressLine4).json.copyFrom((desAddressPath \ 'line4).json.pick)
-          orElse doNothing) and
-        ((userAnswersPath \ 'postalCode).json.copyFrom((desAddressPath \ 'postalCode).json.pick)
-          orElse doNothing) and
-        (userAnswersPath \ 'countryCode).json.copyFrom((desAddressPath \ 'countryCode).json.pick) reduce
-    }
-
-    lazy val transformedJson = desAddress.transform(getAddress(__ \ 'testAddress, __ \ 'testAddressFromDes)).asOpt.value
+    lazy val transformedJson = desAddress.transform(PSASubscriptionDetailsTransformer.getAddress(__ \ 'testAddress, __ \ 'testAddressFromDes)).asOpt.value
 
     "Map correctly to a valid address" when {
       "We have line1" in {
@@ -54,7 +39,7 @@ class AddressTransformationSpec extends WordSpec with MustMatchers with OptionVa
       "We have line3" in {
         val inputJson = desAddress.transform(updateJson(__ \ 'testAddressFromDes,"line3","York")).asOpt.value
 
-        val transformedJson = inputJson.transform(getAddress(__ \ 'testAddress, __ \ 'testAddressFromDes)).asOpt.value
+        val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getAddress(__ \ 'testAddress, __ \ 'testAddressFromDes)).asOpt.value
 
         (transformedJson \ "testAddress" \ "addressLine3").as[String] mustBe (expectedAddress \ "testAddress" \ "addressLine3").as[String]
       }
@@ -66,7 +51,7 @@ class AddressTransformationSpec extends WordSpec with MustMatchers with OptionVa
       "We have line4" in {
         val inputJson = desAddress.transform(updateJson(__ \ 'testAddressFromDes,"line4","Yorkshire")).asOpt.value
 
-        val transformedJson = inputJson.transform(getAddress(__ \ 'testAddress, __ \ 'testAddressFromDes)).asOpt.value
+        val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getAddress(__ \ 'testAddress, __ \ 'testAddressFromDes)).asOpt.value
 
         (transformedJson \ "testAddress" \ "addressLine4").as[String] mustBe (expectedAddress \ "testAddress" \ "addressLine4").as[String]
       }
@@ -78,7 +63,7 @@ class AddressTransformationSpec extends WordSpec with MustMatchers with OptionVa
       "We have postal code" in {
         val inputJson = desAddress.transform(updateJson(__ \ 'testAddressFromDes,"postalCode","YO1 9EX")).asOpt.value
 
-        val transformedJson = inputJson.transform(getAddress(__ \ 'testAddress, __ \ 'testAddressFromDes)).asOpt.value
+        val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getAddress(__ \ 'testAddress, __ \ 'testAddressFromDes)).asOpt.value
 
         (transformedJson \ "testAddress" \ "postalCode").as[String] mustBe (expectedAddress \ "testAddress" \ "postalCode").as[String]
       }
