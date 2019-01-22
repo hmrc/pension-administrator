@@ -22,7 +22,7 @@ import play.api.libs.json.Reads._
 
 object PSASubscriptionDetailsTransformer {
   def doNothing: Reads[JsObject] = __.json.put(Json.obj())
-
+  
   def transformToUserAnswers(jsonFromDES: JsValue): Reads[JsObject] =
     getUtr(jsonFromDES) and
       ((__ \ 'companyRegistrationNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'crnNumber).json.pick)
@@ -85,6 +85,7 @@ object PSASubscriptionDetailsTransformer {
         orElse doNothing) and
       (userAnswersPath \ 'countryCode).json.copyFrom((desAddressPath \ 'countryCode).json.pick) reduce
   }
+
 
   def getDifferentAddress(userAnswersPath: JsPath, desAddressPath: JsPath): Reads[JsObject] = {
     (userAnswersPath \ 'addressLine1).json.copyFrom((desAddressPath \ 'line1).json.pick) and

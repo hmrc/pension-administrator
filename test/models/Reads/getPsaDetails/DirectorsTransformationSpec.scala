@@ -17,9 +17,9 @@
 package models.Reads.getPsaDetails
 
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
+import play.api.libs.json._
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 
 class DirectorsTransformationSpec extends WordSpec with MustMatchers with OptionValues {
@@ -29,35 +29,47 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
 
       def doNothing: Reads[JsObject] = __.json.put(Json.obj())
 
-      def getNino(currentDirector: JsValue) = {
-        if ((currentDirector \ "nino").validate[String].isSuccess) {
-          (__ \ 'directorNino \ 'nino).json.copyFrom((__ \ 'nino).json.pick) and
-            (__ \ 'directorNino \ 'hasNino).json.put(JsBoolean(true)) reduce
-        } else {
-          (__ \ 'directorNino \ 'reason).json.copyFrom((__ \ 'noNinoReason).json.pick) and //TODO: reason is not mandatory, what do we do if we don't have it?
+      val getNino: Reads[JsObject] = {
+        (__ \ "nino").read[String].flatMap {
+          _ =>
+            (__ \ 'directorNino \ 'nino).json.copyFrom((__ \ 'nino).json.pick) and
+              (__ \ 'directorNino \ 'hasNino).json.put(JsBoolean(true)) reduce
+        } orElse {
+          (__ \ 'directorNino \ 'reason).json.copyFrom((__ \ 'noNinoReason).json.pick) and
             (__ \ 'directorNino \ 'hasNino).json.put(JsBoolean(false)) reduce
         }
       }
 
-      def getUtr(currentDirector: JsValue) = {
-        if ((currentDirector \ "utr").validate[String].isSuccess) {
-          (__ \ 'directorUtr \ 'utr).json.copyFrom((__ \ 'utr).json.pick) and
-            (__ \ 'directorUtr \ 'hasUtr).json.put(JsBoolean(true)) reduce
-        } else {
-          (__ \ 'directorUtr \ 'reason).json.copyFrom((__ \ 'noUtrReason).json.pick) and //TODO: reason is not mandatory, what do we do if we don't have it?
+      val getUtr: Reads[JsObject] = {
+        (__ \ "utr").read[String].flatMap {
+          _ =>
+            (__ \ 'directorUtr \ 'utr).json.copyFrom((__ \ 'utr).json.pick) and
+              (__ \ 'directorUtr \ 'hasUtr).json.put(JsBoolean(true)) reduce
+        } orElse {
+          (__ \ 'directorUtr \ 'reason).json.copyFrom((__ \ 'noUtrReason).json.pick) and
             (__ \ 'directorUtr \ 'hasUtr).json.put(JsBoolean(false)) reduce
         }
       }
 
-      def getDirector(currentDirector: JsValue) = (__ \ 'directorDetails \ 'firstName).json.copyFrom((__ \ 'firstName).json.pick) and
+      val getDirectorcontactDetails: Reads[JsObject] = {
+        (__ \ 'directorContactDetails \ 'phone).json.copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'telephone).json.pick) and
+          (__ \ 'directorContactDetails \ 'email).json.copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'email).json.pick) reduce
+      }
+
+      val getDirector = (__ \ 'directorDetails \ 'firstName).json.copyFrom((__ \ 'firstName).json.pick) and
         ((__ \ 'directorDetails \ 'middleName).json.copyFrom((__ \ 'middleName).json.pick) orElse doNothing) and
         (__ \ 'directorDetails \ 'lastName).json.copyFrom((__ \ 'lastName).json.pick) and
         (__ \ 'directorDetails \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
-        getNino(currentDirector) and
-        getUtr(currentDirector) and
-        PSASubscriptionDetailsTransformer.getAddress(__ \ "directorAddress",__ \ "correspondenceCommonDetails" \ "addressDetails") reduce
+        getNino and
+        getUtr and
+        PSASubscriptionDetailsTransformer.getAddress(__ \ "directorAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
+        getDirectorcontactDetails reduce
 
-      lazy val transformedJson = desDirector.transform(getDirector(desDirector)).asOpt.value
+
+      val getDirectors: Reads[JsArray] = __.read(Reads.seq(getDirector)).map(JsArray(_))
+
+
+      lazy val transformedJson = desDirector.transform(getDirector).asOpt.value
 
       "We have director details" when {
         "We have a name" in {
@@ -71,7 +83,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We don't have a middle name" in {
           val inputJson = desDirector.as[JsObject] - "middleName"
 
-          val transformedJson = inputJson.transform(getDirector(inputJson)).asOpt.value
+          val transformedJson = inputJson.transform(getDirector).asOpt.value
 
           (transformedJson \ "directorDetails" \ "middleName").asOpt[String] mustBe None
         }
@@ -92,9 +104,10 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We don't have a nino" in {
           val inputJson = desDirector.as[JsObject] - "nino"
 
-          val transformedJson = inputJson.transform(getDirector(inputJson)).asOpt.value
+          val transformedJson = inputJson.transform(getDirector).asOpt.value
 
           (transformedJson \ "directorNino" \ "hasNino").as[Boolean] mustBe false
+          //TODO: reason is not mandatory but mandatory in our frontend. Potential issues.
           (transformedJson \ "directorNino" \ "reason").as[String] mustBe "test"
         }
 
@@ -106,20 +119,44 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We don't have a utr" in {
           val inputJson = desDirector.as[JsObject] - "utr"
 
-          val transformedJson = inputJson.transform(getDirector(inputJson)).asOpt.value
+          val transformedJson = inputJson.transform(getDirector).asOpt.value
 
           (transformedJson \ "directorUtr" \ "hasUtr").as[Boolean] mustBe false
+          //TODO: reason is not mandatory but mandatory in our frontend. Potential issues.
           (transformedJson \ "directorUtr" \ "reason").as[String] mustBe "test"
         }
 
+        //TODO: DES has director address details as not mandatory but we have it as mandatory in frontend (correspondenceCommonDetails wrapper). Potential issues.
         "We have an address" in {
           (transformedJson \ "directorAddress" \ "addressLine1").asOpt[String].value mustBe (userAnswersDirector \ "directorAddress" \ "addressLine1").asOpt[String].value
+        }
+
+        //TODO: Contact details is not mandatory in DES schema but mandatory in frontend. Potential issues.
+        "We have a valid contact details" when {
+          "with a telephone" in {
+            (transformedJson \ "directorContactDetails" \ "phone").asOpt[String].value mustBe (userAnswersDirector \ "directorContactDetails" \ "phone").asOpt[String].value
+          }
+
+          "with an email" in {
+            (transformedJson \ "directorContactDetails" \ "email").asOpt[String].value mustBe (userAnswersDirector \ "directorContactDetails" \ "email").asOpt[String].value
+          }
+        }
+
+        "We have an array of directors" in {
+          val directors = JsArray(Seq(desDirector, desDirector, desDirector, desDirector))
+
+          val transformedJson = directors.transform(getDirectors).asOpt.value
+
+          (transformedJson \ 0 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
+          (transformedJson \ 1 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
+          (transformedJson \ 2 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
+          (transformedJson \ 3 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
         }
       }
     }
   }
 
-  val userAnswersDirector = Json.parse(
+  val userAnswersDirector: JsValue = Json.parse(
     """      {
                      "directorDetails" : {
                        "firstName" : "Ann",
@@ -146,13 +183,13 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
                      },
                      "directorAddressYears" : "under_a_year",
                      "directorContactDetails" : {
-                       "email" : "s@S.com",
-                       "phone" : "436"
+                       "email" : "ann_baker@test.com",
+                       "phone" : "0044-09876542312"
                      },
                      "isDirectorComplete" : true
                    }""")
 
-  val desDirector = Json.parse(
+  val desDirector: JsValue = Json.parse(
     """      {
                               "sequenceId":"000",
                               "entityType":"Director",
