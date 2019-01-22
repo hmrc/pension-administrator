@@ -21,9 +21,9 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 
-class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatchers with OptionValues {
+class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with MustMatchers with OptionValues {
 
-  import CustomerIdentificationDetailsTypeReadsSpec._
+  import CustomerIdentificationDetailsTypeTransformationSpec._
 
   "organisation Or PartnerDetailsType" must {
 
@@ -76,7 +76,7 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
 
         (transformedJson \ "companyDetails" \ "payeEmployerReferenceNumber").as[String] mustBe "123AB45678"
       }
-      
+
       "we have first name" in {
         val transformedJson = inputJson.transform(jsonTransformer()).asOpt.value
 
@@ -145,9 +145,9 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
       (__ \ 'businessDetails \ 'uniqueTaxReferenceNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
     } else doNothing) and
       getOrganisationOrPartnerDetails and
-      individualDetails and
+      getIndividualDetails and
       getCorrespondenceAddress(jsonFromDES) and
-      contactDetails reduce
+      getContactDetails reduce
 
   private def getOrganisationOrPartnerDetails: Reads[JsObject] = {
     val organisationOrPartnerDetailsPath = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails
@@ -159,16 +159,16 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
       (__ \ 'companyDetails \ 'payeEmployerReferenceNumber).json.copyFrom((organisationOrPartnerDetailsPath \ 'payeReference).json.pick) reduce
   }
 
-  private def getAddress(addressPath: JsPath) = {
-    (addressPath \ 'addressLine1).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line1).json.pick) and
-      (addressPath \ 'addressLine2).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line2).json.pick) and
-      ((addressPath \ 'addressLine3).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line3).json.pick)
+  def getAddress(userAnswersPath: JsPath, desAddressPath: JsPath) = {
+    (userAnswersPath \ 'addressLine1).json.copyFrom((desAddressPath \ 'line1).json.pick) and
+      (userAnswersPath \ 'addressLine2).json.copyFrom((desAddressPath \ 'line2).json.pick) and
+      ((userAnswersPath \ 'addressLine3).json.copyFrom((desAddressPath \ 'line3).json.pick)
         orElse doNothing) and
-      ((addressPath \ 'addressLine4).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line4).json.pick)
+      ((userAnswersPath \ 'addressLine4).json.copyFrom((desAddressPath \ 'line4).json.pick)
         orElse doNothing) and
-      ((addressPath \ 'postalCode).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'postalCode).json.pick)
+      ((userAnswersPath \ 'postalCode).json.copyFrom((desAddressPath \ 'postalCode).json.pick)
         orElse doNothing) and
-      (addressPath \ 'countryCode).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'countryCode).json.pick)
+      (userAnswersPath \ 'countryCode).json.copyFrom((desAddressPath \ 'countryCode).json.pick) reduce
   }
 
   private def getCorrespondenceAddress(jsonFromDES: JsValue): Reads[JsObject] = {
@@ -182,10 +182,10 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
       case "Partnership" =>
         __ \ 'partnershipContactAddress
     }
-    getAddress(addressPath) reduce
+    getAddress(addressPath, __ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails)
   }
 
-  private def individualDetails: Reads[JsObject] = {
+  private def getIndividualDetails: Reads[JsObject] = {
     val individualDetailsPath = __ \ 'psaSubscriptionDetails \ 'individualDetails
       (__ \ 'individualDetails \ 'firstName).json.copyFrom((individualDetailsPath \ 'firstName).json.pick) and
       ((__ \ 'individualDetails \ 'middleName).json.copyFrom((individualDetailsPath \ 'middleName).json.pick)
@@ -194,7 +194,7 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
         (__ \ 'individualDateOfBirth).json.copyFrom((individualDetailsPath \ 'dateOfBirth).json.pick) reduce
   }
 
-  private def contactDetails: Reads[JsObject] = {
+  private def getContactDetails: Reads[JsObject] = {
     val contactAddressPath = __ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails
     (__ \ 'contactDetails \ 'phone).json.copyFrom((contactAddressPath \ 'telephone).json.pick) and
       ((__ \ 'contactDetails \ 'email).json.copyFrom((contactAddressPath \ 'email).json.pick)
@@ -202,7 +202,7 @@ class CustomerIdentificationDetailsTypeReadsSpec extends WordSpec with MustMatch
   }
 }
 
-object CustomerIdentificationDetailsTypeReadsSpec {
+object CustomerIdentificationDetailsTypeTransformationSpec {
 
   val expectedJson: JsValue = Json.parse(
     """{
