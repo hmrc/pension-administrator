@@ -26,7 +26,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
   import CustomerIdentificationDetailsTypeTransformationSpec._
 
   lazy val transformedJson = individualInputJson.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(individualInputJson)).asOpt.value
-  /*  "individual" must {
+    "individual" must {
       "map correctly into individual user answers" when {
 
         "we have first name" in {
@@ -256,8 +256,8 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
         }
 
         "we don't have email" in {
-          val jsonUpdated = individualInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails \ 'email).json.prune).asOpt.value
-          val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(individualInputJson)).asOpt.value
+          val jsonUpdated = companyInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails \ 'email).json.prune).asOpt.value
+          val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(companyInputJson)).asOpt.value
           (transformedJson \ "contactDetails" \ "email").asOpt[String] mustBe None
         }
 
@@ -313,7 +313,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
           transformedJson mustBe expectedCompanyJson
         }
       }
-    }*/
+    }
 
   "partnership" must {
 

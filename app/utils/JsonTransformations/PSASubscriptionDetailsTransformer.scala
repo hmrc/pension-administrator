@@ -22,7 +22,7 @@ import play.api.libs.json.Reads._
 
 object PSASubscriptionDetailsTransformer {
   def doNothing: Reads[JsObject] = __.json.put(Json.obj())
-  
+
   def transformToUserAnswers(jsonFromDES: JsValue): Reads[JsObject] =
     getUtr(jsonFromDES) and
       ((__ \ 'companyRegistrationNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'crnNumber).json.pick)
@@ -52,18 +52,20 @@ object PSASubscriptionDetailsTransformer {
     val paye = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'payeReference
     legalStatus match {
       case "Limited Company" =>
-        (__ \ 'companyDetails \ 'vatRegistrationNumber).json.copyFrom(vatRegistrationNumber.json.pick) and
-          (__ \ 'companyDetails \ 'payeEmployerReferenceNumber).json.copyFrom(paye.json.pick) reduce
+        ((__ \ 'companyDetails \ 'vatRegistrationNumber).json.copyFrom(vatRegistrationNumber.json.pick)
+          orElse doNothing) and
+          ((__ \ 'companyDetails \ 'payeEmployerReferenceNumber).json.copyFrom(paye.json.pick)
+            orElse doNothing) reduce
       case "Partnership" =>
         val vatValue = (jsonFromDES \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails" \ "vatRegistrationNumber").asOpt[String]
         val payeValue = (jsonFromDES \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails" \ "payeReference").asOpt[String]
-        val vatReads = if(vatValue.isEmpty){
-            (__ \ 'partnershipVat \ 'hasVat).json.put(JsBoolean(false))
+        val vatReads = if (vatValue.isEmpty) {
+          (__ \ 'partnershipVat \ 'hasVat).json.put(JsBoolean(false))
         } else {
           (__ \ 'partnershipVat \ 'vat).json.copyFrom(vatRegistrationNumber.json.pick) and
             (__ \ 'partnershipVat \ 'hasVat).json.put(JsBoolean(true)) reduce
         }
-        val payeReads = if(payeValue.isEmpty){
+        val payeReads = if (payeValue.isEmpty) {
           (__ \ 'partnershipPaye \ 'hasPaye).json.put(JsBoolean(false))
         } else {
           (__ \ 'partnershipPaye \ 'paye).json.copyFrom(paye.json.pick) and
