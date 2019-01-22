@@ -20,6 +20,7 @@ import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
+import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 
 class DirectorsTransformationSpec extends WordSpec with MustMatchers with OptionValues {
 
@@ -28,12 +29,35 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
 
       def doNothing: Reads[JsObject] = __.json.put(Json.obj())
 
-      val getDirectors = (__ \ 'directorDetails \ 'firstName).json.copyFrom((__ \ 'firstName).json.pick) and
+      def getNino(currentDirector: JsValue) = {
+        if ((currentDirector \ "nino").validate[String].isSuccess) {
+          (__ \ 'directorNino \ 'nino).json.copyFrom((__ \ 'nino).json.pick) and
+            (__ \ 'directorNino \ 'hasNino).json.put(JsBoolean(true)) reduce
+        } else {
+          (__ \ 'directorNino \ 'reason).json.copyFrom((__ \ 'noNinoReason).json.pick) and //TODO: reason is not mandatory, what do we do if we don't have it?
+            (__ \ 'directorNino \ 'hasNino).json.put(JsBoolean(false)) reduce
+        }
+      }
+
+      def getUtr(currentDirector: JsValue) = {
+        if ((currentDirector \ "utr").validate[String].isSuccess) {
+          (__ \ 'directorUtr \ 'utr).json.copyFrom((__ \ 'utr).json.pick) and
+            (__ \ 'directorUtr \ 'hasUtr).json.put(JsBoolean(true)) reduce
+        } else {
+          (__ \ 'directorUtr \ 'reason).json.copyFrom((__ \ 'noUtrReason).json.pick) and //TODO: reason is not mandatory, what do we do if we don't have it?
+            (__ \ 'directorUtr \ 'hasUtr).json.put(JsBoolean(false)) reduce
+        }
+      }
+
+      def getDirector(currentDirector: JsValue) = (__ \ 'directorDetails \ 'firstName).json.copyFrom((__ \ 'firstName).json.pick) and
         ((__ \ 'directorDetails \ 'middleName).json.copyFrom((__ \ 'middleName).json.pick) orElse doNothing) and
         (__ \ 'directorDetails \ 'lastName).json.copyFrom((__ \ 'lastName).json.pick) and
-        (__ \ 'directorDetails \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) reduce
+        (__ \ 'directorDetails \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
+        getNino(currentDirector) and
+        getUtr(currentDirector) and
+        PSASubscriptionDetailsTransformer.getAddress(__ \ "directorAddress",__ \ "correspondenceCommonDetails" \ "addressDetails") reduce
 
-      lazy val transformedJson = desDirector.transform(getDirectors).asOpt.value
+      lazy val transformedJson = desDirector.transform(getDirector(desDirector)).asOpt.value
 
       "We have director details" when {
         "We have a name" in {
@@ -47,7 +71,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We don't have a middle name" in {
           val inputJson = desDirector.as[JsObject] - "middleName"
 
-          val transformedJson = inputJson.transform(getDirectors).asOpt.value
+          val transformedJson = inputJson.transform(getDirector(inputJson)).asOpt.value
 
           (transformedJson \ "directorDetails" \ "middleName").asOpt[String] mustBe None
         }
@@ -58,6 +82,38 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
 
         "We have a DOB" in {
           (transformedJson \ "directorDetails" \ "dateOfBirth").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "dateOfBirth").as[String]
+        }
+
+        "We have a nino" in {
+          (transformedJson \ "directorNino" \ "hasNino").as[Boolean] mustBe (userAnswersDirector \ "directorNino" \ "hasNino").as[Boolean]
+          (transformedJson \ "directorNino" \ "nino").as[String] mustBe (userAnswersDirector \ "directorNino" \ "nino").as[String]
+        }
+
+        "We don't have a nino" in {
+          val inputJson = desDirector.as[JsObject] - "nino"
+
+          val transformedJson = inputJson.transform(getDirector(inputJson)).asOpt.value
+
+          (transformedJson \ "directorNino" \ "hasNino").as[Boolean] mustBe false
+          (transformedJson \ "directorNino" \ "reason").as[String] mustBe "test"
+        }
+
+        "We have a utr" in {
+          (transformedJson \ "directorUtr" \ "hasUtr").as[Boolean] mustBe (userAnswersDirector \ "directorUtr" \ "hasUtr").as[Boolean]
+          (transformedJson \ "directorUtr" \ "utr").as[String] mustBe (userAnswersDirector \ "directorUtr" \ "utr").as[String]
+        }
+
+        "We don't have a utr" in {
+          val inputJson = desDirector.as[JsObject] - "utr"
+
+          val transformedJson = inputJson.transform(getDirector(inputJson)).asOpt.value
+
+          (transformedJson \ "directorUtr" \ "hasUtr").as[Boolean] mustBe false
+          (transformedJson \ "directorUtr" \ "reason").as[String] mustBe "test"
+        }
+
+        "We have an address" in {
+          (transformedJson \ "directorAddress" \ "addressLine1").asOpt[String].value mustBe (userAnswersDirector \ "directorAddress" \ "addressLine1").asOpt[String].value
         }
       }
     }
@@ -74,22 +130,14 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
                      },
                      "directorNino" : {
                        "hasNino" : true,
-                       "nino" : "CS700100A"
+                       "nino" : "JC000001A"
                      },
                      "directorUtr" : {
                        "hasUtr" : true,
-                       "utr" : "1234567890"
-                     },
-                     "companyDirectorAddressList" : {
-                       "addressLine1" : "2 Other Place",
-                       "addressLine2" : "Some District",
-                       "addressLine3" : "Anytown",
-                       "addressLine4" : "Somerset",
-                       "postalCode" : "ZZ1 1ZZ",
-                       "countryCode" : "GB"
+                       "utr" : "0123456789"
                      },
                      "directorAddress" : {
-                       "addressLine1" : "2 Other Place",
+                       "addressLine1" : "1 Director Road",
                        "addressLine2" : "Some District",
                        "addressLine3" : "Anytown",
                        "addressLine4" : "Somerset",
@@ -97,22 +145,6 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
                        "country" : "GB"
                      },
                      "directorAddressYears" : "under_a_year",
-                     "directorPreviousAddressList" : {
-                       "addressLine1" : "2 Other Place",
-                       "addressLine2" : "Some District",
-                       "addressLine3" : "Anytown",
-                       "addressLine4" : "Somerset",
-                       "postalCode" : "ZZ1 1ZZ",
-                       "countryCode" : "GB"
-                     },
-                     "directorPreviousAddress" : {
-                       "addressLine1" : "2 Other Place",
-                       "addressLine2" : "Some District",
-                       "addressLine3" : "Anytown",
-                       "addressLine4" : "Somerset",
-                       "postcode" : "ZZ1 1ZZ",
-                       "country" : "GB"
-                     },
                      "directorContactDetails" : {
                        "email" : "s@S.com",
                        "phone" : "436"
@@ -130,7 +162,9 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
                               "lastName":"Baker",
                               "dateOfBirth":"1980-03-01",
                               "nino":"JC000001A",
+                              "noNinoReason" : "test",
                               "utr":"0123456789",
+                              "noUtrReason" : "test",
                               "correspondenceCommonDetails":{
                                 "addressDetails":{
                                   "nonUKAddress":false,
