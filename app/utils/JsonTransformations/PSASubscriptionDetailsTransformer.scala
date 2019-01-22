@@ -24,23 +24,54 @@ object PSASubscriptionDetailsTransformer {
   def doNothing: Reads[JsObject] = __.json.put(Json.obj())
   
   def transformToUserAnswers(jsonFromDES: JsValue): Reads[JsObject] =
-    (if ((jsonFromDES \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").asOpt[String].contains("UTR")) {
-      (__ \ 'businessDetails \ 'uniqueTaxReferenceNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
-    } else doNothing) and
-      getOrganisationOrPartnerDetails.orElse(getIndividualDetails) and
+    getUtr(jsonFromDES) and
+      ((__ \ 'companyRegistrationNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'crnNumber).json.pick)
+        orElse doNothing) and
+      getOrganisationOrPartnerDetails(jsonFromDES).orElse(getIndividualDetails) and
+      getPayeAndVat(jsonFromDES) and
       getCorrespondenceAddress and
       getContactDetails(jsonFromDES) and
       getAddressYears(jsonFromDES) and
       getPreviousAddress(jsonFromDES) reduce
 
-  private def getOrganisationOrPartnerDetails: Reads[JsObject] = {
-    val organisationOrPartnerDetailsPath = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails
+  private def getOrganisationOrPartnerDetails(jsonFromDES: JsValue): Reads[JsObject] = {
+    val orgPath = returnPathBasedOnLegalStatus(jsonFromDES, __, __ \ 'businessDetails, __ \ 'partnershipDetails)
+    (orgPath \ 'companyName).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'name).json.pick)
+  }
 
-    (__ \ 'companyRegistrationNumber).json.copyFrom((organisationOrPartnerDetailsPath \ 'crnNumber).json.pick) and
-      (__ \ 'businessDetails \ 'companyName).json.copyFrom((organisationOrPartnerDetailsPath \ 'name).json.pick) and
-      ((__ \ 'companyDetails \ 'vatRegistrationNumber).json.copyFrom((organisationOrPartnerDetailsPath \ 'vatRegistrationNumber).json.pick)
-        orElse doNothing) and
-      (__ \ 'companyDetails \ 'payeEmployerReferenceNumber).json.copyFrom((organisationOrPartnerDetailsPath \ 'payeReference).json.pick) reduce
+  private def getUtr(jsonFromDES: JsValue): Reads[JsObject] = {
+    val userAnswersPath = returnPathBasedOnLegalStatus(jsonFromDES, __, __ \ 'businessDetails, __ \ 'partnershipDetails)
+    if ((jsonFromDES \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").asOpt[String].contains("UTR")) {
+      (userAnswersPath \ 'uniqueTaxReferenceNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
+    } else doNothing
+  }
+
+  private def getPayeAndVat(jsonFromDES: JsValue): Reads[JsObject] = {
+    val legalStatus = (jsonFromDES \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").as[String]
+    val vatRegistrationNumber = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber
+    val paye = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'payeReference
+    legalStatus match {
+      case "Limited Company" =>
+        (__ \ 'companyDetails \ 'vatRegistrationNumber).json.copyFrom(vatRegistrationNumber.json.pick) and
+          (__ \ 'companyDetails \ 'payeEmployerReferenceNumber).json.copyFrom(paye.json.pick) reduce
+      case "Partnership" =>
+        val vatValue = (jsonFromDES \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails" \ "vatRegistrationNumber").asOpt[String]
+        val payeValue = (jsonFromDES \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails" \ "payeReference").asOpt[String]
+        val vatReads = if(vatValue.isEmpty){
+            (__ \ 'partnershipVat \ 'hasVat).json.put(JsBoolean(false))
+        } else {
+          (__ \ 'partnershipVat \ 'vat).json.copyFrom(vatRegistrationNumber.json.pick) and
+            (__ \ 'partnershipVat \ 'hasVat).json.put(JsBoolean(true)) reduce
+        }
+        val payeReads = if(payeValue.isEmpty){
+          (__ \ 'partnershipPaye \ 'hasPaye).json.put(JsBoolean(false))
+        } else {
+          (__ \ 'partnershipPaye \ 'paye).json.copyFrom(paye.json.pick) and
+            (__ \ 'partnershipPaye \ 'hasPaye).json.put(JsBoolean(true)) reduce
+        }
+        vatReads and payeReads reduce
+      case "Individual" => doNothing
+    }
   }
 
   def getAddress(userAnswersPath: JsPath, desAddressPath: JsPath): Reads[JsObject] = {
@@ -108,7 +139,7 @@ object PSASubscriptionDetailsTransformer {
   }
 
   private def getContactDetails(jsonFromDES: JsValue): Reads[JsObject] = {
-    val contactPath = returnPathBasedOnLegalStatus(jsonFromDES, __ \ 'individualContactDetails, __ \ 'contactDetails, __ \ 'contactDetails)
+    val contactPath = returnPathBasedOnLegalStatus(jsonFromDES, __ \ 'individualContactDetails, __ \ 'contactDetails, __ \ 'partnershipContactDetails)
     getContact(contactPath)
   }
 
