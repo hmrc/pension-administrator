@@ -63,7 +63,8 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         getNino and
         getUtr and
         PSASubscriptionDetailsTransformer.getAddress(__ \ "directorAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
-        getDirectorcontactDetails reduce
+        getDirectorcontactDetails and
+        PSASubscriptionDetailsTransformer.getAddressYears(addressYearsPath = __ \ 'directorAddressYears) reduce
 
 
       val getDirectors: Reads[JsArray] = __.read(Reads.seq(getDirector)).map(JsArray(_))
@@ -142,6 +143,14 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
           }
         }
 
+        "We have a previous address flag" in {
+          (transformedJson \ "directorAddressYears").asOpt[String].value mustBe (userAnswersDirector \ "directorAddressYears" ).asOpt[String].value
+        }
+
+        "We have a previous address" in {
+          (transformedJson \ "directorPreviousAddress" \ "addressLine1").asOpt[String].value mustBe (userAnswersDirector \ "directorPreviousAddress" \ "addressLine1" ).asOpt[String].value
+        }
+
         "We have an array of directors" in {
           val directors = JsArray(Seq(desDirector, desDirector, desDirector, desDirector))
 
@@ -182,6 +191,13 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
                        "country" : "GB"
                      },
                      "directorAddressYears" : "under_a_year",
+                     "directorPreviousAddress" : {
+                         "addressLine1" : "8 Pattinson Grove",
+                         "addressLine2" : "Ryton",
+                         "addressLine4" : "Tyne and Wear",
+                         "postcode" : "NE22 ARR",
+                         "country" : "GB"
+                     },
                      "directorContactDetails" : {
                        "email" : "ann_baker@test.com",
                        "phone" : "0044-09876542312"

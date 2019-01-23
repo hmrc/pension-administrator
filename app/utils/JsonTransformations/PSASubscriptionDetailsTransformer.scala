@@ -31,8 +31,8 @@ object PSASubscriptionDetailsTransformer {
       getPayeAndVat and
       getCorrespondenceAddress and
       getContactDetails and
-      getAddressYears and
-      getPreviousAddress and
+      getAddressYearsBasedOnLegalStatus and
+      getPreviousAddressBasedOnLegalStatus and
       getAdviser reduce
 
   private val getOrganisationOrPartnerDetails: Reads[JsObject] = {
@@ -157,20 +157,24 @@ object PSASubscriptionDetailsTransformer {
   private val getContactDetails: Reads[JsObject] =
     returnPathBasedOnLegalStatus(__ \ 'individualContactDetails, __ \ 'contactDetails, __ \ 'partnershipContactDetails).flatMap(getContact)
 
-  private val getAddressYears: Reads[JsObject] = {
-    (__ \ "psaSubscriptionDetails" \ "previousAddressDetails" \ "isPreviousAddressLast12Month").read[Boolean].flatMap { addressYearsValue =>
-      returnPathBasedOnLegalStatus(__ \ 'individualAddressYears, __ \ 'companyAddressYears, __ \ 'partnershipAddressYears).flatMap { addressYearsPath =>
-        val value = if (addressYearsValue) {
-          JsString("under_a_year")
-        } else {
-          JsString("over_a_year")
-        }
-        addressYearsPath.json.put(value)
-      }
+  val getAddressYearsBasedOnLegalStatus: Reads[JsObject] = {
+    returnPathBasedOnLegalStatus(__ \ 'individualAddressYears, __ \ 'companyAddressYears, __ \ 'partnershipAddressYears).flatMap { addressYearsPath =>
+      getAddressYears(__ \ "psaSubscriptionDetails", addressYearsPath)
     }
   }
 
-  private val getPreviousAddress: Reads[JsObject] = {
+  def getAddressYears(path: JsPath = __, addressYearsPath: JsPath = __): Reads[JsObject] = {
+    (path \ "previousAddressDetails" \ "isPreviousAddressLast12Month").read[Boolean].flatMap { addressYearsValue =>
+      val value = if (addressYearsValue) {
+        JsString("under_a_year")
+      } else {
+        JsString("over_a_year")
+      }
+      addressYearsPath.json.put(value)
+    }
+  }
+
+  private val getPreviousAddressBasedOnLegalStatus: Reads[JsObject] = {
     returnPathBasedOnLegalStatus(__ \ 'individualPreviousAddress, __ \ 'companyPreviousAddress, __ \ 'partnershipPreviousAddress).flatMap {
       getDifferentAddress(_, __ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress)
     }
