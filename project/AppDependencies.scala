@@ -67,7 +67,7 @@ object AppDependencies {
   val overrides: Set[ModuleID] = {
     val jettyFromWiremockVersion = "9.2.24.v20180105"
     Set(
-      "org.eclipse.jetty"           % "jetty-client"       % "0.16.1",
+      "org.eclipse.jetty"           % "jetty-client"       % jettyFromWiremockVersion,
       "org.eclipse.jetty"           % "jetty-continuation" % jettyFromWiremockVersion,
       "org.eclipse.jetty"           % "jetty-http"         % jettyFromWiremockVersion,
       "org.eclipse.jetty"           % "jetty-io"           % jettyFromWiremockVersion,
