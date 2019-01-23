@@ -41,7 +41,7 @@ class DeregistrationControllerSpec extends SpecBase with MockitoSugar with Befor
   implicit val mat: Materializer = app.materializer
 
   private def deregistrationController: DeregistrationController =
-    new DeregistrationController(mockSchemeConnector, stubControllerComponents())
+    new DeregistrationController(mockSchemeConnector)
 
   before(reset(mockSchemeConnector))
 

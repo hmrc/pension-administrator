@@ -26,9 +26,8 @@ import utils.ErrorHandler
 import scala.concurrent.ExecutionContext
 
 class DeregistrationController @Inject()(
-                                          schemeConnector: SchemeConnector,
-                                          cc: ControllerComponents
-                                        )(implicit val ec: ExecutionContext) extends BaseController(cc) with ErrorHandler {
+                                          schemeConnector: SchemeConnector
+                                        )(implicit val ec: ExecutionContext) extends BaseController with ErrorHandler {
   private[controllers] def parseSchemes(jsValue: JsValue): Seq[String] =
     (JsPath \ "schemeDetail") (jsValue).head.validate[JsArray] match {
       case JsSuccess(jsArray, _) =>
