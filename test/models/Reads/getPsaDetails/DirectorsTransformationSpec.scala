@@ -26,12 +26,6 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
 
   "A payload containing a director" must {
     "map correctly to a valid user answers director" when {
-
-      def doNothing: Reads[JsObject] = __.json.put(Json.obj())
-
-
-
-
       lazy val transformedJson = desDirector.transform(PSASubscriptionDetailsTransformer.getDirector).asOpt.value
 
       "We have director details" when {
