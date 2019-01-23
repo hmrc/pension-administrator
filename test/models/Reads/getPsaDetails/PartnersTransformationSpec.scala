@@ -162,7 +162,8 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
                  "partnerPreviousAddress" : {
                      "addressLine1" : "8 Pattinson Grove",
                      "addressLine2" : "Ryton",
-                     "addressLine4" : "Tyne and Wear",
+                     "addressLine3" : "Tyne and Wear",
+                     "addressLine4" : "Yorkshire",
                      "postcode" : "NE22 ARR",
                      "country" : "GB"
                  },
@@ -207,11 +208,11 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
                  "isPreviousAddressLast12Month":true,
                  "previousAddress": {
                    "nonUKAddress": false,
-                   "line1":"1 Previous Road",
-                   "line2":"Clifton",
-                   "line3":"York",
+                   "line1":"8 Pattinson Grove",
+                   "line2":"Ryton",
+                   "line3":"Tyne and Wear",
                    "line4":"Yorkshire",
-                   "postalCode":"YO1 9EX",
+                   "postalCode":"NE2 ARR",
                    "countryCode":"GB"
                  }
                }

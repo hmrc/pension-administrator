@@ -471,6 +471,10 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       "we have previous address country code" in {
         (transformedJson \ "partnershipPreviousAddress" \ "country").as[String] mustBe "GB"
       }
+      
+      "we have partners" in {
+        (transformedJson \ "partners" \ 0 \ "partnerDetails" \ "firstName").as[String] mustBe (expectedPartnershipJson \ "partners" \ 0 \ "partnerDetails" \ "firstName").as[String]
+      }
 
       "transform the input json to user answers" in {
         transformedJson mustBe expectedPartnershipJson
@@ -521,7 +525,51 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                "postalCode": "MN21 EF",
                "countryCode": "GB"
              }
-     }
+     },
+     "directorOrPartnerDetails":[
+       {
+                "sequenceId":"000",
+                "entityType":"Partner",
+                "title":"Mr",
+                "firstName":"Bruce",
+                "middleName":"John",
+                "lastName":"Allen",
+                "dateOfBirth":"1980-03-01",
+                "nino":"JC000001A",
+                "noNinoReason":"test",
+                "utr":"0123456789",
+                "noUtrReason":"test",
+                "correspondenceCommonDetails":{
+                  "addressDetails":{
+                    "nonUKAddress":false,
+                    "line1":"1 Partner Road",
+                    "line2":"Clifton",
+                    "line3":"York",
+                    "line4":"Yorkshire",
+                    "postalCode":"YO1 9EX",
+                    "countryCode":"GB"
+                  },
+                  "contactDetails":{
+                    "telephone":"0044-09876542312",
+                    "mobileNumber":"0044-09876542312",
+                    "fax":"0044-09876542312",
+                    "email":"bruce_allen@test.com"
+                  }
+                },
+                "previousAddressDetails":{
+                  "isPreviousAddressLast12Month":true,
+                  "previousAddress": {
+                    "nonUKAddress": false,
+                    "line1":"8 Pattinson Grove",
+                    "line2":"Ryton",
+                    "line3":"Tyne and Wear",
+                    "line4":"Yorkshire",
+                    "postalCode":"NE22 ARR",
+                    "countryCode":"GB"
+                  }
+                }
+             }
+     ]
    }
  }
     """
@@ -569,7 +617,46 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
               "partnershipPaye" : {
                   "hasPaye" : true,
                   "paye" : "123AB45678"
-              }
+              },
+              "partners" : [
+                {
+                   "partnerDetails" : {
+                       "firstName" : "Bruce",
+                       "middleName" : "John",
+                       "lastName" : "Allen",
+                       "dateOfBirth" : "1980-03-01"
+                   },
+                   "partnerNino" : {
+                       "hasNino" : true,
+                       "nino" : "JC000001A"
+                   },
+                   "partnerUtr" : {
+                       "hasUtr" : true,
+                       "utr" : "0123456789"
+                   },
+                   "partnerAddress" : {
+                       "addressLine1" : "1 Partner Road",
+                       "addressLine2" : "Clifton",
+                       "addressLine3" : "York",
+                       "addressLine4" : "Yorkshire",
+                       "postcode" : "YO1 9EX",
+                       "country" : "GB"
+                   },
+                   "partnerContactDetails" : {
+                       "email" : "bruce_allen@test.com",
+                       "phone" : "0044-09876542312"
+                   },
+                   "partnerAddressYears" : "under_a_year",
+                   "partnerPreviousAddress" : {
+                       "addressLine1" : "8 Pattinson Grove",
+                       "addressLine2" : "Ryton",
+                       "addressLine3" : "Tyne and Wear",
+                       "addressLine4" : "Yorkshire",
+                       "postcode" : "NE22 ARR",
+                       "country" : "GB"
+                   }
+                }
+              ]
           }"""
   )
 
