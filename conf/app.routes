@@ -31,5 +31,3 @@ GET         /invitation/get-for-invitee                 controllers.InvitationsC
 GET         /invitation/get                             controllers.InvitationsCacheController.get
 POST        /invitation/add                             controllers.InvitationsCacheController.add
 DELETE      /invitation                                 controllers.InvitationsCacheController.remove
-
-GET         /can-deregister/:id                         controllers.DeregistrationController.canDeregister(id)
