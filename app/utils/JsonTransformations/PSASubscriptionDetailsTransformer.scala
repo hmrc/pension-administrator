@@ -288,9 +288,9 @@ object PSASubscriptionDetailsTransformer {
     (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
       case "Individual" =>
         doNothing
-      case "Limited Company" => (__ \ 'directors).json.put(JsString("test"))
+      case "Limited Company" => (__ \ 'directors).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails).read(getDirectors))
       case "Partnership" =>
         doNothing
-    } orElse doNothing
+    }
   }
 }

@@ -336,7 +336,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       }
 
       "we have directors" in {
-        (transformedJson \ 0 \ "directors" \ "directorDetails" \ "firstName").as[String] mustBe (expectedCompanyJson \ 0 \ "directors" \ "directorDetails" \ "firstName").as[String]
+        (transformedJson \ "directors" \ 0 \ "directorDetails" \ "firstName").as[String] mustBe (expectedCompanyJson \ "directors" \ 0 \ "directorDetails" \ "firstName").as[String]
       }
 
       "transform the input json to user answers" in {
@@ -619,38 +619,29 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                         "firstName" : "Ann",
                         "middleName" : "Sarah",
                         "lastName" : "Baker",
-                        "dateOfBirth" : "1980-03-01",
-                        "isDeleted" : false
+                        "dateOfBirth" : "1980-03-01"
                       },
                       "directorNino" : {
-                        "hasNino" : true,
-                        "nino" : "JC000001A"
+                        "nino" : "JC000001A",
+                        "hasNino" : true
                       },
                       "directorUtr" : {
-                        "hasUtr" : true,
-                        "utr" : "0123456789"
+                        "utr" : "0123456789",
+                        "hasUtr" : true
                       },
                       "directorAddress" : {
                         "addressLine1" : "1 Director Road",
-                        "addressLine2" : "Some District",
-                        "addressLine3" : "Anytown",
-                        "addressLine4" : "Somerset",
-                        "postcode" : "ZZ1 1ZZ",
+                        "addressLine2" : "Clifton",
+                        "addressLine3" : "York",
+                        "addressLine4" : "Yorkshire",
+                        "postcode" : "YO1 9EX",
                         "country" : "GB"
                       },
-                      "directorAddressYears" : "under_a_year",
-                      "directorPreviousAddress" : {
-                          "addressLine1" : "8 Pattinson Grove",
-                          "addressLine2" : "Ryton",
-                          "addressLine4" : "Tyne and Wear",
-                          "postcode" : "NE22 ARR",
-                          "country" : "ES"
-                      },
                       "directorContactDetails" : {
-                        "email" : "ann_baker@test.com",
-                        "phone" : "0044-09876542312"
+                        "phone" : "0044-09876542312",
+                        "email" : "ann_baker@test.com"
                       },
-                      "isDirectorComplete" : true
+                      "directorAddressYears" : "over_a_year"
                     }
          ]
         }"""
@@ -729,16 +720,7 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                                  }
                                },
                                "previousAddressDetails":{
-                                 "isPreviousAddressLast12Month":true,
-                                 "previousAddress": {
-                                   "nonUKAddress": false,
-                                   "line1":"1 Previous Road",
-                                   "line2":"Clifton",
-                                   "line3":"York",
-                                   "line4":"Yorkshire",
-                                   "postalCode":"YO1 9EX",
-                                   "countryCode":"ES"
-                                 }
+                                 "isPreviousAddressLast12Month":false
                                }
                              }
           ]
