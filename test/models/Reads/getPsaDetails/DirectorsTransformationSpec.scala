@@ -29,49 +29,10 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
 
       def doNothing: Reads[JsObject] = __.json.put(Json.obj())
 
-      val getNino: Reads[JsObject] = {
-        (__ \ "nino").read[String].flatMap {
-          _ =>
-            (__ \ 'directorNino \ 'nino).json.copyFrom((__ \ 'nino).json.pick) and
-              (__ \ 'directorNino \ 'hasNino).json.put(JsBoolean(true)) reduce
-        } orElse {
-          (__ \ 'directorNino \ 'reason).json.copyFrom((__ \ 'noNinoReason).json.pick) and
-            (__ \ 'directorNino \ 'hasNino).json.put(JsBoolean(false)) reduce
-        }
-      }
-
-      val getUtr: Reads[JsObject] = {
-        (__ \ "utr").read[String].flatMap {
-          _ =>
-            (__ \ 'directorUtr \ 'utr).json.copyFrom((__ \ 'utr).json.pick) and
-              (__ \ 'directorUtr \ 'hasUtr).json.put(JsBoolean(true)) reduce
-        } orElse {
-          (__ \ 'directorUtr \ 'reason).json.copyFrom((__ \ 'noUtrReason).json.pick) and
-            (__ \ 'directorUtr \ 'hasUtr).json.put(JsBoolean(false)) reduce
-        }
-      }
-
-      val getDirectorcontactDetails: Reads[JsObject] = {
-        (__ \ 'directorContactDetails \ 'phone).json.copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'telephone).json.pick) and
-          (__ \ 'directorContactDetails \ 'email).json.copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'email).json.pick) reduce
-      }
-
-      val getDirector = (__ \ 'directorDetails \ 'firstName).json.copyFrom((__ \ 'firstName).json.pick) and
-        ((__ \ 'directorDetails \ 'middleName).json.copyFrom((__ \ 'middleName).json.pick) orElse doNothing) and
-        (__ \ 'directorDetails \ 'lastName).json.copyFrom((__ \ 'lastName).json.pick) and
-        (__ \ 'directorDetails \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
-        getNino and
-        getUtr and
-        PSASubscriptionDetailsTransformer.getAddress(__ \ "directorAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
-        getDirectorcontactDetails and
-        PSASubscriptionDetailsTransformer.getAddressYears(addressYearsPath = __ \ 'directorAddressYears) and
-        PSASubscriptionDetailsTransformer.getPreviousAddress(__ \ "directorPreviousAddress") reduce
 
 
-      val getDirectors: Reads[JsArray] = __.read(Reads.seq(getDirector)).map(JsArray(_))
 
-
-      lazy val transformedJson = desDirector.transform(getDirector).asOpt.value
+      lazy val transformedJson = desDirector.transform(PSASubscriptionDetailsTransformer.getDirector).asOpt.value
 
       "We have director details" when {
         "We have a name" in {
@@ -85,7 +46,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We don't have a middle name" in {
           val inputJson = desDirector.as[JsObject] - "middleName"
 
-          val transformedJson = inputJson.transform(getDirector).asOpt.value
+          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getDirector).asOpt.value
 
           (transformedJson \ "directorDetails" \ "middleName").asOpt[String] mustBe None
         }
@@ -106,7 +67,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We don't have a nino" in {
           val inputJson = desDirector.as[JsObject] - "nino"
 
-          val transformedJson = inputJson.transform(getDirector).asOpt.value
+          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getDirector).asOpt.value
 
           (transformedJson \ "directorNino" \ "hasNino").as[Boolean] mustBe false
           //TODO: reason is not mandatory but mandatory in our frontend. Potential issues.
@@ -121,7 +82,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We don't have a utr" in {
           val inputJson = desDirector.as[JsObject] - "utr"
 
-          val transformedJson = inputJson.transform(getDirector).asOpt.value
+          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getDirector).asOpt.value
 
           (transformedJson \ "directorUtr" \ "hasUtr").as[Boolean] mustBe false
           //TODO: reason is not mandatory but mandatory in our frontend. Potential issues.
@@ -155,7 +116,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We have a previous address flag as false and no previous address" in {
           val inputJson = desDirector.as[JsObject] - "previousAddressDetails" + ("previousAddressDetails" -> Json.obj("isPreviousAddressLast12Month" -> JsBoolean(false)))
 
-          val transformedJson = inputJson.transform(getDirector).asOpt.value
+          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getDirector).asOpt.value
 
           (transformedJson \ "directorAddressYears").asOpt[String].value mustBe "over_a_year"
           (transformedJson \ "directorPreviousAddress").asOpt[JsObject] mustBe None
@@ -164,7 +125,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We have an array of directors" in {
           val directors = JsArray(Seq(desDirector, desDirector, desDirector, desDirector))
 
-          val transformedJson = directors.transform(getDirectors).asOpt.value
+          val transformedJson = directors.transform(PSASubscriptionDetailsTransformer.getDirectors).asOpt.value
 
           (transformedJson \ 0 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
           (transformedJson \ 1 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
