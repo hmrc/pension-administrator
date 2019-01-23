@@ -335,6 +335,10 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
         (transformedJson \ "companyPreviousAddress" \ "country").as[String] mustBe "GB"
       }
 
+      "we have directors" in {
+        (transformedJson \ 0 \ "directors" \ "directorDetails" \ "firstName").as[String] mustBe (expectedCompanyJson \ 0 \ "directors" \ "directorDetails" \ "firstName").as[String]
+      }
+
       "transform the input json to user answers" in {
         transformedJson mustBe expectedCompanyJson
       }
@@ -608,7 +612,47 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
             "addressLine4" : "Somerset",
             "postcode" : "MN21 EF",
             "country" : "GB"
-          }
+          },
+          "directors" : [
+                    {
+                      "directorDetails" : {
+                        "firstName" : "Ann",
+                        "middleName" : "Sarah",
+                        "lastName" : "Baker",
+                        "dateOfBirth" : "1980-03-01",
+                        "isDeleted" : false
+                      },
+                      "directorNino" : {
+                        "hasNino" : true,
+                        "nino" : "JC000001A"
+                      },
+                      "directorUtr" : {
+                        "hasUtr" : true,
+                        "utr" : "0123456789"
+                      },
+                      "directorAddress" : {
+                        "addressLine1" : "1 Director Road",
+                        "addressLine2" : "Some District",
+                        "addressLine3" : "Anytown",
+                        "addressLine4" : "Somerset",
+                        "postcode" : "ZZ1 1ZZ",
+                        "country" : "GB"
+                      },
+                      "directorAddressYears" : "under_a_year",
+                      "directorPreviousAddress" : {
+                          "addressLine1" : "8 Pattinson Grove",
+                          "addressLine2" : "Ryton",
+                          "addressLine4" : "Tyne and Wear",
+                          "postcode" : "NE22 ARR",
+                          "country" : "ES"
+                      },
+                      "directorContactDetails" : {
+                        "email" : "ann_baker@test.com",
+                        "phone" : "0044-09876542312"
+                      },
+                      "isDirectorComplete" : true
+                    }
+         ]
         }"""
   )
 
@@ -653,7 +697,51 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
               "postalCode": "MN21 EF",
               "countryCode": "GB"
             }
-          }
+          },
+          "directorOrPartnerDetails":[
+                            {
+                               "sequenceId":"000",
+                               "entityType":"Director",
+                               "title":"Mrs",
+                               "firstName":"Ann",
+                               "middleName":"Sarah",
+                               "lastName":"Baker",
+                               "dateOfBirth":"1980-03-01",
+                               "nino":"JC000001A",
+                               "noNinoReason" : "test",
+                               "utr":"0123456789",
+                               "noUtrReason" : "test",
+                               "correspondenceCommonDetails":{
+                                 "addressDetails":{
+                                   "nonUKAddress":false,
+                                   "line1":"1 Director Road",
+                                   "line2":"Clifton",
+                                   "line3":"York",
+                                   "line4":"Yorkshire",
+                                   "postalCode":"YO1 9EX",
+                                   "countryCode":"GB"
+                                 },
+                                 "contactDetails":{
+                                   "telephone":"0044-09876542312",
+                                   "mobileNumber":"0044-09876542312",
+                                   "fax":"0044-09876542312",
+                                   "email":"ann_baker@test.com"
+                                 }
+                               },
+                               "previousAddressDetails":{
+                                 "isPreviousAddressLast12Month":true,
+                                 "previousAddress": {
+                                   "nonUKAddress": false,
+                                   "line1":"1 Previous Road",
+                                   "line2":"Clifton",
+                                   "line3":"York",
+                                   "line4":"Yorkshire",
+                                   "postalCode":"YO1 9EX",
+                                   "countryCode":"ES"
+                                 }
+                               }
+                             }
+          ]
         }
       }"""
   )

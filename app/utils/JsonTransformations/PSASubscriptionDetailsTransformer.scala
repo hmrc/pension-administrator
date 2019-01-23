@@ -18,7 +18,7 @@ package utils.JsonTransformations
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
-import play.api.libs.json._
+import play.api.libs.json.{__, _}
 
 object PSASubscriptionDetailsTransformer {
   val doNothing: Reads[JsObject] = __.json.put(Json.obj())
@@ -33,7 +33,8 @@ object PSASubscriptionDetailsTransformer {
       getContactDetails and
       getAddressYearsBasedOnLegalStatus and
       getPreviousAddressBasedOnLegalStatus and
-      getAdviser reduce
+      getAdviser and test reduce
+
 
   private val getOrganisationOrPartnerDetails: Reads[JsObject] = {
     returnPathBasedOnLegalStatus(__, __ \ 'businessDetails, __ \ 'partnershipDetails).flatMap { orgPath =>
@@ -281,4 +282,15 @@ object PSASubscriptionDetailsTransformer {
 
 
   val getPartners: Reads[JsArray] = __.read(Reads.seq(getPartner)).map(JsArray(_))
+
+
+  val test: Reads[JsObject] = {
+    (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
+      case "Individual" =>
+        doNothing
+      case "Limited Company" => (__ \ 'directors).json.put(JsString("test"))
+      case "Partnership" =>
+        doNothing
+    } orElse doNothing
+  }
 }
