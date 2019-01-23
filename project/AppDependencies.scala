@@ -67,6 +67,7 @@ object AppDependencies {
   val overrides: Set[ModuleID] = {
     val jettyFromWiremockVersion = "9.2.24.v20180105"
     Set(
+      "reactivemongo"              %% "reactivemongo"      % "0.16.1", //TODO REMOVE OVERRIDE AFTER FIX IS IMPLEMENTED ON REACTIVE MONGO
       "org.eclipse.jetty"           % "jetty-client"       % jettyFromWiremockVersion,
       "org.eclipse.jetty"           % "jetty-continuation" % jettyFromWiremockVersion,
       "org.eclipse.jetty"           % "jetty-http"         % jettyFromWiremockVersion,
