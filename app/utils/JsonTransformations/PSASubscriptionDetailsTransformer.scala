@@ -33,7 +33,8 @@ object PSASubscriptionDetailsTransformer {
       getContactDetails and
       getAddressYearsBasedOnLegalStatus and
       getPreviousAddressBasedOnLegalStatus and
-      getAdviser and test reduce
+      getAdviser and
+      getDirectorsOrPartners reduce
 
 
   private val getOrganisationOrPartnerDetails: Reads[JsObject] = {
@@ -233,7 +234,7 @@ object PSASubscriptionDetailsTransformer {
     (__ \ 'directorDetails \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
     getDirectorNino and
     getDirectorUtr and
-    PSASubscriptionDetailsTransformer.getAddress(__ \ "directorAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
+    PSASubscriptionDetailsTransformer.getDifferentAddress(__ \ "directorAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
     getDirectorcontactDetails and
     PSASubscriptionDetailsTransformer.getAddressYears(addressYearsPath = __ \ 'directorAddressYears) and
     PSASubscriptionDetailsTransformer.getPreviousAddress(__ \ "directorPreviousAddress") reduce
@@ -275,7 +276,7 @@ object PSASubscriptionDetailsTransformer {
     (__ \ 'partnerDetails \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
     getPartnerNino and
     getPartnerUtr and
-    PSASubscriptionDetailsTransformer.getAddress(__ \ "partnerAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
+    PSASubscriptionDetailsTransformer.getDifferentAddress(__ \ "partnerAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
     getPartnercontactDetails and
     PSASubscriptionDetailsTransformer.getAddressYears(addressYearsPath = __ \ 'partnerAddressYears) and
     PSASubscriptionDetailsTransformer.getPreviousAddress(__ \ "partnerPreviousAddress") reduce
@@ -284,13 +285,11 @@ object PSASubscriptionDetailsTransformer {
   val getPartners: Reads[JsArray] = __.read(Reads.seq(getPartner)).map(JsArray(_))
 
 
-  val test: Reads[JsObject] = {
+  val getDirectorsOrPartners: Reads[JsObject] = {
     (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
-      case "Individual" =>
-        doNothing
       case "Limited Company" => (__ \ 'directors).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails).read(getDirectors))
-      case "Partnership" =>
-        doNothing
+      case "Partnership" => doNothing
+      case _ => doNothing
     }
   }
 }
