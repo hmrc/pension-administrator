@@ -180,6 +180,12 @@ object PSASubscriptionDetailsTransformer {
     }
   }
 
+  def getPreviousAddress(path: JsPath) : Reads[JsObject] = {
+    (__ \ 'previousAddressDetails \ 'previousAddress).read[JsObject].flatMap { _ =>
+      getDifferentAddress(path , __ \ 'previousAddressDetails \ 'previousAddress)
+    } orElse doNothing
+  }
+
   private val getAdviser: Reads[JsObject] = {
     ((__ \ 'adviserDetails \ 'name).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'name).json.pick)
       orElse doNothing) and

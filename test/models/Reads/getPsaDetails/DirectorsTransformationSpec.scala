@@ -64,7 +64,8 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         getUtr and
         PSASubscriptionDetailsTransformer.getAddress(__ \ "directorAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
         getDirectorcontactDetails and
-        PSASubscriptionDetailsTransformer.getAddressYears(addressYearsPath = __ \ 'directorAddressYears) reduce
+        PSASubscriptionDetailsTransformer.getAddressYears(addressYearsPath = __ \ 'directorAddressYears) and
+        PSASubscriptionDetailsTransformer.getPreviousAddress(__ \ "directorPreviousAddress") reduce
 
 
       val getDirectors: Reads[JsArray] = __.read(Reads.seq(getDirector)).map(JsArray(_))
@@ -148,7 +149,16 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         }
 
         "We have a previous address" in {
-          (transformedJson \ "directorPreviousAddress" \ "addressLine1").asOpt[String].value mustBe (userAnswersDirector \ "directorPreviousAddress" \ "addressLine1" ).asOpt[String].value
+          (transformedJson \ "directorPreviousAddress" \ "country").asOpt[String].value mustBe (userAnswersDirector \ "directorPreviousAddress" \ "country" ).asOpt[String].value
+        }
+
+        "We have a previous address flag as false and no previous address" in {
+          val inputJson = desDirector.as[JsObject] - "previousAddressDetails" + ("previousAddressDetails" -> Json.obj("isPreviousAddressLast12Month" -> JsBoolean(false)))
+
+          val transformedJson = inputJson.transform(getDirector).asOpt.value
+
+          (transformedJson \ "directorAddressYears").asOpt[String].value mustBe "over_a_year"
+          (transformedJson \ "directorPreviousAddress").asOpt[JsObject] mustBe None
         }
 
         "We have an array of directors" in {
@@ -196,7 +206,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
                          "addressLine2" : "Ryton",
                          "addressLine4" : "Tyne and Wear",
                          "postcode" : "NE22 ARR",
-                         "country" : "GB"
+                         "country" : "ES"
                      },
                      "directorContactDetails" : {
                        "email" : "ann_baker@test.com",
@@ -244,7 +254,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
                                   "line3":"York",
                                   "line4":"Yorkshire",
                                   "postalCode":"YO1 9EX",
-                                  "countryCode":"GB"
+                                  "countryCode":"ES"
                                 }
                               }
                             }""")
