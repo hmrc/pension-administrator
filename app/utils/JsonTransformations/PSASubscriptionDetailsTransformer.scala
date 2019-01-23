@@ -234,7 +234,7 @@ object PSASubscriptionDetailsTransformer {
     (__ \ 'directorDetails \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
     getDirectorNino and
     getDirectorUtr and
-    PSASubscriptionDetailsTransformer.getAddress(__ \ "directorAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
+    PSASubscriptionDetailsTransformer.getDifferentAddress(__ \ "directorAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
     getDirectorcontactDetails and
     PSASubscriptionDetailsTransformer.getAddressYears(addressYearsPath = __ \ 'directorAddressYears) and
     PSASubscriptionDetailsTransformer.getPreviousAddress(__ \ "directorPreviousAddress") reduce
@@ -276,7 +276,7 @@ object PSASubscriptionDetailsTransformer {
     (__ \ 'partnerDetails \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
     getPartnerNino and
     getPartnerUtr and
-    PSASubscriptionDetailsTransformer.getAddress(__ \ "partnerAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
+    PSASubscriptionDetailsTransformer.getDifferentAddress(__ \ "partnerAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
     getPartnercontactDetails and
     PSASubscriptionDetailsTransformer.getAddressYears(addressYearsPath = __ \ 'partnerAddressYears) and
     PSASubscriptionDetailsTransformer.getPreviousAddress(__ \ "partnerPreviousAddress") reduce
