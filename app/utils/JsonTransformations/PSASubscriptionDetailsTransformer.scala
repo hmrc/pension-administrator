@@ -33,7 +33,8 @@ object PSASubscriptionDetailsTransformer {
       getContactDetails and
       getAddressYearsBasedOnLegalStatus and
       getPreviousAddressBasedOnLegalStatus and
-      getAdviser and test reduce
+      getAdviser and
+      getDirectorsOrPartners reduce
 
 
   private val getOrganisationOrPartnerDetails: Reads[JsObject] = {
@@ -284,13 +285,11 @@ object PSASubscriptionDetailsTransformer {
   val getPartners: Reads[JsArray] = __.read(Reads.seq(getPartner)).map(JsArray(_))
 
 
-  val test: Reads[JsObject] = {
+  val getDirectorsOrPartners: Reads[JsObject] = {
     (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
-      case "Individual" =>
-        doNothing
       case "Limited Company" => (__ \ 'directors).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails).read(getDirectors))
-      case "Partnership" =>
-        doNothing
+      case "Partnership" => doNothing
+      case _ => doNothing
     }
   }
 }
