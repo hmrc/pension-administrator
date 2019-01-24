@@ -490,11 +490,15 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
   val directorOrPartnerTransformer = new DirectorOrPartnerTransformer(addressTransformer)
   val registrationInfoTransformer = new RegistrationInfoTransformer
   val payeAndVatTransformer = new PayeAndVatTransformer
+  val adviserTransformer = new AdviserTransformer(addressTransformer)
+  val individualTransformer = new IndividualTransformer(legalStatusTransformer)
   val transformer = new PSASubscriptionDetailsTransformer(addressTransformer,
     directorOrPartnerTransformer,
     legalStatusTransformer,
     registrationInfoTransformer,
-    payeAndVatTransformer)
+    payeAndVatTransformer,
+    adviserTransformer,
+    individualTransformer)
 
   val partnershipInputJson = Json.parse(
     """
