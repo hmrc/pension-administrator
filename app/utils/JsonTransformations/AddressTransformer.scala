@@ -72,7 +72,7 @@ class AddressTransformer @Inject()(legalStatusTransformer: LegalStatusTransforme
   val getPreviousAddressBasedOnLegalStatus: Reads[JsObject] = {
     legalStatusTransformer.returnPathBasedOnLegalStatus(__ \ 'individualPreviousAddress, __ \ 'companyPreviousAddress, __ \ 'partnershipPreviousAddress).flatMap {
       getDifferentAddress(_, __ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress)
-    }
+    } orElse doNothing
   }
 
   val getCorrespondenceAddress: Reads[JsObject] = {

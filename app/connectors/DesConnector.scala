@@ -28,6 +28,7 @@ import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -58,12 +59,13 @@ trait DesConnector {
 }
 
 class DesConnectorImpl @Inject()(
-                                  http: HttpClient,
-                                  config: AppConfig,
-                                  auditService: AuditService,
-                                  invalidPayloadHandler: InvalidPayloadHandler,
-                                  headerUtils: HeaderUtils
-                                ) extends DesConnector with HttpResponseHelper with ErrorHandler {
+                                     http: HttpClient,
+                                     config: AppConfig,
+                                     auditService: AuditService,
+                                     invalidPayloadHandler: InvalidPayloadHandler,
+                                     headerUtils: HeaderUtils,
+                                     psaSubscriptionDetailsTransformer: PSASubscriptionDetailsTransformer
+                                   ) extends DesConnector with HttpResponseHelper with ErrorHandler {
 
   override def registerPSA(registerData: JsValue)(implicit
                                                   headerCarrier: HeaderCarrier,
@@ -167,7 +169,14 @@ class DesConnectorImpl @Inject()(
     case Success(Left(e: HttpResponse)) => Logger.warn(s"$endpoint received error response from DES", e)
   }
 
-  private def validateJson(json: JsValue): JsValue = {
+  private def validateJson(json: JsValue): JsValue ={
+
+    if (json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).isSuccess)
+      Logger.warn("PensionAdministratorSuccessfulMapToUserAnswers")
+    else
+      Logger.warn("PensionAdministratorFailedMapToUserAnswers")
+
+
     json.validate[PsaSubscription] match {
       case JsSuccess(value, _) => Json.toJson(value)
       case JsError(errors) => throw new JsResultException(errors)
