@@ -22,8 +22,9 @@ import models.PsaToBeRemovedFromScheme
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.http.Status.BAD_GATEWAY
+import play.api.libs.json.JodaWrites._
 import play.api.libs.json.{JsResultException, JsValue, Json}
-import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
+import play.api.mvc.{AnyContentAsEmpty, ControllerComponents, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import service.SchemeService
@@ -254,6 +255,89 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
     }
   }
 
+  "deregisterPSA" should "return OK when service returns successfully" in {
+
+    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+    status(result) mustBe NO_CONTENT
+
+  }
+
+  it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(
+      Future.successful(Left(new BadRequestException("bad request")))
+    )
+
+    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "bad request"
+  }
+
+  it should "return CONFLICT when service returns CONFLICT" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(
+      Future.successful(Left(new ConflictException("conflict")))
+    )
+
+    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+
+    status(result) mustBe CONFLICT
+    contentAsString(result) mustBe "conflict"
+  }
+
+  it should "return NOT_FOUND when service returns NOT_FOUND" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(
+      Future.successful(Left(new NotFoundException("not found")))
+    )
+
+    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+
+    status(result) mustBe NOT_FOUND
+    contentAsString(result) mustBe "not found"
+  }
+
+  it should "return Forbidden when service return Forbidden" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(
+      Future.successful(Left(new ForbiddenException("forbidden")))
+    )
+
+    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+
+    status(result) mustBe FORBIDDEN
+    contentAsString(result) mustBe "forbidden"
+  }
+
+
+  it should "throw Upstream5xxResponse when service throws Upstream5xxResponse" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+
+    recoverToSucceededIf[Upstream5xxResponse] {
+      call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+    }
+  }
+
+  it should "throw UpStream4xxResponse when service throws UpStream4xxResponse" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(Future.failed(Upstream4xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+
+    recoverToSucceededIf[Upstream4xxResponse] {
+      call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+    }
+  }
+
+  it should "throw Exception when service throws any unknown Exception" in {
+
+    fakeDesConnector.setDeregisterPsaResponse(Future.failed(new Exception("Unknown Exception")))
+
+    recoverToSucceededIf[Exception] {
+      call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
+    }
+  }
+
 }
 
 object SchemeControllerSpec extends SpecBase {
@@ -280,7 +364,7 @@ object SchemeControllerSpec extends SpecBase {
     )
   val fakeSchemeService = new FakeSchemeService
   val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
-  val controller = new SchemeController(fakeSchemeService, fakeDesConnector)
+  val controller = new SchemeController(fakeSchemeService, fakeDesConnector, controllerComponents)
 
   val psaId = PsaId("A7654321")
   val pstr: String = "123456789AB"
@@ -289,4 +373,6 @@ object SchemeControllerSpec extends SpecBase {
   private val removePsaJson: JsValue = Json.toJson(removePsaDataModel)
 
   def removePsaFakeRequest(data: JsValue): FakeRequest[JsValue] = FakeRequest("DELETE", "/").withBody(data)
+
+  def deregisterPsaFakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("DELETE", "/")
 }

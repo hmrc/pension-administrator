@@ -19,12 +19,12 @@ package controllers
 import com.google.inject.Inject
 import play.api.Configuration
 import play.api.mvc.ControllerComponents
-import repositories.ManagePensionsCacheRepository
+import repositories.PSACacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
 
-class ManagePensionsCacheController @Inject()(
-                                          config: Configuration,
-                                          repository: ManagePensionsCacheRepository,
-                                          authConnector: AuthConnector,
-                                          cc: ControllerComponents
+class PSACacheController @Inject()(
+                                           config: Configuration,
+                                           repository: PSACacheRepository,
+                                           authConnector: AuthConnector,
+                                           cc: ControllerComponents
                                  ) extends PensionAdministratorCacheController(config, repository, authConnector, cc)

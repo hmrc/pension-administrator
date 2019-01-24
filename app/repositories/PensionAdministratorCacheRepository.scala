@@ -43,8 +43,8 @@ abstract class PensionAdministratorCacheRepository(
   component.mongoConnector.db,
   implicitly
 ) {
+  private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
-  private val encrypted: Boolean = config.getBoolean("encrypted").getOrElse(true)
 
   private case class DataEntry(
                                 id: String,
@@ -171,7 +171,7 @@ abstract class PensionAdministratorCacheRepository(
   def remove(id: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     Logger.warn(s"Removing row from collection ${collection.name} externalId:$id")
     val selector = BSONDocument("id" -> id)
-    collection.remove(selector).map(_.ok)
+    collection.delete().one(selector).map(_.ok)
   }
 
 }

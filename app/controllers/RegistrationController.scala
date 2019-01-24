@@ -17,32 +17,35 @@
 package controllers
 
 import com.google.inject.Inject
-import config.AppConfig
+import config.FeatureSwitchManagementService
 import connectors.RegistrationConnector
 import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
 import models.{Organisation, SuccessResponse}
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsResultException, JsValue, Json}
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, Upstream4xxResponse}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.ErrorHandler
+import utils.Toggles.IsManualIVEnabled
 import utils.validationUtils._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 class RegistrationController @Inject()(
                                         override val authConnector: AuthConnector,
                                         registerConnector: RegistrationConnector,
-                                        config: AppConfig
-                                      )(implicit val ec: ExecutionContext) extends BaseController with ErrorHandler with AuthorisedFunctions {
+                                        cc: ControllerComponents,
+                                        fs: FeatureSwitchManagementService
+                                      ) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 
   def registerWithIdIndividual: Action[AnyContent] = Action.async {
     implicit request => {
-      if(config.isManualIVEnabled){
+      if(fs.get(IsManualIVEnabled)){
         registerWithIdManualIVEnabled
       }else {
         registerWithIdManualIVDisabled

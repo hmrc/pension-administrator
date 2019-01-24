@@ -19,13 +19,14 @@ package controllers.testonly
 import com.google.inject.Inject
 import config.FeatureSwitchManagementService
 import play.api.Logger
-import play.api.mvc.{Action, AnyContent}
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.play.bootstrap.controller.{BackendController, FrontendController}
 
 import scala.concurrent.ExecutionContext
 
 class TestFeatureSwitchManagerController @Inject()(
-                                                    fs: FeatureSwitchManagementService)(implicit val ec: ExecutionContext) extends FrontendController {
+                                                    fs: FeatureSwitchManagementService,
+                                                    cc: ControllerComponents)(implicit val ec: ExecutionContext) extends BackendController(cc) {
 
   def toggleOn(featureSwitch: String): Action[AnyContent] = Action {
     implicit request =>

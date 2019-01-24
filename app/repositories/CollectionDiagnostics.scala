@@ -18,14 +18,13 @@ package repositories
 
 import play.api.Logger
 import reactivemongo.play.json.collection.JSONCollection
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Future
 
 case class IndexDef(name: String, fields: Seq[String], unique: Boolean, ttl: Option[Int])
 
 object CollectionDiagnostics {
-
-  implicit val ec = play.api.libs.concurrent.Execution.defaultContext
 
   def logCollectionInfo(collection: JSONCollection): Unit = {
 

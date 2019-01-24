@@ -30,7 +30,8 @@ class TestFeatureSwitchManagerControllerSpec extends SpecBase with MockitoSugar 
 
   def controller: TestFeatureSwitchManagerController =
     new TestFeatureSwitchManagerController(
-      fakeFeatureSwitchManagerService
+      fakeFeatureSwitchManagerService,
+      controllerComponents
     )
 
   "TestFeatureSwitchManager Controller" when {

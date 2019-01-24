@@ -21,18 +21,20 @@ import java.util.Date
 
 import javax.inject.Inject
 import play.api.Configuration
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.Cursor
 import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.bson.{BSONDocument, BSONString}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.language.postfixOps
 
-class MongoDiagnosticsController @Inject()(config: Configuration, component: ReactiveMongoComponent)
-                                          (implicit val ec: ExecutionContext) extends BaseController {
+class MongoDiagnosticsController @Inject()(config: Configuration,
+                                           component: ReactiveMongoComponent,
+                                           cc: ControllerComponents) extends BackendController(cc) {
 
   // scalastyle:off magic.number
   private val banner = Seq.fill(50)("-").mkString
@@ -54,7 +56,7 @@ class MongoDiagnosticsController @Inject()(config: Configuration, component: Rea
 
     val db = component.mongoConnector.db()
 
-    db.collectionNames flatMap  {
+    db.collectionNames flatMap {
       names =>
         Future.traverse(names) {
           name =>
@@ -110,19 +112,12 @@ class MongoDiagnosticsController @Inject()(config: Configuration, component: Rea
 
     import collection.BatchCommands.AggregationFramework.{Group, MinField}
 
-    collection.aggregate(
-      Group(BSONString(""))("minLastUpdated" -> MinField("lastUpdated"))
-    ) map {
-      result =>
-        result.firstBatch.headOption.flatMap {
-          head =>
-            head.getAs[Date]("minLastUpdated") map {
-              date =>
-                dateFormat.format(date)
-            }
-        }.getOrElse("<none>")
-    }
-
+    collection.aggregatorContext[BSONDocument](Group(BSONString(""))("minLastUpdated" -> MinField("lastUpdated")))
+      .prepared.cursor.collect[Seq](-1, Cursor.FailOnError[Seq[BSONDocument]]()).map(docs => {
+      docs.head.getAs[Date]("minLastUpdated").map {
+        date => dateFormat.format(date)
+      }.getOrElse("<none>")
+    })
   }
 
   def ids(collection: BSONCollection): Future[String] = {

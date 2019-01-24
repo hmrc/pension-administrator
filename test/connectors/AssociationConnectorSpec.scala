@@ -106,7 +106,11 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
+    logger.reset()
+
     connector.getPSAMinimalDetails(psaId).map { response =>
+      logger.getLogEntries.size shouldBe 1
+      logger.getLogEntries.head.level shouldBe Level.WARN
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe "INVALID PAYLOAD"
     }

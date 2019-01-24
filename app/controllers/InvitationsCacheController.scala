@@ -20,20 +20,26 @@ import com.google.inject.Inject
 import models.Invitation
 import play.api.Configuration
 import play.api.libs.json.Json
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
+import repositories.InvitationsCacheRepository
+import service.MongoDBFailedException
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import repositories.InvitationsCacheRepository
 import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.BadRequestException
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationsCacheController @Inject()(
                                             config: Configuration,
                                             repository: InvitationsCacheRepository,
-                                            val authConnector: AuthConnector
-                                          )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
+                                            val authConnector: AuthConnector,
+                                            cc: ControllerComponents
+                                          ) extends BackendController(cc) with AuthorisedFunctions {
 
   private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
 
