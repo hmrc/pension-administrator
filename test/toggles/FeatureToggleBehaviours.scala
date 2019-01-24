@@ -16,37 +16,40 @@
 
 package toggles
 
-import config.AppConfig
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
+import play.api.Configuration
 import play.api.inject.guice.GuiceApplicationBuilder
 
 class FeatureToggleBehaviours extends WordSpec with Matchers with GuiceOneAppPerTest {
 
-  private def configuration(name: String, on: Option[Boolean]): AppConfig = {
+  private def configuration(name: String, on: Option[Boolean]): Boolean = {
 
-    on.fold {
-      new GuiceApplicationBuilder().configure().build().injector
+    val injector = on.fold {
+      app.injector
     } {
       b => new GuiceApplicationBuilder()
         .configure(conf= s"features.$name" -> b.toString).build().injector
-    }.instanceOf[AppConfig]
+    }
+
+    injector.instanceOf[Configuration].getBoolean(s"features.$name").getOrElse(false)
+
   }
 
-  def featureToggle(name: String, getter: AppConfig => Boolean): Unit = {
+  def featureToggle(name: String): Unit = {
 
     "behave like a feature toggle" should {
 
       s"return true when $name is configured as true" in {
-        getter(configuration(name, Some(true))) shouldBe true
+        configuration(name, Some(true)) shouldBe true
       }
 
       s"return false when $name is configured as false" in {
-        getter(configuration(name, Some(false))) shouldBe false
+        configuration(name, Some(false)) shouldBe false
       }
 
       s"return false when $name is not configured" in {
-        getter(configuration(name, None)) shouldBe false
+        configuration(name, None) shouldBe false
       }
 
     }
