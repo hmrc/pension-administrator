@@ -51,5 +51,6 @@ class AppConfig @Inject()(override val runModeConfiguration: Configuration, envi
   lazy val invitationCallbackUrl: String = s"$baseUrlPensionAdministrator${runModeConfiguration.underlying.getString("serviceUrls.invitation.callback")}"
 
   lazy val isManualIVEnabled: Boolean = runModeConfiguration.getBoolean("features.is-iv-enabled").getOrElse(false)
+  lazy val IsVariationsEnabled: Boolean = runModeConfiguration.getBoolean("features.is-variations-enabled").getOrElse(false)
 
 }
