@@ -18,7 +18,7 @@ package connectors
 
 import audit._
 import com.google.inject.{ImplementedBy, Inject}
-import config.AppConfig
+import config.{AppConfig, FeatureSwitchManagementService}
 import connectors.helper.HeaderUtils
 import models.{PsaSubscription, PsaToBeRemovedFromScheme}
 import org.joda.time.LocalDate
@@ -29,6 +29,7 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
+import utils.Toggles.IsManualIVEnabled
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -59,13 +60,14 @@ trait DesConnector {
 }
 
 class DesConnectorImpl @Inject()(
-                                     http: HttpClient,
-                                     config: AppConfig,
-                                     auditService: AuditService,
-                                     invalidPayloadHandler: InvalidPayloadHandler,
-                                     headerUtils: HeaderUtils,
-                                     psaSubscriptionDetailsTransformer: PSASubscriptionDetailsTransformer
-                                   ) extends DesConnector with HttpResponseHelper with ErrorHandler {
+                                  http: HttpClient,
+                                  config: AppConfig,
+                                  auditService: AuditService,
+                                  invalidPayloadHandler: InvalidPayloadHandler,
+                                  headerUtils: HeaderUtils,
+                                  psaSubscriptionDetailsTransformer: PSASubscriptionDetailsTransformer,
+                                  fs: FeatureSwitchManagementService
+                                ) extends DesConnector with HttpResponseHelper with ErrorHandler {
 
   override def registerPSA(registerData: JsValue)(implicit
                                                   headerCarrier: HeaderCarrier,
@@ -169,7 +171,9 @@ class DesConnectorImpl @Inject()(
     case Success(Left(e: HttpResponse)) => Logger.warn(s"$endpoint received error response from DES", e)
   }
 
-  private def validateJson(json: JsValue): JsValue ={
+  private def validateJson(json: JsValue): JsValue = {
+
+    case class PSAFailedMapToUserAnswersException() extends Exception
 
     if (json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).isSuccess)
       Logger.warn("PensionAdministratorSuccessfulMapToUserAnswers")
@@ -178,7 +182,11 @@ class DesConnectorImpl @Inject()(
 
 
     json.validate[PsaSubscription] match {
-      case JsSuccess(value, _) => Json.toJson(value)
+      case JsSuccess(value, _) =>  if(fs.get(IsManualIVEnabled)) {
+        json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).getOrElse(throw new PSAFailedMapToUserAnswersException)
+      } else {
+        Json.toJson(value)
+      }
       case JsError(errors) => throw new JsResultException(errors)
     }
   }
