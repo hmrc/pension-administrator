@@ -140,30 +140,8 @@ class DirectorOrPartnerTransformer @Inject()(addressTransformer: AddressTransfor
   }
 }
 
-class PSASubscriptionDetailsTransformer@Inject()(addressTransformer: AddressTransformer,
-                                                 directorOrPartnerTransformer: DirectorOrPartnerTransformer,
-                                                 legalStatusTransformer: LegalStatusTransformer) extends JsonTransformer {
-  def transformToUserAnswers(jsonFromDES: JsValue): Reads[JsObject] =
-    getRegistrationInfo and
-      getNinoOrUtr and
-      getCrn and
-      getOrganisationOrPartnerDetails.orElse(getIndividualDetails) and
-      getPayeAndVat and
-      getCorrespondenceAddress and
-      getContactDetails and
-      addressTransformer.getAddressYearsBasedOnLegalStatus and
-      addressTransformer.getPreviousAddressBasedOnLegalStatus and
-      getAdviser and
-      directorOrPartnerTransformer.getDirectorsOrPartners reduce
-
-
-  private val getOrganisationOrPartnerDetails: Reads[JsObject] = {
-    legalStatusTransformer.returnPathBasedOnLegalStatus(__, __ \ 'businessDetails, __ \ 'partnershipDetails).flatMap { orgPath =>
-      (orgPath \ 'companyName).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'name).json.pick)
-    }
-  }
-
-  private val getRegistrationInfo: Reads[JsObject] = {
+class RegistrationInfoTransformer @Inject()() extends JsonTransformer {
+  val getRegistrationInfo: Reads[JsObject] = {
     (__ \ "psaSubscriptionDetails" \ "correspondenceAddressDetails" \ "nonUKAddress").read[Boolean].flatMap { flag =>
       (__ \ 'registrationInfo \ 'legalStatus).json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").json.pick) and
         (__ \ 'registrationInfo \ 'sapNumber).json.put(JsString("")) and
@@ -173,22 +151,9 @@ class PSASubscriptionDetailsTransformer@Inject()(addressTransformer: AddressTran
         (__ \ 'registrationInfo \ 'idNumber).json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idNumber").json.pick) reduce
     }
   }
+}
 
-  private val getCrn = ((__ \ 'companyRegistrationNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'crnNumber).json.pick)
-    orElse doNothing)
-
-  private val getNinoOrUtr: Reads[JsObject] = {
-    legalStatusTransformer.returnPathBasedOnLegalStatus(__ \ 'individualNino, __ \ 'businessDetails, __ \ 'partnershipDetails).flatMap { userAnswersPath =>
-      (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").read[String].flatMap { value =>
-        if (value.contains("UTR")) {
-          (userAnswersPath \ 'uniqueTaxReferenceNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
-        } else {
-          userAnswersPath.json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
-        }
-      }
-    }
-  }
-
+class PayeAndVatTransformer @Inject()() extends JsonTransformer {
   val getPayeAndVat: Reads[JsObject] = {
     val vatRegistrationNumber = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber
     val paye = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'payeReference
@@ -214,6 +179,50 @@ class PSASubscriptionDetailsTransformer@Inject()(addressTransformer: AddressTran
       case "Individual" => doNothing
     }
   }
+}
+
+class PSASubscriptionDetailsTransformer@Inject()(addressTransformer: AddressTransformer,
+                                                 directorOrPartnerTransformer: DirectorOrPartnerTransformer,
+                                                 legalStatusTransformer: LegalStatusTransformer,
+                                                 registrationInfoTransformer: RegistrationInfoTransformer,
+                                                 payeAndVatTransformer: PayeAndVatTransformer) extends JsonTransformer {
+
+  def transformToUserAnswers(jsonFromDES: JsValue): Reads[JsObject] =
+      registrationInfoTransformer.getRegistrationInfo and
+      getNinoOrUtr and
+      getCrn and
+      getOrganisationOrPartnerDetails.orElse(getIndividualDetails) and
+      payeAndVatTransformer.getPayeAndVat and
+      getCorrespondenceAddress and
+      getContactDetails and
+      addressTransformer.getAddressYearsBasedOnLegalStatus and
+      addressTransformer.getPreviousAddressBasedOnLegalStatus and
+      getAdviser and
+      directorOrPartnerTransformer.getDirectorsOrPartners reduce
+
+
+  private val getOrganisationOrPartnerDetails: Reads[JsObject] = {
+    legalStatusTransformer.returnPathBasedOnLegalStatus(__, __ \ 'businessDetails, __ \ 'partnershipDetails).flatMap { orgPath =>
+      (orgPath \ 'companyName).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'name).json.pick)
+    }
+  }
+
+  private val getCrn = ((__ \ 'companyRegistrationNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'crnNumber).json.pick)
+    orElse doNothing)
+
+  private val getNinoOrUtr: Reads[JsObject] = {
+    legalStatusTransformer.returnPathBasedOnLegalStatus(__ \ 'individualNino, __ \ 'businessDetails, __ \ 'partnershipDetails).flatMap { userAnswersPath =>
+      (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").read[String].flatMap { value =>
+        if (value.contains("UTR")) {
+          (userAnswersPath \ 'uniqueTaxReferenceNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
+        } else {
+          userAnswersPath.json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
+        }
+      }
+    }
+  }
+
+
 
   val getCorrespondenceAddress: Reads[JsObject] = {
     val inputAddressPath = __ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails

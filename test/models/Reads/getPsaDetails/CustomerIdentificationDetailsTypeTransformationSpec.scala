@@ -19,7 +19,7 @@ package models.Reads.getPsaDetails
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.Reads._
 import play.api.libs.json._
-import utils.JsonTransformations.{AddressTransformer, DirectorOrPartnerTransformer, LegalStatusTransformer, PSASubscriptionDetailsTransformer}
+import utils.JsonTransformations._
 
 class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with MustMatchers with OptionValues {
 
@@ -485,10 +485,16 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
 object CustomerIdentificationDetailsTypeTransformationSpec {
 
-  val legalStatusTransformer = new LegalStatusTransformer()
+  val legalStatusTransformer = new LegalStatusTransformer
   val addressTransformer = new AddressTransformer(legalStatusTransformer)
   val directorOrPartnerTransformer = new DirectorOrPartnerTransformer(addressTransformer)
-  val transformer = new PSASubscriptionDetailsTransformer(addressTransformer,directorOrPartnerTransformer,legalStatusTransformer)
+  val registrationInfoTransformer = new RegistrationInfoTransformer
+  val payeAndVatTransformer = new PayeAndVatTransformer
+  val transformer = new PSASubscriptionDetailsTransformer(addressTransformer,
+    directorOrPartnerTransformer,
+    legalStatusTransformer,
+    registrationInfoTransformer,
+    payeAndVatTransformer)
 
   val partnershipInputJson = Json.parse(
     """
