@@ -29,7 +29,7 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
-import utils.Toggles.IsManualIVEnabled
+import utils.Toggles.IsVariationsEnabled
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -58,6 +58,8 @@ trait DesConnector {
                                    ec: ExecutionContext,
                                    request: RequestHeader): Future[Either[HttpException, JsValue]]
 }
+
+case class PSAFailedMapToUserAnswersException() extends Exception
 
 class DesConnectorImpl @Inject()(
                                   http: HttpClient,
@@ -173,8 +175,6 @@ class DesConnectorImpl @Inject()(
 
   private def validateJson(json: JsValue): JsValue = {
 
-    case class PSAFailedMapToUserAnswersException() extends Exception
-
     if (json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).isSuccess)
       Logger.info("PensionAdministratorSuccessfulMapToUserAnswers")
     else
@@ -182,7 +182,7 @@ class DesConnectorImpl @Inject()(
 
 
     json.validate[PsaSubscription] match {
-      case JsSuccess(value, _) =>  if(fs.get(IsManualIVEnabled)) {
+      case JsSuccess(value, _) =>  if(fs.get(IsVariationsEnabled)) {
         json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).getOrElse(throw new PSAFailedMapToUserAnswersException)
       } else {
         Json.toJson(value)

@@ -19,32 +19,39 @@ package connectors
 import audit.{AuditService, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
+import config.FeatureSwitchManagementService
 import connectors.helper.ConnectorBehaviours
 import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
 import org.joda.time.LocalDate
+import org.mockito.Matchers
+import org.mockito.Matchers.any
+import org.mockito.Mockito.when
 import org.scalatest._
+import org.scalatest.mockito.MockitoSugar
 import org.slf4j.event.Level
-import play.api.LoggerLike
 import play.api.http.Status._
 import play.api.inject.bind
-import play.api.inject.guice.GuiceableModule
+import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
 import play.api.libs.json.JodaWrites._
-import play.api.libs.json.{JsResultException, JsValue, Json}
+import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import play.api.test.Helpers.NOT_FOUND
+import play.api.{Application, LoggerLike}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
+import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.testhelpers.PsaSubscriptionBuilder._
-import utils.{FakeDesConnector, StubLogger, WireMockHelper}
+import utils.{FakeDesConnector, FakeFeatureSwitchManagementService, StubLogger, WireMockHelper}
+
+import scala.concurrent.Future
 
 class DesConnectorSpec extends AsyncFlatSpec
-  with Matchers
   with WireMockHelper
   with OptionValues
   with RecoverMethods
   with EitherValues
-  with ConnectorBehaviours{
+  with ConnectorBehaviours with MockitoSugar{
 
   import DesConnectorSpec._
 
@@ -73,6 +80,7 @@ class DesConnectorSpec extends AsyncFlatSpec
             .withHeader("Content-Type", "application/json")
         )
     )
+
     connector.registerPSA(registerPsaData).map { response =>
       response.right.value shouldBe successResponse
     }
@@ -168,10 +176,65 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   }
 
+  it should "handle OK (200) if variations is enabled" in {
+
+    lazy val appWithFeatureEnabled: Application = new GuiceApplicationBuilder().configure(portConfigKey -> server.port().toString,
+      "auditing.enabled" -> false,
+      "metrics.enabled" -> false
+    ).overrides(bind[FeatureSwitchManagementService].toInstance(FakeFeatureSwitchManagementService(true))).build()
+
+    val connector: DesConnector = appWithFeatureEnabled.injector.instanceOf[DesConnector]
+
+     server.stubFor(
+       get(urlEqualTo(psaSubscriptionDetailsUrl))
+         .withHeader("Content-Type", equalTo("application/json"))
+         .willReturn(
+           ok(psaSubscriptionData.toString())
+             .withHeader("Content-Type", "application/json")
+         )
+     )
+    connector.getPSASubscriptionDetails(psaId.value).map { response =>
+       response.right.value shouldBe Json.parse(psaSubscriptionUserAnswers)
+       server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
+     }
+
+  }
+
   it should behave like errorHandlerForGetApiFailures(
     connector.getPSASubscriptionDetails(psaId.value),
     psaSubscriptionDetailsUrl
   )
+
+  it should "return a PSAFailedMapToUserAnswersException if the API response cannot be transformed to UserAnswers" in {
+
+    val pSASubscriptionDetailsTransformer = mock[PSASubscriptionDetailsTransformer]
+
+    when(pSASubscriptionDetailsTransformer.transformToUserAnswers).thenReturn(__.json.copyFrom((__ \ 'hello).json.pick))
+
+    lazy val appWithFeatureEnabled: Application = new GuiceApplicationBuilder().configure(portConfigKey -> server.port().toString,
+      "auditing.enabled" -> false,
+      "metrics.enabled" -> false
+    ).overrides(
+      Seq(bind[FeatureSwitchManagementService].toInstance(FakeFeatureSwitchManagementService(true)),
+      bind[PSASubscriptionDetailsTransformer].toInstance(pSASubscriptionDetailsTransformer))
+      ).build()
+
+    val connector: DesConnector = appWithFeatureEnabled.injector.instanceOf[DesConnector]
+
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          ok(psaSubscriptionData.toString())
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    recoverToExceptionIf[PSAFailedMapToUserAnswersException](connector.getPSASubscriptionDetails(psaId.value)) map {
+      ex =>
+        ex.leftSide shouldBe a[PSAFailedMapToUserAnswersException]
+    }
+  }
 
   it should "return a JsResultException if the API response cannot be converted to PsaSubscription" in {
     server.stubFor(

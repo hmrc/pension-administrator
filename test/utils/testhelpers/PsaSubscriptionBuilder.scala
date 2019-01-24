@@ -50,6 +50,94 @@ object PsaSubscriptionBuilder {
 
   val psaSubscription = PsaSubscription(false, customerId, None, Some(individual), address, contactDetails,
   true, Some(previousAddress), Some(Seq(director1, director2)), Some(pensionsAdvisor))
+  
+  val psaSubscriptionUserAnswers = """{
+                                        "registrationInfo":{  
+                                           "legalStatus":"Individual",
+                                           "sapNumber":"",
+                                           "noIdentifier":false,
+                                           "customerType":"UK",
+                                           "idType":"NINO",
+                                           "idNumber":"AA999999A"
+                                        },
+                                        "individualNino":"AA999999A",
+                                        "individualDetails":{  
+                                           "firstName":"abcdefghijkl",
+                                           "middleName":"abcdefghijkl",
+                                           "lastName":"abcdefjkl"
+                                        },
+                                        "individualDateOfBirth":"1947-03-29",
+                                        "individualContactAddress":{  
+                                           "addressLine1":"Telford1",
+                                           "addressLine2":"Telford2",
+                                           "addressLine3":"Telford3",
+                                           "addressLine4":"Telford3",
+                                           "postalCode":"TF3 4ER",
+                                           "countryCode":"GB"
+                                        },
+                                        "individualContactDetails":{  
+                                           "phone":" ",
+                                           "email":"aaa@aa.com"
+                                        },
+                                        "individualAddressYears":"under_a_year",
+                                        "individualPreviousAddress":{  
+                                           "addressLine1":"London1",
+                                           "addressLine2":"London2",
+                                           "addressLine3":"London3",
+                                           "addressLine4":"London4",
+                                           "postcode":"LN12 4DC",
+                                           "country":"GB"
+                                        },
+                                        "adviserDetails":{  
+                                           "name":"sgfdgssd",
+                                           "email":"aaa@yahoo.com",
+                                           "phone":"0044-0987654232"
+                                        },
+                                        "adviserAddress":{  
+                                           "addressLine1":"addline1",
+                                           "addressLine2":"addline2",
+                                           "addressLine3":"addline3",
+                                           "addressLine4":"addline4 ",
+                                           "postcode":"56765",
+                                           "country":"AD"
+                                        }
+                                     }""".stripMargin
+  
+  val requestPsaSubscriptionUserAnswers = """{
+                    "individualDetails": {
+                      "firstName": "Stephen",
+                      "lastName": "Wood",
+                      "dateOfBirth": "1990-01-01"
+                    },
+                    "individualAddress": {
+                      "addressLine1": "100 SuttonStreet",
+                      "addressLine2": "Wokingham",
+                      "addressLine3": "Surrey",
+                      "addressLine4": "London",
+                      "postCode": "DH14EJ",
+                      "countryCode": "GB"
+                    },
+                    "registrationInfo": {
+                      "legalStatus": "Individual",
+                      "sapNumber": "1234567890",
+                      "noIdentifier": false,
+                      "customerType": "UK",
+                      "idType": "NINO",
+                      "idNumber": "CS700100A"
+                    },
+                    "individualDetailsCorrect": true,
+                    "individualAddressYears": "over_a_year",
+                    "individualContactDetails": {
+                      "email": "test@test.com",
+                      "phone": "3247234"
+                    },
+                    "declaration": true,
+                    "declarationWorkingKnowledge": "workingKnowledge",
+                    "declarationFitAndProper": true,
+                    "existingPSA": {
+                      "isExistingPSA": false
+                    }
+                  }""".stripMargin
 
 }
 
