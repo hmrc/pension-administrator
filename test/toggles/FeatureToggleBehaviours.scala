@@ -23,7 +23,6 @@ import play.api.inject.guice.GuiceApplicationBuilder
 
 class FeatureToggleBehaviours extends WordSpec with Matchers with GuiceOneAppPerTest {
 
-
   private def configuration(name: String, on: Option[Boolean]): AppConfig = {
 
     on.fold {
@@ -51,13 +50,5 @@ class FeatureToggleBehaviours extends WordSpec with Matchers with GuiceOneAppPer
       }
 
     }
-
   }
-
-}
-
-object FeatureToggleBehaviours {
-
-
-
 }
