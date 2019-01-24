@@ -42,11 +42,14 @@ class DirectorOrPartnerTransformer @Inject()(addressTransformer: AddressTransfor
   }
 
   private def getDirectorOrPartnerContactDetails(directorOrPartner: String): Reads[JsObject] = {
-    (__ \ s"${directorOrPartner}ContactDetails" \ 'phone).json.copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'telephone).json.pick) and
-      (__ \ s"${directorOrPartner}ContactDetails" \ 'email).json.copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'email).json.pick) reduce
+    (__ \ s"${directorOrPartner}ContactDetails" \ 'phone).json
+      .copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'telephone).json.pick) and
+      (__ \ s"${directorOrPartner}ContactDetails" \ 'email).json
+        .copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'email).json.pick) reduce
   }
 
-  def getDirectorOrPartner(directorOrPartner: String): Reads[JsObject] = (__ \ s"${directorOrPartner}Details" \ 'firstName).json.copyFrom((__ \ 'firstName).json.pick) and
+  def getDirectorOrPartner(directorOrPartner: String): Reads[JsObject] = (__ \ s"${directorOrPartner}Details" \ 'firstName).json
+    .copyFrom((__ \ 'firstName).json.pick) and
     ((__ \ s"${directorOrPartner}Details" \ 'middleName).json.copyFrom((__ \ 'middleName).json.pick) orElse doNothing) and
     (__ \ s"${directorOrPartner}Details" \ 'lastName).json.copyFrom((__ \ 'lastName).json.pick) and
     (__ \ s"${directorOrPartner}Details" \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
@@ -61,8 +64,10 @@ class DirectorOrPartnerTransformer @Inject()(addressTransformer: AddressTransfor
 
   val getDirectorsOrPartners: Reads[JsObject] = {
     (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
-      case "Limited Company" => (__ \ 'directors).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails).read(getDirectorsOrPartners("director")))
-      case "Partnership" => (__ \ 'partners).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails).read(getDirectorsOrPartners("partner")))
+      case "Limited Company" => (__ \ 'directors).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails)
+        .read(getDirectorsOrPartners("director")))
+      case "Partnership" => (__ \ 'partners).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails)
+        .read(getDirectorsOrPartners("partner")))
       case _ => doNothing
     }
   }

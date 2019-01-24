@@ -23,15 +23,18 @@ import play.api.libs.json.{__, _}
 
 class AdviserTransformer @Inject()(addressTransformer: AddressTransformer) extends  JsonTransformer {
   val getAdviser: Reads[JsObject] = {
-    ((__ \ 'adviserDetails \ 'name).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'name).json.pick)
+    (((__ \ 'adviserDetails \ 'name).json
+      .copyFrom((__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'name).json.pick)
       orElse doNothing) and
-      ((__ \ 'adviserDetails \ 'email).json.copyFrom(
+      ((__ \ 'adviserDetails \ 'email).json
+        .copyFrom(
         (__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'contactDetails \ 'email).json.pick)
         orElse doNothing) and
-      ((__ \ 'adviserDetails \ 'phone).json.copyFrom(
+      ((__ \ 'adviserDetails \ 'phone).json
+        .copyFrom(
         (__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'contactDetails \ 'telephone).json.pick)
         orElse doNothing) and
       (addressTransformer.getDifferentAddress(__ \ 'adviserAddress, __ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'addressDetails)
-        orElse doNothing) reduce
+        orElse doNothing)) reduce
   }
 }

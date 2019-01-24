@@ -167,7 +167,7 @@ class DesConnectorImpl @Inject()(
   private def validateJson(json: JsValue): PsaSubscription ={
 
     if (json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).isSuccess)
-      Logger.warn("PensionAdministratorSuccessfulMapToUserAnswers")
+      Logger.info("PensionAdministratorSuccessfulMapToUserAnswers")
     else
       Logger.warn("PensionAdministratorFailedMapToUserAnswers")
 
