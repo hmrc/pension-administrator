@@ -17,16 +17,15 @@
 package models.Reads.getPsaDetails
 
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
-import utils.JsonTransformations.PSASubscriptionDetailsTransformer
+import utils.JsonTransformations.{AddressTransformer, DirectorOrPartnerTransformer, LegalStatusTransformer}
 
 class DirectorsTransformationSpec extends WordSpec with MustMatchers with OptionValues {
 
   "A payload containing a director" must {
     "map correctly to a valid user answers director" when {
-      lazy val transformedJson = desDirector.transform(PSASubscriptionDetailsTransformer.getDirectorOrPartner("director")).asOpt.value
+      lazy val transformedJson = desDirector.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
 
       "We have director details" when {
         "We have a name" in {
@@ -40,7 +39,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We don't have a middle name" in {
           val inputJson = desDirector.as[JsObject] - "middleName"
 
-          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getDirectorOrPartner("director")).asOpt.value
+          val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
 
           (transformedJson \ "directorDetails" \ "middleName").asOpt[String] mustBe None
         }
@@ -61,7 +60,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We don't have a nino" in {
           val inputJson = desDirector.as[JsObject] - "nino"
 
-          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getDirectorOrPartner("director")).asOpt.value
+          val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
 
           (transformedJson \ "directorNino" \ "hasNino").as[Boolean] mustBe false
           //TODO: reason is not mandatory but mandatory in our frontend. Potential issues.
@@ -76,7 +75,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We don't have a utr" in {
           val inputJson = desDirector.as[JsObject] - "utr"
 
-          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getDirectorOrPartner("director")).asOpt.value
+          val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
 
           (transformedJson \ "directorUtr" \ "hasUtr").as[Boolean] mustBe false
           //TODO: reason is not mandatory but mandatory in our frontend. Potential issues.
@@ -110,7 +109,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We have a previous address flag as false and no previous address" in {
           val inputJson = desDirector.as[JsObject] - "previousAddressDetails" + ("previousAddressDetails" -> Json.obj("isPreviousAddressLast12Month" -> JsBoolean(false)))
 
-          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getDirectorOrPartner("director")).asOpt.value
+          val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
 
           (transformedJson \ "directorAddressYears").asOpt[String].value mustBe "over_a_year"
           (transformedJson \ "directorPreviousAddress").asOpt[JsObject] mustBe None
@@ -119,7 +118,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         "We have an array of directors" in {
           val directors = JsArray(Seq(desDirector, desDirector, desDirector, desDirector))
 
-          val transformedJson = directors.transform(PSASubscriptionDetailsTransformer.getDirectorsOrPartners("director")).asOpt.value
+          val transformedJson = directors.transform(directorOrPartnerTransformer.getDirectorsOrPartners("director")).asOpt.value
 
           (transformedJson \ 0 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
           (transformedJson \ 1 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
@@ -129,6 +128,10 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
       }
     }
   }
+
+  val legalStatusTransformer = new LegalStatusTransformer()
+  val addressTransformer = new AddressTransformer(legalStatusTransformer)
+  val directorOrPartnerTransformer = new DirectorOrPartnerTransformer(addressTransformer)
 
   val userAnswersDirector: JsValue = Json.parse(
     """      {

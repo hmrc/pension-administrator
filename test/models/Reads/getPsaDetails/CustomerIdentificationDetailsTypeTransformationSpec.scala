@@ -19,13 +19,13 @@ package models.Reads.getPsaDetails
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.Reads._
 import play.api.libs.json._
-import utils.JsonTransformations.PSASubscriptionDetailsTransformer
+import utils.JsonTransformations.{AddressTransformer, DirectorOrPartnerTransformer, LegalStatusTransformer, PSASubscriptionDetailsTransformer}
 
 class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with MustMatchers with OptionValues {
 
   import CustomerIdentificationDetailsTypeTransformationSpec._
 
-  lazy val transformedJson = individualInputJson.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(individualInputJson)).asOpt.value
+  lazy val transformedJson = individualInputJson.transform(transformer.transformToUserAnswers(individualInputJson)).asOpt.value
 
   "registrationInfo" must {
     "map correctly into user answers" when {
@@ -69,7 +69,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have a middle name" in {
         val jsonUpdated = individualInputJson.transform((__ \ 'psaSubscriptionDetails \ 'individualDetails \ 'middleName).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(individualInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(individualInputJson)).asOpt.value
 
         (transformedJson \ "individualDetails" \ "middleName").asOpt[String] mustBe None
       }
@@ -88,7 +88,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have address line 3" in {
         val jsonUpdated = individualInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line3).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(individualInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(individualInputJson)).asOpt.value
         (transformedJson \ "individualContactAddress" \ "addressLine3").asOpt[String] mustBe None
       }
 
@@ -98,7 +98,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have address line 4" in {
         val jsonUpdated = individualInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line4).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(individualInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(individualInputJson)).asOpt.value
         (transformedJson \ "individualContactAddress" \ "addressLine4").asOpt[String] mustBe None
       }
 
@@ -108,7 +108,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have address postal code" in {
         val jsonUpdated = individualInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'postalCode).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(individualInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(individualInputJson)).asOpt.value
         (transformedJson \ "individualContactAddress" \ "postalCode").asOpt[String] mustBe None
       }
 
@@ -134,7 +134,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have previous address line 3" in {
         val jsonUpdated = individualInputJson.transform((__ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress \ 'line3).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(individualInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(individualInputJson)).asOpt.value
         (transformedJson \ "individualPreviousAddress" \ "addressLine3").asOpt[String] mustBe None
       }
 
@@ -145,7 +145,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       "we don't have previous address line 4" in {
         val jsonUpdated =
           individualInputJson.transform((__ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress \ 'line4).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(individualInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(individualInputJson)).asOpt.value
         (transformedJson \ "individualPreviousAddress" \ "addressLine4").asOpt[String] mustBe None
       }
 
@@ -156,7 +156,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       "we don't have previous address postal code" in {
         val jsonUpdated =
           individualInputJson.transform((__ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress \ 'postalCode).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(individualInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(individualInputJson)).asOpt.value
         (transformedJson \ "individualPreviousAddress" \ "postcode").asOpt[String] mustBe None
       }
 
@@ -178,7 +178,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have email" in {
         val jsonUpdated = individualInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails \ 'email).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(individualInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(individualInputJson)).asOpt.value
         (transformedJson \ "individualContactDetails" \ "email").asOpt[String] mustBe None
       }
 
@@ -192,7 +192,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
     "map correctly into user answers" when {
 
-      lazy val transformedJson = companyInputJson.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(companyInputJson)).asOpt.value
+      lazy val transformedJson = companyInputJson.transform(transformer.transformToUserAnswers(companyInputJson)).asOpt.value
 
       "we have company name" in {
         (transformedJson \ "businessDetails" \ "companyName").as[String] mustBe "Global Pensions Ltd"
@@ -206,7 +206,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
         val inputWithIdTypeNino = companyInputJson.transform(
           updateJson(__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails, "idType", "NINO")).asOpt.value
 
-        val idTransformJson = inputWithIdTypeNino.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(inputWithIdTypeNino)).asOpt.value
+        val idTransformJson = inputWithIdTypeNino.transform(transformer.transformToUserAnswers(inputWithIdTypeNino)).asOpt.value
 
         (idTransformJson \ "businessDetails" \ "uniqueTaxReferenceNumber").asOpt[String] mustBe None
       }
@@ -222,7 +222,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       "we don't have a vat" in {
         val jsonUpdated =
           companyInputJson.transform((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(companyInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(companyInputJson)).asOpt.value
 
         (transformedJson \ "companyDetails" \ "vatRegistrationNumber").asOpt[String] mustBe None
       }
@@ -241,7 +241,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have address line 3" in {
         val jsonUpdated = companyInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line3).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(companyInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(companyInputJson)).asOpt.value
         (transformedJson \ "companyContactAddress" \ "addressLine3").asOpt[String] mustBe None
       }
 
@@ -251,7 +251,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have address line 4" in {
         val jsonUpdated = companyInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line4).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(companyInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(companyInputJson)).asOpt.value
         (transformedJson \ "companyContactAddress" \ "addressLine4").asOpt[String] mustBe None
       }
 
@@ -261,7 +261,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have address postal code" in {
         val jsonUpdated = companyInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'postalCode).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(companyInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(companyInputJson)).asOpt.value
         (transformedJson \ "companyContactAddress" \ "postalCode").asOpt[String] mustBe None
       }
 
@@ -283,7 +283,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have email" in {
         val jsonUpdated = companyInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails \ 'email).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(companyInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(companyInputJson)).asOpt.value
         (transformedJson \ "contactDetails" \ "email").asOpt[String] mustBe None
       }
 
@@ -302,7 +302,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       "we don't have previous address line 3" in {
         val jsonUpdated =
           companyInputJson.transform((__ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress \ 'line3).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(companyInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(companyInputJson)).asOpt.value
         (transformedJson \ "companyPreviousAddress" \ "addressLine3").asOpt[String] mustBe None
       }
 
@@ -312,7 +312,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have previous address line 4" in {
         val jsonUpdated = companyInputJson.transform((__ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress \ 'line4).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(companyInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(companyInputJson)).asOpt.value
         (transformedJson \ "companyPreviousAddress" \ "addressLine4").asOpt[String] mustBe None
       }
 
@@ -323,7 +323,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       "we don't have previous address postal code" in {
         val jsonUpdated =
           companyInputJson.transform((__ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress \ 'postalCode).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(companyInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(companyInputJson)).asOpt.value
         (transformedJson \ "companyPreviousAddress" \ "postcode").asOpt[String] mustBe None
       }
 
@@ -349,7 +349,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
     "map correctly into user answers" when {
 
-      lazy val transformedJson = partnershipInputJson.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
+      lazy val transformedJson = partnershipInputJson.transform(transformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
 
       "we have partnership name" in {
         (transformedJson \ "partnershipDetails" \ "companyName").as[String] mustBe "Acme Partnership"
@@ -363,7 +363,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
         val inputWithIdTypeNino = partnershipInputJson.transform(
           updateJson(__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails, "idType", "NINO")).asOpt.value
 
-        val idTransformJson = inputWithIdTypeNino.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(inputWithIdTypeNino)).asOpt.value
+        val idTransformJson = inputWithIdTypeNino.transform(transformer.transformToUserAnswers(inputWithIdTypeNino)).asOpt.value
 
         (idTransformJson \ "partnershipDetails" \ "uniqueTaxReferenceNumber").asOpt[String] mustBe None
       }
@@ -378,7 +378,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have address line 3" in {
         val jsonUpdated = partnershipInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line3).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
         (transformedJson \ "partnershipContactAddress" \ "addressLine3").asOpt[String] mustBe None
       }
 
@@ -388,7 +388,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have address line 4" in {
         val jsonUpdated = partnershipInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'line4).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
         (transformedJson \ "partnershipContactAddress" \ "addressLine4").asOpt[String] mustBe None
       }
 
@@ -398,7 +398,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have address postal code" in {
         val jsonUpdated = partnershipInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails \ 'postalCode).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
         (transformedJson \ "partnershipContactAddress" \ "postalCode").asOpt[String] mustBe None
       }
 
@@ -420,7 +420,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have email" in {
         val jsonUpdated = partnershipInputJson.transform((__ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails \ 'email).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
         (transformedJson \ "partnershipContactDetails" \ "email").asOpt[String] mustBe None
       }
 
@@ -439,7 +439,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       "we don't have previous address line 3" in {
         val jsonUpdated =
           partnershipInputJson.transform((__ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress \ 'line3).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
         (transformedJson \ "partnershipPreviousAddress" \ "addressLine3").asOpt[String] mustBe None
       }
 
@@ -449,7 +449,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
       "we don't have previous address line 4" in {
         val jsonUpdated = partnershipInputJson.transform((__ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress \ 'line4).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
         (transformedJson \ "partnershipPreviousAddress" \ "addressLine4").asOpt[String] mustBe None
       }
 
@@ -460,7 +460,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       "we don't have previous address postal code" in {
         val jsonUpdated =
           partnershipInputJson.transform((__ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress \ 'postalCode).json.prune).asOpt.value
-        val transformedJson = jsonUpdated.transform(PSASubscriptionDetailsTransformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers(partnershipInputJson)).asOpt.value
         (transformedJson \ "partnershipPreviousAddress" \ "postcode").asOpt[String] mustBe None
       }
 
@@ -484,6 +484,11 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 }
 
 object CustomerIdentificationDetailsTypeTransformationSpec {
+
+  val legalStatusTransformer = new LegalStatusTransformer()
+  val addressTransformer = new AddressTransformer(legalStatusTransformer)
+  val directorOrPartnerTransformer = new DirectorOrPartnerTransformer(addressTransformer)
+  val transformer = new PSASubscriptionDetailsTransformer(addressTransformer,directorOrPartnerTransformer,legalStatusTransformer)
 
   val partnershipInputJson = Json.parse(
     """
