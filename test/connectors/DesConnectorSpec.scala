@@ -19,7 +19,6 @@ package connectors
 import audit.{AuditService, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
-import config.AppConfig
 import connectors.helper.ConnectorBehaviours
 import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
 import org.joda.time.LocalDate
@@ -29,16 +28,15 @@ import play.api.LoggerLike
 import play.api.http.Status._
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
+import play.api.libs.json.JodaWrites._
 import play.api.libs.json.{JsResultException, JsValue, Json}
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import play.api.test.Helpers.NOT_FOUND
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.{FakeDesConnector, StubLogger, WireMockHelper}
 import utils.testhelpers.PsaSubscriptionBuilder._
-import play.api.libs.json.JodaWrites._
-import play.api.libs.json.JodaReads._
+import utils.{FakeDesConnector, StubLogger, WireMockHelper}
 
 class DesConnectorSpec extends AsyncFlatSpec
   with Matchers
@@ -59,7 +57,6 @@ class DesConnectorSpec extends AsyncFlatSpec
     )
 
   lazy val connector: DesConnector = injector.instanceOf[DesConnector]
-  lazy val appConfig: AppConfig = injector.instanceOf[AppConfig]
 
   "DesConnector registerPSA" should "handle OK (200)" in {
     val successResponse = Json.obj(
@@ -165,7 +162,7 @@ class DesConnectorSpec extends AsyncFlatSpec
            )
        )
        connector.getPSASubscriptionDetails(psaId.value).map { response =>
-         response.right.value shouldBe psaSubscription
+         response.right.value shouldBe Json.toJson(psaSubscription)
          server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
        }
 
