@@ -28,6 +28,7 @@ import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -62,7 +63,8 @@ class DesConnectorImpl @Inject()(
                                      config: AppConfig,
                                      auditService: AuditService,
                                      invalidPayloadHandler: InvalidPayloadHandler,
-                                     headerUtils: HeaderUtils
+                                     headerUtils: HeaderUtils,
+                                     psaSubscriptionDetailsTransformer: PSASubscriptionDetailsTransformer
                                    ) extends DesConnector with HttpResponseHelper with ErrorHandler {
 
   override def registerPSA(registerData: JsValue)(implicit
@@ -163,6 +165,13 @@ class DesConnectorImpl @Inject()(
   }
 
   private def validateJson(json: JsValue): PsaSubscription ={
+
+    if (json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).isSuccess)
+      Logger.warn("PensionAdministratorSuccessfulMapToUserAnswers")
+    else
+      Logger.warn("PensionAdministratorFailedMapToUserAnswers")
+
+
     json.validate[PsaSubscription] match {
       case JsSuccess(value, _) => value
       case JsError(errors) => throw new JsResultException(errors)
