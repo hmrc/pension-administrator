@@ -202,24 +202,21 @@ object PSASubscriptionDetailsTransformer {
   }
 
   private def getDirectorOrPartnerNino(directorOrPartner: String): Reads[JsObject] = {
-    (__ \ "nino").read[String].flatMap {
-      _ =>
-        (__ \ s"${directorOrPartner}Nino" \ 'nino).json.copyFrom((__ \ 'nino).json.pick) and
-          (__ \ s"${directorOrPartner}Nino" \ 'hasNino).json.put(JsBoolean(true)) reduce
-    } orElse {
-      (__ \ s"${directorOrPartner}Nino" \ 'reason).json.copyFrom((__ \ 'noNinoReason).json.pick) and
-        (__ \ s"${directorOrPartner}Nino" \ 'hasNino).json.put(JsBoolean(false)) reduce
-    }
+    getNinoOrUtr(directorOrPartner,"Nino")
   }
 
   private def getDirectorOrPartnerUtr(directorOrPartner: String): Reads[JsObject] = {
-    (__ \ "utr").read[String].flatMap {
+    getNinoOrUtr(directorOrPartner,"Utr")
+  }
+
+  private def getNinoOrUtr(path: String, ninoOrUtr: String): Reads[JsObject] = {
+    (__ \ ninoOrUtr.toLowerCase()).read[String].flatMap {
       _ =>
-        (__ \ s"${directorOrPartner}Utr" \ 'utr).json.copyFrom((__ \ 'utr).json.pick) and
-          (__ \ s"${directorOrPartner}Utr" \ 'hasUtr).json.put(JsBoolean(true)) reduce
+        (__ \ s"$path$ninoOrUtr" \ ninoOrUtr.toLowerCase()).json.copyFrom((__ \ ninoOrUtr.toLowerCase()).json.pick) and
+          (__ \ s"$path$ninoOrUtr" \ s"has$ninoOrUtr").json.put(JsBoolean(true)) reduce
     } orElse {
-      (__ \ s"${directorOrPartner}Utr" \ 'reason).json.copyFrom((__ \ 'noUtrReason).json.pick) and
-        (__ \ s"${directorOrPartner}Utr" \ 'hasUtr).json.put(JsBoolean(false)) reduce
+      (__ \ s"$path$ninoOrUtr" \ 'reason).json.copyFrom((__ \ s"no${ninoOrUtr}Reason").json.pick) and
+        (__ \ s"$path$ninoOrUtr" \ s"has$ninoOrUtr").json.put(JsBoolean(false)) reduce
     }
   }
 
