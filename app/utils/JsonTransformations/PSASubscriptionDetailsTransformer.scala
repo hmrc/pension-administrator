@@ -33,7 +33,7 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
                                                  adviserTransformer: AdviserTransformer,
                                                  individualTransformer: IndividualTransformer) extends JsonTransformer {
 
-  def transformToUserAnswers(jsonFromDES: JsValue): Reads[JsObject] =
+  lazy val transformToUserAnswers: Reads[JsObject] =
       registrationInfoTransformer.getRegistrationInfo and
       individualTransformer.getNinoOrUtr and
       getCrn and
