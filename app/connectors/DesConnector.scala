@@ -176,7 +176,7 @@ class DesConnectorImpl @Inject()(
     case class PSAFailedMapToUserAnswersException() extends Exception
 
     if (json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).isSuccess)
-      Logger.warn("PensionAdministratorSuccessfulMapToUserAnswers")
+      Logger.info("PensionAdministratorSuccessfulMapToUserAnswers")
     else
       Logger.warn("PensionAdministratorFailedMapToUserAnswers")
 

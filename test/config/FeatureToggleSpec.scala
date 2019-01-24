@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-package utils
+package config
 
-object Toggles {
+import toggles.FeatureToggleBehaviours
 
-  val IsManualIVEnabled: String = "is-iv-enabled"
-  val IsVariationsEnabled: String = "is-variations-enabled"
+class FeatureToggleSpec extends FeatureToggleBehaviours {
+
+  "is-iv-enabled new feature toggle" should {
+    behave like featureToggle("is-iv-enabled")
+  }
+
+  "is-variations-enabled new feature toggle" should {
+    behave like featureToggle("is-variations-enabled")
+  }
 }

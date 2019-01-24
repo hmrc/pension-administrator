@@ -22,25 +22,25 @@ import play.api.libs.json.Reads._
 import play.api.libs.json.{__, _}
 
 class AddressTransformer @Inject()(legalStatusTransformer: LegalStatusTransformer) extends JsonTransformer {
-  def getAddress(userAnswersPath: JsPath, desAddressPath: JsPath): Reads[JsObject] = {
+
+  private def getCommonAddressElements(userAnswersPath: JsPath, desAddressPath: JsPath): Reads[JsObject] = {
     (userAnswersPath \ 'addressLine1).json.copyFrom((desAddressPath \ 'line1).json.pick) and
       (userAnswersPath \ 'addressLine2).json.copyFrom((desAddressPath \ 'line2).json.pick) and
       ((userAnswersPath \ 'addressLine3).json.copyFrom((desAddressPath \ 'line3).json.pick)
         orElse doNothing) and
       ((userAnswersPath \ 'addressLine4).json.copyFrom((desAddressPath \ 'line4).json.pick)
-        orElse doNothing) and
+        orElse doNothing) reduce
+  }
+
+  def getAddress(userAnswersPath: JsPath, desAddressPath: JsPath): Reads[JsObject] = {
+    getCommonAddressElements(userAnswersPath, desAddressPath) and
       ((userAnswersPath \ 'postalCode).json.copyFrom((desAddressPath \ 'postalCode).json.pick)
         orElse doNothing) and
       (userAnswersPath \ 'countryCode).json.copyFrom((desAddressPath \ 'countryCode).json.pick) reduce
   }
 
   def getDifferentAddress(userAnswersPath: JsPath, desAddressPath: JsPath): Reads[JsObject] = {
-    (userAnswersPath \ 'addressLine1).json.copyFrom((desAddressPath \ 'line1).json.pick) and
-      (userAnswersPath \ 'addressLine2).json.copyFrom((desAddressPath \ 'line2).json.pick) and
-      ((userAnswersPath \ 'addressLine3).json.copyFrom((desAddressPath \ 'line3).json.pick)
-        orElse doNothing) and
-      ((userAnswersPath \ 'addressLine4).json.copyFrom((desAddressPath \ 'line4).json.pick)
-        orElse doNothing) and
+    getCommonAddressElements(userAnswersPath, desAddressPath) and
       ((userAnswersPath \ 'postcode).json.copyFrom((desAddressPath \ 'postalCode).json.pick)
         orElse doNothing) and
       (userAnswersPath \ 'country).json.copyFrom((desAddressPath \ 'countryCode).json.pick) reduce
@@ -57,21 +57,24 @@ class AddressTransformer @Inject()(legalStatusTransformer: LegalStatusTransforme
     }
   }
 
-  def getPreviousAddress(path: JsPath) : Reads[JsObject] = {
+  def getPreviousAddress(path: JsPath): Reads[JsObject] = {
     (__ \ 'previousAddressDetails \ 'previousAddress).read[JsObject].flatMap { _ =>
-      getDifferentAddress(path , __ \ 'previousAddressDetails \ 'previousAddress)
+      getDifferentAddress(path, __ \ 'previousAddressDetails \ 'previousAddress)
     } orElse doNothing
   }
 
   val getAddressYearsBasedOnLegalStatus: Reads[JsObject] = {
-    legalStatusTransformer.returnPathBasedOnLegalStatus(__ \ 'individualAddressYears, __ \ 'companyAddressYears, __ \ 'partnershipAddressYears).flatMap { addressYearsPath =>
+    legalStatusTransformer
+      .returnPathBasedOnLegalStatus(__ \ 'individualAddressYears, __ \ 'companyAddressYears, __ \ 'partnershipAddressYears)
+      .flatMap { addressYearsPath =>
       getAddressYears(__ \ "psaSubscriptionDetails", addressYearsPath)
     }
   }
 
   val getPreviousAddressBasedOnLegalStatus: Reads[JsObject] = {
-    legalStatusTransformer.returnPathBasedOnLegalStatus(__ \ 'individualPreviousAddress, __ \ 'companyPreviousAddress, __ \ 'partnershipPreviousAddress).flatMap {
-      getDifferentAddress(_, __ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress)
+    legalStatusTransformer
+      .returnPathBasedOnLegalStatus(__ \ 'individualPreviousAddress, __ \ 'companyPreviousAddress, __ \ 'partnershipPreviousAddress)
+      .flatMap {getDifferentAddress(_, __ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress)
     } orElse doNothing
   }
 
