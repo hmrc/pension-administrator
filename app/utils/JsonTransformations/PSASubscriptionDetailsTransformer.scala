@@ -201,94 +201,50 @@ object PSASubscriptionDetailsTransformer {
         orElse doNothing) reduce
   }
 
-  private val getDirectorNino: Reads[JsObject] = {
+  private def getDirectorOrPartnerNino(directorOrPartner: String): Reads[JsObject] = {
     (__ \ "nino").read[String].flatMap {
       _ =>
-        (__ \ 'directorNino \ 'nino).json.copyFrom((__ \ 'nino).json.pick) and
-          (__ \ 'directorNino \ 'hasNino).json.put(JsBoolean(true)) reduce
+        (__ \ s"${directorOrPartner}Nino" \ 'nino).json.copyFrom((__ \ 'nino).json.pick) and
+          (__ \ s"${directorOrPartner}Nino" \ 'hasNino).json.put(JsBoolean(true)) reduce
     } orElse {
-      (__ \ 'directorNino \ 'reason).json.copyFrom((__ \ 'noNinoReason).json.pick) and
-        (__ \ 'directorNino \ 'hasNino).json.put(JsBoolean(false)) reduce
+      (__ \ s"${directorOrPartner}Nino" \ 'reason).json.copyFrom((__ \ 'noNinoReason).json.pick) and
+        (__ \ s"${directorOrPartner}Nino" \ 'hasNino).json.put(JsBoolean(false)) reduce
     }
   }
 
-  private val getDirectorUtr: Reads[JsObject] = {
+  private def getDirectorOrPartnerUtr(directorOrPartner: String): Reads[JsObject] = {
     (__ \ "utr").read[String].flatMap {
       _ =>
-        (__ \ 'directorUtr \ 'utr).json.copyFrom((__ \ 'utr).json.pick) and
-          (__ \ 'directorUtr \ 'hasUtr).json.put(JsBoolean(true)) reduce
+        (__ \ s"${directorOrPartner}Utr" \ 'utr).json.copyFrom((__ \ 'utr).json.pick) and
+          (__ \ s"${directorOrPartner}Utr" \ 'hasUtr).json.put(JsBoolean(true)) reduce
     } orElse {
-      (__ \ 'directorUtr \ 'reason).json.copyFrom((__ \ 'noUtrReason).json.pick) and
-        (__ \ 'directorUtr \ 'hasUtr).json.put(JsBoolean(false)) reduce
+      (__ \ s"${directorOrPartner}Utr" \ 'reason).json.copyFrom((__ \ 'noUtrReason).json.pick) and
+        (__ \ s"${directorOrPartner}Utr" \ 'hasUtr).json.put(JsBoolean(false)) reduce
     }
   }
 
-  private val getDirectorcontactDetails: Reads[JsObject] = {
-    (__ \ 'directorContactDetails \ 'phone).json.copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'telephone).json.pick) and
-      (__ \ 'directorContactDetails \ 'email).json.copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'email).json.pick) reduce
+  private def getDirectorOrPartnerContactDetails(directorOrPartner: String): Reads[JsObject] = {
+    (__ \ s"${directorOrPartner}ContactDetails" \ 'phone).json.copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'telephone).json.pick) and
+      (__ \ s"${directorOrPartner}ContactDetails" \ 'email).json.copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'email).json.pick) reduce
   }
 
-  val getDirector = (__ \ 'directorDetails \ 'firstName).json.copyFrom((__ \ 'firstName).json.pick) and
-    ((__ \ 'directorDetails \ 'middleName).json.copyFrom((__ \ 'middleName).json.pick) orElse doNothing) and
-    (__ \ 'directorDetails \ 'lastName).json.copyFrom((__ \ 'lastName).json.pick) and
-    (__ \ 'directorDetails \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
-    getDirectorNino and
-    getDirectorUtr and
-    PSASubscriptionDetailsTransformer.getDifferentAddress(__ \ "directorAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
-    getDirectorcontactDetails and
-    PSASubscriptionDetailsTransformer.getAddressYears(addressYearsPath = __ \ 'directorAddressYears) and
-    PSASubscriptionDetailsTransformer.getPreviousAddress(__ \ "directorPreviousAddress") reduce
+  def getDirectorOrPartner(directorOrPartner: String): Reads[JsObject] = (__ \ s"${directorOrPartner}Details" \ 'firstName).json.copyFrom((__ \ 'firstName).json.pick) and
+    ((__ \ s"${directorOrPartner}Details" \ 'middleName).json.copyFrom((__ \ 'middleName).json.pick) orElse doNothing) and
+    (__ \ s"${directorOrPartner}Details" \ 'lastName).json.copyFrom((__ \ 'lastName).json.pick) and
+    (__ \ s"${directorOrPartner}Details" \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
+    getDirectorOrPartnerNino(directorOrPartner) and
+    getDirectorOrPartnerUtr(directorOrPartner) and
+    PSASubscriptionDetailsTransformer.getDifferentAddress(__ \ s"${directorOrPartner}Address", __ \ "correspondenceCommonDetails" \ "addressDetails") and
+    getDirectorOrPartnerContactDetails(directorOrPartner) and
+    PSASubscriptionDetailsTransformer.getAddressYears(addressYearsPath = __ \ s"${directorOrPartner}AddressYears") and
+    PSASubscriptionDetailsTransformer.getPreviousAddress(__ \ s"${directorOrPartner}PreviousAddress") reduce
 
-
-  val getDirectors: Reads[JsArray] = __.read(Reads.seq(getDirector)).map(JsArray(_))
-
-
-  private val getPartnerNino: Reads[JsObject] = {
-    (__ \ "nino").read[String].flatMap {
-      _ =>
-        (__ \ 'partnerNino \ 'nino).json.copyFrom((__ \ 'nino).json.pick) and
-          (__ \ 'partnerNino \ 'hasNino).json.put(JsBoolean(true)) reduce
-    } orElse {
-      (__ \ 'partnerNino \ 'reason).json.copyFrom((__ \ 'noNinoReason).json.pick) and
-        (__ \ 'partnerNino \ 'hasNino).json.put(JsBoolean(false)) reduce
-    }
-  }
-
-  private val getPartnerUtr: Reads[JsObject] = {
-    (__ \ "utr").read[String].flatMap {
-      _ =>
-        (__ \ 'partnerUtr \ 'utr).json.copyFrom((__ \ 'utr).json.pick) and
-          (__ \ 'partnerUtr \ 'hasUtr).json.put(JsBoolean(true)) reduce
-    } orElse {
-      (__ \ 'partnerUtr \ 'reason).json.copyFrom((__ \ 'noUtrReason).json.pick) and
-        (__ \ 'partnerUtr \ 'hasUtr).json.put(JsBoolean(false)) reduce
-    }
-  }
-
-  private val getPartnercontactDetails: Reads[JsObject] = {
-    (__ \ 'partnerContactDetails \ 'phone).json.copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'telephone).json.pick) and
-      (__ \ 'partnerContactDetails \ 'email).json.copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'email).json.pick) reduce
-  }
-
-  val getPartner = (__ \ 'partnerDetails \ 'firstName).json.copyFrom((__ \ 'firstName).json.pick) and
-    ((__ \ 'partnerDetails \ 'middleName).json.copyFrom((__ \ 'middleName).json.pick) orElse doNothing) and
-    (__ \ 'partnerDetails \ 'lastName).json.copyFrom((__ \ 'lastName).json.pick) and
-    (__ \ 'partnerDetails \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
-    getPartnerNino and
-    getPartnerUtr and
-    PSASubscriptionDetailsTransformer.getDifferentAddress(__ \ "partnerAddress", __ \ "correspondenceCommonDetails" \ "addressDetails") and
-    getPartnercontactDetails and
-    PSASubscriptionDetailsTransformer.getAddressYears(addressYearsPath = __ \ 'partnerAddressYears) and
-    PSASubscriptionDetailsTransformer.getPreviousAddress(__ \ "partnerPreviousAddress") reduce
-
-
-  val getPartners: Reads[JsArray] = __.read(Reads.seq(getPartner)).map(JsArray(_))
-
+  def getDirectorsOrPartners(directorOrPartner: String): Reads[JsArray] = __.read(Reads.seq(getDirectorOrPartner(directorOrPartner))).map(JsArray(_))
 
   val getDirectorsOrPartners: Reads[JsObject] = {
     (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
-      case "Limited Company" => (__ \ 'directors).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails).read(getDirectors))
-      case "Partnership" => (__ \ 'partners).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails).read(getPartners))
+      case "Limited Company" => (__ \ 'directors).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails).read(getDirectorsOrPartners("director")))
+      case "Partnership" => (__ \ 'partners).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails).read(getDirectorsOrPartners("partner")))
       case _ => doNothing
     }
   }

@@ -28,7 +28,7 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
 
       def doNothing: Reads[JsObject] = __.json.put(Json.obj())
 
-      lazy val transformedJson = desPartner.transform(PSASubscriptionDetailsTransformer.getPartner).asOpt.value
+      lazy val transformedJson = desPartner.transform(PSASubscriptionDetailsTransformer.getDirectorOrPartner("partner")).asOpt.value
 
       "We have partner details" when {
         "We have a name" in {
@@ -42,7 +42,7 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
         "We don't have a middle name" in {
           val inputJson = desPartner.as[JsObject] - "middleName"
 
-          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getPartner).asOpt.value
+          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getDirectorOrPartner("partner")).asOpt.value
 
           (transformedJson \ "partnerDetails" \ "middleName").asOpt[String] mustBe None
         }
@@ -64,7 +64,7 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
 
           val inputJson = desPartner.as[JsObject] - "nino"
 
-          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getPartner).asOpt.value
+          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getDirectorOrPartner("partner")).asOpt.value
 
           (transformedJson \ "partnerNino" \ "hasNino").as[Boolean] mustBe false
           //TODO: reason is not mandatory but mandatory in our frontend. Potential issues.
@@ -79,7 +79,7 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
         "We don't have a utr" in {
           val inputJson = desPartner.as[JsObject] - "utr"
 
-          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getPartner).asOpt.value
+          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getDirectorOrPartner("partner")).asOpt.value
 
           (transformedJson \ "partnerUtr" \ "hasUtr").as[Boolean] mustBe false
           //TODO: reason is not mandatory but mandatory in our frontend. Potential issues.
@@ -113,7 +113,7 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
         "We have a previous address flag as false and no previous address" in {
           val inputJson = desPartner.as[JsObject] - "previousAddressDetails" + ("previousAddressDetails" -> Json.obj("isPreviousAddressLast12Month" -> JsBoolean(false)))
 
-          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getPartner).asOpt.value
+          val transformedJson = inputJson.transform(PSASubscriptionDetailsTransformer.getDirectorOrPartner("partner")).asOpt.value
 
           (transformedJson \ "partnerAddressYears").asOpt[String].value mustBe "over_a_year"
           (transformedJson \ "partnerPreviousAddress").asOpt[JsObject] mustBe None
@@ -122,7 +122,7 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
         "We have an array of directors" in {
           val directors = JsArray(Seq(desPartner, desPartner, desPartner, desPartner))
 
-          val transformedJson = directors.transform(PSASubscriptionDetailsTransformer.getPartners).asOpt.value
+          val transformedJson = directors.transform(PSASubscriptionDetailsTransformer.getDirectorsOrPartners("partner")).asOpt.value
 
           (transformedJson \ 0 \ "partnerDetails" \ "firstName").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "firstName").as[String]
           (transformedJson \ 1 \ "partnerDetails" \ "firstName").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "firstName").as[String]
