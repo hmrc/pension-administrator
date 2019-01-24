@@ -102,43 +102,6 @@ object PsaSubscriptionBuilder {
                                            "country":"AD"
                                         }
                                      }""".stripMargin
-  
-  val requestPsaSubscriptionUserAnswers = """{
-                    "individualDetails": {
-                      "firstName": "Stephen",
-                      "lastName": "Wood",
-                      "dateOfBirth": "1990-01-01"
-                    },
-                    "individualAddress": {
-                      "addressLine1": "100 SuttonStreet",
-                      "addressLine2": "Wokingham",
-                      "addressLine3": "Surrey",
-                      "addressLine4": "London",
-                      "postCode": "DH14EJ",
-                      "countryCode": "GB"
-                    },
-                    "registrationInfo": {
-                      "legalStatus": "Individual",
-                      "sapNumber": "1234567890",
-                      "noIdentifier": false,
-                      "customerType": "UK",
-                      "idType": "NINO",
-                      "idNumber": "CS700100A"
-                    },
-                    "individualDetailsCorrect": true,
-                    "individualAddressYears": "over_a_year",
-                    "individualContactDetails": {
-                      "email": "test@test.com",
-                      "phone": "3247234"
-                    },
-                    "declaration": true,
-                    "declarationWorkingKnowledge": "workingKnowledge",
-                    "declarationFitAndProper": true,
-                    "existingPSA": {
-                      "isExistingPSA": false
-                    }
-                  }""".stripMargin
-
 }
 
 
