@@ -72,8 +72,8 @@ object PsaSubscriptionBuilder {
                                            "addressLine2":"Telford2",
                                            "addressLine3":"Telford3",
                                            "addressLine4":"Telford3",
-                                           "postalCode":"TF3 4ER",
-                                           "countryCode":"GB"
+                                           "postcode":"TF3 4ER",
+                                           "country":"GB"
                                         },
                                         "individualContactDetails":{  
                                            "phone":" ",
