@@ -32,12 +32,12 @@ class FakeDesConnector extends DesConnector {
   import FakeDesConnector._
 
   private var registerPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
-  private var getPsaResponse: Future[Either[HttpException, PsaSubscription]] = Future.successful(Right(psaSubscription))
+  private var getPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(Json.toJson(psaSubscription)))
   private var removePsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(removePsaResponseJson))
   private var deregisterPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(deregisterPsaResponseJson))
 
   def setRegisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.registerPsaResponse = response
-  def setPsaDetailsResponse(response: Future[Either[HttpException, PsaSubscription]]): Unit = this.getPsaResponse = response
+  def setPsaDetailsResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.getPsaResponse = response
   def setRemovePsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.removePsaResponse = response
   def setDeregisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.deregisterPsaResponse = response
 
@@ -49,7 +49,7 @@ class FakeDesConnector extends DesConnector {
   override def getPSASubscriptionDetails(psaId: String)(implicit
                                                         headerCarrier: HeaderCarrier,
                                                         ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, PsaSubscription]] = getPsaResponse
+                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = getPsaResponse
 
   def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
                                                         headerCarrier: HeaderCarrier,
