@@ -18,7 +18,6 @@ package controllers
 
 import akka.stream.Materializer
 import base.SpecBase
-import config.FeatureSwitchManagementService
 import connectors.RegistrationConnector
 import models._
 import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
@@ -38,9 +37,8 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.FakeAuthConnector
+import utils.{FakeAuthConnector, FakeFeatureSwitchManagementService}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfter with GeneratorDrivenPropertyChecks {
@@ -57,20 +55,12 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
   implicit val mat: Materializer = app.materializer
 
-  private def fakeFeatureSwitchManagerService(isIvEnabled: Boolean): FeatureSwitchManagementService = new FeatureSwitchManagementService {
-    override def change(name: String, newValue: Boolean): Boolean = ???
-
-    override def get(name: String): Boolean = isIvEnabled
-
-    override def reset(name: String): Unit = ???
-  }
-
   private def registrationController(retrievals: Future[_], isManualIvEnabled: Boolean = true): RegistrationController =
     new RegistrationController(
       new FakeAuthConnector(retrievals),
       mockRegistrationConnector,
       controllerComponents,
-      fakeFeatureSwitchManagerService(isManualIvEnabled)
+      FakeFeatureSwitchManagementService(isManualIvEnabled)
     )
 
   before(reset(mockRegistrationConnector))

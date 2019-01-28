@@ -82,7 +82,7 @@ class AddressTransformer @Inject()(legalStatusTransformer: LegalStatusTransforme
     val inputAddressPath = __ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails
 
     (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
-      case "Individual" => getAddress(__ \ 'individualContactAddress, inputAddressPath)
+      case "Individual" => getDifferentAddress(__ \ 'individualContactAddress, inputAddressPath)
       case "Limited Company" => getDifferentAddress(__ \ 'companyContactAddress, inputAddressPath)
       case "Partnership" => getDifferentAddress(__ \ 'partnershipContactAddress, inputAddressPath)
     }

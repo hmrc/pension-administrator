@@ -25,6 +25,7 @@ trait JsonTransformer{
   val doNothing: Reads[JsObject] = __.json.put(Json.obj())
 }
 
+
 class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTransformer,
                                                  directorOrPartnerTransformer: DirectorOrPartnerTransformer,
                                                  legalStatusTransformer: LegalStatusTransformer,

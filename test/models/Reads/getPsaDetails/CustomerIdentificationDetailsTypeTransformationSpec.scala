@@ -113,11 +113,11 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       }
 
       "we have address postal code" in {
-        (transformedJson \ "individualContactAddress" \ "postalCode").as[String] mustBe "TF1 4ER"
+        (transformedJson \ "individualContactAddress" \ "postcode").as[String] mustBe "TF1 4ER"
       }
 
       "we have address country code" in {
-        (transformedJson \ "individualContactAddress" \ "countryCode").as[String] mustBe "GB"
+        (transformedJson \ "individualContactAddress" \ "country").as[String] mustBe "GB"
       }
 
       "we have individual address years" in {
@@ -926,8 +926,8 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
        "addressLine2" : "Central Tower",
        "addressLine3" : "Telford",
        "addressLine4" : "Shropshire",
-       "postalCode" : "TF1 4ER",
-       "countryCode" : "GB"
+       "postcode" : "TF1 4ER",
+       "country" : "GB"
      },
      "individualContactDetails" : {
         "phone" : "0151 6551234 ",
