@@ -625,22 +625,6 @@ class DesConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should "return a BadRequestException for a 400 INVALID_PAYLOAD response" in {
-    server.stubFor(
-      post(urlEqualTo(variationPsaUrl))
-        .willReturn(
-          badRequest
-            .withHeader("Content-Type", "application/json")
-            .withBody(errorResponse("INVALID_PAYLOAD"))
-        )
-    )
-    connector.updatePSA(psaId.id, psaVariationData).map {
-      response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_PAYLOAD")
-    }
-  }
-
   it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
     server.stubFor(
       post(urlEqualTo(variationPsaUrl))
