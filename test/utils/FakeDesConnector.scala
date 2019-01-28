@@ -37,8 +37,11 @@ class FakeDesConnector extends DesConnector {
   private var deregisterPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(deregisterPsaResponseJson))
 
   def setRegisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.registerPsaResponse = response
+
   def setPsaDetailsResponse(response: Future[Either[HttpException, PsaSubscription]]): Unit = this.getPsaResponse = response
+
   def setRemovePsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.removePsaResponse = response
+
   def setDeregisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.deregisterPsaResponse = response
 
   override def registerPSA(registerData: JsValue)(implicit
@@ -51,14 +54,18 @@ class FakeDesConnector extends DesConnector {
                                                         ec: ExecutionContext,
                                                         request: RequestHeader): Future[Either[HttpException, PsaSubscription]] = getPsaResponse
 
-  def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
-                                                        headerCarrier: HeaderCarrier,
-                                                        ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = removePsaResponse
+  override def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
+                                                          headerCarrier: HeaderCarrier,
+                                                          ec: ExecutionContext,
+                                                          request: RequestHeader): Future[Either[HttpException, JsValue]] = removePsaResponse
 
   override def deregisterPSA(psaId: String)(implicit headerCarrier: HeaderCarrier,
                                             ec: ExecutionContext,
                                             request: RequestHeader): Future[Either[HttpException, JsValue]] = deregisterPsaResponse
+
+  override def updatePSA(psaId: String, data : JsValue)(implicit headerCarrier: HeaderCarrier,
+                                        ec: ExecutionContext,
+                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = ???
 }
 
 object FakeDesConnector {

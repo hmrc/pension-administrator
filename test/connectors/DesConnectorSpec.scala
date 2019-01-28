@@ -29,16 +29,15 @@ import play.api.LoggerLike
 import play.api.http.Status._
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
+import play.api.libs.json.JodaWrites._
 import play.api.libs.json.{JsResultException, JsValue, Json}
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import play.api.test.Helpers.NOT_FOUND
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.{FakeDesConnector, StubLogger, WireMockHelper}
 import utils.testhelpers.PsaSubscriptionBuilder._
-import play.api.libs.json.JodaWrites._
-import play.api.libs.json.JodaReads._
+import utils.{FakeDesConnector, StubLogger, WireMockHelper}
 
 class DesConnectorSpec extends AsyncFlatSpec
   with Matchers
@@ -546,12 +545,104 @@ class DesConnectorSpec extends AsyncFlatSpec
     }
   }
 
+  "DesConnector updatePSA" should "handle OK (200)" in {
+    val successResponse = Json.obj(
+      "processingDate"-> "2001-12-17T09:30:47Z",
+      "formBundleNumber"-> "12345678912"
+    )
+    server.stubFor(
+      post(urlEqualTo(variationPsaUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .withRequestBody(equalToJson(Json.stringify(psaVariationData)))
+        .willReturn(
+          ok(Json.stringify(successResponse))
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+    connector.updatePSA(psaId.id, psaVariationData).map { response =>
+      response.right.value shouldBe successResponse
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_PAYLOAD response" in {
+    server.stubFor(
+      post(urlEqualTo(variationPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_PAYLOAD"))
+        )
+    )
+    connector.updatePSA(psaId.id, psaVariationData).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_PAYLOAD")
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
+    server.stubFor(
+      post(urlEqualTo(variationPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_CORRELATION_ID"))
+        )
+    )
+    connector.updatePSA(psaId.id, psaVariationData).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_CORRELATION_ID")
+    }
+  }
+
+  it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
+    server.stubFor(
+      post(urlEqualTo(variationPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody("INVALID_PAYLOAD")
+        )
+    )
+
+    logger.reset()
+    connector.updatePSA(psaId.id, psaVariationData).map {
+      _ =>
+        logger.getLogEntries.size shouldBe 1
+        logger.getLogEntries.head.level shouldBe Level.WARN
+    }
+  }
+
+  it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
+    server.stubFor(
+      post(urlEqualTo(variationPsaUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(CONFLICT)
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("DUPLICATE_SUBMISSION"))
+        )
+    )
+    connector.updatePSA(psaId.id, psaVariationData).map {
+      response =>
+        response.left.value shouldBe a[ConflictException]
+        response.left.value.message should include("DUPLICATE_SUBMISSION")
+    }
+  }
+
+  it should behave like errorHandlerForPostApiFailures(
+    connector.updatePSA(psaId.id, psaVariationData),
+    variationPsaUrl
+  )
+
 }
 
 object DesConnectorSpec extends JsonFileReader {
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val rh: RequestHeader = FakeRequest("", "")
   private val registerPsaData = readJsonFromFile("/data/validPsaRequest.json")
+  private val psaVariationData = readJsonFromFile("/data/validPsaVariationRequest.json")
   private val psaSubscriptionData = readJsonFromFile("/data/validPSASubscriptionDetails.json")
   private val invalidPsaSubscriptionResponse = readJsonFromFile("/data/validPsaRequest.json")
 
@@ -568,6 +659,7 @@ object DesConnectorSpec extends JsonFileReader {
   val psaSubscriptionDetailsUrl = s"/pension-online/psa-subscription-details/$psaId"
   val removePsaUrl = s"/pension-online/cease-psa/psaid/$psaId/pstr/$pstr"
   val deregisterPsaUrl = s"/pension-online/deregistration/psaid/$psaId"
+  val variationPsaUrl = s"/pension-online/psa-variation/psaid/$psaId"
 
   private def errorResponse(code: String) =
     Json.stringify(
