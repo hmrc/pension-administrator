@@ -82,9 +82,8 @@ class SchemeController @Inject()(schemeService: SchemeService,
 
   def updatePSA(psaId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      val variationDetails = request.body.asJson
 
-      variationDetails match {
+       request.body.asJson match {
         case Some(jsValue) =>
           schemeService.updatePSA(psaId, jsValue).map {
             case Right(_) => Ok
