@@ -175,10 +175,12 @@ class DesConnectorImpl @Inject()(
 
   private def validateJson(json: JsValue): JsValue = {
 
-    if (json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).isSuccess)
-      Logger.info("PensionAdministratorSuccessfulMapToUserAnswers")
-    else
-      Logger.warn("PensionAdministratorFailedMapToUserAnswers")
+    val temporaryMappingTest = json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers)
+    if (temporaryMappingTest.isSuccess)
+      Logger.warn("PensionAdministratorSuccessfulMapToUserAnswers")
+    else {
+      Logger.warn(s"PensionAdministratorFailedMapToUserAnswers - [$temporaryMappingTest]")
+    }
 
 
     json.validate[PsaSubscription] match {
