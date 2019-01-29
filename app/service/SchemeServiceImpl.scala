@@ -25,26 +25,47 @@ import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
+import utils.validationUtils._
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
-import utils.validationUtils._
 
 class SchemeServiceImpl @Inject()(desConnector: DesConnector,
                                   auditService: AuditService, appConfig: AppConfig) extends SchemeService with SchemeAuditService {
 
-  override def registerPSA(json: JsValue)
-                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, JsValue]] = {
-    Try(json.convertTo[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)) match {
-      case Success(pensionSchemeAdministrator) =>
-        val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaSubmissionWrites)
-        Logger.debug(s"[PSA-Registration-Outgoing-Payload]$psaJsValue")
+  override def registerPSA(json: JsValue)(
+    implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
-        desConnector.registerPSA(psaJsValue) andThen sendPSASubscriptionEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
-
-      case Failure(e) =>
-        Logger.warn(s"Bad Request returned from frontend for PSA $e")
-        Future.failed(new BadRequestException(s"Bad Request returned from frontend for PSA $e"))
+    getPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
+      val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaSubmissionWrites)
+      Logger.debug(s"[PSA-Registration-Outgoing-Payload]$psaJsValue")
+      desConnector.registerPSA(psaJsValue) andThen sendPSASubscriptionEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
     }
 
   }
+
+  override def updatePSA(psaId: String, json: JsValue)(
+    implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
+    getPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
+      val psaJsValue = Json.toJson(pensionSchemeAdministrator)
+      Logger.debug(s"[PSA-Variation-Outgoing-Payload]$psaJsValue")
+      desConnector.updatePSA(psaId, psaJsValue)
+    }
+  }
+
+  def getPensionSchemeAdministrator(json: JsValue)(
+    block: PensionSchemeAdministrator => Future[Either[HttpException, JsValue]]): Future[Either[HttpException, JsValue]] = {
+
+    Try(json.convertTo[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)) match {
+      case Success(pensionSchemeAdministrator) =>
+
+        block(pensionSchemeAdministrator)
+
+      case Failure(e) =>
+        Logger.warn(s"Bad Request returned from frontend for PSA $e")
+        Future.failed(new BadRequestException(s"Bad Request received from frontend for PSA $e"))
+    }
+  }
 }
+

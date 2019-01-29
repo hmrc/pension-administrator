@@ -99,6 +99,28 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
   }
 
+
+  "updatePSA" should "return the result from the connector" in {
+
+    val fixture = testFixture()
+
+    fixture.schemeService.updatePSA(psaId, psaJson).map {
+      httpResponse =>
+        httpResponse.right.value shouldBe updatePsaResponseJson
+    }
+
+  }
+
+  it should "throw BadRequestException if the JSON cannot be parsed as PensionSchemeAdministrator" in {
+
+    val fixture = testFixture()
+
+    recoverToSucceededIf[BadRequestException] {
+      fixture.schemeService.updatePSA(psaId, Json.obj())
+    }
+
+  }
+
 }
 
 object SchemeServiceImplSpec extends SpecBase {
