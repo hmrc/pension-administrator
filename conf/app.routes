@@ -9,7 +9,7 @@ GET         /psa-subscription-details                   controllers.SchemeContro
 POST        /register-psa                               controllers.SchemeController.registerPSA
 POST        /remove-psa                                 controllers.SchemeController.removePsa
 DELETE      /deregister-psa/:psaId                      controllers.SchemeController.deregisterPsa(psaId: String)
-POST        /psa-variation/:psaId                       controllers.SchemeController.updatePSA(psaId)
+POST        /psa-variation/:psaId                       controllers.SchemeController.updatePSA(psaId: String)
 
 GET         /get-name                                   controllers.AssociationController.getName
 GET         /get-email                                  controllers.AssociationController.getEmail
@@ -33,4 +33,4 @@ GET         /invitation/get                             controllers.InvitationsC
 POST        /invitation/add                             controllers.InvitationsCacheController.add
 DELETE      /invitation                                 controllers.InvitationsCacheController.remove
 
-GET         /can-deregister/:id                         controllers.DeregistrationController.canDeregister(id)
+GET         /can-deregister/:id                         controllers.DeregistrationController.canDeregister(id: String)
