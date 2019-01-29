@@ -64,7 +64,7 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
 
       case Failure(e) =>
         Logger.warn(s"Bad Request returned from frontend for PSA $e")
-        Future.failed(new BadRequestException(s"Bad Request received from frontend for PSA $e"))
+        Future.failed(new BadRequestException(s"Bad Request returned from frontend for PSA $e"))
     }
   }
 }
