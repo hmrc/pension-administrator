@@ -57,6 +57,11 @@ trait DesConnector {
                                    headerCarrier: HeaderCarrier,
                                    ec: ExecutionContext,
                                    request: RequestHeader): Future[Either[HttpException, JsValue]]
+
+  def updatePSA(psaId: String, data: JsValue)(implicit
+                               headerCarrier: HeaderCarrier,
+                               ec: ExecutionContext,
+                               request: RequestHeader): Future[Either[HttpException, JsValue]]
 }
 
 case class PSAFailedMapToUserAnswersException() extends Exception
@@ -139,6 +144,22 @@ class DesConnectorImpl @Inject()(
     http.POST[JsValue, HttpResponse](deregisterPsaUrl, data)(implicitly, implicitly, hc, implicitly) map {
       handlePostResponse(_, deregisterPsaUrl)
     } andThen logFailures("deregister PSA", data, deregisterPsaSchema)
+  }
+
+  override def updatePSA(psaId: String, data: JsValue)(implicit
+                                                       headerCarrier: HeaderCarrier,
+                                                       ec: ExecutionContext,
+                                                       request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
+    val psaVariationSchema = "/resources/schemas/psaVariation.json"
+
+    val psaVariationUrl = config.psaVariationDetailsUrl.format(psaId)
+
+    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+
+    http.POST[JsValue, HttpResponse](psaVariationUrl, data)(implicitly, implicitly, hc, implicitly) map {
+      handlePostResponse(_, psaVariationUrl)
+    } andThen logFailures("Update PSA", data, psaVariationSchema)
   }
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {

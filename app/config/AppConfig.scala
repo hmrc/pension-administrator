@@ -36,6 +36,7 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
   lazy val registerWithIdOrganisationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.register.with.id.organisation")}"
   lazy val psaMinimalDetailsUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.psa.minimal.details")}"
   lazy val psaSubscriptionDetailsUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.psa.subscription.details")}"
+  lazy val psaVariationDetailsUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.psa.variation.details")}"
   lazy val removePsaUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.remove.psa")}"
   lazy val deregisterPsaUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.deregister.psa")}"
 
