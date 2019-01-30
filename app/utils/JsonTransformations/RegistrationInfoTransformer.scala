@@ -28,8 +28,10 @@ class RegistrationInfoTransformer @Inject()() extends JsonTransformer {
         (__ \ 'registrationInfo \ 'sapNumber).json.put(JsString("")) and
         (__ \ 'registrationInfo \ 'noIdentifier).json.put(JsBoolean(false)) and
         (__ \ 'registrationInfo \ 'customerType).json.put(if (flag) JsString("NON-UK") else JsString("UK")) and
-        (__ \ 'registrationInfo \ 'idType).json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").json.pick) and
-        (__ \ 'registrationInfo \ 'idNumber).json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idNumber").json.pick) reduce
+        ((__ \ 'registrationInfo \ 'idType).json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").json.pick)
+          orElse doNothing) and
+        ((__ \ 'registrationInfo \ 'idNumber).json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idNumber").json.pick)
+          orElse doNothing) reduce
     }
   }
 }
