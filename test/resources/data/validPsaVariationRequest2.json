@@ -1,0 +1,48 @@
+{
+  "customerType": "TestCustomer",
+  "legalStatus": "Limited Company",
+  "idType": "TestId",
+  "idNumber": "TestIdNumber",
+  "sapNumber": "NumberTest",
+  "noIdentifier": true,
+  "pensionSchemeAdministratoridentifierStatus": {
+    "isExistingPensionSchemaAdministrator": false
+  },
+  "correspondenceAddressDetails": {
+    "line1": "line1",
+    "line2": "line2",
+    "line3": "line3",
+    "line4": "line4",
+    "countryCode": "GB",
+    "postalCode": "NE1",
+    "addressType": "UK"
+  },
+  "correspondenceContactDetail": {
+    "telephone": "07592113",
+    "email": "test@test.com"
+  },
+  "previousAddressDetails": {
+    "isPreviousAddressLast12Month": true,
+    "previousAddressDetails": {
+      "line1": "line1",
+      "line2": "line2",
+      "line3": "line3",
+      "line4": "line4",
+      "countryCode": "GB",
+      "postalCode": "NE1",
+      "addressType": "UK"
+    }
+  },
+  "numberOfDirectorOrPartners": {
+    "isMorethanTenDirectors": true,
+    "isMorethanTenPartners": true
+  },
+  "declaration": {
+    "box1": true,
+    "box2": true,
+    "box3": true,
+    "box4": true,
+    "box5": true,
+    "box7": true
+  }
+}

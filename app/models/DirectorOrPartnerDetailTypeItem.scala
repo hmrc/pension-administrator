@@ -61,6 +61,34 @@ object DirectorOrPartnerDetailTypeItem {
     directorOrPartner.correspondenceCommonDetail,
     directorOrPartner.previousAddressDetail))
 
+  val psaUpdateWrites: Writes[DirectorOrPartnerDetailTypeItem] = (
+    (JsPath \ "sequenceId").write[String] and
+      (JsPath \ "entityType").write[String] and
+      (JsPath \ "title").writeNullable[String] and
+      (JsPath \ "firstName").write[String] and
+      (JsPath \ "middleName").writeNullable[String] and
+      (JsPath \ "lastName").write[String] and
+      (JsPath \ "dateOfBirth").write[LocalDate] and
+      (JsPath \ "referenceOrNino").writeNullable[String] and
+      (JsPath \ "noNinoReason").writeNullable[String] and
+      (JsPath \ "utr").writeNullable[String] and
+      (JsPath \ "noUtrReason").writeNullable[String] and
+      (JsPath \ "correspondenceCommonDetail").write[CorrespondenceCommonDetail] and
+      (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites)
+    ) (directorOrPartner => (directorOrPartner.sequenceId,
+    directorOrPartner.entityType,
+    directorOrPartner.title,
+    directorOrPartner.firstName,
+    directorOrPartner.middleName,
+    directorOrPartner.lastName,
+    directorOrPartner.dateOfBirth,
+    directorOrPartner.referenceOrNino,
+    directorOrPartner.noNinoReason,
+    directorOrPartner.utr,
+    directorOrPartner.noUtrReason,
+    directorOrPartner.correspondenceCommonDetail,
+    directorOrPartner.previousAddressDetail))
+
   def apiReads(personType: String): Reads[List[DirectorOrPartnerDetailTypeItem]] = json.Reads {
     json =>
       json.validate[Seq[JsValue]].flatMap(elements => {

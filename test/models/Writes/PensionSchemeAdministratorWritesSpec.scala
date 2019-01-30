@@ -16,11 +16,12 @@
 
 package models.Writes
 
+import base.JsonFileReader
 import models.{PensionSchemeAdministrator, PreviousAddressDetails, Samples}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.Json
 
-class PensionSchemeAdministratorWritesSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class PensionSchemeAdministratorWritesSpec extends WordSpec with MustMatchers with OptionValues with Samples with JsonFileReader {
   "An object of a Pension Scheme Administrator" should {
     Seq("director", "partner").foreach { personType =>
 
@@ -39,6 +40,13 @@ class PensionSchemeAdministratorWritesSpec extends WordSpec with MustMatchers wi
             PensionSchemeAdministrator.psaSubmissionWrites)
 
           result.toString() must include("true,\"previousAddressDetail\":")
+        }
+
+        "We are doing a PSA submission containing previous address at rool level for update writes" in {
+          val result = Json.toJson(pensionSchemeAdministratorSample.copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample))))(
+            PensionSchemeAdministrator.psaUpdateWrites)
+
+          result mustEqual readJsonFromFile("/data/validPsaVariationRequest2.json")
         }
       }
     }

@@ -126,6 +126,39 @@ object PensionSchemeAdministrator {
       Json.toJson(director)(DirectorOrPartnerDetailTypeItem.psaSubmissionWrites))),
     psaSubmission.declaration))
 
+  val psaUpdateWrites: Writes[PensionSchemeAdministrator] = (
+    (JsPath \ "customerType").write[String] and
+      (JsPath \ "legalStatus").write[String] and
+      (JsPath \ "idType").writeNullable[String] and
+      (JsPath \ "idNumber").writeNullable[String] and
+      (JsPath \ "sapNumber").write[String] and
+      (JsPath \ "noIdentifier").write[Boolean] and
+      (JsPath \ "organisationDetail").writeNullable[OrganisationDetailType] and
+      (JsPath \ "individualDetail").writeNullable[IndividualDetailType] and
+      (JsPath \ "pensionSchemeAdministratoridentifierStatus").write[PensionSchemeAdministratorIdentifierStatusType] and
+      (JsPath \ "correspondenceAddressDetails").write[Address] and
+      (JsPath \ "correspondenceContactDetail").write[ContactDetails] and
+      (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites) and
+      (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType] and
+      (JsPath \ "directorOrPartnerDetail").writeNullable[List[JsValue]] and
+      (JsPath \ "declaration").write[PensionSchemeAdministratorDeclarationType]
+    ) (psaSubmission => (psaSubmission.customerType,
+    psaSubmission.legalStatus,
+    psaSubmission.idType,
+    psaSubmission.idNumber,
+    psaSubmission.sapNumber,
+    psaSubmission.noIdentifier,
+    psaSubmission.organisationDetail,
+    psaSubmission.individualDetail,
+    psaSubmission.pensionSchemeAdministratoridentifierStatus,
+    psaSubmission.correspondenceAddressDetail,
+    psaSubmission.correspondenceContactDetail,
+    psaSubmission.previousAddressDetail,
+    psaSubmission.numberOfDirectorOrPartners,
+    psaSubmission.directorOrPartnerDetail.map(directors => directors.map(director =>
+      Json.toJson(director)(DirectorOrPartnerDetailTypeItem.psaUpdateWrites))),
+    psaSubmission.declaration))
+
   val registrationInfoReads: Reads[(String, String, Boolean, String, Option[String], Option[String])] = (
     (JsPath \ "legalStatus").read[String] and
       (JsPath \ "sapNumber").read[String] and
