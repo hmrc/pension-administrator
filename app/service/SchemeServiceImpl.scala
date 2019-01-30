@@ -36,7 +36,7 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
   override def registerPSA(json: JsValue)(
     implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
-    getPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
+    convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
       val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaSubmissionWrites)
       Logger.debug(s"[PSA-Registration-Outgoing-Payload]$psaJsValue")
       desConnector.registerPSA(psaJsValue) andThen sendPSASubscriptionEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
@@ -47,14 +47,14 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
   override def updatePSA(psaId: String, json: JsValue)(
     implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
-    getPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
+    convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
       val psaJsValue = Json.toJson(pensionSchemeAdministrator)
       Logger.debug(s"[PSA-Variation-Outgoing-Payload]$psaJsValue")
       desConnector.updatePSA(psaId, psaJsValue)
     }
   }
 
-  def getPensionSchemeAdministrator(json: JsValue)(
+  private def convertPensionSchemeAdministrator(json: JsValue)(
     block: PensionSchemeAdministrator => Future[Either[HttpException, JsValue]]): Future[Either[HttpException, JsValue]] = {
 
     Try(json.convertTo[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)) match {
