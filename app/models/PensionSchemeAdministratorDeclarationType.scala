@@ -23,7 +23,8 @@ import play.api.libs.json.{JsPath, Json, Reads}
 
 case class PensionSchemeAdministratorDeclarationType(box1: Boolean, box2: Boolean, box3: Boolean, box4: Boolean,
                                                      box5: Option[Boolean], box6: Option[Boolean], box7: Boolean,
-                                                     pensionAdvisorDetail: Option[PensionAdvisorDetail])
+                                                     pensionAdvisorDetail: Option[PensionAdvisorDetail],
+                                                     isChanged: Option[Boolean] = None)
 
 object PensionSchemeAdministratorDeclarationType {
   implicit val formats = Json.format[PensionSchemeAdministratorDeclarationType]

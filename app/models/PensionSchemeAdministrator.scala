@@ -62,7 +62,7 @@ object PensionSchemeAdministratorIdentifierStatusType {
 
 case class NumberOfDirectorOrPartnersType(isMorethanTenDirectors: Option[Boolean] = None,
                                           isMorethanTenPartners: Option[Boolean] = None,
-                                          isUpdated: Option[Boolean] = None)
+                                          isChanged: Option[Boolean] = None)
 
 object NumberOfDirectorOrPartnersType {
   implicit val formats: OFormat[NumberOfDirectorOrPartnersType] = Json.format[NumberOfDirectorOrPartnersType]
@@ -88,9 +88,8 @@ case class PensionSchemeAdministrator(customerType: String, legalStatus: String,
                                       correspondenceContactDetail: ContactDetails,
                                       previousAddressDetail: PreviousAddressDetails,
                                       numberOfDirectorOrPartners: Option[NumberOfDirectorOrPartnersType] = None,
-                                      areDirectorsUpdated: Option[Boolean] = None,
+                                      changeOfDirectorOrPartnerDetails: Option[Boolean] = None,
                                       directorOrPartnerDetail: Option[List[DirectorOrPartnerDetailTypeItem]] = None,
-                                      arePartnersUpdated: Option[Boolean] = None,
                                       declaration: PensionSchemeAdministratorDeclarationType)
 
 object PensionSchemeAdministrator {
@@ -116,6 +115,7 @@ object PensionSchemeAdministrator {
         (JsPath \ s"previousAddressDetail$vc").write(prevAddressWrites) and
         (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType] and
         (JsPath \ s"directorOrPartnerDetail$vc").writeNullable[List[JsValue]] and
+        (JsPath \ "changeOfDirectorOrPartnerDetails").writeNullable[Boolean] and
         (JsPath \ "declaration").write[PensionSchemeAdministratorDeclarationType]
       ) (psaSubmission => (psaSubmission.customerType,
       psaSubmission.legalStatus,
@@ -132,6 +132,7 @@ object PensionSchemeAdministrator {
       psaSubmission.numberOfDirectorOrPartners,
       psaSubmission.directorOrPartnerDetail.map(directors => directors.map(director =>
         Json.toJson(director)(directorOrPartnerWrites))),
+      psaSubmission.changeOfDirectorOrPartnerDetails,
       psaSubmission.declaration))
   }
 
