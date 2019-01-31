@@ -42,8 +42,20 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
         (transformedJson \ "registrationInfo" \ "idType").as[String] mustBe "NINO"
       }
 
+      "we don't have idType" in {
+        val jsonUpdated = individualInputJson.transform((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idType).json.prune).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
+        (transformedJson \ "registrationInfo" \ "idType").asOpt[String] mustBe None
+      }
+
       "we have idNumber" in {
         (transformedJson \ "registrationInfo" \ "idNumber").as[String] mustBe "AB123456C"
+      }
+
+      "we don't have idNumber" in {
+        val jsonUpdated = individualInputJson.transform((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.prune).asOpt.value
+        val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
+        (transformedJson \ "registrationInfo" \ "idNumber").asOpt[String] mustBe None
       }
     }
 
@@ -471,7 +483,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       "we have previous address country code" in {
         (transformedJson \ "partnershipPreviousAddress" \ "country").as[String] mustBe "GB"
       }
-      
+
       "we have partners" in {
         (transformedJson \ "partners" \ 0 \ "partnerDetails" \ "firstName").as[String] mustBe (expectedPartnershipJson \ "partners" \ 0 \ "partnerDetails" \ "firstName").as[String]
       }

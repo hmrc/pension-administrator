@@ -79,4 +79,17 @@ class SchemeController @Inject()(schemeService: SchemeService,
         case Left(e) => result(e)
       }
   }
+
+  def updatePSA(psaId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+
+       request.body.asJson match {
+        case Some(jsValue) =>
+          schemeService.updatePSA(psaId, jsValue).map {
+            case Right(_) => Ok
+            case Left(e) => result(e)
+          }
+        case _ => Future.failed(new BadRequestException("No PSA variation details in the header for psa update/variatiosn"))
+      }
+  }
 }
