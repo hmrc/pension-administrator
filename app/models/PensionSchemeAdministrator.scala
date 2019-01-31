@@ -96,7 +96,7 @@ object PensionSchemeAdministrator {
   implicit val formats: OFormat[PensionSchemeAdministrator] = Json.format[PensionSchemeAdministrator]
 
   private def psaWrites(isUpdate: Boolean): Writes[PensionSchemeAdministrator] = {
-    val (vc, prevAddressWrites, directorOrPartnerWrites) =
+    val (suffix, prevAddressWrites, directorOrPartnerWrites) =
       if (isUpdate) ("s", PreviousAddressDetails.psaUpdateWrites, DirectorOrPartnerDetailTypeItem.psaUpdateWrites)
       else ("", PreviousAddressDetails.psaSubmissionWrites, DirectorOrPartnerDetailTypeItem.psaSubmissionWrites)
 
@@ -110,11 +110,11 @@ object PensionSchemeAdministrator {
         (JsPath \ "organisationDetail").writeNullable[OrganisationDetailType] and
         (JsPath \ "individualDetail").writeNullable[IndividualDetailType] and
         (JsPath \ "pensionSchemeAdministratoridentifierStatus").write[PensionSchemeAdministratorIdentifierStatusType] and
-        (JsPath \ s"correspondenceAddressDetail$vc").write[Address] and
+        (JsPath \ s"correspondenceAddressDetail$suffix").write[Address] and
         (JsPath \ "correspondenceContactDetail").write[ContactDetails] and
-        (JsPath \ s"previousAddressDetail$vc").write(prevAddressWrites) and
+        (JsPath \ s"previousAddressDetail$suffix").write(prevAddressWrites) and
         (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType] and
-        (JsPath \ s"directorOrPartnerDetail$vc").writeNullable[List[JsValue]] and
+        (JsPath \ s"directorOrPartnerDetail$suffix").writeNullable[List[JsValue]] and
         (JsPath \ "changeOfDirectorOrPartnerDetails").writeNullable[Boolean] and
         (JsPath \ "declaration").write[PensionSchemeAdministratorDeclarationType]
       ) (psaSubmission => (psaSubmission.customerType,
