@@ -56,12 +56,13 @@ trait Samples {
 
   def pensionSchemeAdministratorSample2(personType: String) = {
     val item1 = directorOrPartnerSample(personType) copy (previousAddressDetail = previousAddressDetailsSample2)
-    val item2 = item1 copy (firstName = "Paul", middleName = None, lastName = "Stephens", previousAddressDetail = previousAddressDetailsSample2)
+    val item2 = item1 copy(firstName = "Paul", middleName = None, lastName = "Stephens", previousAddressDetail = previousAddressDetailsSample2)
 
-    pensionSchemeAdministratorSample copy (
+    pensionSchemeAdministratorSample copy(
       directorOrPartnerDetail = Some(List(item1, item2)
       ),
-      declaration = declarationSample2)
+      declaration = declarationSample2,
+      individualDetail = Some(individualSample))
   }
 
   def directorOrPartnerSample(personType: String): DirectorOrPartnerDetailTypeItem = DirectorOrPartnerDetailTypeItem(sequenceId = "000",

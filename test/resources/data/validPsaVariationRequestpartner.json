@@ -3,8 +3,11 @@
   "idType": "TestId",
   "idNumber": "TestIdNumber",
   "noIdentifier": true,
-  "pensionSchemeAdministratoridentifierStatus": {
-    "isExistingPensionSchemaAdministrator": false
+  "individualDetails": {
+    "firstName": "John",
+    "middleName": "Does Does",
+    "lastName": "Doe",
+    "dateOfBirth": "2019-01-31"
   },
   "correspondenceAddressDetails": {
     "line1": "line1",

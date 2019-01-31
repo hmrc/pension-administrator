@@ -125,8 +125,7 @@ object PensionSchemeAdministrator {
         (JsPath \ "idNumber").writeNullable[String] and
         (JsPath \ "noIdentifier").write[Boolean] and
         (JsPath \ "organisationDetail").writeNullable[OrganisationDetailType] and
-        (JsPath \ "individualDetail").writeNullable[IndividualDetailType] and
-        (JsPath \ "pensionSchemeAdministratoridentifierStatus").write[PensionSchemeAdministratorIdentifierStatusType] and
+        (JsPath \ "individualDetails").writeNullable[IndividualDetailType] and
         (JsPath \ "correspondenceAddressDetails").write[Address] and
         (JsPath \ "correspondenceContactDetails").write[ContactDetails] and
         (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites) and
@@ -141,7 +140,6 @@ object PensionSchemeAdministrator {
       psaSubmission.noIdentifier,
       psaSubmission.organisationDetail,
       psaSubmission.individualDetail,
-      psaSubmission.pensionSchemeAdministratoridentifierStatus,
       psaSubmission.correspondenceAddressDetail,
       psaSubmission.correspondenceContactDetail,
       psaSubmission.previousAddressDetail,
