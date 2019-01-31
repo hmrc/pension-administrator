@@ -66,6 +66,18 @@ case class NumberOfDirectorOrPartnersType(isMorethanTenDirectors: Option[Boolean
 
 object NumberOfDirectorOrPartnersType {
   implicit val formats: OFormat[NumberOfDirectorOrPartnersType] = Json.format[NumberOfDirectorOrPartnersType]
+
+  val psaUpdateWrites: Writes[NumberOfDirectorOrPartnersType] = (
+    (JsPath \ "isMoreThanTenDirectors").writeNullable[Boolean] and
+    (JsPath \ "isMoreThanTenPartners").writeNullable[Boolean] and
+    (JsPath \ "isChanged").writeNullable[Boolean]
+    ) (
+    numberOfDirectorOrPartnersType =>
+      (numberOfDirectorOrPartnersType.isMorethanTenDirectors,
+        numberOfDirectorOrPartnersType.isMorethanTenPartners,
+        numberOfDirectorOrPartnersType.isChanged)
+    )
+
 }
 
 case class CorrespondenceCommonDetail(addressDetail: Address, contactDetail: ContactDetails)
@@ -98,27 +110,24 @@ object PensionSchemeAdministrator {
 
   val psaUpdateWrites: Writes[PensionSchemeAdministrator] =
     (
-      (JsPath \ "customerType").write[String] and
         (JsPath \ "legalStatus").write[String] and
         (JsPath \ "idType").writeNullable[String] and
         (JsPath \ "idNumber").writeNullable[String] and
-        (JsPath \ "sapNumber").write[String] and
         (JsPath \ "noIdentifier").write[Boolean] and
         (JsPath \ "organisationDetail").writeNullable[OrganisationDetailType] and
         (JsPath \ "individualDetail").writeNullable[IndividualDetailType] and
         (JsPath \ "pensionSchemeAdministratoridentifierStatus").write[PensionSchemeAdministratorIdentifierStatusType] and
         (JsPath \ "correspondenceAddressDetails").write[Address] and
-        (JsPath \ "correspondenceContactDetail").write[ContactDetails] and
+        (JsPath \ "correspondenceContactDetails").write[ContactDetails] and
         (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites) and
-        (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType] and
+        (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType](NumberOfDirectorOrPartnersType.psaUpdateWrites) and
         (JsPath \ "directorOrPartnerDetails").writeNullable[List[JsValue]] and
         (JsPath \ "changeOfDirectorOrPartnerDetails").writeNullable[Boolean] and
         (JsPath \ "declaration").write[PensionSchemeAdministratorDeclarationType]
-      ) (psaSubmission => (psaSubmission.customerType,
+      ) (psaSubmission => (
       psaSubmission.legalStatus,
       psaSubmission.idType,
       psaSubmission.idNumber,
-      psaSubmission.sapNumber,
       psaSubmission.noIdentifier,
       psaSubmission.organisationDetail,
       psaSubmission.individualDetail,

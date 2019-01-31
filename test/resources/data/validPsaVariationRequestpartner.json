@@ -1,9 +1,7 @@
 {
-  "customerType": "TestCustomer",
   "legalStatus": "Limited Company",
   "idType": "TestId",
   "idNumber": "TestIdNumber",
-  "sapNumber": "NumberTest",
   "noIdentifier": true,
   "pensionSchemeAdministratoridentifierStatus": {
     "isExistingPensionSchemaAdministrator": false
@@ -17,7 +15,7 @@
     "postalCode": "NE1",
     "addressType": "UK"
   },
-  "correspondenceContactDetail": {
+  "correspondenceContactDetails": {
     "telephone": "07592113",
     "email": "test@test.com"
   },
@@ -34,8 +32,8 @@
     }
   },
   "numberOfDirectorOrPartners": {
-    "isMorethanTenDirectors": true,
-    "isMorethanTenPartners": true
+    "isMoreThanTenDirectors": true,
+    "isMoreThanTenPartners": true
   },
   "directorOrPartnerDetails": [
     {
