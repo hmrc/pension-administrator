@@ -47,8 +47,8 @@
       "noNinoReason": "he can't find it",
       "utr": "123456789",
       "noUtrReason": "he can't find it",
-      "correspondenceCommonDetail": {
-        "addressDetail": {
+      "correspondenceCommonDetails": {
+        "addressDetails": {
           "addressType": "NON-UK",
           "line1": "line1",
           "line2": "line2",
@@ -57,7 +57,7 @@
           "postalCode": "NE1",
           "countryCode": "IT"
         },
-        "contactDetail": {
+        "contactDetails": {
           "telephone": "07592113",
           "email": "test@test.com"
         }
@@ -85,8 +85,8 @@
       "noNinoReason": "he can't find it",
       "utr": "123456789",
       "noUtrReason": "he can't find it",
-      "correspondenceCommonDetail": {
-        "addressDetail": {
+      "correspondenceCommonDetails": {
+        "addressDetails": {
           "addressType": "NON-UK",
           "line1": "line1",
           "line2": "line2",
@@ -95,7 +95,7 @@
           "postalCode": "NE1",
           "countryCode": "IT"
         },
-        "contactDetail": {
+        "contactDetails": {
           "telephone": "07592113",
           "email": "test@test.com"
         }

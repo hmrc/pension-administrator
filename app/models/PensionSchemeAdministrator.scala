@@ -89,6 +89,16 @@ object CorrespondenceCommonDetail {
     (JsPath \ s"${personType}ContactDetails").read(ContactDetails.apiReads) and
       (JsPath \ s"${personType}Address").read[Address]
     ) ((contactDetails, address) => CorrespondenceCommonDetail(address, contactDetails))
+
+  val psaUpdateWrites: Writes[CorrespondenceCommonDetail] = (
+    (JsPath \ "addressDetails").write[Address] and
+      (JsPath \ "contactDetails").write[ContactDetails]
+    ) (
+    commonDetails =>
+      (commonDetails.addressDetail,
+        commonDetails.contactDetail)
+  )
+
 }
 
 case class PensionSchemeAdministrator(customerType: String, legalStatus: String, idType: Option[String] = None,

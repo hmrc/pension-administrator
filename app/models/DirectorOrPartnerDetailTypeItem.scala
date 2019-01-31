@@ -33,7 +33,17 @@ case class DirectorOrPartnerDetailTypeItem(sequenceId: String, entityType: Strin
 object DirectorOrPartnerDetailTypeItem {
   implicit val formats: OFormat[DirectorOrPartnerDetailTypeItem] = Json.format[DirectorOrPartnerDetailTypeItem]
 
-  private def directorOrPartnerWrites(oWritesPAD: OWrites[PreviousAddressDetails]): Writes[DirectorOrPartnerDetailTypeItem] = {
+  private def directorOrPartnerWrites(isUpdate: Boolean): Writes[DirectorOrPartnerDetailTypeItem] = {
+
+    val (previousAddress, commonDetails) = if(isUpdate){
+      ((JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites),
+        (JsPath \ "correspondenceCommonDetails").write[CorrespondenceCommonDetail](CorrespondenceCommonDetail.psaUpdateWrites))
+    }
+    else {
+      ((JsPath \ "previousAddressDetail").write(PreviousAddressDetails.psaSubmissionWrites),
+        (JsPath \ "correspondenceCommonDetail").write[CorrespondenceCommonDetail])
+    }
+
     (
       (JsPath \ "sequenceId").write[String] and
         (JsPath \ "entityType").write[String] and
@@ -46,8 +56,8 @@ object DirectorOrPartnerDetailTypeItem {
         (JsPath \ "noNinoReason").writeNullable[String] and
         (JsPath \ "utr").writeNullable[String] and
         (JsPath \ "noUtrReason").writeNullable[String] and
-        (JsPath \ "correspondenceCommonDetail").write[CorrespondenceCommonDetail] and
-        oWritesPAD
+        commonDetails and
+        previousAddress
       ) (directorOrPartner => (directorOrPartner.sequenceId,
       directorOrPartner.entityType,
       directorOrPartner.title,
@@ -63,10 +73,8 @@ object DirectorOrPartnerDetailTypeItem {
       directorOrPartner.previousAddressDetail))
   }
 
-  val psaSubmissionWrites: Writes[DirectorOrPartnerDetailTypeItem] = directorOrPartnerWrites((JsPath \ "previousAddressDetail")
-    .write(PreviousAddressDetails.psaSubmissionWrites))
-  val psaUpdateWrites: Writes[DirectorOrPartnerDetailTypeItem] = directorOrPartnerWrites((JsPath \ "previousAddressDetails")
-    .write(PreviousAddressDetails.psaUpdateWrites))
+  val psaSubmissionWrites: Writes[DirectorOrPartnerDetailTypeItem] = directorOrPartnerWrites(isUpdate = false)
+  val psaUpdateWrites: Writes[DirectorOrPartnerDetailTypeItem] = directorOrPartnerWrites(isUpdate = true)
 
   def apiReads(personType: String): Reads[List[DirectorOrPartnerDetailTypeItem]] = json.Reads {
     json =>
