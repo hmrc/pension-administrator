@@ -33,61 +33,42 @@ case class DirectorOrPartnerDetailTypeItem(sequenceId: String, entityType: Strin
 object DirectorOrPartnerDetailTypeItem {
   implicit val formats: OFormat[DirectorOrPartnerDetailTypeItem] = Json.format[DirectorOrPartnerDetailTypeItem]
 
-  val psaSubmissionWrites: Writes[DirectorOrPartnerDetailTypeItem] = (
-    (JsPath \ "sequenceId").write[String] and
-      (JsPath \ "entityType").write[String] and
-      (JsPath \ "title").writeNullable[String] and
-      (JsPath \ "firstName").write[String] and
-      (JsPath \ "middleName").writeNullable[String] and
-      (JsPath \ "lastName").write[String] and
-      (JsPath \ "dateOfBirth").write[LocalDate] and
-      (JsPath \ "referenceOrNino").writeNullable[String] and
-      (JsPath \ "noNinoReason").writeNullable[String] and
-      (JsPath \ "utr").writeNullable[String] and
-      (JsPath \ "noUtrReason").writeNullable[String] and
-      (JsPath \ "correspondenceCommonDetail").write[CorrespondenceCommonDetail] and
-      (JsPath \ "previousAddressDetail").write(PreviousAddressDetails.psaSubmissionWrites)
-    ) (directorOrPartner => (directorOrPartner.sequenceId,
-    directorOrPartner.entityType,
-    directorOrPartner.title,
-    directorOrPartner.firstName,
-    directorOrPartner.middleName,
-    directorOrPartner.lastName,
-    directorOrPartner.dateOfBirth,
-    directorOrPartner.referenceOrNino,
-    directorOrPartner.noNinoReason,
-    directorOrPartner.utr,
-    directorOrPartner.noUtrReason,
-    directorOrPartner.correspondenceCommonDetail,
-    directorOrPartner.previousAddressDetail))
 
-  val psaUpdateWrites: Writes[DirectorOrPartnerDetailTypeItem] = (
-    (JsPath \ "sequenceId").write[String] and
-      (JsPath \ "entityType").write[String] and
-      (JsPath \ "title").writeNullable[String] and
-      (JsPath \ "firstName").write[String] and
-      (JsPath \ "middleName").writeNullable[String] and
-      (JsPath \ "lastName").write[String] and
-      (JsPath \ "dateOfBirth").write[LocalDate] and
-      (JsPath \ "referenceOrNino").writeNullable[String] and
-      (JsPath \ "noNinoReason").writeNullable[String] and
-      (JsPath \ "utr").writeNullable[String] and
-      (JsPath \ "noUtrReason").writeNullable[String] and
-      (JsPath \ "correspondenceCommonDetail").write[CorrespondenceCommonDetail] and
-      (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites)
-    ) (directorOrPartner => (directorOrPartner.sequenceId,
-    directorOrPartner.entityType,
-    directorOrPartner.title,
-    directorOrPartner.firstName,
-    directorOrPartner.middleName,
-    directorOrPartner.lastName,
-    directorOrPartner.dateOfBirth,
-    directorOrPartner.referenceOrNino,
-    directorOrPartner.noNinoReason,
-    directorOrPartner.utr,
-    directorOrPartner.noUtrReason,
-    directorOrPartner.correspondenceCommonDetail,
-    directorOrPartner.previousAddressDetail))
+
+  def directorOrPartnerWrites(oWritesPAD: OWrites[PreviousAddressDetails]): Writes[DirectorOrPartnerDetailTypeItem] = {
+    (
+      (JsPath \ "sequenceId").write[String] and
+        (JsPath \ "entityType").write[String] and
+        (JsPath \ "title").writeNullable[String] and
+        (JsPath \ "firstName").write[String] and
+        (JsPath \ "middleName").writeNullable[String] and
+        (JsPath \ "lastName").write[String] and
+        (JsPath \ "dateOfBirth").write[LocalDate] and
+        (JsPath \ "referenceOrNino").writeNullable[String] and
+        (JsPath \ "noNinoReason").writeNullable[String] and
+        (JsPath \ "utr").writeNullable[String] and
+        (JsPath \ "noUtrReason").writeNullable[String] and
+        (JsPath \ "correspondenceCommonDetail").write[CorrespondenceCommonDetail] and
+        oWritesPAD
+      ) (directorOrPartner => (directorOrPartner.sequenceId,
+      directorOrPartner.entityType,
+      directorOrPartner.title,
+      directorOrPartner.firstName,
+      directorOrPartner.middleName,
+      directorOrPartner.lastName,
+      directorOrPartner.dateOfBirth,
+      directorOrPartner.referenceOrNino,
+      directorOrPartner.noNinoReason,
+      directorOrPartner.utr,
+      directorOrPartner.noUtrReason,
+      directorOrPartner.correspondenceCommonDetail,
+      directorOrPartner.previousAddressDetail))
+  }
+
+  val psaSubmissionWrites: Writes[DirectorOrPartnerDetailTypeItem] = directorOrPartnerWrites((JsPath \ "previousAddressDetail")
+    .write(PreviousAddressDetails.psaSubmissionWrites))
+  val psaUpdateWrites: Writes[DirectorOrPartnerDetailTypeItem] = directorOrPartnerWrites((JsPath \ "previousAddressDetails")
+    .write(PreviousAddressDetails.psaUpdateWrites))
 
   def apiReads(personType: String): Reads[List[DirectorOrPartnerDetailTypeItem]] = json.Reads {
     json =>
