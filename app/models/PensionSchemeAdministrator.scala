@@ -96,7 +96,7 @@ case class PensionSchemeAdministrator(customerType: String, legalStatus: String,
 object PensionSchemeAdministrator {
   implicit val formats: OFormat[PensionSchemeAdministrator] = Json.format[PensionSchemeAdministrator]
 
-  def psaWrites(isUpdate: Boolean): Writes[PensionSchemeAdministrator] = {
+  private def psaWrites(isUpdate: Boolean): Writes[PensionSchemeAdministrator] = {
     val (vc, prevAddressWrites, directorOrPartnerWrites) =
       if (isUpdate) ("s", PreviousAddressDetails.psaUpdateWrites, DirectorOrPartnerDetailTypeItem.psaUpdateWrites)
       else ("", PreviousAddressDetails.psaSubmissionWrites, DirectorOrPartnerDetailTypeItem.psaSubmissionWrites)

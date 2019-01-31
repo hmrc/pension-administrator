@@ -33,9 +33,7 @@ case class DirectorOrPartnerDetailTypeItem(sequenceId: String, entityType: Strin
 object DirectorOrPartnerDetailTypeItem {
   implicit val formats: OFormat[DirectorOrPartnerDetailTypeItem] = Json.format[DirectorOrPartnerDetailTypeItem]
 
-
-
-  def directorOrPartnerWrites(oWritesPAD: OWrites[PreviousAddressDetails]): Writes[DirectorOrPartnerDetailTypeItem] = {
+  private def directorOrPartnerWrites(oWritesPAD: OWrites[PreviousAddressDetails]): Writes[DirectorOrPartnerDetailTypeItem] = {
     (
       (JsPath \ "sequenceId").write[String] and
         (JsPath \ "entityType").write[String] and
