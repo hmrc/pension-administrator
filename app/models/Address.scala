@@ -63,7 +63,8 @@ object Address {
 }
 
 case class UkAddress(addressLine1: String, addressLine2: Option[String] = None, addressLine3: Option[String] = None,
-                     addressLine4: Option[String] = None, countryCode: String, postalCode: String) extends Address
+                     addressLine4: Option[String] = None, countryCode: String, postalCode: String,
+                     isUpdated: Option[Boolean] = None) extends Address
 
 object UkAddress {
   implicit val format: Reads[UkAddress] = Json.reads[UkAddress]
@@ -87,7 +88,8 @@ object UkAddress {
 }
 
 case class InternationalAddress(addressLine1: String, addressLine2: Option[String] = None, addressLine3: Option[String] = None,
-                                addressLine4: Option[String] = None, countryCode: String, postalCode: Option[String] = None) extends Address
+                                addressLine4: Option[String] = None, countryCode: String,
+                                postalCode: Option[String] = None, isUpdated: Option[Boolean] = None) extends Address
 
 object InternationalAddress {
   implicit val format: Format[InternationalAddress] = Json.format[InternationalAddress]

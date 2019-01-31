@@ -19,7 +19,7 @@ package models
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Json, Reads, __}
 
-case class PensionAdvisorDetail(name: String, addressDetail: Address, contactDetail: ContactDetails)
+case class PensionAdvisorDetail(name: String, addressDetail: Address, contactDetail: ContactDetails, isUpdated: Option[Boolean] = None)
 
 object PensionAdvisorDetail {
   implicit val formats = Json.format[PensionAdvisorDetail]
