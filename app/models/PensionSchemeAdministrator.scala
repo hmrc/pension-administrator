@@ -95,11 +95,8 @@ case class PensionSchemeAdministrator(customerType: String, legalStatus: String,
 object PensionSchemeAdministrator {
   implicit val formats: OFormat[PensionSchemeAdministrator] = Json.format[PensionSchemeAdministrator]
 
-  private def psaWrites(isUpdate: Boolean): Writes[PensionSchemeAdministrator] = {
-    val (suffix, prevAddressWrites, directorOrPartnerWrites) =
-      if (isUpdate) ("s", PreviousAddressDetails.psaUpdateWrites, DirectorOrPartnerDetailTypeItem.psaUpdateWrites)
-      else ("", PreviousAddressDetails.psaSubmissionWrites, DirectorOrPartnerDetailTypeItem.psaSubmissionWrites)
 
+  val psaUpdateWrites: Writes[PensionSchemeAdministrator] =
     (
       (JsPath \ "customerType").write[String] and
         (JsPath \ "legalStatus").write[String] and
@@ -110,11 +107,11 @@ object PensionSchemeAdministrator {
         (JsPath \ "organisationDetail").writeNullable[OrganisationDetailType] and
         (JsPath \ "individualDetail").writeNullable[IndividualDetailType] and
         (JsPath \ "pensionSchemeAdministratoridentifierStatus").write[PensionSchemeAdministratorIdentifierStatusType] and
-        (JsPath \ s"correspondenceAddressDetail$suffix").write[Address] and
+        (JsPath \ "correspondenceAddressDetails").write[Address] and
         (JsPath \ "correspondenceContactDetail").write[ContactDetails] and
-        (JsPath \ s"previousAddressDetail$suffix").write(prevAddressWrites) and
+        (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites) and
         (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType] and
-        (JsPath \ s"directorOrPartnerDetail$suffix").writeNullable[List[JsValue]] and
+        (JsPath \ "directorOrPartnerDetails").writeNullable[List[JsValue]] and
         (JsPath \ "changeOfDirectorOrPartnerDetails").writeNullable[Boolean] and
         (JsPath \ "declaration").write[PensionSchemeAdministratorDeclarationType]
       ) (psaSubmission => (psaSubmission.customerType,
@@ -131,14 +128,45 @@ object PensionSchemeAdministrator {
       psaSubmission.previousAddressDetail,
       psaSubmission.numberOfDirectorOrPartners,
       psaSubmission.directorOrPartnerDetail.map(directors => directors.map(director =>
-        Json.toJson(director)(directorOrPartnerWrites))),
+        Json.toJson(director)(DirectorOrPartnerDetailTypeItem.psaUpdateWrites))),
       psaSubmission.changeOfDirectorOrPartnerDetails,
       psaSubmission.declaration))
-  }
 
-
-  val psaUpdateWrites: Writes[PensionSchemeAdministrator] = psaWrites(isUpdate = true)
-  val psaSubmissionWrites: Writes[PensionSchemeAdministrator] = psaWrites(isUpdate = false)
+  val psaSubmissionWrites: Writes[PensionSchemeAdministrator] =
+    (
+      (JsPath \ "customerType").write[String] and
+        (JsPath \ "legalStatus").write[String] and
+        (JsPath \ "idType").writeNullable[String] and
+        (JsPath \ "idNumber").writeNullable[String] and
+        (JsPath \ "sapNumber").write[String] and
+        (JsPath \ "noIdentifier").write[Boolean] and
+        (JsPath \ "organisationDetail").writeNullable[OrganisationDetailType] and
+        (JsPath \ "individualDetail").writeNullable[IndividualDetailType] and
+        (JsPath \ "pensionSchemeAdministratoridentifierStatus").write[PensionSchemeAdministratorIdentifierStatusType] and
+        (JsPath \ "correspondenceAddressDetail").write[Address] and
+        (JsPath \ "correspondenceContactDetail").write[ContactDetails] and
+        (JsPath \ "previousAddressDetail").write(PreviousAddressDetails.psaSubmissionWrites) and
+        (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType] and
+        (JsPath \ "directorOrPartnerDetail").writeNullable[List[JsValue]] and
+        (JsPath \ "changeOfDirectorOrPartnerDetails").writeNullable[Boolean] and
+        (JsPath \ "declaration").write[PensionSchemeAdministratorDeclarationType]
+      ) (psaSubmission => (psaSubmission.customerType,
+      psaSubmission.legalStatus,
+      psaSubmission.idType,
+      psaSubmission.idNumber,
+      psaSubmission.sapNumber,
+      psaSubmission.noIdentifier,
+      psaSubmission.organisationDetail,
+      psaSubmission.individualDetail,
+      psaSubmission.pensionSchemeAdministratoridentifierStatus,
+      psaSubmission.correspondenceAddressDetail,
+      psaSubmission.correspondenceContactDetail,
+      psaSubmission.previousAddressDetail,
+      psaSubmission.numberOfDirectorOrPartners,
+      psaSubmission.directorOrPartnerDetail.map(directors => directors.map(director =>
+        Json.toJson(director)(DirectorOrPartnerDetailTypeItem.psaSubmissionWrites))),
+      psaSubmission.changeOfDirectorOrPartnerDetails,
+      psaSubmission.declaration))
 
   val registrationInfoReads: Reads[(String, String, Boolean, String, Option[String], Option[String])] = (
     (JsPath \ "legalStatus").read[String] and
