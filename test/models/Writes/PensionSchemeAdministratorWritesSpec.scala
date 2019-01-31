@@ -35,19 +35,22 @@ class PensionSchemeAdministratorWritesSpec extends WordSpec with MustMatchers wi
         }
 
         s"We are doing a PSA submission with ${personType}s that have previous address" in {
-          val directorWithPreviousAddress = directorOrPartnerSample(personType).copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample)))
+          val directorWithPreviousAddress = directorOrPartnerSample(personType)
+            .copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample)))
           val result = Json.toJson(pensionSchemeAdministratorSample.copy(directorOrPartnerDetail = Some(List(directorWithPreviousAddress))))(
             PensionSchemeAdministrator.psaSubmissionWrites)
 
           result.toString() must include("true,\"previousAddressDetail\":")
         }
 
-        "We are doing a PSA submission containing previous address at rool level for update writes" in {
-          val result = Json.toJson(pensionSchemeAdministratorSample.copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample))))(
+        s"We are doing a PSA submission with ${personType}s containing directorOrPartnerDetail at root level for update writes" in {
+          val result = Json.toJson(pensionSchemeAdministratorSample2(personType)
+            .copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample))))(
             PensionSchemeAdministrator.psaUpdateWrites)
 
-          result mustEqual readJsonFromFile("/data/validPsaVariationRequest2.json")
+          result mustEqual readJsonFromFile(s"/data/validPsaVariationRequest$personType.json")
         }
+
       }
     }
   }

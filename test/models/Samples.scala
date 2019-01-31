@@ -28,6 +28,7 @@ trait Samples {
   val ukAddressSample = UkAddress("line1", Some("line2"), Some("line3"), Some("line4"), "GB", "NE1")
   val numberOfDirectorOrPartnersSample = NumberOfDirectorOrPartnersType(isMorethanTenDirectors = Some(true), isMorethanTenPartners = Some(true))
   val previousAddressDetailsSample = PreviousAddressDetails(isPreviousAddressLast12Month = false)
+  val previousAddressDetailsSample2 = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
   val contactDetailsSample = ContactDetails("07592113", email = "test@test.com")
   val declarationSample = PensionSchemeAdministratorDeclarationType(box1 = true, box2 = true, box3 = true, box4 = true, Some(true), None, box7 = true, None)
   val pensionSchemeAdministratorSample = PensionSchemeAdministrator(customerType = "TestCustomer",
@@ -45,6 +46,15 @@ trait Samples {
     numberOfDirectorOrPartners = Some(numberOfDirectorOrPartnersSample),
     directorOrPartnerDetail = None, declaration = declarationSample)
   val correspondenceCommonDetails = CorrespondenceCommonDetail(nonUkAddressSample, contactDetailsSample)
+
+  def pensionSchemeAdministratorSample2(personType: String) = {
+    val item1 = directorOrPartnerSample(personType) copy (previousAddressDetail = previousAddressDetailsSample2)
+    val item2 = item1 copy (firstName = "Paul", middleName = None, lastName = "Stephens", previousAddressDetail = previousAddressDetailsSample2)
+
+    pensionSchemeAdministratorSample copy (
+      directorOrPartnerDetail = Some(List(item1, item2)
+      ))
+  }
 
   def directorOrPartnerSample(personType: String): DirectorOrPartnerDetailTypeItem = DirectorOrPartnerDetailTypeItem(sequenceId = "000",
     entityType = personType.capitalize,
