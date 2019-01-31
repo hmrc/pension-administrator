@@ -30,7 +30,14 @@ trait Samples {
   val previousAddressDetailsSample = PreviousAddressDetails(isPreviousAddressLast12Month = false)
   val previousAddressDetailsSample2 = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
   val contactDetailsSample = ContactDetails("07592113", email = "test@test.com")
+
+  val pensionAdvisorDetail = PensionAdvisorDetail(name = "Blaa",
+    addressDetail = nonUkAddressSample,
+    contactDetail = contactDetailsSample)
+
   val declarationSample = PensionSchemeAdministratorDeclarationType(box1 = true, box2 = true, box3 = true, box4 = true, Some(true), None, box7 = true, None)
+  val declarationSample2 = PensionSchemeAdministratorDeclarationType(box1 = true,
+    box2 = true, box3 = true, box4 = true, Some(true), None, box7 = true, Some(pensionAdvisorDetail))
   val pensionSchemeAdministratorSample = PensionSchemeAdministrator(customerType = "TestCustomer",
     legalStatus = "Limited Company",
     sapNumber = "NumberTest",

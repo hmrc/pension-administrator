@@ -27,6 +27,17 @@ class PensionSchemeAdministratorWritesSpec extends WordSpec with MustMatchers wi
 
       s"Map all ${personType}s previous addresses to `previousDetail`" when {
 
+
+        "parse pension adviser correctly" in {
+
+          val pensionSchemeAdministratorSample2 = pensionSchemeAdministratorSample copy (declaration = declarationSample2)
+
+          val result = Json.toJson(pensionSchemeAdministratorSample2)(
+            PensionSchemeAdministrator.psaSubmissionWrites)
+
+          result.toString() must include("\"pensionAdvisorDetail\":")
+        }
+
         "We are doing a PSA submission containing previous address at rool level" in {
           val result = Json.toJson(pensionSchemeAdministratorSample.copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample))))(
             PensionSchemeAdministrator.psaSubmissionWrites)
