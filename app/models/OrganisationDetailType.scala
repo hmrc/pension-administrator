@@ -22,7 +22,7 @@ import play.api.libs.json.JsObject
 
 case class OrganisationDetailType(name: String, crnNumber: Option[String] = None,
                                   vatRegistrationNumber: Option[String] = None, payeReference: Option[String] = None,
-                                  isUpdated: Option[Boolean] = None) extends PSADetail
+                                  isChanged: Option[Boolean] = None) extends PSADetail
 
 object OrganisationDetailType {
   implicit val formats: OFormat[OrganisationDetailType] = Json.format[OrganisationDetailType]
