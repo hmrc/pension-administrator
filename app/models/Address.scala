@@ -73,11 +73,12 @@ object UkAddress {
     JsPath.write(Address.commonAddressWrites) and
       (JsPath \ "countryCode").write[String] and
       (JsPath \ "postalCode").write[String] and
-      (JsPath \ "addressType").write[String]
+      (JsPath \ "addressType").write[String] and
+      (JsPath \ "isChanged").writeNullable[Boolean]
     ) (ukAddress => ((ukAddress.addressLine1, ukAddress.addressLine2, ukAddress.addressLine3, ukAddress.addressLine4),
     ukAddress.countryCode,
     ukAddress.postalCode,
-    "UK"))
+    "UK", ukAddress.isUpdated))
 
   val defaultWrites: Writes[UkAddress] = Json.writes[UkAddress]
 
@@ -98,7 +99,8 @@ object InternationalAddress {
     JsPath.write(Address.commonAddressWrites) and
       (JsPath \ "countryCode").write[String] and
       (JsPath \ "postalCode").writeNullable[String] and
-      (JsPath \ "addressType").write[String]
+      (JsPath \ "addressType").write[String] and
+      (JsPath \ "isChanged").writeNullable[Boolean]
     ) (internationalAddress => ((
     internationalAddress.addressLine1,
     internationalAddress.addressLine2,
@@ -106,7 +108,7 @@ object InternationalAddress {
     internationalAddress.addressLine4),
     internationalAddress.countryCode,
     internationalAddress.postalCode,
-    "NON-UK"))
+    "NON-UK", internationalAddress.isUpdated))
 
   val defaultWrites: Writes[InternationalAddress] = Json.writes[InternationalAddress]
 

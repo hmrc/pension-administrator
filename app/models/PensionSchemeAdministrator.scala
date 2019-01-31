@@ -88,9 +88,8 @@ case class PensionSchemeAdministrator(customerType: String, legalStatus: String,
                                       correspondenceContactDetail: ContactDetails,
                                       previousAddressDetail: PreviousAddressDetails,
                                       numberOfDirectorOrPartners: Option[NumberOfDirectorOrPartnersType] = None,
-                                      areDirectorsUpdated: Option[Boolean] = None,
+                                      areDirectorsOrPartnersUpdated: Option[Boolean] = None,
                                       directorOrPartnerDetail: Option[List[DirectorOrPartnerDetailTypeItem]] = None,
-                                      arePartnersUpdated: Option[Boolean] = None,
                                       declaration: PensionSchemeAdministratorDeclarationType)
 
 object PensionSchemeAdministrator {
