@@ -64,7 +64,7 @@ object Address {
 
 case class UkAddress(addressLine1: String, addressLine2: Option[String] = None, addressLine3: Option[String] = None,
                      addressLine4: Option[String] = None, countryCode: String, postalCode: String,
-                     isUpdated: Option[Boolean] = None) extends Address
+                     isChanged: Option[Boolean] = None) extends Address
 
 object UkAddress {
   implicit val format: Reads[UkAddress] = Json.reads[UkAddress]
@@ -73,11 +73,12 @@ object UkAddress {
     JsPath.write(Address.commonAddressWrites) and
       (JsPath \ "countryCode").write[String] and
       (JsPath \ "postalCode").write[String] and
-      (JsPath \ "addressType").write[String]
+      (JsPath \ "addressType").write[String] and
+      (JsPath \ "isChanged").writeNullable[Boolean]
     ) (ukAddress => ((ukAddress.addressLine1, ukAddress.addressLine2, ukAddress.addressLine3, ukAddress.addressLine4),
     ukAddress.countryCode,
     ukAddress.postalCode,
-    "UK"))
+    "UK", ukAddress.isChanged))
 
   val defaultWrites: Writes[UkAddress] = Json.writes[UkAddress]
 
@@ -89,7 +90,7 @@ object UkAddress {
 
 case class InternationalAddress(addressLine1: String, addressLine2: Option[String] = None, addressLine3: Option[String] = None,
                                 addressLine4: Option[String] = None, countryCode: String,
-                                postalCode: Option[String] = None, isUpdated: Option[Boolean] = None) extends Address
+                                postalCode: Option[String] = None, isChanged: Option[Boolean] = None) extends Address
 
 object InternationalAddress {
   implicit val format: Format[InternationalAddress] = Json.format[InternationalAddress]
@@ -98,7 +99,8 @@ object InternationalAddress {
     JsPath.write(Address.commonAddressWrites) and
       (JsPath \ "countryCode").write[String] and
       (JsPath \ "postalCode").writeNullable[String] and
-      (JsPath \ "addressType").write[String]
+      (JsPath \ "addressType").write[String] and
+      (JsPath \ "isChanged").writeNullable[Boolean]
     ) (internationalAddress => ((
     internationalAddress.addressLine1,
     internationalAddress.addressLine2,
@@ -106,7 +108,7 @@ object InternationalAddress {
     internationalAddress.addressLine4),
     internationalAddress.countryCode,
     internationalAddress.postalCode,
-    "NON-UK"))
+    "NON-UK", internationalAddress.isChanged))
 
   val defaultWrites: Writes[InternationalAddress] = Json.writes[InternationalAddress]
 

@@ -40,6 +40,18 @@ class PensionSchemeAdministratorWritesSpec extends WordSpec with MustMatchers wi
 
           result.toString() must include("true,\"previousAddressDetail\":")
         }
+
+        s"We are checking the changeOfDirectorOrPartnerDetails flag is not included" in {
+          val result = Json.toJson(pensionSchemeAdministratorSample)(PensionSchemeAdministrator.psaSubmissionWrites)
+
+          (result \ "changeOfDirectorOrPartnerDetails").asOpt[Boolean] mustBe None
+        }
+
+        s"We are checking the changeOfDirectorOrPartnerDetails flag is included" in {
+          val result = Json.toJson(pensionSchemeAdministratorSample.copy(changeOfDirectorOrPartnerDetails = Some(true)))(PensionSchemeAdministrator.psaSubmissionWrites)
+
+          (result \ "changeOfDirectorOrPartnerDetails").asOpt[Boolean].value mustBe true
+        }
       }
     }
   }
