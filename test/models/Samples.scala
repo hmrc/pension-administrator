@@ -31,7 +31,7 @@ trait Samples {
   val previousAddressDetailsSample2 = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
   val contactDetailsSample = ContactDetails("07592113", email = "test@test.com")
 
-  val pensionAdvisorDetail = PensionAdvisorDetail(name = "Blaa",
+  val pensionAdvisorDetail = PensionAdvisorDetail(name = "xyz",
     addressDetail = nonUkAddressSample,
     contactDetail = contactDetailsSample)
 
@@ -60,7 +60,8 @@ trait Samples {
 
     pensionSchemeAdministratorSample copy (
       directorOrPartnerDetail = Some(List(item1, item2)
-      ))
+      ),
+      declaration = declarationSample2)
   }
 
   def directorOrPartnerSample(personType: String): DirectorOrPartnerDetailTypeItem = DirectorOrPartnerDetailTypeItem(sequenceId = "000",

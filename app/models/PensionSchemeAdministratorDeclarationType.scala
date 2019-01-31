@@ -18,7 +18,7 @@ package models
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json
-import play.api.libs.json.{JsPath, Json, Reads}
+import play.api.libs.json.{JsPath, Json, Reads, Writes}
 
 
 case class PensionSchemeAdministratorDeclarationType(box1: Boolean, box2: Boolean, box3: Boolean, box4: Boolean,
@@ -45,4 +45,22 @@ object PensionSchemeAdministratorDeclarationType {
       declarationOutput.copy(box6 = Some(true), pensionAdvisorDetail = adviserDetail.flatten)
     }
   })
+
+
+    val psaUpdateWrites: Writes[PensionSchemeAdministratorDeclarationType] = (
+    (JsPath \ "box1").write[Boolean] and
+    (JsPath \ "box2").write[Boolean] and
+    (JsPath \ "box3").write[Boolean] and
+    (JsPath \ "box4").write[Boolean] and
+    (JsPath \ "box5").writeNullable[Boolean] and
+    (JsPath \ "box6").writeNullable[Boolean] and
+    (JsPath \ "box7").write[Boolean] and
+    (JsPath \ "pensionAdvisorDetails").writeNullable(PensionAdvisorDetail.psaUpdateWrites) and
+    (JsPath \ "isChanged").writeNullable[Boolean]
+    ) (
+    padt =>
+      (padt.box1, padt.box2, padt.box3, padt.box4, padt.box5, padt.box6, padt.box7, padt.pensionAdvisorDetail, padt.isChanged)
+    )
+
+
 }
