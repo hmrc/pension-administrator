@@ -140,7 +140,7 @@ object PensionSchemeAdministrator {
       (JsPath \ "correspondenceContactDetail").write[ContactDetails] and
       (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites) and
       (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType] and
-      (JsPath \ "directorOrPartnerDetail").writeNullable[List[JsValue]] and
+      (JsPath \ "directorOrPartnerDetails").writeNullable[List[JsValue]] and
       (JsPath \ "declaration").write[PensionSchemeAdministratorDeclarationType]
     ) (psaSubmission => (psaSubmission.customerType,
     psaSubmission.legalStatus,
