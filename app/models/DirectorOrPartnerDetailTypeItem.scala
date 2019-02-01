@@ -33,32 +33,24 @@ case class DirectorOrPartnerDetailTypeItem(sequenceId: String, entityType: Strin
 object DirectorOrPartnerDetailTypeItem {
   implicit val formats: OFormat[DirectorOrPartnerDetailTypeItem] = Json.format[DirectorOrPartnerDetailTypeItem]
 
-  private def directorOrPartnerWrites(isUpdate: Boolean): Writes[DirectorOrPartnerDetailTypeItem] = {
 
-    val (previousAddress, commonDetails) = if(isUpdate){
-      ((JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites),
-        (JsPath \ "correspondenceCommonDetails").write[CorrespondenceCommonDetail](CorrespondenceCommonDetail.psaUpdateWrites))
-    }
-    else {
-      ((JsPath \ "previousAddressDetail").write(PreviousAddressDetails.psaSubmissionWrites),
-        (JsPath \ "correspondenceCommonDetail").write[CorrespondenceCommonDetail])
-    }
+  private val commonElements : Writes[(String,String,Option[String],String,
+    Option[String],String,LocalDate,Option[String],Option[String],Option[String],Option[String])] = (
+    (JsPath \ "sequenceId").write[String] and
+      (JsPath \ "entityType").write[String] and
+      (JsPath \ "title").writeNullable[String] and
+      (JsPath \ "firstName").write[String] and
+      (JsPath \ "middleName").writeNullable[String] and
+      (JsPath \ "lastName").write[String] and
+      (JsPath \ "dateOfBirth").write[LocalDate] and
+      (JsPath \ "referenceOrNino").writeNullable[String] and
+      (JsPath \ "noNinoReason").writeNullable[String] and
+      (JsPath \ "utr").writeNullable[String] and
+      (JsPath \ "noUtrReason").writeNullable[String]
+    )( x=> x)
 
-    (
-      (JsPath \ "sequenceId").write[String] and
-        (JsPath \ "entityType").write[String] and
-        (JsPath \ "title").writeNullable[String] and
-        (JsPath \ "firstName").write[String] and
-        (JsPath \ "middleName").writeNullable[String] and
-        (JsPath \ "lastName").write[String] and
-        (JsPath \ "dateOfBirth").write[LocalDate] and
-        (JsPath \ "referenceOrNino").writeNullable[String] and
-        (JsPath \ "noNinoReason").writeNullable[String] and
-        (JsPath \ "utr").writeNullable[String] and
-        (JsPath \ "noUtrReason").writeNullable[String] and
-        commonDetails and
-        previousAddress
-      ) (directorOrPartner => (directorOrPartner.sequenceId,
+  private def commonElementsToTuple(directorOrPartner:DirectorOrPartnerDetailTypeItem) = {
+    (directorOrPartner.sequenceId,
       directorOrPartner.entityType,
       directorOrPartner.title,
       directorOrPartner.firstName,
@@ -68,13 +60,24 @@ object DirectorOrPartnerDetailTypeItem {
       directorOrPartner.referenceOrNino,
       directorOrPartner.noNinoReason,
       directorOrPartner.utr,
-      directorOrPartner.noUtrReason,
-      directorOrPartner.correspondenceCommonDetail,
-      directorOrPartner.previousAddressDetail))
+      directorOrPartner.noUtrReason)
   }
 
-  val psaSubmissionWrites: Writes[DirectorOrPartnerDetailTypeItem] = directorOrPartnerWrites(isUpdate = false)
-  val psaUpdateWrites: Writes[DirectorOrPartnerDetailTypeItem] = directorOrPartnerWrites(isUpdate = true)
+  val psaSubmissionWrites : Writes[DirectorOrPartnerDetailTypeItem] = (
+    JsPath.write(commonElements) and
+      (JsPath \ "previousAddressDetail").write(PreviousAddressDetails.psaSubmissionWrites) and
+        (JsPath \ "correspondenceCommonDetail").write[CorrespondenceCommonDetail])(directorOrPartner =>
+    (commonElementsToTuple(directorOrPartner),
+      directorOrPartner.previousAddressDetail,
+      directorOrPartner.correspondenceCommonDetail))
+
+  val psaUpdateWrites : Writes[DirectorOrPartnerDetailTypeItem] = (
+    JsPath.write(commonElements) and
+      (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites) and
+      (JsPath \ "correspondenceCommonDetails").write[CorrespondenceCommonDetail](CorrespondenceCommonDetail.psaUpdateWrites))(directorOrPartner =>
+    (commonElementsToTuple(directorOrPartner),
+      directorOrPartner.previousAddressDetail,
+      directorOrPartner.correspondenceCommonDetail))
 
   def apiReads(personType: String): Reads[List[DirectorOrPartnerDetailTypeItem]] = json.Reads {
     json =>
