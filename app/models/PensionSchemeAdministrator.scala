@@ -241,7 +241,8 @@ object PensionSchemeAdministrator {
       JsPath.read(PSADetail.apiReads) and
       (JsPath \ "existingPSA").read(PensionSchemeAdministratorIdentifierStatusType.apiReads) and
       JsPath.read(PensionSchemeAdministratorDeclarationType.apiReads) and
-      (JsPath \ "isMoreThanTenDirectorsOrPartnersChanged").readNullable[Boolean]
+      (JsPath \ "isMoreThanTenDirectorsOrPartnersChanged").readNullable[Boolean] and
+      (JsPath \ "areDirectorsOrPartnersChanged").readNullable[Boolean]
     ) ((registrationInfo,
         isThereMoreThanTenDirectors,
         isThereMoreThanTenPartners,
@@ -253,7 +254,8 @@ object PensionSchemeAdministrator {
         transactionDetails,
         isExistingPSA,
         declaration,
-        isMoreThanTenDirectorsOrPartnersChanged) => {
+        isMoreThanTenDirectorsOrPartnersChanged,
+        areDirectorsOrPartnersChanged) => {
 
     PensionSchemeAdministrator(
       customerType = registrationInfo._4,
@@ -267,6 +269,7 @@ object PensionSchemeAdministrator {
       correspondenceAddressDetail = correspondenceAddress,
       correspondenceContactDetail = contactDetails,
       previousAddressDetail = previousAddressDetails,
+      changeOfDirectorOrPartnerDetails = areDirectorsOrPartnersChanged,
       directorOrPartnerDetail = directorOrPartnerDetail(registrationInfo._1, Seq(directors, partners)),
       organisationDetail = if (organisationLegalStatus.contains(registrationInfo._1))
         Some(transactionDetails.asInstanceOf[OrganisationDetailType]) else None,
