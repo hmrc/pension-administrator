@@ -33,10 +33,11 @@ object PensionSchemeAdministratorDeclarationType {
     (JsPath \ "declaration").read[Boolean] and
       (JsPath \ "declarationFitAndProper").read[Boolean] and
       (JsPath \ "declarationWorkingKnowledge").read[String] and
-      json.Reads.optionWithNull(PensionAdvisorDetail.apiReads)
-    ) ((declarationSectionOneToFour, declarationSectionSeven, workingKnowledge, adviserDetail) => {
+      json.Reads.optionWithNull(PensionAdvisorDetail.apiReads) and
+      (JsPath \ "isChanged").readNullable[Boolean]
+    ) ((declarationSectionOneToFour, declarationSectionSeven, workingKnowledge, adviserDetail, isChanged) => {
     val declarationOutput = PensionSchemeAdministratorDeclarationType(declarationSectionOneToFour, declarationSectionOneToFour,
-      declarationSectionOneToFour, declarationSectionOneToFour, None, None, declarationSectionSeven, None)
+      declarationSectionOneToFour, declarationSectionOneToFour, None, None, declarationSectionSeven, None,isChanged)
 
     if (workingKnowledge == "workingKnowledge") {
       declarationOutput.copy(box5 = Some(true))
