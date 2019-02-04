@@ -17,7 +17,7 @@
 package models
 
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, Json, Reads, __}
+import play.api.libs.json._
 
 case class PensionAdvisorDetail(name: String, addressDetail: Address, contactDetail: ContactDetails)
 
@@ -34,4 +34,13 @@ object PensionAdvisorDetail {
       case _ => None
     }
   })
+
+  val psaUpdateWrites: Writes[PensionAdvisorDetail] = (
+    (JsPath \ "name").write[String] and
+      (JsPath \ "addressDetails").write[Address] and
+      (JsPath \ "contactDetails").write[ContactDetails]
+    ) (
+    details =>
+      (details.name, details.addressDetail, details.contactDetail)
+  )
 }
