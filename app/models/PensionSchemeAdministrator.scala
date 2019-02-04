@@ -214,10 +214,11 @@ object PensionSchemeAdministrator {
   private val organisationLegalStatus = Seq("Limited Company", "Partnership")
 
   private def numberOfDirectorsOrPartners(isThereMoreThanTenDirectors: Option[Boolean],
-                                          isThereMoreThanTenPartners: Option[Boolean]): Option[NumberOfDirectorOrPartnersType] =
+                                          isThereMoreThanTenPartners: Option[Boolean],
+                                          isMoreThanTenDirectorsOrPartnersChanged: Option[Boolean]): Option[NumberOfDirectorOrPartnersType] =
     (isThereMoreThanTenDirectors, isThereMoreThanTenPartners) match {
       case (None, None) => None
-      case _ => Some(NumberOfDirectorOrPartnersType(isThereMoreThanTenDirectors, isThereMoreThanTenPartners))
+      case _ => Some(NumberOfDirectorOrPartnersType(isThereMoreThanTenDirectors, isThereMoreThanTenPartners,isMoreThanTenDirectorsOrPartnersChanged))
     }
 
   private def directorOrPartnerDetail(legalStatus: String, directorsOrPartners: Seq[Option[scala.List[DirectorOrPartnerDetailTypeItem]]]) = {
@@ -239,7 +240,8 @@ object PensionSchemeAdministrator {
       (JsPath \ "partners").readNullable(DirectorOrPartnerDetailTypeItem.apiReads("partner")) and
       JsPath.read(PSADetail.apiReads) and
       (JsPath \ "existingPSA").read(PensionSchemeAdministratorIdentifierStatusType.apiReads) and
-      JsPath.read(PensionSchemeAdministratorDeclarationType.apiReads)
+      JsPath.read(PensionSchemeAdministratorDeclarationType.apiReads) and
+      (JsPath \ "isMoreThanTenDirectorsOrPartnersChanged").readNullable[Boolean]
     ) ((registrationInfo,
         isThereMoreThanTenDirectors,
         isThereMoreThanTenPartners,
@@ -250,7 +252,8 @@ object PensionSchemeAdministrator {
         partners,
         transactionDetails,
         isExistingPSA,
-        declaration) => {
+        declaration,
+        isMoreThanTenDirectorsOrPartnersChanged) => {
 
     PensionSchemeAdministrator(
       customerType = registrationInfo._4,
@@ -259,7 +262,7 @@ object PensionSchemeAdministrator {
       noIdentifier = registrationInfo._3,
       idType = registrationInfo._5,
       idNumber = registrationInfo._6,
-      numberOfDirectorOrPartners = numberOfDirectorsOrPartners(isThereMoreThanTenDirectors, isThereMoreThanTenPartners),
+      numberOfDirectorOrPartners = numberOfDirectorsOrPartners(isThereMoreThanTenDirectors, isThereMoreThanTenPartners, isMoreThanTenDirectorsOrPartnersChanged),
       pensionSchemeAdministratoridentifierStatus = isExistingPSA,
       correspondenceAddressDetail = correspondenceAddress,
       correspondenceContactDetail = contactDetails,

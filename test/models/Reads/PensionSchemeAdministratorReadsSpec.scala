@@ -96,6 +96,13 @@ class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers wit
         result.numberOfDirectorOrPartners mustBe None
       }
 
+      "We have a flag for isMoreThanTenDirectorsOrPartnersChanged" in {
+        val psaWithUpdatedMoreThan10Directors = input + ("isMoreThanTenDirectorsOrPartnersChanged" -> JsBoolean(true)) + ("moreThanTenDirectors" -> JsBoolean(true))
+        val result = psaWithUpdatedMoreThan10Directors.as[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)
+
+        result.numberOfDirectorOrPartners.value.isChanged.value mustBe true
+      }
+
       "We have contact details" in {
         val result = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads).asOpt.value
 
