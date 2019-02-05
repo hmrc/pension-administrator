@@ -122,12 +122,6 @@ class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with
 
           result.asInstanceOf[UkAddress].isChanged.value mustBe true
         }
-
-        "with no isChanged flag" in {
-          val result = address.as[Address]
-
-          result.asInstanceOf[UkAddress].isChanged mustBe None
-        }
       }
 
       "we have a non UK address" when {
@@ -177,12 +171,6 @@ class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with
           val result = modifiedAddress.as[Address]
 
           result.asInstanceOf[InternationalAddress].isChanged.value mustBe true
-        }
-
-        "with no isChanged flag" in {
-          val result = address.as[Address]
-
-          result.asInstanceOf[InternationalAddress].isChanged mustBe None
         }
       }
     }
