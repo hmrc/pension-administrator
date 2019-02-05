@@ -117,13 +117,16 @@ case class PensionSchemeAdministrator(customerType: String, legalStatus: String,
 object PensionSchemeAdministrator {
   implicit val formats: OFormat[PensionSchemeAdministrator] = Json.format[PensionSchemeAdministrator]
 
+  val customerIdentificationDetailsWrites : Writes[(String, Option[String],Option[String],Boolean)] = (
+    (JsPath \ "legalStatus").write[String] and
+      (JsPath \ "idType").writeNullable[String] and
+      (JsPath \ "idNumber").writeNullable[String] and
+      (JsPath \ "noIdentifier").write[Boolean]
+    )(details => (details._1, details._2,details._3,details._4))
 
   val psaUpdateWrites: Writes[PensionSchemeAdministrator] =
     (
-        (JsPath \ "legalStatus").write[String] and
-        (JsPath \ "idType").writeNullable[String] and
-        (JsPath \ "idNumber").writeNullable[String] and
-        (JsPath \ "noIdentifier").write[Boolean] and
+        (JsPath \ "customerIdentificationDetails").write(customerIdentificationDetailsWrites) and
         (JsPath \ "organisationDetail").writeNullable[OrganisationDetailType] and
         (JsPath \ "individualDetails").writeNullable[IndividualDetailType] and
         (JsPath \ "correspondenceAddressDetails").write[Address] and
@@ -134,10 +137,7 @@ object PensionSchemeAdministrator {
         (JsPath \ "changeOfDirectorOrPartnerDetails").writeNullable[Boolean] and
         (JsPath \ "declaration").write(PensionSchemeAdministratorDeclarationType.psaUpdateWrites)
       ) (psaSubmission => (
-      psaSubmission.legalStatus,
-      psaSubmission.idType,
-      psaSubmission.idNumber,
-      psaSubmission.noIdentifier,
+      (psaSubmission.legalStatus,psaSubmission.idType,psaSubmission.idNumber,psaSubmission.noIdentifier),
       psaSubmission.organisationDetail,
       psaSubmission.individualDetail,
       psaSubmission.correspondenceAddressDetail,

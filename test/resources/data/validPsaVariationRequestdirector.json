@@ -1,8 +1,10 @@
 {
-  "legalStatus": "Limited Company",
-  "idType": "TestId",
-  "idNumber": "TestIdNumber",
-  "noIdentifier": true,
+  "customerIdentificationDetails" : {
+    "legalStatus": "Limited Company",
+    "idType": "TestId",
+    "idNumber": "TestIdNumber",
+    "noIdentifier": true
+  },
   "individualDetails": {
     "firstName": "John",
     "middleName": "Does Does",
