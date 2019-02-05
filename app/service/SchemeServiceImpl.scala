@@ -48,7 +48,7 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
     implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
-      val psaJsValue = Json.toJson(pensionSchemeAdministrator)
+      val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaUpdateWrites)
       Logger.debug(s"[PSA-Variation-Outgoing-Payload]$psaJsValue")
       desConnector.updatePSA(psaId, psaJsValue)
     }
