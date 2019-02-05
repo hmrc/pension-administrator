@@ -40,7 +40,7 @@ class DeclarationTypeReadsSpec extends WordSpec with MustMatchers with OptionVal
           result.box4 mustBe true
         }
 
-        "It is false then boxes 1,2,3, and 4 will be false" in {
+        "It is false then boxes 1,2,3, and 4 will be false " in {
           val result = (declaration + ("declaration" ->
             JsBoolean(false))).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
 
@@ -49,6 +49,12 @@ class DeclarationTypeReadsSpec extends WordSpec with MustMatchers with OptionVal
           result.box3 mustBe false
           result.box4 mustBe false
         }
+      }
+
+      "We have an isChanged flag" in {
+        val result = (declaration + ("isChanged" -> JsBoolean(true))).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+
+        result.isChanged.value mustBe true
       }
 
       "We have a fitAndProper declaration field" in {

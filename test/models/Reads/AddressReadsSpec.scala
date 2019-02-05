@@ -66,38 +66,38 @@ class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with
 
       "We have common address elements" when {
         "with addressLine 1" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String)](Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](Address.commonAddressElementsReads)
 
           result._1 mustBe ukAddressSample.addressLine1
         }
 
         "with addressLine 2" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String)](Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](Address.commonAddressElementsReads)
 
           result._2 mustBe ukAddressSample.addressLine2
         }
 
         "with addressLine 3" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String)](Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](Address.commonAddressElementsReads)
 
           result._3 mustBe ukAddressSample.addressLine3
         }
 
         "with addressLine 4" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String)](Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](Address.commonAddressElementsReads)
 
           result._4 mustBe ukAddressSample.addressLine4
         }
 
         "with countryCode" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String)](Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](Address.commonAddressElementsReads)
 
           result._5 mustBe ukAddressSample.countryCode
         }
 
         "with a countryCode defined as `country`" in {
           val result = (address - "countryCode" +
-            ("country" -> JsString("GB"))).as[(String, Option[String], Option[String], Option[String], String)](Address.commonAddressElementsReads)
+            ("country" -> JsString("GB"))).as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](Address.commonAddressElementsReads)
 
           result._5 mustBe ukAddressSample.countryCode
         }
@@ -114,6 +114,19 @@ class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with
           val result = (address - "postalCode" + ("postcode" -> JsString("NE1"))).as[Address]
 
           result.asInstanceOf[UkAddress].postalCode mustBe ukAddressSample.postalCode
+        }
+
+        "with isChanged flag" in {
+          val modifiedAddress = address + ("isChanged" -> JsBoolean(true))
+          val result = modifiedAddress.as[Address]
+
+          result.asInstanceOf[UkAddress].isChanged mustBe Some(true)
+        }
+
+        "with no isChanged flag" in {
+          val result = address.as[Address]
+
+          result.asInstanceOf[UkAddress].isChanged mustBe None
         }
       }
 
@@ -157,6 +170,19 @@ class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with
           val result = input.as[Address]
 
           result.asInstanceOf[InternationalAddress].countryCode mustBe nonUkAddressSample.countryCode
+        }
+
+        "with isChanged flag" in {
+          val modifiedAddress = address + ("isChanged" -> JsBoolean(true))
+          val result = modifiedAddress.as[Address]
+
+          result.asInstanceOf[InternationalAddress].isChanged mustBe Some(true)
+        }
+
+        "with no isChanged flag" in {
+          val result = address.as[Address]
+
+          result.asInstanceOf[InternationalAddress].isChanged mustBe None
         }
       }
     }

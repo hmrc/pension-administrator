@@ -26,7 +26,8 @@ object ContactDetails {
   implicit val formats: OFormat[ContactDetails] = Json.format[ContactDetails]
   val apiReads: Reads[ContactDetails] = (
     (JsPath \ "phone").read[String] and
-      (JsPath \ "email").read[String]
-    ) ((phone, email) => ContactDetails(phone, email = email)
+      (JsPath \ "email").read[String] and
+      (JsPath \ "isChanged").readNullable[Boolean]
+    ) ((phone, email, isChanged) => ContactDetails(phone, email = email, isChanged = isChanged)
   )
 }

@@ -39,13 +39,14 @@ object Address {
       InternationalAddress.defaultWrites.writes(address)
   }
 
-  val commonAddressElementsReads: Reads[(String, Option[String], Option[String], Option[String], String)] = (
+  val commonAddressElementsReads: Reads[(String, Option[String], Option[String], Option[String], String, Option[Boolean])] = (
     (JsPath \ "addressLine1").read[String] and
       (JsPath \ "addressLine2").readNullable[String] and
       (JsPath \ "addressLine3").readNullable[String] and
       (JsPath \ "addressLine4").readNullable[String] and
-      ((JsPath \ "countryCode").read[String] orElse (JsPath \ "country").read[String])
-    ) ((line1, line2, line3, line4, countryCode) => (line1, line2, line3, line4, getCountryOrTerritoryCode(countryCode)))
+      ((JsPath \ "countryCode").read[String] orElse (JsPath \ "country").read[String]) and
+      (JsPath \ "isChanged").readNullable[Boolean]
+    ) ((line1, line2, line3, line4, countryCode, isChanged) => (line1, line2, line3, line4, getCountryOrTerritoryCode(countryCode), isChanged))
 
   val commonAddressWrites: Writes[(String, Option[String], Option[String], Option[String])] = (
     (JsPath \ "line1").write[String] and
@@ -85,7 +86,7 @@ object UkAddress {
   val apiReads: Reads[UkAddress] = (
     JsPath.read(Address.commonAddressElementsReads) and
       ((JsPath \ "postalCode").read[String] orElse (JsPath \ "postcode").read[String])
-    ) ((common, postalCode) => UkAddress(common._1, common._2, common._3, common._4, common._5, postalCode))
+    ) ((common, postalCode) => UkAddress(common._1, common._2, common._3, common._4, common._5, postalCode,common._6))
 }
 
 case class InternationalAddress(addressLine1: String, addressLine2: Option[String] = None, addressLine3: Option[String] = None,
@@ -124,7 +125,7 @@ object InternationalAddress {
       case _ => None
     }
 
-    InternationalAddress(common._1, common._2, common._3, common._4, common._5, postCode)
+    InternationalAddress(common._1, common._2, common._3, common._4, common._5, postCode, common._6)
   })
 
 }
