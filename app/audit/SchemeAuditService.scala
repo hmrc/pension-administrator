@@ -51,7 +51,30 @@ trait SchemeAuditService {
         )
       )
     case Failure(t) =>
-      Logger.error("Error in registration connector", t)
+      Logger.error("Error in sending audit event for PSA Subscription", t)
   }
 
+  def sendPSAChangeEvent(psa: PensionSchemeAdministrator, request: JsValue)(sendEvent: PSAChanges => Unit)
+                              (implicit rh: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+    case Success(Right(json)) =>
+      sendEvent(
+        PSAChanges(
+          legalStatus = psa.legalStatus,
+          status = Status.OK,
+          request = request,
+          response = Some(json)
+        )
+      )
+    case Success(Left(e)) =>
+      sendEvent(
+        PSAChanges(
+          legalStatus = psa.legalStatus,
+          status = e.responseCode,
+          request = request,
+          response = None
+        )
+      )
+    case Failure(t) =>
+      Logger.error("Error in sending audit event for PSA Changes", t)
+  }
 }
