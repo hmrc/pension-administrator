@@ -125,6 +125,7 @@
     }
   ],
   "declaration": {
+    "changeFlag" : false,
     "box1": true,
     "box2": true,
     "box3": true,
