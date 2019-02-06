@@ -34,7 +34,7 @@ object AppDependencies {
   private val reactiveMongoVersion = "7.9.0-play-26"
   private val jsonSchemeValidatorVersion = "0.1.19"
   private val jsonPathVersion = "2.5.0"
-  private val reactiveMongoTestVersion = "4.2.0-play-26"
+  private val reactiveMongoTestVersion = "4.6.0-play-26"
   private val hmrcTestVersion = "3.2.0"
   private val pegDownVersion = "1.6.0"
 
