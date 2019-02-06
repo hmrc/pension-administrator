@@ -38,9 +38,10 @@ object PreviousAddressDetails {
 
   def apiReads(typeOfAddressDetail: String): Reads[PreviousAddressDetails] = (
     (JsPath \ s"${typeOfAddressDetail}AddressYears").read[String] and
-      (JsPath \ s"${typeOfAddressDetail}PreviousAddress").readNullable[Address]
-    ) ((addressLast12Months, address) => {
+      (JsPath \ s"${typeOfAddressDetail}PreviousAddress").readNullable[Address] and
+      (JsPath \ "isChanged").readNullable[Boolean]
+    ) ((addressLast12Months, address, isChanged) => {
     val isAddressLast12Months = if (addressLast12Months == "under_a_year") true else false
-    PreviousAddressDetails(isAddressLast12Months, address)
+    PreviousAddressDetails(isAddressLast12Months, address, isChanged)
   })
 }
