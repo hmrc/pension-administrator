@@ -22,6 +22,109 @@ import play.api.libs.json.Json
 
 class AddressWritesSpec extends WordSpec with MustMatchers with OptionValues {
 
+  "An updated address" should {
+    "parse correctly to a valid DES format" when {
+      "we have a UK address" when {
+        val address = UkAddress("line1", Some("line2"), Some("line3"), Some("line4"), "GB", "Test")
+        val result = Json.toJson(address.asInstanceOf[Address])(Address.updateWrites)
+
+        "with address line 1 " in {
+          result.toString() must include("line1")
+        }
+
+        "with address line 2" in {
+          result.toString() must include("line2")
+        }
+
+        "with address line 3" in {
+          result.toString() must include("line3")
+        }
+
+        "with address line 4" in {
+          result.toString() must include("line4")
+        }
+
+        "with countrycode" in {
+          result.toString() must include("countryCode")
+        }
+
+        "with postalcode" in {
+          result.toString() must include("postalCode")
+        }
+
+        "we have a nonUkAddress flag" in {
+          (result \ "nonUKAddress").as[Boolean] mustBe false
+        }
+
+        "with an isUpdated flag" in {
+          val address = UkAddress("line1", Some("line2"), Some("line3"), Some("line4"), "GB", "Test", isChanged = Some(true))
+
+          val result = Json.toJson(address.asInstanceOf[Address])(Address.updateWrites)
+
+          (result \ "changeFlag").asOpt[Boolean].value mustBe true
+        }
+
+        "without an isUpdated flag" in {
+          val address = UkAddress("line1", Some("line2"), Some("line3"), Some("line4"), "GB", "Test", isChanged = None)
+
+          val result = Json.toJson(address.asInstanceOf[Address])(Address.updateWrites)
+
+          (result \ "changeFlag").asOpt[Boolean] mustBe None
+        }
+      }
+
+      "we have an International address" when {
+        val address = InternationalAddress("line1", Some("line2"), Some("line3"), Some("line4"), "IT", Some("test"))
+        val result = Json.toJson(address.asInstanceOf[Address])(Address.updateWrites)
+
+        "with address line 1" in {
+          result.toString() must include("line1")
+        }
+
+        "with address line 2" in {
+          result.toString() must include("line2")
+        }
+
+        "with address line 3" in {
+          result.toString() must include("line3")
+        }
+
+        "with address line 4" in {
+          result.toString() must include("line4")
+        }
+
+        "with countrycode" in {
+          result.toString() must include("countryCode")
+        }
+
+        "with postalcode" in {
+          result.toString() must include("postalCode")
+        }
+
+        "we have a nonUkAddress flag" in {
+          (result \ "nonUKAddress").as[Boolean] mustBe true
+        }
+
+        "with an isUpdated flag" in {
+          val address = InternationalAddress("line1", Some("line2"), Some("line3"), Some("line4"), "IT", Some("test"), isChanged = Some(true))
+
+          val result = Json.toJson(address.asInstanceOf[Address])(Address.updateWrites)
+
+          (result \ "changeFlag").asOpt[Boolean].value mustBe true
+        }
+
+        "without an isUpdated flag" in {
+          val address = InternationalAddress("line1", Some("line2"), Some("line3"), Some("line4"), "IT", Some("test"), isChanged = None)
+
+          val result = Json.toJson(address.asInstanceOf[Address])(Address.updateWrites)
+
+          (result \ "changeFlag").asOpt[Boolean] mustBe None
+        }
+
+      }
+    }
+  }
+
   "An address" should {
     "parse correctly to a valid DES format" when {
       "we have a UK address" when {
@@ -54,22 +157,6 @@ class AddressWritesSpec extends WordSpec with MustMatchers with OptionValues {
 
         "with an address type of UK" in {
           result.toString() must include("\"addressType\":\"UK\"")
-        }
-
-        "with an isUpdated flag" in {
-          val address = UkAddress("line1", Some("line2"), Some("line3"), Some("line4"), "GB", "Test", isChanged = Some(true))
-
-          val result = Json.toJson(address.asInstanceOf[Address])
-
-          (result \ "isChanged").asOpt[Boolean].value mustBe true
-        }
-
-        "without an isUpdated flag" in {
-          val address = UkAddress("line1", Some("line2"), Some("line3"), Some("line4"), "GB", "Test", isChanged = None)
-
-          val result = Json.toJson(address.asInstanceOf[Address])
-
-          (result \ "isChanged").asOpt[Boolean] mustBe None
         }
       }
 
@@ -104,23 +191,6 @@ class AddressWritesSpec extends WordSpec with MustMatchers with OptionValues {
         "with an address type of Non-UK" in {
           result.toString() must include("\"addressType\":\"NON-UK\"")
         }
-
-        "with an isUpdated flag" in {
-          val address = InternationalAddress("line1", Some("line2"), Some("line3"), Some("line4"), "IT", Some("test"), isChanged = Some(true))
-
-          val result = Json.toJson(address.asInstanceOf[Address])
-
-          (result \ "isChanged").asOpt[Boolean].value mustBe true
-        }
-
-        "without an isUpdated flag" in {
-          val address = InternationalAddress("line1", Some("line2"), Some("line3"), Some("line4"), "IT", Some("test"), isChanged = None)
-
-          val result = Json.toJson(address.asInstanceOf[Address])
-
-          (result \ "isChanged").asOpt[Boolean] mustBe None
-        }
-
       }
     }
   }

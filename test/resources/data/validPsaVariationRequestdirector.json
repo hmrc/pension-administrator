@@ -18,7 +18,7 @@
     "line4": "line4",
     "countryCode": "GB",
     "postalCode": "NE1",
-    "addressType": "UK"
+    "nonUKAddress":false
   },
   "correspondenceContactDetails": {
     "changeFlag" : false,
@@ -35,7 +35,7 @@
       "line4": "line4",
       "countryCode": "GB",
       "postalCode": "NE1",
-      "addressType": "UK"
+      "nonUKAddress":false
     }
   },
   "numberOfDirectorOrPartners": {
@@ -74,13 +74,13 @@
         "changeFlag" : false,
         "isPreviousAddressLast12Month": true,
         "previousAddressDetails": {
-          "addressType": "UK",
           "line1": "line1",
           "line2": "line2",
           "line3": "line3",
           "line4": "line4",
-	  "postalCode": "NE1",
-          "countryCode": "GB"
+	      "postalCode": "NE1",
+          "countryCode": "GB",
+          "nonUKAddress":false
         }
       }
     },
@@ -113,13 +113,13 @@
         "changeFlag" : false,
         "isPreviousAddressLast12Month": true,
         "previousAddressDetails": {
-          "addressType": "UK",
           "line1": "line1",
           "line2": "line2",
           "line3": "line3",
           "line4": "line4",
-	  "postalCode": "NE1",
-          "countryCode": "GB"
+	      "postalCode": "NE1",
+          "countryCode": "GB",
+          "nonUKAddress":false
         }
       }
     }
@@ -135,14 +135,13 @@
     "pensionAdvisorDetails": {
       "name": "xyz",
       "addressDetails": {
-        "addressType": "NON-UK",
         "line1": "line1",
         "line2": "line2",
         "line3": "line3",
         "line4": "line4",
         "postalCode": "NE1",
-        "countryCode": "IT"
-
+        "countryCode": "IT",
+        "nonUKAddress":true
       },
       "contactDetails": {
         "telephone": "07592113",
