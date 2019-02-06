@@ -70,12 +70,12 @@ object NumberOfDirectorOrPartnersType {
   val psaUpdateWrites: Writes[NumberOfDirectorOrPartnersType] = (
     (JsPath \ "isMoreThanTenDirectors").writeNullable[Boolean] and
     (JsPath \ "isMoreThanTenPartners").writeNullable[Boolean] and
-    (JsPath \ "isChanged").writeNullable[Boolean]
+    (JsPath \ "changeFlag").write[Boolean]
     ) (
     numberOfDirectorOrPartnersType =>
       (numberOfDirectorOrPartnersType.isMorethanTenDirectors,
         numberOfDirectorOrPartnersType.isMorethanTenPartners,
-        numberOfDirectorOrPartnersType.isChanged)
+        numberOfDirectorOrPartnersType.isChanged.fold(false)(identity))
     )
 
 }
@@ -130,7 +130,7 @@ object PensionSchemeAdministrator {
         (JsPath \ "organisationDetail").writeNullable[OrganisationDetailType] and
         (JsPath \ "individualDetails").writeNullable[IndividualDetailType] and
         (JsPath \ "correspondenceAddressDetails").write[Address] and
-        (JsPath \ "correspondenceContactDetails").write[ContactDetails] and
+        (JsPath \ "correspondenceContactDetails").write[ContactDetails](ContactDetails.updateWrites) and
         (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites) and
         (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType](NumberOfDirectorOrPartnersType.psaUpdateWrites) and
         (JsPath \ "directorOrPartnerDetails").writeNullable[List[JsValue]] and

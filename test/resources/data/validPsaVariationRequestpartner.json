@@ -21,10 +21,12 @@
     "addressType": "UK"
   },
   "correspondenceContactDetails": {
+    "changeFlag" : false,
     "telephone": "07592113",
     "email": "test@test.com"
   },
   "previousAddressDetails": {
+    "changeFlag" : false,
     "isPreviousAddressLast12Month": true,
     "previousAddressDetails": {
       "line1": "line1",
@@ -37,6 +39,7 @@
     }
   },
   "numberOfDirectorOrPartners": {
+    "changeFlag": false,
     "isMoreThanTenDirectors": true,
     "isMoreThanTenPartners": true
   },
@@ -68,6 +71,7 @@
         }
       },
       "previousAddressDetails": {
+        "changeFlag" : false,
         "isPreviousAddressLast12Month": true,
         "previousAddressDetails": {
           "addressType": "UK",
@@ -106,6 +110,7 @@
         }
       },
       "previousAddressDetails": {
+        "changeFlag": false,
         "isPreviousAddressLast12Month": true,
         "previousAddressDetails": {
           "addressType": "UK",
@@ -120,6 +125,7 @@
     }
   ],
   "declaration": {
+    "changeFlag" : false,
     "box1": true,
     "box2": true,
     "box3": true,

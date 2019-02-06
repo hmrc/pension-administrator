@@ -37,7 +37,7 @@ object PensionSchemeAdministratorDeclarationType {
       (JsPath \ "isChanged").readNullable[Boolean]
     ) ((declarationSectionOneToFour, declarationSectionSeven, workingKnowledge, adviserDetail, isChanged) => {
     val declarationOutput = PensionSchemeAdministratorDeclarationType(declarationSectionOneToFour, declarationSectionOneToFour,
-      declarationSectionOneToFour, declarationSectionOneToFour, None, None, declarationSectionSeven, None,isChanged)
+      declarationSectionOneToFour, declarationSectionOneToFour, None, None, declarationSectionSeven, None, isChanged)
 
     if (workingKnowledge == "workingKnowledge") {
       declarationOutput.copy(box5 = Some(true))
@@ -48,20 +48,20 @@ object PensionSchemeAdministratorDeclarationType {
   })
 
 
-    val psaUpdateWrites: Writes[PensionSchemeAdministratorDeclarationType] = (
+  val psaUpdateWrites: Writes[PensionSchemeAdministratorDeclarationType] = (
     (JsPath \ "box1").write[Boolean] and
-    (JsPath \ "box2").write[Boolean] and
-    (JsPath \ "box3").write[Boolean] and
-    (JsPath \ "box4").write[Boolean] and
-    (JsPath \ "box5").writeNullable[Boolean] and
-    (JsPath \ "box6").writeNullable[Boolean] and
-    (JsPath \ "box7").write[Boolean] and
-    (JsPath \ "pensionAdvisorDetails").writeNullable(PensionAdvisorDetail.psaUpdateWrites) and
-    (JsPath \ "isChanged").writeNullable[Boolean]
+      (JsPath \ "box2").write[Boolean] and
+      (JsPath \ "box3").write[Boolean] and
+      (JsPath \ "box4").write[Boolean] and
+      (JsPath \ "box5").writeNullable[Boolean] and
+      (JsPath \ "box6").writeNullable[Boolean] and
+      (JsPath \ "box7").write[Boolean] and
+      (JsPath \ "pensionAdvisorDetails").writeNullable(PensionAdvisorDetail.psaUpdateWrites) and
+      (JsPath \ "changeFlag").write[Boolean]
     ) (
     padt =>
-      (padt.box1, padt.box2, padt.box3, padt.box4, padt.box5, padt.box6, padt.box7, padt.pensionAdvisorDetail, padt.isChanged)
-    )
+      (padt.box1, padt.box2, padt.box3, padt.box4, padt.box5, padt.box6, padt.box7, padt.pensionAdvisorDetail, padt.isChanged.fold(false)(identity))
+  )
 
 
 }
