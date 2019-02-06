@@ -26,6 +26,7 @@
     "email": "test@test.com"
   },
   "previousAddressDetails": {
+    "changeFlag" : false,
     "isPreviousAddressLast12Month": true,
     "previousAddressDetails": {
       "line1": "line1",
@@ -70,6 +71,7 @@
         }
       },
       "previousAddressDetails": {
+        "changeFlag" : false,
         "isPreviousAddressLast12Month": true,
         "previousAddressDetails": {
           "addressType": "UK",
@@ -108,6 +110,7 @@
         }
       },
       "previousAddressDetails": {
+        "changeFlag" : false,
         "isPreviousAddressLast12Month": true,
         "previousAddressDetails": {
           "addressType": "UK",
