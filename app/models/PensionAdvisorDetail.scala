@@ -37,7 +37,7 @@ object PensionAdvisorDetail {
 
   val psaUpdateWrites: Writes[PensionAdvisorDetail] = (
     (JsPath \ "name").write[String] and
-      (JsPath \ "addressDetails").write[Address] and
+      (JsPath \ "addressDetails").write[Address](Address.updateWrites) and
       (JsPath \ "contactDetails").write[ContactDetails]
     ) (
     details =>
