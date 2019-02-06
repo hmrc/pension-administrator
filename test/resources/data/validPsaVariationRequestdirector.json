@@ -21,6 +21,7 @@
     "addressType": "UK"
   },
   "correspondenceContactDetails": {
+    "changeFlag" : false,
     "telephone": "07592113",
     "email": "test@test.com"
   },

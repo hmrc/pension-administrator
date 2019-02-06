@@ -130,7 +130,7 @@ object PensionSchemeAdministrator {
         (JsPath \ "organisationDetail").writeNullable[OrganisationDetailType] and
         (JsPath \ "individualDetails").writeNullable[IndividualDetailType] and
         (JsPath \ "correspondenceAddressDetails").write[Address] and
-        (JsPath \ "correspondenceContactDetails").write[ContactDetails] and
+        (JsPath \ "correspondenceContactDetails").write[ContactDetails](ContactDetails.updateWrites) and
         (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites) and
         (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType](NumberOfDirectorOrPartnersType.psaUpdateWrites) and
         (JsPath \ "directorOrPartnerDetails").writeNullable[List[JsValue]] and

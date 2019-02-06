@@ -42,7 +42,7 @@ class NumberOfDirectorOrPartnersTypeWriteSpec extends WordSpec with MustMatchers
         (result \ "changeFlag").asOpt[Boolean] mustBe numberOfDirectors.isChanged
       }
 
-      "we dont have the isChanged flag so we set it to false" in {
+      "we don't have the isChanged flag so we set it to false" in {
         (result \ "changeFlag").asOpt[Boolean] mustBe Some(false)
       }
     }
