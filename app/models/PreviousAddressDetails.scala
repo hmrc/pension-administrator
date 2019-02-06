@@ -32,7 +32,7 @@ object PreviousAddressDetails {
 
   val psaUpdateWrites: Writes[PreviousAddressDetails] = (
     (JsPath \ "isPreviousAddressLast12Month").write[Boolean] and
-      (JsPath \ "previousAddressDetails").writeNullable[Address] and
+      (JsPath \ "previousAddressDetails").writeNullable[Address](Address.updateWrites) and
       (JsPath \ "changeFlag").write[Boolean]
     ) (previousAddress => (previousAddress.isPreviousAddressLast12Month, previousAddress.previousAddressDetails, previousAddress.isChanged.fold(false)(identity)))
 
