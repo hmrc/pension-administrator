@@ -37,6 +37,7 @@
     }
   },
   "numberOfDirectorOrPartners": {
+    "changeFlag": false,
     "isMoreThanTenDirectors": true,
     "isMoreThanTenPartners": true
   },

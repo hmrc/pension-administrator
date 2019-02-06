@@ -70,12 +70,12 @@ object NumberOfDirectorOrPartnersType {
   val psaUpdateWrites: Writes[NumberOfDirectorOrPartnersType] = (
     (JsPath \ "isMoreThanTenDirectors").writeNullable[Boolean] and
     (JsPath \ "isMoreThanTenPartners").writeNullable[Boolean] and
-    (JsPath \ "isChanged").writeNullable[Boolean]
+    (JsPath \ "changeFlag").write[Boolean]
     ) (
     numberOfDirectorOrPartnersType =>
       (numberOfDirectorOrPartnersType.isMorethanTenDirectors,
         numberOfDirectorOrPartnersType.isMorethanTenPartners,
-        numberOfDirectorOrPartnersType.isChanged)
+        numberOfDirectorOrPartnersType.isChanged.fold(false)(identity))
     )
 
 }
