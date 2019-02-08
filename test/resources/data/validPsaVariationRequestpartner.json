@@ -124,7 +124,7 @@
       }
     }
   ],
-  "declaration": {
+  "declarationDetails": {
     "changeFlag" : false,
     "box1": true,
     "box2": true,
