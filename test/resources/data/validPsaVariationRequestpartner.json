@@ -57,13 +57,13 @@
       "noUtrReason": "he can't find it",
       "correspondenceCommonDetails": {
         "addressDetails": {
-          "addressType": "NON-UK",
           "line1": "line1",
           "line2": "line2",
           "line3": "line3",
           "line4": "line4",
           "postalCode": "NE1",
-          "countryCode": "IT"
+          "countryCode": "IT",
+          "nonUKAddress": true
         },
         "contactDetails": {
           "telephone": "07592113",
@@ -71,7 +71,6 @@
         }
       },
       "previousAddressDetails": {
-        "changeFlag" : false,
         "isPreviousAddressLast12Month": true,
         "previousAddressDetails": {
           "line1": "line1",
@@ -96,13 +95,13 @@
       "noUtrReason": "he can't find it",
       "correspondenceCommonDetails": {
         "addressDetails": {
-          "addressType": "NON-UK",
           "line1": "line1",
           "line2": "line2",
           "line3": "line3",
           "line4": "line4",
           "postalCode": "NE1",
-          "countryCode": "IT"
+          "countryCode": "IT",
+          "nonUKAddress": true
         },
         "contactDetails": {
           "telephone": "07592113",
@@ -110,7 +109,6 @@
         }
       },
       "previousAddressDetails": {
-        "changeFlag": false,
         "isPreviousAddressLast12Month": true,
         "previousAddressDetails": {
           "line1": "line1",

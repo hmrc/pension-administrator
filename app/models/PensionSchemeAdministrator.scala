@@ -91,7 +91,7 @@ object CorrespondenceCommonDetail {
     ) ((contactDetails, address) => CorrespondenceCommonDetail(address, contactDetails))
 
   val psaUpdateWrites: Writes[CorrespondenceCommonDetail] = (
-    (JsPath \ "addressDetails").write[Address] and
+    (JsPath \ "addressDetails").write[Address](Address.updateWrites) and
       (JsPath \ "contactDetails").write[ContactDetails]
     ) (
     commonDetails =>
@@ -127,7 +127,7 @@ object PensionSchemeAdministrator {
   val psaUpdateWrites: Writes[PensionSchemeAdministrator] =
     (
         (JsPath \ "customerIdentificationDetails").write(customerIdentificationDetailsWrites) and
-        (JsPath \ "organisationDetail").writeNullable[OrganisationDetailType] and
+        (JsPath \ "organisationDetails").writeNullable[OrganisationDetailType] and
         (JsPath \ "individualDetails").writeNullable[IndividualDetailType] and
         (JsPath \ "correspondenceAddressDetails").write[Address](Address.updateWrites) and
         (JsPath \ "correspondenceContactDetails").write[ContactDetails](ContactDetails.updateWrites) and
