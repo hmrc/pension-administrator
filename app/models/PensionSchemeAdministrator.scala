@@ -135,7 +135,7 @@ object PensionSchemeAdministrator {
         (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType](NumberOfDirectorOrPartnersType.psaUpdateWrites) and
         (JsPath \ "directorOrPartnerDetails").writeNullable[List[JsValue]] and
         (JsPath \ "changeOfDirectorOrPartnerDetails").writeNullable[Boolean] and
-        (JsPath \ "declaration").write(PensionSchemeAdministratorDeclarationType.psaUpdateWrites)
+        (JsPath \ "declarationDetails").write(PensionSchemeAdministratorDeclarationType.psaUpdateWrites)
       ) (psaSubmission => (
       (psaSubmission.legalStatus,psaSubmission.idType,psaSubmission.idNumber,psaSubmission.noIdentifier),
       psaSubmission.organisationDetail,
