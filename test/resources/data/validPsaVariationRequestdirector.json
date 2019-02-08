@@ -71,7 +71,6 @@
         }
       },
       "previousAddressDetails": {
-        "changeFlag" : false,
         "isPreviousAddressLast12Month": true,
         "previousAddressDetails": {
           "line1": "line1",
@@ -110,7 +109,6 @@
         }
       },
       "previousAddressDetails": {
-        "changeFlag" : false,
         "isPreviousAddressLast12Month": true,
         "previousAddressDetails": {
           "line1": "line1",

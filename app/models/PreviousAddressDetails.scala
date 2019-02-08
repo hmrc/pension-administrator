@@ -36,6 +36,11 @@ object PreviousAddressDetails {
       (JsPath \ "changeFlag").write[Boolean]
     ) (previousAddress => (previousAddress.isPreviousAddressLast12Month, previousAddress.previousAddressDetails, previousAddress.isChanged.fold(false)(identity)))
 
+  val psaUpdateWritesWithNoUpdateFlag: Writes[PreviousAddressDetails] = (
+    (JsPath \ "isPreviousAddressLast12Month").write[Boolean] and
+      (JsPath \ "previousAddressDetails").writeNullable[Address](Address.updateWrites)
+    ) (previousAddress => (previousAddress.isPreviousAddressLast12Month, previousAddress.previousAddressDetails))
+
   def apiReads(typeOfAddressDetail: String): Reads[PreviousAddressDetails] = (
     (JsPath \ s"${typeOfAddressDetail}AddressYears").read[String] and
       (JsPath \ s"${typeOfAddressDetail}PreviousAddress").readNullable[Address] and

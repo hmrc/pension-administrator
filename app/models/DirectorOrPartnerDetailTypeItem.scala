@@ -73,7 +73,7 @@ object DirectorOrPartnerDetailTypeItem {
 
   val psaUpdateWrites : Writes[DirectorOrPartnerDetailTypeItem] = (
     JsPath.write(commonElements) and
-      (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites) and
+      (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWritesWithNoUpdateFlag) and
       (JsPath \ "correspondenceCommonDetails").write[CorrespondenceCommonDetail](CorrespondenceCommonDetail.psaUpdateWrites))(directorOrPartner =>
     (commonElementsToTuple(directorOrPartner),
       directorOrPartner.previousAddressDetail,
