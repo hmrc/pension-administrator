@@ -34,8 +34,8 @@ object AppDependencies {
   private val reactiveMongoVersion = "7.12.0-play-26"
   private val jsonSchemeValidatorVersion = "1.0.3"
   private val jsonPathVersion = "2.6.0"
-  private val reactiveMongoTestVersion = "4.7.0-play-26"
-  private val hmrcTestVersion = "3.2.0"
+  private val reactiveMongoTestVersion = "4.8.0-play-26"
+  private val hmrcTestVersion = "3.5.0-play-26"
   private val pegDownVersion = "1.6.0"
 
   val compile = Seq(
@@ -67,7 +67,7 @@ object AppDependencies {
   val overrides: Set[ModuleID] = {
     val jettyFromWiremockVersion = "9.2.24.v20180105"
     Set(
-      "reactivemongo"              %% "reactivemongo"      % "0.16.1", //TODO REMOVE OVERRIDE AFTER FIX IS IMPLEMENTED ON REACTIVE MONGO
+      "reactivemongo"              %% "reactivemongo"      % "0.12.2", //TODO REMOVE OVERRIDE AFTER FIX IS IMPLEMENTED ON REACTIVE MONGO
       "org.eclipse.jetty"           % "jetty-client"       % jettyFromWiremockVersion,
       "org.eclipse.jetty"           % "jetty-continuation" % jettyFromWiremockVersion,
       "org.eclipse.jetty"           % "jetty-http"         % jettyFromWiremockVersion,
