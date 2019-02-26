@@ -101,8 +101,7 @@ class RegistrationConnectorImpl @Inject()(
     val url = config.registerWithoutIdOrganisationUrl
     val correlationId = headerUtils.getCorrelationId(hc.requestId.map(_.value))
 
-    val registerWithNoIdData = mandatoryWithoutIdData(correlationId).as[JsObject] ++
-      Json.toJson(registerData)(OrganisationRegistrant.writesOrganisationRegistrant).as[JsObject]
+    val registerWithNoIdData = Json.toJson(registerData)(OrganisationRegistrant.writesOrganisationRegistrantRequest(correlationId))
 
     Logger.debug(s"Registration Without Id Organisation request body:" +
       s"${Json.prettyPrint(registerWithNoIdData)}) headers: ${headerUtils.desHeaderWithoutCorrelationId.toString()}")
@@ -162,19 +161,5 @@ class RegistrationConnectorImpl @Inject()(
       case _ =>
         Left(handleErrorResponse(methodContext, url, response, Seq.empty))
     }
-  }
-
-  private def mandatoryWithoutIdData(correlationId: String): JsValue = {
-    Json.obj("regime" -> "PODA",
-      "acknowledgementReference" -> correlationId,
-      "isAnAgent" -> false,
-      "isAGroup" -> false,
-      "contactDetails" -> Json.obj(
-        "phoneNumber" -> JsNull,
-        "mobileNumber" -> JsNull,
-        "faxNumber" -> JsNull,
-        "emailAddress" -> JsNull
-      )
-    )
   }
 }
