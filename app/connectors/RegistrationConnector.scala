@@ -56,8 +56,7 @@ class RegistrationConnectorImpl @Inject()(
                                            invalidPayloadHandler: InvalidPayloadHandler
                                          ) extends RegistrationConnector with HttpResponseHelper with ErrorHandler with RegistrationAuditService {
 
-
-  private def headerCarrier: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeaderWithoutCorrelationId)
+  private def desHeaderCarrierWithoutCorrelationId: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeaderWithoutCorrelationId)
 
   override def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)
                                        (implicit hc: HeaderCarrier,
@@ -67,7 +66,7 @@ class RegistrationConnectorImpl @Inject()(
 
     Logger.debug(s"[Pensions-Scheme-Header-Carrier]-${headerUtils.desHeaderWithoutCorrelationId.toString()}")
 
-    http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], headerCarrier, implicitly) map {
+    http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrierWithoutCorrelationId, implicitly) map {
       handleResponse(_, registerWithIdUrl)
     } andThen sendPSARegistrationEvent(
       withId = true, user, "Individual", registerData, withIdIsUk
@@ -83,7 +82,7 @@ class RegistrationConnectorImpl @Inject()(
     val registerWithIdUrl = config.registerWithIdOrganisationUrl.format(utr)
     val psaType: String = organisationPsaType(registerData)
 
-    http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], headerCarrier, implicitly) map {
+    http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrierWithoutCorrelationId, implicitly) map {
       handleResponse(_, registerWithIdUrl)
     } andThen sendPSARegistrationEvent(
       withId = true, user, psaType, registerData, withIdIsUk
@@ -106,7 +105,7 @@ class RegistrationConnectorImpl @Inject()(
     Logger.debug(s"Registration Without Id Organisation request body:" +
       s"${Json.prettyPrint(registerWithNoIdData)}) headers: ${headerUtils.desHeaderWithoutCorrelationId.toString()}")
 
-    http.POST(url, registerWithNoIdData)(implicitly, httpResponseReads, headerCarrier, implicitly) map {
+    http.POST(url, registerWithNoIdData)(implicitly, httpResponseReads, desHeaderCarrierWithoutCorrelationId, implicitly) map {
       response =>
         Logger.debug(s"Registration Without Id Organisation response. Status=${response.status}\n${response.body}")
 
@@ -121,18 +120,16 @@ class RegistrationConnectorImpl @Inject()(
                                          (implicit hc: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = {
-
-    val correlationId = headerUtils.getCorrelationId(hc.requestId.map(_.value))
-
     val schema = "/resources/schemas/registrationWithoutIdRequest.json"
     val url = config.registerWithoutIdIndividualUrl
-    val apiWrites = RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(correlationId)
-    val body = Json.toJson(registrationRequest)(apiWrites)
+    val correlationId = headerUtils.getCorrelationId(hc.requestId.map(_.value))
+
+    val body = Json.toJson(registrationRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(correlationId))
 
     Logger.debug(s"Registration Without Id Individual request body:" +
       s"${Json.prettyPrint(body)}) headers: ${headerUtils.desHeaderWithoutCorrelationId.toString()}")
 
-    http.POST(url, body)(implicitly, httpResponseReads, headerCarrier, implicitly) map {
+    http.POST(url, body)(implicitly, httpResponseReads, desHeaderCarrierWithoutCorrelationId, implicitly) map {
       response =>
         Logger.debug(s"Registration Without Id Individual response. Status=${response.status}\n${response.body}")
 
