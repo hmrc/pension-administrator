@@ -20,7 +20,7 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.User
+import models.{SuccessResponse, User}
 import models.registrationnoid._
 import play.Logger
 import play.api.http.Status._
@@ -35,10 +35,10 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[RegistrationConnectorImpl])
 trait RegistrationConnector {
   def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)(
-    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]]
+    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, SuccessResponse]]
 
   def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)(
-    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]]
+    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, SuccessResponse]]
 
   def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)(
     implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]]
@@ -61,14 +61,14 @@ class RegistrationConnectorImpl @Inject()(
   override def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)
                                        (implicit hc: HeaderCarrier,
                                         ec: ExecutionContext,
-                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                        request: RequestHeader): Future[Either[HttpException, SuccessResponse]] = {
     val registerWithIdUrl = config.registerWithIdIndividualUrl.format(nino)
     val schema = "/resources/schemas/registrationWithIdRequest.json"
 
     Logger.debug(s"[Pensions-Scheme-Header-Carrier]-${headerUtils.desHeaderWithoutCorrelationId.toString()}")
 
     http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrierWithoutCorrelationId, implicitly) map {
-      handleResponse[JsValue](_, registerWithIdUrl, schema,  registerData, "Business Partner Matching")
+      handleResponse[SuccessResponse](_, registerWithIdUrl, schema,  registerData, "Business Partner Matching")
     } andThen sendPSARegistrationEvent(
       withId = true, user, "Individual", registerData, withIdIsUk
     )(auditService.sendEvent) andThen logWarning("registerWithIdIndividual")
@@ -78,14 +78,14 @@ class RegistrationConnectorImpl @Inject()(
   override def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)
                                          (implicit hc: HeaderCarrier,
                                           ec: ExecutionContext,
-                                          request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                          request: RequestHeader): Future[Either[HttpException, SuccessResponse]] = {
 
     val registerWithIdUrl = config.registerWithIdOrganisationUrl.format(utr)
     val psaType: String = organisationPsaType(registerData)
     val schema = "/resources/schemas/registrationWithIdRequest.json"
 
     http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrierWithoutCorrelationId, implicitly) map {
-      handleResponse[JsValue](_, registerWithIdUrl,schema, registerData,  "Business Partner Matching")
+      handleResponse[SuccessResponse](_, registerWithIdUrl,schema, registerData,  "Business Partner Matching")
     } andThen sendPSARegistrationEvent(
       withId = true, user, psaType, registerData, withIdIsUk
     )(auditService.sendEvent) andThen logWarning("registerWithIdOrganisation")

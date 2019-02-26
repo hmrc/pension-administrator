@@ -106,8 +106,8 @@ class RegistrationController @Inject()(
     } recoverWith recoverFromError
   }
 
-  private def handleResponse: PartialFunction[Either[HttpException, JsValue], Result] = {
-    case Right(json) => Ok(Json.toJson[SuccessResponse](json.as[SuccessResponse]))
+  private def handleResponse: PartialFunction[Either[HttpException, SuccessResponse], Result] = {
+    case Right(successResponse) => Ok(Json.toJson(successResponse))
     case Left(e: HttpException) => result(e)
   }
 

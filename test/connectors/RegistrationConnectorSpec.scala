@@ -21,7 +21,7 @@ import audit.{AuditService, PSARegistration}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours
-import models.User
+import models.{SuccessResponse, User}
 import models.registrationnoid._
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
@@ -72,7 +72,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual).map {
       response =>
-        response.right.value shouldBe registerIndividualResponse
+        response.right.value shouldBe registerIndividualResponse.as[SuccessResponse]
     }
 
   }
@@ -111,7 +111,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should behave like errorHandlerForPostApiFailures[JsValue](
+  it should behave like errorHandlerForPostApiFailures[SuccessResponse](
     connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual),
     registerIndividualWithIdUrl
   )
@@ -139,7 +139,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             isUk = Some(true),
             status = OK,
             request = testRegisterDataIndividual,
-            response = Some(registerIndividualResponse)
+            response = Some(Json.toJson(registerIndividualResponse.as[SuccessResponse]))
           )
         ) shouldBe true
     }
@@ -207,7 +207,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation).map {
       response =>
-        response.right.value shouldBe registerOrganisationResponse
+        response.right.value shouldBe registerOrganisationResponse.as[SuccessResponse]
     }
 
   }
