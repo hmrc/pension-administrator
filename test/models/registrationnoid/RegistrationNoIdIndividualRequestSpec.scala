@@ -16,7 +16,6 @@
 
 package models.registrationnoid
 
-import connectors.RegistrationConnectorImpl
 import org.joda.time.LocalDate
 import org.scalatest.{FlatSpec, Matchers}
 import play.api.Logger
@@ -29,7 +28,7 @@ class RegistrationNoIdIndividualRequestSpec extends FlatSpec with Matchers {
 
   "RegistrationNoIdIndividualRequest.apiWrites" should "transform a request with full address details" in {
 
-    val actual = Json.toJson(fullAddressRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
+    val actual = Json.toJson(fullAddressRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
 
     actual shouldEqual expectedFullAddressJson
 
@@ -37,7 +36,7 @@ class RegistrationNoIdIndividualRequestSpec extends FlatSpec with Matchers {
 
   it should "produce valid JSON for a full address details request" in {
 
-    val actual = Json.toJson(fullAddressRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
+    val actual = Json.toJson(fullAddressRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
     val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/registrationWithoutIdRequest.json")(actual)
 
     validationFailures shouldBe empty
@@ -46,7 +45,7 @@ class RegistrationNoIdIndividualRequestSpec extends FlatSpec with Matchers {
 
   it should "transform a request with minimal address details" in {
 
-    val actual = Json.toJson(minimalAddressRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
+    val actual = Json.toJson(minimalAddressRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
 
     actual shouldEqual expectedMinimalAddressJson
 
@@ -54,7 +53,7 @@ class RegistrationNoIdIndividualRequestSpec extends FlatSpec with Matchers {
 
   it should "produce valid JSON for a minimal address details request" in {
 
-    val actual = Json.toJson(minimalAddressRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
+    val actual = Json.toJson(minimalAddressRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
     val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/registrationWithoutIdRequest.json")(actual)
 
     validationFailures shouldBe empty

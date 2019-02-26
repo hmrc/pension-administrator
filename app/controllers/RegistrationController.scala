@@ -119,12 +119,7 @@ class RegistrationController @Inject()(
     implicit request => {
       retrieveUser { user =>
         registerConnector.registrationNoIdOrganisation(user, request.body) map {
-          case Right(jsValue) => {
-            jsValue.validate[RegisterWithoutIdResponse].fold(
-              errors => throw new JsResultException(errors),
-              value => Ok(Json.toJson(value))
-            )
-          }
+          case Right(response) => Ok(Json.toJson(response))
           case Left(e) => result(e)
         }
       }

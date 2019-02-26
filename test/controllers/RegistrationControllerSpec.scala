@@ -221,7 +221,8 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(inputRequestData))(any(), any(), any()))
         .thenReturn(Future.successful(Right(successResponse)))
 
-      val result = registrationController(individualRetrievalsWithNino, isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+      val result = registrationController(individualRetrievalsWithNino,
+        isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
 
       ScalaFutures.whenReady(result) { _ =>
         status(result) mustBe OK
@@ -468,11 +469,11 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     "return OK with successful response from connector" in {
 
-      val successResponse: JsObject = Json.obj(
+      val successResponse: RegisterWithoutIdResponse = Json.obj(
         "processingDate" -> LocalDate.now,
         "sapNumber" -> "1234567890",
         "safeId" -> "XE0001234567890"
-      )
+      ).as[RegisterWithoutIdResponse]
 
       when(mockRegistrationConnector.registrationNoIdOrganisation(any(), Matchers.eq(dataToEmtp))(any(), any(), any()))
         .thenReturn(Future.successful(Right(successResponse)))

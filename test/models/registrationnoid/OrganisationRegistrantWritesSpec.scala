@@ -44,7 +44,7 @@ class OrganisationRegistrantWritesSpec extends WordSpec with MustMatchers {
           """.stripMargin
         )
 
-        val result = Json.toJson(orgRegistrant)(RegistrationConnectorImpl.writesOrganisationRegistrant)
+        val result = Json.toJson(orgRegistrant)(OrganisationRegistrant.writesOrganisationRegistrant)
 
         result mustBe expectedJsValue
       }

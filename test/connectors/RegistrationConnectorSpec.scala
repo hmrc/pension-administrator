@@ -25,7 +25,6 @@ import models.User
 import models.registrationnoid._
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
-import play.api.http.Status
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
@@ -111,7 +110,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should behave like errorHandlerForPostApiFailures(
+  it should behave like errorHandlerForPostApiFailures[JsValue](
     connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual),
     registerIndividualWithIdUrl
   )
@@ -231,20 +230,6 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
   }
 
-  it should "handle CONFLICT (409)" in {
-    server.stubFor(
-      post(urlEqualTo(registerOrganisationWithIdUrl))
-        .willReturn(
-          aResponse()
-            .withStatus(CONFLICT)
-        )
-    )
-    connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation).map {
-      response =>
-        response.left.value shouldBe a[ConflictException]
-    }
-  }
-
   it should behave like errorHandlerForPostApiFailures(
     connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation),
     registerOrganisationWithIdUrl
@@ -336,42 +321,10 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant).map {
       response =>
-        response.right.value shouldBe registerWithoutIdResponseJson
+        response.right.value shouldBe registerWithoutIdResponse
     }
   }
 
-  it should "handle FORBIDDEN (403) - INVALID_SUBMISSION" in {
-
-    server.stubFor(
-      post(urlEqualTo(registerOrganisationWithoutIdUrl))
-        .willReturn(
-          forbidden
-            .withHeader("Content-Type", "application/json")
-            .withBody(errorResponse("INVALID_SUBMISSION"))
-        )
-    )
-
-    connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant) map {
-      response =>
-        response.left.value shouldBe a[ForbiddenException]
-        response.left.value.message should include("INVALID_SUBMISSION")
-    }
-
-  }
-
-  it should "handle CONFLICT (409)" in {
-    server.stubFor(
-      post(urlEqualTo(registerOrganisationWithoutIdUrl))
-        .willReturn(
-          aResponse()
-            .withStatus(CONFLICT)
-        )
-    )
-    connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant).map {
-      response =>
-        response.left.value shouldBe a[ConflictException]
-    }
-  }
 
   it should behave like errorHandlerForPostApiFailures(
     connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant),
@@ -865,6 +818,6 @@ object RegistrationConnectorSpec {
     )
 
   val registerIndividualWithoutIdRequestJson: JsValue =
-    Json.toJson(registerIndividualWithoutIdRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(testCorrelationId))
+    Json.toJson(registerIndividualWithoutIdRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(testCorrelationId))
 
 }
