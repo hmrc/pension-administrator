@@ -67,13 +67,13 @@ class RegistrationController @Inject()(
         case _ =>
           Future.failed(new BadRequestException("No request body received for register with Id Individual"))
       }
-    } recoverWith recoverFromError
+    }
   }
 
   private def registerWithIdManualIVDisabled(implicit request: Request[AnyContent]) = {
     retrieveIndividual { (nino, user) =>
       registerConnector.registerWithIdIndividual(nino, user, mandatoryPODSData()) map handleResponse
-    } recoverWith recoverFromError
+    }
   }
 
   private def retrieveIndividual(fn: (String, models.User) => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
@@ -103,7 +103,7 @@ class RegistrationController @Inject()(
             Future.failed(new BadRequestException("No request body received for Organisation"))
         }
       }
-    } recoverWith recoverFromError
+    }
   }
 
   private def handleResponse: PartialFunction[Either[HttpException, SuccessResponse], Result] = {
