@@ -88,12 +88,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual) map {
-      response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_NINO")
-    }
 
+    recoverToExceptionIf[Upstream4xxResponse](connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual)) map {
+      ex =>
+        ex.upstreamResponseCode shouldBe BAD_REQUEST
+        ex.message should include("INVALID_NINO")
+    }
   }
 
   it should "handle CONFLICT (409)" in {
@@ -104,9 +104,10 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             .withStatus(CONFLICT)
         )
     )
-    connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual).map {
-      response =>
-        response.left.value shouldBe a[ConflictException]
+
+    recoverToExceptionIf[Upstream4xxResponse](connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual)) map {
+      ex =>
+        ex.upstreamResponseCode shouldBe CONFLICT
     }
   }
 
@@ -222,12 +223,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation) map {
-      response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_UTR")
-    }
+    recoverToExceptionIf[Upstream4xxResponse](connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation)) map {
+      ex =>
 
+        ex.upstreamResponseCode shouldBe BAD_REQUEST
+        ex.message should include("INVALID_UTR")
+    }
   }
 
   it should behave like errorHandlerForPostApiFailures(

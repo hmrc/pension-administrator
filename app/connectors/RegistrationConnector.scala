@@ -63,11 +63,12 @@ class RegistrationConnectorImpl @Inject()(
                                         ec: ExecutionContext,
                                         request: RequestHeader): Future[Either[HttpException, JsValue]] = {
     val registerWithIdUrl = config.registerWithIdIndividualUrl.format(nino)
+    val schema = "/resources/schemas/registrationWithIdRequest.json"
 
     Logger.debug(s"[Pensions-Scheme-Header-Carrier]-${headerUtils.desHeaderWithoutCorrelationId.toString()}")
 
     http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrierWithoutCorrelationId, implicitly) map {
-      handleResponse(_, registerWithIdUrl)
+      handleResponse[JsValue](_, registerWithIdUrl, schema,  registerData, "Business Partner Matching")
     } andThen sendPSARegistrationEvent(
       withId = true, user, "Individual", registerData, withIdIsUk
     )(auditService.sendEvent) andThen logWarning("registerWithIdIndividual")
@@ -81,9 +82,10 @@ class RegistrationConnectorImpl @Inject()(
 
     val registerWithIdUrl = config.registerWithIdOrganisationUrl.format(utr)
     val psaType: String = organisationPsaType(registerData)
+    val schema = "/resources/schemas/registrationWithIdRequest.json"
 
     http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrierWithoutCorrelationId, implicitly) map {
-      handleResponse(_, registerWithIdUrl)
+      handleResponse[JsValue](_, registerWithIdUrl,schema, registerData,  "Business Partner Matching")
     } andThen sendPSARegistrationEvent(
       withId = true, user, psaType, registerData, withIdIsUk
     )(auditService.sendEvent) andThen logWarning("registerWithIdOrganisation")
@@ -109,7 +111,7 @@ class RegistrationConnectorImpl @Inject()(
       response =>
         Logger.debug(s"Registration Without Id Organisation response. Status=${response.status}\n${response.body}")
 
-        handleResponseWithoutID[RegisterWithoutIdResponse](response, url, schema, registerWithNoIdData, "Register without Id Organisation")
+        handleResponse[RegisterWithoutIdResponse](response, url, schema, registerWithNoIdData, "Register without Id Organisation")
 
     } andThen sendPSARegWithoutIdEvent(
       withId = false, user, "Organisation", Json.toJson(registerWithNoIdData), _ => Some(false)
@@ -133,7 +135,7 @@ class RegistrationConnectorImpl @Inject()(
       response =>
         Logger.debug(s"Registration Without Id Individual response. Status=${response.status}\n${response.body}")
 
-        handleResponseWithoutID[RegisterWithoutIdResponse](response, url, schema, body, "Register without Id Individual")
+        handleResponse[RegisterWithoutIdResponse](response, url, schema, body, "Register without Id Individual")
 
     } andThen sendPSARegWithoutIdEvent(
       withId = false, user, "Individual", Json.toJson(registrationRequest), _ => Some(false)
@@ -141,7 +143,7 @@ class RegistrationConnectorImpl @Inject()(
   }
 
 
-  private def handleResponseWithoutID[A](response: HttpResponse, url: String, schema: String, requestBody: JsValue, methodContext: String)(
+  private def handleResponse[A](response: HttpResponse, url: String, schema: String, requestBody: JsValue, methodContext: String)(
     implicit reads: Reads[A]): Either[HttpException, A] = {
 
     val method = "POST"
@@ -159,16 +161,6 @@ class RegistrationConnectorImpl @Inject()(
 
       case _ =>
         Left(handleErrorResponse(methodContext, url, response, Seq.empty))
-    }
-  }
-
-  private def handleResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
-    val badResponseSeq = Seq("INVALID_NINO", "INVALID_PAYLOAD", "INVALID_UTR")
-    response.status match {
-      case OK => Right(response.json)
-      case CONFLICT => Left(new ConflictException(response.body))
-      case FORBIDDEN if response.body.contains("INVALID_SUBMISSION") => Left(new ForbiddenException(response.body))
-      case _ => Left(handleErrorResponse("Business Partner Matching", url, response, badResponseSeq))
     }
   }
 
