@@ -25,18 +25,14 @@ class FeatureToggleBehaviours extends WordSpec with Matchers with GuiceOneAppPer
 
   private def configuration(name: String, on: Option[Boolean]): Boolean = {
 
-    val injector = on.fold {
-      app.injector
-    } {
-      b => new GuiceApplicationBuilder()
-        .configure(conf= s"features.$name" -> b.toString).build().injector
-    }
+    val injector = new GuiceApplicationBuilder()
+      .configure(on.fold ("features"->"")(b=> s"features.$name" -> b.toString)).build().injector
 
     injector.instanceOf[Configuration].getBoolean(s"features.$name").getOrElse(false)
 
   }
 
-  def featureToggle(name: String): Unit = {
+  def featureToggle(name: String, actualValue: Boolean): Unit = {
 
     "behave like a feature toggle" should {
 
@@ -50,6 +46,10 @@ class FeatureToggleBehaviours extends WordSpec with Matchers with GuiceOneAppPer
 
       s"return false when $name is not configured" in {
         configuration(name, None) shouldBe false
+      }
+
+      s"return actual conf value" in {
+        new GuiceApplicationBuilder().build().injector.instanceOf[Configuration].getBoolean(s"features.$name") shouldBe Some(actualValue)
       }
 
     }
