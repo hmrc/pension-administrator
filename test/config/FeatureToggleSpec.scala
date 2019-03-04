@@ -20,10 +20,6 @@ import toggles.FeatureToggleBehaviours
 
 class FeatureToggleSpec extends FeatureToggleBehaviours {
 
-  "is-iv-enabled new feature toggle" should {
-    behave like featureToggle("is-iv-enabled")
-  }
-
   "is-variations-enabled new feature toggle" should {
     behave like featureToggle("is-variations-enabled")
   }
