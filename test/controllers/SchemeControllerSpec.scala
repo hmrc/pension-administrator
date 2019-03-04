@@ -189,9 +189,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
     val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
     status(result) mustBe NO_CONTENT
 
-    val expectedPsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removalDate)
-
-    fakeAuditService.verifySent(PSARemovalFromSchemeAuditEvent(expectedPsaToBeRemovedFromScheme)) mustBe true
+    fakeAuditService.verifySent(PSARemovalFromSchemeAuditEvent(PsaToBeRemovedFromScheme(psaId.id, pstr, removalDate))) mustBe true
   }
 
   it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
@@ -454,7 +452,7 @@ object SchemeControllerSpec extends SpecBase {
 
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"
-  private val removalDate = new LocalDate(2018,1,1)
+  private val removalDate = new LocalDate(2018,2,1)
   private val removeDate: LocalDate = LocalDate.parse("2018-02-01")
   private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removeDate)
   private val removePsaJson: JsValue = Json.toJson(removePsaDataModel)

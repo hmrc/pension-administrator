@@ -30,8 +30,10 @@ class StubSuccessfulAuditService extends AuditService {
                                          (implicit rh: RequestHeader, ec: ExecutionContext): Unit =
     events += event
 
-  def verifySent[T <: AuditEvent](event: T): Boolean =
+  def verifySent[T <: AuditEvent](event: T): Boolean = {
+    println( "\n>>" + events)
     events.contains(event)
+  }
 
   def verifyNothingSent(): Boolean = events.isEmpty
 

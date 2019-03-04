@@ -16,10 +16,11 @@
 
 package controllers
 
-import audit.AuditService
+import audit.{AuditService, PSARemovalFromSchemeAuditEvent}
 import com.google.inject.Inject
 import connectors.DesConnector
 import models.PsaToBeRemovedFromScheme
+import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -69,8 +70,11 @@ class SchemeController @Inject()(schemeService: SchemeService,
 
   def removePsa: Action[PsaToBeRemovedFromScheme] = Action.async(parse.json[PsaToBeRemovedFromScheme]) {
     implicit request =>
-      schemeConnector.removePSA(request.body)map {
-        case Right(_) =>  NoContent
+      val psaToBeRemoved: PsaToBeRemovedFromScheme = request.body
+      schemeConnector.removePSA(psaToBeRemoved) map {
+        case Right(_) =>
+          auditService.sendEvent(PSARemovalFromSchemeAuditEvent(psaToBeRemoved))
+          NoContent
         case Left(e) => result(e)
       }
   }
