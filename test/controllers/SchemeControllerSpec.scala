@@ -17,10 +17,9 @@
 package controllers
 
 import akka.stream.Materializer
-import audit.{EmailAuditEvent, PSARemovalFromSchemeAuditEvent}
-import audit.testdoubles.StubSuccessfulAuditService
+import audit.{PSARemovalFromSchemeAuditEvent, StubSuccessfulAuditService}
 import base.{JsonFileReader, SpecBase}
-import models.{PsaToBeRemovedFromScheme, Sent}
+import models.PsaToBeRemovedFromScheme
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.http.Status.BAD_GATEWAY
