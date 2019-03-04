@@ -22,8 +22,9 @@ import service.InvitationService
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.ErrorHandler
+
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future}
+import scala.concurrent.Future
 
 class InvitationController @Inject()(invitationService: InvitationService,
                                      cc: ControllerComponents

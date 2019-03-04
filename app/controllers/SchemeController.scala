@@ -16,6 +16,7 @@
 
 package controllers
 
+import audit.AuditService
 import com.google.inject.Inject
 import connectors.DesConnector
 import models.PsaToBeRemovedFromScheme
@@ -32,7 +33,9 @@ import scala.concurrent.Future
 
 class SchemeController @Inject()(schemeService: SchemeService,
                                  schemeConnector: DesConnector,
-                                 cc: ControllerComponents) extends BackendController(cc) with ErrorHandler {
+                                 cc: ControllerComponents,
+                                 auditService: AuditService
+                                ) extends BackendController(cc) with ErrorHandler {
 
   def registerPSA: Action[AnyContent] = Action.async {
     implicit request => {

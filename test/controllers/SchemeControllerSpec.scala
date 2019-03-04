@@ -17,8 +17,10 @@
 package controllers
 
 import akka.stream.Materializer
+import audit.{EmailAuditEvent, PSARemovalFromSchemeAuditEvent}
+import audit.testdoubles.StubSuccessfulAuditService
 import base.{JsonFileReader, SpecBase}
-import models.PsaToBeRemovedFromScheme
+import models.{PsaToBeRemovedFromScheme, Sent}
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.http.Status.BAD_GATEWAY
@@ -173,11 +175,23 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
     contentAsString(result) mustBe "not found"
   }
 
-  "removePSA" should "return OK when service returns successfully" in {
+  "removePSA" should "return NO_CONTENT when service returns successfully" in {
 
     val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
     status(result) mustBe NO_CONTENT
 
+  }
+
+  it should "generate an audit event when service returns successfully" in {
+
+    fakeAuditService.reset()
+
+    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+    status(result) mustBe NO_CONTENT
+
+    val expectedPsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removalDate)
+
+    fakeAuditService.verifySent(PSARemovalFromSchemeAuditEvent(expectedPsaToBeRemovedFromScheme)) mustBe true
   }
 
   it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
@@ -432,12 +446,15 @@ object SchemeControllerSpec extends SpecBase {
 
   private val psaVariationData : JsValue = readJsonFromFile("/data/validPsaVariationRequest.json")
 
+  private val fakeAuditService = new StubSuccessfulAuditService()
+
   private val fakeSchemeService = new FakeSchemeService
   private val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
-  private val controller = new SchemeController(fakeSchemeService, fakeDesConnector, controllerComponents)
+  private val controller = new SchemeController(fakeSchemeService, fakeDesConnector, controllerComponents, fakeAuditService)
 
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"
+  private val removalDate = new LocalDate(2018,1,1)
   private val removeDate: LocalDate = LocalDate.parse("2018-02-01")
   private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removeDate)
   private val removePsaJson: JsValue = Json.toJson(removePsaDataModel)
