@@ -19,6 +19,7 @@ package controllers
 import akka.stream.Materializer
 import base.{JsonFileReader, SpecBase}
 import connectors.SchemeConnector
+import controllers.DeregistrationControllerSpec.psaId
 import org.mockito.Matchers
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -58,6 +59,15 @@ class DeregistrationControllerSpec extends SpecBase with MockitoSugar with Befor
     "return OK and true when canDeregister called with psa ID having no schemes" in {
       when(mockSchemeConnector.listOfSchemes(Matchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Right(listSchemesResponseEmpty)))
+      val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
+
+      status(result) mustBe OK
+      contentAsJson(result) mustEqual JsBoolean(true)
+    }
+
+    "return OK and true when canDeregister called with psa ID having no scheme detail item at all" in {
+      when(mockSchemeConnector.listOfSchemes(Matchers.eq(psaId))(any(), any(), any()))
+        .thenReturn(Future.successful(Right(listSchemesResponseNoSchemeDetail)))
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
@@ -105,6 +115,11 @@ object DeregistrationControllerSpec extends JsonFileReader {
                                            |  "totalSchemesRegistered": "0",
                                            |  "schemeDetail": []
                                            |}""".stripMargin )
+
+  private val listSchemesResponseNoSchemeDetail = Json.parse( """{
+                                                       |  "processingDate": "2001-12-17T09:30:47Z",
+                                                       |  "totalSchemesRegistered": "0"
+                                                       |}""".stripMargin )
   private val psaId = "A123456"
 
 }
