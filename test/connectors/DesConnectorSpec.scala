@@ -16,7 +16,7 @@
 
 package connectors
 
-import audit.{AuditService, StubSuccessfulAuditService}
+import audit.{AuditService, PSARemovalFromSchemeAuditEvent, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.FeatureSwitchManagementService
@@ -64,17 +64,6 @@ class DesConnectorSpec extends AsyncFlatSpec
     )
 
   lazy val connector: DesConnector = injector.instanceOf[DesConnector]
-
-
-  //  it should "generate an audit event when service returns successfully" in {
-  //
-  //    fakeAuditService.reset()
-  //
-  //    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
-  //    status(result) mustBe NO_CONTENT
-  //
-  //    fakeAuditService.verifySent(PSARemovalFromSchemeAuditEvent(PsaToBeRemovedFromScheme(psaId.id, pstr, removalDate))) mustBe true
-  //  }
 
   "DesConnector registerPSA" should "handle OK (200)" in {
     val successResponse = Json.obj(
@@ -284,6 +273,11 @@ class DesConnectorSpec extends AsyncFlatSpec
     )
     connector.removePSA(removePsaDataModel).map { response =>
       response.right.value shouldBe successResponse
+
+      val expectedAuditEvent = PSARemovalFromSchemeAuditEvent(PsaToBeRemovedFromScheme(
+        removePsaDataModel.psaId, removePsaDataModel.pstr, removePsaDataModel.removalDate))
+      auditService.verifySent(expectedAuditEvent) shouldBe true
+
     }
   }
 
@@ -470,6 +464,7 @@ class DesConnectorSpec extends AsyncFlatSpec
             .withHeader("Content-Type", "application/json")
         )
     )
+
     connector.deregisterPSA(psaId.id).map { response =>
       response.right.value shouldBe successResponse
     }
