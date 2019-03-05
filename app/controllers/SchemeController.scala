@@ -73,7 +73,6 @@ class SchemeController @Inject()(schemeService: SchemeService,
       val psaToBeRemoved: PsaToBeRemovedFromScheme = request.body
       schemeConnector.removePSA(psaToBeRemoved) map {
         case Right(_) =>
-          auditService.sendEvent(PSARemovalFromSchemeAuditEvent(psaToBeRemoved))
           NoContent
         case Left(e) => result(e)
       }

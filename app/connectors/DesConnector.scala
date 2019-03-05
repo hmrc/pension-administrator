@@ -123,6 +123,8 @@ class DesConnectorImpl @Inject()(
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
+    // do audit
+
     http.POST[JsValue, HttpResponse](removePsaUrl, data)(implicitly, implicitly, hc, implicitly) map {
       handlePostResponse(_, removePsaUrl)
     } andThen logFailures("remove PSA", data, removePsaSchema)

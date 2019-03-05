@@ -65,6 +65,17 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   lazy val connector: DesConnector = injector.instanceOf[DesConnector]
 
+
+  //  it should "generate an audit event when service returns successfully" in {
+  //
+  //    fakeAuditService.reset()
+  //
+  //    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+  //    status(result) mustBe NO_CONTENT
+  //
+  //    fakeAuditService.verifySent(PSARemovalFromSchemeAuditEvent(PsaToBeRemovedFromScheme(psaId.id, pstr, removalDate))) mustBe true
+  //  }
+
   "DesConnector registerPSA" should "handle OK (200)" in {
     val successResponse = Json.obj(
       "processingDate" -> LocalDate.now,

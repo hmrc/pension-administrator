@@ -181,16 +181,6 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
 
   }
 
-  it should "generate an audit event when service returns successfully" in {
-
-    fakeAuditService.reset()
-
-    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
-    status(result) mustBe NO_CONTENT
-
-    fakeAuditService.verifySent(PSARemovalFromSchemeAuditEvent(PsaToBeRemovedFromScheme(psaId.id, pstr, removalDate))) mustBe true
-  }
-
   it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
 
     fakeDesConnector.setRemovePsaResponse(
