@@ -16,11 +16,9 @@
 
 package controllers
 
-import audit.{AuditService, PSARemovalFromSchemeAuditEvent}
 import com.google.inject.Inject
 import connectors.DesConnector
 import models.PsaToBeRemovedFromScheme
-import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -34,8 +32,7 @@ import scala.concurrent.Future
 
 class SchemeController @Inject()(schemeService: SchemeService,
                                  schemeConnector: DesConnector,
-                                 cc: ControllerComponents,
-                                 auditService: AuditService
+                                 cc: ControllerComponents
                                 ) extends BackendController(cc) with ErrorHandler {
 
   def registerPSA: Action[AnyContent] = Action.async {
