@@ -125,6 +125,9 @@ class DesConnectorImpl @Inject()(
 
     http.POST[JsValue, HttpResponse](removePsaUrl, data)(implicitly, implicitly, hc, implicitly) map {
       handlePostResponse(_, removePsaUrl)
+    } andThen {
+      case Success(Right(_)) =>
+        auditService.sendEvent(PSARemovalFromSchemeAuditEvent(psaToBeRemoved))
     } andThen logFailures("remove PSA", data, removePsaSchema)
   }
 

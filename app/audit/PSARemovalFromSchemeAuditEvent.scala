@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package config
+package audit
 
-import toggles.FeatureToggleBehaviours
+import models.PsaToBeRemovedFromScheme
+import org.joda.time.format.DateTimeFormat
 
-class FeatureToggleSpec extends FeatureToggleBehaviours {
+case class PSARemovalFromSchemeAuditEvent(psaToBeRemovedFromScheme: PsaToBeRemovedFromScheme) extends AuditEvent {
+  override def auditType: String = "PSARemoveFromScheme"
 
-  "is-iv-enabled new feature toggle" should {
-    behave like featureToggle("is-iv-enabled", true)
-  }
-
-  "is-variations-enabled new feature toggle" should {
-    behave like featureToggle("is-variations-enabled", false)
-  }
+  override def details: Map[String, String] =
+    Map(
+      "psaId" -> psaToBeRemovedFromScheme.psaId,
+      "pstr" -> psaToBeRemovedFromScheme.pstr,
+      "removalDate" -> psaToBeRemovedFromScheme.removalDate.toString(DateTimeFormat.forPattern("dd MMMM YYYY"))
+    )
 }

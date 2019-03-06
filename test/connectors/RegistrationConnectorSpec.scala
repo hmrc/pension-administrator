@@ -16,8 +16,7 @@
 
 package connectors
 
-import audit.testdoubles.StubSuccessfulAuditService
-import audit.{AuditService, PSARegistration}
+import audit.{AuditService, PSARegistration, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours
@@ -25,7 +24,6 @@ import models.User
 import models.registrationnoid._
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
-import play.api.http.Status
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
