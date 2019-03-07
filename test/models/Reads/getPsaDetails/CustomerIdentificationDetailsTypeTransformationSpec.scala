@@ -954,8 +954,8 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
        "postcode" : "TF3 4DC",
        "country" : "GB"
      },
+     "adviserName": "Acme Pensions Ltd",
      "adviserDetails" : {
-             "name" : "Acme Pensions Ltd",
              "email" : "acme_pensions@test.com",
              "phone" : "0044-0987654232"
      },
