@@ -45,7 +45,8 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
       addressTransformer.getAddressYearsBasedOnLegalStatus and
       addressTransformer.getPreviousAddressBasedOnLegalStatus and
       adviserTransformer.getAdviser and
-      directorOrPartnerTransformer.getDirectorsOrPartners reduce
+      directorOrPartnerTransformer.getDirectorsOrPartners and
+      getAreYouInUK reduce
 
 
   private val getOrganisationOrPartnerDetails: Reads[JsObject] = {
@@ -56,5 +57,8 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
 
   private val getCrn = ((__ \ 'companyRegistrationNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'crnNumber).json.pick)
     orElse doNothing)
+
+  private val getAreYouInUK: Reads[JsObject] =
+    ((__ \ 'areYouInUK).json.copyFrom((__ \ "psaSubscriptionDetails" \ "correspondenceAddressDetails" \ "nonUKAddress").json.pick))
 
 }
