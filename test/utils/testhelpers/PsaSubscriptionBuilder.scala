@@ -52,7 +52,7 @@ object PsaSubscriptionBuilder {
   true, Some(previousAddress), Some(Seq(director1, director2)), Some(pensionsAdvisor))
   
   val psaSubscriptionUserAnswers = """{
-                                        "areYouInUK" : false,
+                                        "areYouInUK" : true,
                                         "registrationInfo":{  
                                            "legalStatus":"Individual",
                                            "sapNumber":"",
