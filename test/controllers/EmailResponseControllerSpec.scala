@@ -16,8 +16,7 @@
 
 package controllers
 
-import audit.testdoubles.StubSuccessfulAuditService
-import audit.{AuditService, EmailAuditEvent}
+import audit.{AuditService, EmailAuditEvent, StubSuccessfulAuditService}
 import base.SpecBase
 import models._
 import models.enumeration.JourneyType

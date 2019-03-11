@@ -16,8 +16,7 @@
 
 package connectors
 
-import audit.testdoubles.StubSuccessfulAuditService
-import audit.{AuditService, PSARegistration}
+import audit.{AuditService, PSARegistration, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours

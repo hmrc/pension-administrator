@@ -173,7 +173,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
     contentAsString(result) mustBe "not found"
   }
 
-  "removePSA" should "return OK when service returns successfully" in {
+  "removePSA" should "return NO_CONTENT when service returns successfully" in {
 
     val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
     status(result) mustBe NO_CONTENT
@@ -438,6 +438,7 @@ object SchemeControllerSpec extends SpecBase {
 
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"
+  private val removalDate = new LocalDate(2018,2,1)
   private val removeDate: LocalDate = LocalDate.parse("2018-02-01")
   private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removeDate)
   private val removePsaJson: JsValue = Json.toJson(removePsaDataModel)

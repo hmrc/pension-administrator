@@ -16,7 +16,7 @@
 
 package connectors
 
-import audit.{AuditService, StubSuccessfulAuditService}
+import audit.{AuditService, PSARemovalFromSchemeAuditEvent, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.FeatureSwitchManagementService
@@ -273,6 +273,11 @@ class DesConnectorSpec extends AsyncFlatSpec
     )
     connector.removePSA(removePsaDataModel).map { response =>
       response.right.value shouldBe successResponse
+
+      val expectedAuditEvent = PSARemovalFromSchemeAuditEvent(PsaToBeRemovedFromScheme(
+        removePsaDataModel.psaId, removePsaDataModel.pstr, removePsaDataModel.removalDate))
+      auditService.verifySent(expectedAuditEvent) shouldBe true
+
     }
   }
 
@@ -459,6 +464,7 @@ class DesConnectorSpec extends AsyncFlatSpec
             .withHeader("Content-Type", "application/json")
         )
     )
+
     connector.deregisterPSA(psaId.id).map { response =>
       response.right.value shouldBe successResponse
     }
