@@ -36,24 +36,20 @@ trait RegistrationAuditService {
     )
   }
 
-  def withIdIsUk(response: JsValue): Option[Boolean] = {
+  def withIdIsUk(response: SuccessResponse): Option[Boolean] = {
 
-    response.validate[SuccessResponse].fold(
-      _ => None,
-      success => success.address match {
-        case _: UkAddress => Some(true)
-        case _ => Some(false)
-      }
-    )
-
+    response.address match {
+      case _: UkAddress => Some(true)
+      case _ => Some(false)
+    }
   }
 
-  def sendPSARegistrationEvent(withId: Boolean, user: User, psaType: String, registerData: JsValue, isUk: JsValue => Option[Boolean])
+  def sendPSARegistrationEvent(withId: Boolean, user: User, psaType: String, registerData: JsValue, isUk: SuccessResponse => Option[Boolean])
                               (sendEvent: PSARegistration => Unit)
-                              (implicit request: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+                              (implicit request: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, SuccessResponse]], Unit] = {
 
-    case Success(Right(json)) =>
-      sendAuditEvent(withId, user.externalId, psaType, true, isUk(json), Status.OK, registerData, Some(json))(sendEvent)
+    case Success(Right(successResponse)) =>
+      sendAuditEvent(withId, user.externalId, psaType, true, isUk(successResponse), Status.OK, registerData, Some(Json.toJson(successResponse)))(sendEvent)
 
     case Success(Left(e)) =>
       sendAuditEvent(withId, user.externalId, psaType, false, None, e.responseCode, registerData, None)(sendEvent)
@@ -80,8 +76,10 @@ trait RegistrationAuditService {
 
   }
 
-  private def sendAuditEvent(withId: Boolean, externalId: String, psaType: String, found : Boolean, isUk:Option[Boolean],
-                             status : Int, request:JsValue, response:Option[JsValue])(sendEvent: PSARegistration => Unit): Unit = {
+  private def sendAuditEvent(withId: Boolean, externalId: String, psaType: String, found: Boolean, isUk: Option[Boolean],
+                             status: Int, request: JsValue, response: Option[JsValue])(sendEvent: PSARegistration => Unit): Unit
+
+  = {
     sendEvent(
       PSARegistration(
         withId = withId,

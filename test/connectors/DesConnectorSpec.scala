@@ -154,7 +154,7 @@ class DesConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should behave like errorHandlerForPostApiFailures(
+  it should behave like errorHandlerForPostApiFailures[JsValue](
     connector.registerPSA(registerPsaData),
     registerPsaUrl
   )
