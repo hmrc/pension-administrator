@@ -16,7 +16,6 @@
 
 package models.registrationnoid
 
-import connectors.RegistrationConnectorImpl
 import org.scalatest.{MustMatchers, WordSpec}
 import play.api.libs.json.Json
 
@@ -28,8 +27,17 @@ class OrganisationRegistrantWritesSpec extends WordSpec with MustMatchers {
         val orgRegistrant = OrganisationRegistrant(OrganisationName("test company name"),
           Address("line 1", "line 2", Some("line 3"), Some("line4"), None, "DE"))
         val expectedJsValue = Json.parse(
-          """
-            |{
+          """{
+            |  "regime": "PODA",
+            |  "acknowledgementReference": "test-correlation-id",
+            |  "isAnAgent": false,
+            |  "isAGroup": false,
+            |  "contactDetails": {
+            |    "phoneNumber": null,
+            |    "mobileNumber": null,
+            |    "faxNumber": null,
+            |    "emailAddress": null
+            |  },
             |  "organisation": {
             |    "organisationName": "test company name"
             |  },
@@ -44,7 +52,7 @@ class OrganisationRegistrantWritesSpec extends WordSpec with MustMatchers {
           """.stripMargin
         )
 
-        val result = Json.toJson(orgRegistrant)(RegistrationConnectorImpl.writesOrganisationRegistrant)
+        val result = Json.toJson(orgRegistrant)(OrganisationRegistrant.writesOrganisationRegistrantRequest("test-correlation-id"))
 
         result mustBe expectedJsValue
       }
