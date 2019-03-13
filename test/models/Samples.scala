@@ -72,7 +72,7 @@ trait Samples {
     middleName = Some("Does Does"),
     lastName = "Doe",
     dateOfBirth = LocalDate.parse("2019-01-31"),
-    nino = Some("SL211111A"),
+    referenceOrNino = Some("SL211111A"),
     noNinoReason = Some("he can't find it"),
     utr = Some("123456789"),
     noUtrReason = Some("he can't find it"),

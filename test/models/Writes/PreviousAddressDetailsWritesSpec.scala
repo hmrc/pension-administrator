@@ -47,10 +47,10 @@ class PreviousAddressDetailsWritesSpec extends WordSpec with MustMatchers with O
       }
 
       "we have an isChanged flag" in {
-        val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample), Some(true))
+        val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample.copy(isChanged = Some(true))), Some(true))
         val result = Json.toJson(previousAddress)(PreviousAddressDetails.psaUpdateWrites)
 
-        (result \ "changeFlag").asOpt[Boolean] mustBe previousAddress.isChanged
+        (result \ "changeFlag").asOpt[Boolean] mustBe Some(true)
       }
 
       "we don't require isChanged flag" in {
