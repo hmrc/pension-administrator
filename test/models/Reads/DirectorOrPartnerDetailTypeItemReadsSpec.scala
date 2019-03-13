@@ -71,7 +71,7 @@ class DirectorOrPartnerDetailTypeItemReadsSpec extends WordSpec with MustMatcher
           "We have a director nino" in {
             val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
 
-            result.head.referenceOrNino mustBe directorOrPartnerSample(personType).referenceOrNino
+            result.head.nino mustBe directorOrPartnerSample(personType).nino
           }
 
           "We don't have a nino" in {
@@ -79,7 +79,7 @@ class DirectorOrPartnerDetailTypeItemReadsSpec extends WordSpec with MustMatcher
               (s"${personType}Nino" -> Json.obj("hasNino" -> JsBoolean(false))))
             val result = JsArray(directorsNoNino).as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
 
-            result.last.referenceOrNino mustBe None
+            result.last.nino mustBe None
           }
 
           "We have a reason for not having nino" in {

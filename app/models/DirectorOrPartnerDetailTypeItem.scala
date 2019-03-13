@@ -24,7 +24,7 @@ import play.api.libs.json._
 
 case class DirectorOrPartnerDetailTypeItem(sequenceId: String, entityType: String, title: Option[String] = None,
                                            firstName: String, middleName: Option[String] = None, lastName: String,
-                                           dateOfBirth: LocalDate, referenceOrNino: Option[String] = None,
+                                           dateOfBirth: LocalDate, nino: Option[String] = None,
                                            noNinoReason: Option[String] = None, utr: Option[String] = None,
                                            noUtrReason: Option[String] = None,
                                            correspondenceCommonDetail: CorrespondenceCommonDetail,
@@ -57,7 +57,7 @@ object DirectorOrPartnerDetailTypeItem {
       directorOrPartner.middleName,
       directorOrPartner.lastName,
       directorOrPartner.dateOfBirth,
-      directorOrPartner.referenceOrNino,
+      directorOrPartner.nino,
       directorOrPartner.noNinoReason,
       directorOrPartner.utr,
       directorOrPartner.noUtrReason)
@@ -127,7 +127,7 @@ object DirectorOrPartnerDetailTypeItem {
         middleName = directorOrPartnerPersonalDetails.middleName,
         lastName = directorOrPartnerPersonalDetails.lastName,
         dateOfBirth = directorOrPartnerPersonalDetails.dateOfBirth,
-        referenceOrNino = ninoDetails.flatMap(_._1),
+        nino = ninoDetails.flatMap(_._1),
         noNinoReason = ninoDetails.flatMap(_._2),
         utr = utrDetails.flatMap(_._1),
         noUtrReason = utrDetails.flatMap(_._2),

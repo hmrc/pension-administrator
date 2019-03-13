@@ -57,6 +57,8 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
   private def convertPensionSchemeAdministrator(json: JsValue)(
     block: PensionSchemeAdministrator => Future[Either[HttpException, JsValue]]): Future[Either[HttpException, JsValue]] = {
 
+    Logger.debug(s"[PSA-Variation-InComing-Payload]$json")
+
     Try(json.convertTo[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)) match {
       case Success(pensionSchemeAdministrator) =>
 
