@@ -20,7 +20,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 case class PreviousAddressDetails(isPreviousAddressLast12Month: Boolean,
-                                  previousAddressDetails: Option[Address] = None, isChanged : Option[Boolean] = None)
+                                  previousAddressDetails: Option[Address] = None, isChanged: Option[Boolean] = None)
 
 object PreviousAddressDetails {
   implicit val formats: Format[PreviousAddressDetails] = Json.format[PreviousAddressDetails]
@@ -34,7 +34,14 @@ object PreviousAddressDetails {
     (JsPath \ "isPreviousAddressLast12Month").write[Boolean] and
       (JsPath \ "previousAddressDetails").writeNullable[Address](Address.updateWrites) and
       (JsPath \ "changeFlag").write[Boolean]
-    ) (previousAddress => (previousAddress.isPreviousAddressLast12Month, previousAddress.previousAddressDetails, previousAddress.isChanged.fold(false)(identity)))
+    ) { previousAddress => {
+    val isChangeFlag = previousAddress.previousAddressDetails match {
+      case Some(UkAddress(_, _, _, _, _, _, isChanged)) => isChanged
+      case Some(InternationalAddress(_, _, _, _, _, _, isChanged)) => isChanged
+      case _ => None
+    }
+    (previousAddress.isPreviousAddressLast12Month, previousAddress.previousAddressDetails,
+      isChangeFlag.fold(false)(identity))}}
 
   val psaUpdateWritesWithNoUpdateFlag: Writes[PreviousAddressDetails] = (
     (JsPath \ "isPreviousAddressLast12Month").write[Boolean] and
