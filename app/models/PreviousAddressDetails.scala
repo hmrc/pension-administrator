@@ -34,14 +34,7 @@ object PreviousAddressDetails {
     (JsPath \ "isPreviousAddressLast12Month").write[Boolean] and
       (JsPath \ "previousAddressDetails").writeNullable[Address](Address.updateWrites) and
       (JsPath \ "changeFlag").write[Boolean]
-    ) { previousAddress => {
-    val isChangeFlag = previousAddress.previousAddressDetails match {
-      case Some(UkAddress(_, _, _, _, _, _, isChanged)) => isChanged
-      case Some(InternationalAddress(_, _, _, _, _, _, isChanged)) => isChanged
-      case _ => None
-    }
-    (previousAddress.isPreviousAddressLast12Month, previousAddress.previousAddressDetails,
-      isChangeFlag.fold(false)(identity))}}
+    ) (previousAddress => (previousAddress.isPreviousAddressLast12Month, previousAddress.previousAddressDetails, previousAddress.isChanged.fold(false)(identity)))
 
   val psaUpdateWritesWithNoUpdateFlag: Writes[PreviousAddressDetails] = (
     (JsPath \ "isPreviousAddressLast12Month").write[Boolean] and
@@ -51,7 +44,7 @@ object PreviousAddressDetails {
   def apiReads(typeOfAddressDetail: String): Reads[PreviousAddressDetails] = (
     (JsPath \ s"${typeOfAddressDetail}AddressYears").read[String] and
       (JsPath \ s"${typeOfAddressDetail}PreviousAddress").readNullable[Address] and
-      (JsPath \ "isChanged").readNullable[Boolean]
+      (JsPath \ s"${typeOfAddressDetail}PreviousAddressIsChanged").readNullable[Boolean]
     ) ((addressLast12Months, address, isChanged) => {
     val isAddressLast12Months = if (addressLast12Months == "under_a_year") true else false
     PreviousAddressDetails(isAddressLast12Months, address, isChanged)

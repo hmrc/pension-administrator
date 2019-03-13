@@ -62,7 +62,7 @@ class PreviousAddressDetailReadsSpec extends WordSpec with MustMatchers with Opt
       "we have an isChanged flag" in {
         val input = Json.obj("companyAddressYears" -> JsString("under_a_year"),
           "companyPreviousAddress" -> Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"),
-            "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"), "country" -> JsString("IT")), "isChanged" -> JsBoolean(true))
+            "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"), "country" -> JsString("IT")), "companyPreviousAddressIsChanged" -> JsBoolean(true))
 
         val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("company"))
 
