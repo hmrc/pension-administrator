@@ -39,6 +39,13 @@ object Address {
       InternationalAddress.updateWrites.writes(address)
   }
 
+  val updatePreviousAddressWrites: Writes[Address] = Writes {
+    case address: UkAddress =>
+      UkAddress.updatePreviousAddressWrites.writes(address)
+    case address: InternationalAddress =>
+      InternationalAddress.updatePreviousAddressWrites.writes(address)
+  }
+
   val defaultWrites: Writes[Address] = Writes {
     case address: UkAddress =>
       UkAddress.defaultWrites.writes(address)
@@ -97,6 +104,15 @@ object UkAddress {
     ukAddress.countryCode,
     ukAddress.postalCode, ukAddress.isChanged,false))
 
+  implicit val updatePreviousAddressWrites: Writes[UkAddress] = (
+    JsPath.write(Address.commonAddressWrites) and
+      (JsPath \ "countryCode").write[String] and
+      (JsPath \ "postalCode").write[String] and
+      (JsPath \ "nonUKAddress").write[Boolean]
+    ) (ukAddress => ((ukAddress.addressLine1, ukAddress.addressLine2, ukAddress.addressLine3, ukAddress.addressLine4),
+    ukAddress.countryCode,
+    ukAddress.postalCode,false))
+
   val defaultWrites: Writes[UkAddress] = Json.writes[UkAddress]
 
   val apiReads: Reads[UkAddress] = (
@@ -140,6 +156,19 @@ object InternationalAddress {
     internationalAddress.addressLine4),
     internationalAddress.countryCode,
     internationalAddress.postalCode, internationalAddress.isChanged, true))
+
+  implicit val updatePreviousAddressWrites : Writes[InternationalAddress] = (
+    JsPath.write(Address.commonAddressWrites) and
+      (JsPath \ "countryCode").write[String] and
+      (JsPath \ "postalCode").writeNullable[String] and
+      (JsPath \ "nonUKAddress").write[Boolean]
+    ) (internationalAddress => ((
+    internationalAddress.addressLine1,
+    internationalAddress.addressLine2,
+    internationalAddress.addressLine3,
+    internationalAddress.addressLine4),
+    internationalAddress.countryCode,
+    internationalAddress.postalCode, true))
 
 
   val defaultWrites: Writes[InternationalAddress] = Json.writes[InternationalAddress]
