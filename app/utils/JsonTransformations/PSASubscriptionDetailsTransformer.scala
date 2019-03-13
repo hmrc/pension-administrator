@@ -46,7 +46,7 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
       addressTransformer.getPreviousAddressBasedOnLegalStatus and
       adviserTransformer.getAdviser and
       directorOrPartnerTransformer.getDirectorsOrPartners and
-      getAreYouInUK reduce
+      getAreYouInUK and adviserTransformer.getWorkingKnowledge reduce
 
 
   private val getOrganisationOrPartnerDetails: Reads[JsObject] = {
