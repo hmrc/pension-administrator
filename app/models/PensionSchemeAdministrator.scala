@@ -165,7 +165,6 @@ object PensionSchemeAdministrator {
         (JsPath \ "previousAddressDetail").write(PreviousAddressDetails.psaSubmissionWrites) and
         (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType] and
         (JsPath \ "directorOrPartnerDetail").writeNullable[List[JsValue]] and
-        (JsPath \ "changeOfDirectorOrPartnerDetails").writeNullable[Boolean] and
         (JsPath \ "declaration").write[PensionSchemeAdministratorDeclarationType]
       ) (psaSubmission => (psaSubmission.customerType,
       psaSubmission.legalStatus,
@@ -182,7 +181,6 @@ object PensionSchemeAdministrator {
       psaSubmission.numberOfDirectorOrPartners,
       psaSubmission.directorOrPartnerDetail.map(directors => directors.map(director =>
         Json.toJson(director)(DirectorOrPartnerDetailTypeItem.psaSubmissionWrites))),
-      psaSubmission.changeOfDirectorOrPartnerDetails,
       psaSubmission.declaration))
 
   val registrationInfoReads: Reads[(String, String, Boolean, String, Option[String], Option[String])] = (
