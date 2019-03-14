@@ -20,7 +20,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 case class PreviousAddressDetails(isPreviousAddressLast12Month: Boolean,
-                                  previousAddressDetails: Option[Address] = None, isChanged : Option[Boolean] = None)
+                                  previousAddressDetails: Option[Address] = None, isChanged: Option[Boolean] = None)
 
 object PreviousAddressDetails {
   implicit val formats: Format[PreviousAddressDetails] = Json.format[PreviousAddressDetails]
@@ -32,7 +32,7 @@ object PreviousAddressDetails {
 
   val psaUpdateWrites: Writes[PreviousAddressDetails] = (
     (JsPath \ "isPreviousAddressLast12Month").write[Boolean] and
-      (JsPath \ "previousAddressDetails").writeNullable[Address](Address.updateWrites) and
+      (JsPath \ "previousAddressDetails").writeNullable[Address](Address.updatePreviousAddressWrites) and
       (JsPath \ "changeFlag").write[Boolean]
     ) (previousAddress => (previousAddress.isPreviousAddressLast12Month, previousAddress.previousAddressDetails, previousAddress.isChanged.fold(false)(identity)))
 
@@ -44,7 +44,7 @@ object PreviousAddressDetails {
   def apiReads(typeOfAddressDetail: String): Reads[PreviousAddressDetails] = (
     (JsPath \ s"${typeOfAddressDetail}AddressYears").read[String] and
       (JsPath \ s"${typeOfAddressDetail}PreviousAddress").readNullable[Address] and
-      (JsPath \ "isChanged").readNullable[Boolean]
+      (JsPath \ s"${typeOfAddressDetail}PreviousAddressIsChanged").readNullable[Boolean]
     ) ((addressLast12Months, address, isChanged) => {
     val isAddressLast12Months = if (addressLast12Months == "under_a_year") true else false
     PreviousAddressDetails(isAddressLast12Months, address, isChanged)
