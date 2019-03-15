@@ -35,7 +35,7 @@ object DirectorOrPartnerDetailTypeItem {
 
 
   private val commonElements : Writes[(String,String,Option[String],String,
-    Option[String],String,LocalDate,Option[String],Option[String],Option[String],Option[String])] = (
+    Option[String],String,LocalDate,Option[String],Option[String],Option[String])] = (
     (JsPath \ "sequenceId").write[String] and
       (JsPath \ "entityType").write[String] and
       (JsPath \ "title").writeNullable[String] and
@@ -43,7 +43,6 @@ object DirectorOrPartnerDetailTypeItem {
       (JsPath \ "middleName").writeNullable[String] and
       (JsPath \ "lastName").write[String] and
       (JsPath \ "dateOfBirth").write[LocalDate] and
-      (JsPath \ "referenceOrNino").writeNullable[String] and
       (JsPath \ "noNinoReason").writeNullable[String] and
       (JsPath \ "utr").writeNullable[String] and
       (JsPath \ "noUtrReason").writeNullable[String]
@@ -57,7 +56,6 @@ object DirectorOrPartnerDetailTypeItem {
       directorOrPartner.middleName,
       directorOrPartner.lastName,
       directorOrPartner.dateOfBirth,
-      directorOrPartner.referenceOrNino,
       directorOrPartner.noNinoReason,
       directorOrPartner.utr,
       directorOrPartner.noUtrReason)
@@ -65,17 +63,21 @@ object DirectorOrPartnerDetailTypeItem {
 
   val psaSubmissionWrites : Writes[DirectorOrPartnerDetailTypeItem] = (
     JsPath.write(commonElements) and
+      (JsPath \ "referenceOrNino").writeNullable[String] and
       (JsPath \ "previousAddressDetail").write(PreviousAddressDetails.psaSubmissionWrites) and
         (JsPath \ "correspondenceCommonDetail").write[CorrespondenceCommonDetail])(directorOrPartner =>
     (commonElementsToTuple(directorOrPartner),
+      directorOrPartner.referenceOrNino,
       directorOrPartner.previousAddressDetail,
       directorOrPartner.correspondenceCommonDetail))
 
   val psaUpdateWrites : Writes[DirectorOrPartnerDetailTypeItem] = (
     JsPath.write(commonElements) and
-      (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWrites) and
+      (JsPath \ "nino").writeNullable[String] and
+      (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWritesWithNoUpdateFlag) and
       (JsPath \ "correspondenceCommonDetails").write[CorrespondenceCommonDetail](CorrespondenceCommonDetail.psaUpdateWrites))(directorOrPartner =>
     (commonElementsToTuple(directorOrPartner),
+      directorOrPartner.referenceOrNino,
       directorOrPartner.previousAddressDetail,
       directorOrPartner.correspondenceCommonDetail))
 

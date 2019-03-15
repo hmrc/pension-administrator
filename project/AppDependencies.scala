@@ -24,18 +24,18 @@ object AppDependencies {
 
   private val scalaTestPlusPlayVersion = "3.1.2"
   private val mockitoAllVersion = "1.10.19"
-  private val wireMockVersion = "2.19.0"
+  private val wireMockVersion = "2.21.0"
   private val scalacheckVersion = "1.14.0"
-  private val domainVersion = "5.2.0"
+  private val domainVersion = "5.3.0"
   private val scalacheckGenRegexp = "0.1.1"
   private val bootstrapVersion = "0.32.0"
   private val playJsonVersion = "2.6.10"
   private val scalaTestVersion = "3.0.5"
-  private val reactiveMongoVersion = "7.9.0-play-26"
-  private val jsonSchemeValidatorVersion = "0.1.19"
-  private val jsonPathVersion = "2.5.0"
-  private val reactiveMongoTestVersion = "4.2.0-play-26"
-  private val hmrcTestVersion = "3.2.0"
+  private val reactiveMongoVersion = "7.12.0-play-26"
+  private val jsonSchemeValidatorVersion = "1.0.3"
+  private val jsonPathVersion = "2.6.0"
+  private val reactiveMongoTestVersion = "4.8.0-play-26"
+  private val hmrcTestVersion = "3.5.0-play-26"
   private val pegDownVersion = "1.6.0"
 
   val compile = Seq(
@@ -67,7 +67,7 @@ object AppDependencies {
   val overrides: Set[ModuleID] = {
     val jettyFromWiremockVersion = "9.2.24.v20180105"
     Set(
-      "reactivemongo"              %% "reactivemongo"      % "0.16.1", //TODO REMOVE OVERRIDE AFTER FIX IS IMPLEMENTED ON REACTIVE MONGO
+      "reactivemongo"              %% "reactivemongo"      % "0.12.2", //TODO REMOVE OVERRIDE AFTER FIX IS IMPLEMENTED ON REACTIVE MONGO
       "org.eclipse.jetty"           % "jetty-client"       % jettyFromWiremockVersion,
       "org.eclipse.jetty"           % "jetty-continuation" % jettyFromWiremockVersion,
       "org.eclipse.jetty"           % "jetty-http"         % jettyFromWiremockVersion,

@@ -608,6 +608,7 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                   "companyName" : "Acme Partnership",
                   "uniqueTaxReferenceNumber" : "0123456789"
               },
+              "areYouInUK" : true,
               "registrationInfo" : {
                   "legalStatus" : "Partnership",
                   "sapNumber" : "",
@@ -693,6 +694,7 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
             "uniqueTaxReferenceNumber" : "0123456789",
              "companyName" : "Global Pensions Ltd"
           },
+          "areYouInUK" : true,
           "registrationInfo" : {
             "legalStatus" : "Limited Company",
             "sapNumber" : "",
@@ -918,6 +920,7 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
   val expectedIndividualJson: JsValue = Json.parse(
     """
      {
+     "areYouInUK" : true,
      "registrationInfo" : {
        "legalStatus" : "Individual",
        "sapNumber" : "",
@@ -954,8 +957,8 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
        "postcode" : "TF3 4DC",
        "country" : "GB"
      },
+     "adviserName": "Acme Pensions Ltd",
      "adviserDetails" : {
-             "name" : "Acme Pensions Ltd",
              "email" : "acme_pensions@test.com",
              "phone" : "0044-0987654232"
      },

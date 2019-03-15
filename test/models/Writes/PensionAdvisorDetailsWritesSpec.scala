@@ -25,21 +25,20 @@ class PensionAdvisorDetailsWritesSpec extends WordSpec with MustMatchers with Op
 
   "A pension advisor details object" should {
     "Map pension advisor" when {
-        val result = Json.toJson(pensionAdvisorDetail)(PensionAdvisorDetail.psaUpdateWrites)
+      val result = Json.toJson(pensionAdvisorDetail)(PensionAdvisorDetail.psaUpdateWrites)
 
-        Seq(("addressDetails", Json.toJson(nonUkAddressSample)(InternationalAddress.writes)),
-          ("contactDetails", Json.toJson(contactDetailsSample))).foreach { testElement =>
+      Seq(("addressDetails", Json.toJson(nonUkAddressSample)(Address.updateWrites)), ("contactDetails", Json.toJson(contactDetailsSample))).foreach { testElement =>
 
-          s"testing for element ${testElement._1} having value ${testElement._2}" in {
+        s"testing for element ${testElement._1} having value ${testElement._2}" in {
 
-            testElementValue(result, elementName = testElement._1, expectedValue = testElement._2)
-          }
+          testElementValue(result, elementName = testElement._1, expectedValue = testElement._2)
         }
+      }
 
       s"testing for element `name` having value `xyz`" in {
 
         testElementValue(result, elementName = "name", expectedValue = "xyz")
       }
-      }
+    }
   }
 }

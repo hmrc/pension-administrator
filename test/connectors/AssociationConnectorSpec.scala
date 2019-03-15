@@ -16,11 +16,9 @@
 
 package connectors
 
-import audit.testdoubles.StubSuccessfulAuditService
-import audit.{AuditService, InvitationAcceptanceAuditEvent, MinimalPSADetailsEvent}
+import audit.{AuditService, InvitationAcceptanceAuditEvent, MinimalPSADetailsEvent, StubSuccessfulAuditService}
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
-import connectors.RegistrationConnectorSpec.auditService
 import connectors.helper.ConnectorBehaviours
 import models._
 import org.scalatest._

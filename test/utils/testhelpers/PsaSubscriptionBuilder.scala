@@ -52,6 +52,7 @@ object PsaSubscriptionBuilder {
   true, Some(previousAddress), Some(Seq(director1, director2)), Some(pensionsAdvisor))
   
   val psaSubscriptionUserAnswers = """{
+                                        "areYouInUK" : true,
                                         "registrationInfo":{  
                                            "legalStatus":"Individual",
                                            "sapNumber":"",
@@ -88,8 +89,8 @@ object PsaSubscriptionBuilder {
                                            "postcode":"LN12 4DC",
                                            "country":"GB"
                                         },
-                                        "adviserDetails":{  
-                                           "name":"sgfdgssd",
+                                        "adviserName": "sgfdgssd",
+                                        "adviserDetails":{
                                            "email":"aaa@yahoo.com",
                                            "phone":"0044-0987654232"
                                         },

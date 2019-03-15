@@ -16,7 +16,9 @@
 
 package models.registrationnoid
 
+import connectors.RegistrationConnectorImpl
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 case class OrganisationName(organisationName: String)
 
@@ -32,4 +34,45 @@ case class OrganisationRegistrant(
 
 object OrganisationRegistrant {
   implicit val format: Format[OrganisationRegistrant] = Json.format[OrganisationRegistrant]
+
+  private val writesAddress: OWrites[Address] = (
+    (JsPath \ "addressLine1").write[String] and
+      (JsPath \ "addressLine2").write[String] and
+      (JsPath \ "addressLine3").writeNullable[String] and
+      (JsPath \ "addressLine4").writeNullable[String] and
+      (JsPath \ "postalCode").writeNullable[String] and
+      (JsPath \ "countryCode").write[String]
+    ) (address => (address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, address.postcode, address.country))
+
+  private val writesOrganisationRegistrant: Writes[OrganisationRegistrant] = {
+    (
+      (__ \ "organisation").write[OrganisationName] and
+        (__ \ "address").write[Address](writesAddress)
+      ) { o =>
+      (
+        o.organisation,
+        o.address
+      )
+    }
+  }
+
+  def writesOrganisationRegistrantRequest(acknowledgementReference: String): OWrites[OrganisationRegistrant] = {
+
+    new OWrites[OrganisationRegistrant] {
+
+      override def writes(registrant: OrganisationRegistrant): JsObject = {
+        Json.obj("regime" -> "PODA",
+          "acknowledgementReference" -> acknowledgementReference,
+          "isAnAgent" -> false,
+          "isAGroup" -> false,
+          "contactDetails" -> Json.obj(
+            "phoneNumber" -> JsNull,
+            "mobileNumber" -> JsNull,
+            "faxNumber" -> JsNull,
+            "emailAddress" -> JsNull
+          )
+        ) ++ Json.toJson(registrant)(writesOrganisationRegistrant).as[JsObject]
+      }
+    }
+  }
 }

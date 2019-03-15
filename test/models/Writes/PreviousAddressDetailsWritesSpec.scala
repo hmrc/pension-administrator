@@ -16,7 +16,7 @@
 
 package models.Writes
 
-import models.{PreviousAddressDetails, Samples}
+import models.{Address, PreviousAddressDetails, Samples, UkAddress}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.Json
 
@@ -29,6 +29,35 @@ class PreviousAddressDetailsWritesSpec extends WordSpec with MustMatchers with O
         val result = Json.toJson(previousAddress)(PreviousAddressDetails.psaSubmissionWrites)
 
         result.toString() must include("\"previousAddressDetail\":")
+      }
+    }
+  }
+
+  "An updated previous address details object" should {
+    "serialize correctly into a valid DES payload" when {
+      val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
+      val result = Json.toJson(previousAddress)(PreviousAddressDetails.psaUpdateWrites)
+
+      "we have an isPreviousAddressLast12Months flag" in {
+        (result \ "isPreviousAddressLast12Month").as[Boolean] mustBe previousAddress.isPreviousAddressLast12Month
+      }
+
+      "we have a previous address" in {
+        (result \ "previousAddressDetails" \ "line1").as[String] mustBe previousAddress.previousAddressDetails.value.asInstanceOf[UkAddress].addressLine1
+      }
+
+      "we have an isChanged flag" in {
+        val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample), Some(true))
+        val result = Json.toJson(previousAddress)(PreviousAddressDetails.psaUpdateWrites)
+
+        (result \ "changeFlag").asOpt[Boolean] mustBe Some(true)
+      }
+
+      "we don't require isChanged flag" in {
+        val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample), Some(true))
+        val result = Json.toJson(previousAddress)(PreviousAddressDetails.psaUpdateWritesWithNoUpdateFlag)
+
+        (result \ "changeFlag").asOpt[Boolean] mustBe None
       }
     }
   }

@@ -23,7 +23,7 @@ import play.api.libs.json.{__, _}
 
 class AdviserTransformer @Inject()(addressTransformer: AddressTransformer) extends  JsonTransformer {
   val getAdviser: Reads[JsObject] = {
-    (((__ \ 'adviserDetails \ 'name).json
+    (((__ \ 'adviserName).json
       .copyFrom((__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'name).json.pick)
       orElse doNothing) and
       ((__ \ 'adviserDetails \ 'email).json

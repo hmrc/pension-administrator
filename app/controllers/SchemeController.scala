@@ -32,7 +32,8 @@ import scala.concurrent.Future
 
 class SchemeController @Inject()(schemeService: SchemeService,
                                  schemeConnector: DesConnector,
-                                 cc: ControllerComponents) extends BackendController(cc) with ErrorHandler {
+                                 cc: ControllerComponents
+                                ) extends BackendController(cc) with ErrorHandler {
 
   def registerPSA: Action[AnyContent] = Action.async {
     implicit request => {
@@ -66,8 +67,9 @@ class SchemeController @Inject()(schemeService: SchemeService,
 
   def removePsa: Action[PsaToBeRemovedFromScheme] = Action.async(parse.json[PsaToBeRemovedFromScheme]) {
     implicit request =>
-      schemeConnector.removePSA(request.body)map {
-        case Right(_) =>  NoContent
+      schemeConnector.removePSA(request.body) map {
+        case Right(_) =>
+          NoContent
         case Left(e) => result(e)
       }
   }

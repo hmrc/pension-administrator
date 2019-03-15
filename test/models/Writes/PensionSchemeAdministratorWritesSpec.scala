@@ -60,13 +60,6 @@ class PensionSchemeAdministratorWritesSpec extends WordSpec with MustMatchers wi
           (result \ "changeOfDirectorOrPartnerDetails").asOpt[Boolean] mustBe None
         }
 
-        s"We are checking the changeOfDirectorOrPartnerDetails flag is included" in {
-          val result = Json.toJson(pensionSchemeAdministratorSample
-            .copy(changeOfDirectorOrPartnerDetails = Some(true)))(PensionSchemeAdministrator.psaSubmissionWrites)
-
-          (result \ "changeOfDirectorOrPartnerDetails").asOpt[Boolean].value mustBe true
-        }
-
         s"We are doing a PSA submission with ${personType}s containing directorOrPartnerDetail at root level for update writes" in {
           val result = Json.toJson(pensionSchemeAdministratorSample2(personType)
             .copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample))))(

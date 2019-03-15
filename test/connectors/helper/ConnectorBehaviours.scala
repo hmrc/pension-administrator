@@ -28,10 +28,9 @@ import scala.concurrent.Future
 
 trait ConnectorBehaviours extends AsyncFlatSpec with WireMockHelper with EitherValues with Matchers {
 
-  def errorHandlerForPostApiFailures(call: => Future[Either[HttpException, JsValue]], url: String): Unit = {
+  def errorHandlerForPostApiFailures[A](call: => Future[Either[HttpException, A]], url: String): Unit = {
 
     errorHandlerForApiFailures(call, post(urlEqualTo(url)))
-
   }
 
   def errorHandlerForGetApiFailures[A](call: => Future[Either[HttpException, A]], url: String): Unit = {

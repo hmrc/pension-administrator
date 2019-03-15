@@ -30,4 +30,10 @@ object ContactDetails {
       (JsPath \ "isChanged").readNullable[Boolean]
     ) ((phone, email, isChanged) => ContactDetails(phone, email = email, isChanged = isChanged)
   )
+
+  val updateWrites: Writes[ContactDetails] = (
+    (JsPath \ "telephone").write[String] and
+      (JsPath \ "email").write[String] and
+      (JsPath \ "changeFlag").write[Boolean]
+  )(contactDetails => (contactDetails.telephone,contactDetails.email,contactDetails.isChanged.fold(false)(identity)))
 }

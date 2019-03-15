@@ -67,13 +67,13 @@ class RegistrationController @Inject()(
         case _ =>
           Future.failed(new BadRequestException("No request body received for register with Id Individual"))
       }
-    } recoverWith recoverFromError
+    }
   }
 
   private def registerWithIdManualIVDisabled(implicit request: Request[AnyContent]) = {
     retrieveIndividual { (nino, user) =>
       registerConnector.registerWithIdIndividual(nino, user, mandatoryPODSData()) map handleResponse
-    } recoverWith recoverFromError
+    }
   }
 
   private def retrieveIndividual(fn: (String, models.User) => Future[Result])(implicit hc: HeaderCarrier): Future[Result] =
@@ -103,11 +103,11 @@ class RegistrationController @Inject()(
             Future.failed(new BadRequestException("No request body received for Organisation"))
         }
       }
-    } recoverWith recoverFromError
+    }
   }
 
-  private def handleResponse: PartialFunction[Either[HttpException, JsValue], Result] = {
-    case Right(json) => Ok(Json.toJson[SuccessResponse](json.as[SuccessResponse]))
+  private def handleResponse: PartialFunction[Either[HttpException, SuccessResponse], Result] = {
+    case Right(successResponse) => Ok(Json.toJson(successResponse))
     case Left(e: HttpException) => result(e)
   }
 
@@ -119,12 +119,7 @@ class RegistrationController @Inject()(
     implicit request => {
       retrieveUser { user =>
         registerConnector.registrationNoIdOrganisation(user, request.body) map {
-          case Right(jsValue) => {
-            jsValue.validate[RegisterWithoutIdResponse].fold(
-              errors => throw new JsResultException(errors),
-              value => Ok(Json.toJson(value))
-            )
-          }
+          case Right(response) => Ok(Json.toJson(response))
           case Left(e) => result(e)
         }
       }

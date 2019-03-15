@@ -72,7 +72,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     "return OK when the registration with id is successful for Individual" in {
 
-      val successResponse = Json.toJson(readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json").as[SuccessResponse])
+      val successResponse:SuccessResponse = readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json").as[SuccessResponse]
 
       when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(mandatoryRequestData))(any(), any(), any()))
         .thenReturn(Future.successful(Right(successResponse)))
@@ -81,7 +81,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
       ScalaFutures.whenReady(result) { _ =>
         status(result) mustBe OK
-        contentAsJson(result) mustEqual successResponse
+        contentAsJson(result) mustEqual Json.toJson(successResponse)
       }
     }
 
@@ -216,16 +216,17 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     "return OK when the registration with id is successful for Individual" in {
 
-      val successResponse = Json.toJson(readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json").as[SuccessResponse])
+      val successResponse = readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json").as[SuccessResponse]
 
       when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(inputRequestData))(any(), any(), any()))
         .thenReturn(Future.successful(Right(successResponse)))
 
-      val result = registrationController(individualRetrievalsWithNino, isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+      val result = registrationController(individualRetrievalsWithNino,
+        isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
 
       ScalaFutures.whenReady(result) { _ =>
         status(result) mustBe OK
-        contentAsJson(result) mustEqual successResponse
+        contentAsJson(result) mustEqual Json.toJson(successResponse)
       }
     }
 
@@ -333,18 +334,16 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
     val inputData = Json.obj("utr" -> "1100000000", "organisationName" -> "Test Ltd", "organisationType" -> "LLP")
 
     "return OK when request utr and organisation get successful response from connector" in {
-
-      val input = readJsonFromFile("/data/validRegisterWithIdOrganisationResponse.json")
-      val successResponse = Json.toJson(readJsonFromFile("/data/validRegisterWithIdOrganisationResponse.json").as[SuccessResponse])
+     val successResponse = readJsonFromFile("/data/validRegisterWithIdOrganisationResponse.json").as[SuccessResponse]
 
       when(mockRegistrationConnector.registerWithIdOrganisation(Matchers.eq("1100000000"), any(), any())(any(), any(), any()))
-        .thenReturn(Future.successful(Right(input)))
+        .thenReturn(Future.successful(Right(successResponse)))
 
       val result = registrationController(organisationRetrievals).registerWithIdOrganisation(fakeRequest.withJsonBody(inputData))
 
       ScalaFutures.whenReady(result) { _ =>
         status(result) mustBe OK
-        contentAsJson(result) mustEqual successResponse
+        contentAsJson(result) mustEqual Json.toJson(successResponse)
       }
     }
 
@@ -468,11 +467,11 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     "return OK with successful response from connector" in {
 
-      val successResponse: JsObject = Json.obj(
+      val successResponse: RegisterWithoutIdResponse = Json.obj(
         "processingDate" -> LocalDate.now,
         "sapNumber" -> "1234567890",
         "safeId" -> "XE0001234567890"
-      )
+      ).as[RegisterWithoutIdResponse]
 
       when(mockRegistrationConnector.registrationNoIdOrganisation(any(), Matchers.eq(dataToEmtp))(any(), any(), any()))
         .thenReturn(Future.successful(Right(successResponse)))

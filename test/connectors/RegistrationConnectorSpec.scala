@@ -16,16 +16,14 @@
 
 package connectors
 
-import audit.testdoubles.StubSuccessfulAuditService
-import audit.{AuditService, PSARegistration}
+import audit.{AuditService, PSARegistration, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours
-import models.User
+import models.{SuccessResponse, User}
 import models.registrationnoid._
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
-import play.api.http.Status
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
@@ -73,7 +71,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual).map {
       response =>
-        response.right.value shouldBe registerIndividualResponse
+        response.right.value shouldBe registerIndividualResponse.as[SuccessResponse]
     }
 
   }
@@ -89,12 +87,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual) map {
-      response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_NINO")
-    }
 
+    recoverToExceptionIf[Upstream4xxResponse](connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual)) map {
+      ex =>
+        ex.upstreamResponseCode shouldBe BAD_REQUEST
+        ex.message should include("INVALID_NINO")
+    }
   }
 
   it should "handle CONFLICT (409)" in {
@@ -105,13 +103,14 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             .withStatus(CONFLICT)
         )
     )
-    connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual).map {
-      response =>
-        response.left.value shouldBe a[ConflictException]
+
+    recoverToExceptionIf[Upstream4xxResponse](connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual)) map {
+      ex =>
+        ex.upstreamResponseCode shouldBe CONFLICT
     }
   }
 
-  it should behave like errorHandlerForPostApiFailures(
+  it should behave like errorHandlerForPostApiFailures[SuccessResponse](
     connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual),
     registerIndividualWithIdUrl
   )
@@ -139,7 +138,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             isUk = Some(true),
             status = OK,
             request = testRegisterDataIndividual,
-            response = Some(registerIndividualResponse)
+            response = Some(Json.toJson(registerIndividualResponse.as[SuccessResponse]))
           )
         ) shouldBe true
     }
@@ -207,7 +206,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation).map {
       response =>
-        response.right.value shouldBe registerOrganisationResponse
+        response.right.value shouldBe registerOrganisationResponse.as[SuccessResponse]
     }
 
   }
@@ -223,25 +222,11 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation) map {
-      response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_UTR")
-    }
+    recoverToExceptionIf[Upstream4xxResponse](connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation)) map {
+      ex =>
 
-  }
-
-  it should "handle CONFLICT (409)" in {
-    server.stubFor(
-      post(urlEqualTo(registerOrganisationWithIdUrl))
-        .willReturn(
-          aResponse()
-            .withStatus(CONFLICT)
-        )
-    )
-    connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation).map {
-      response =>
-        response.left.value shouldBe a[ConflictException]
+        ex.upstreamResponseCode shouldBe BAD_REQUEST
+        ex.message should include("INVALID_UTR")
     }
   }
 
@@ -336,42 +321,10 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant).map {
       response =>
-        response.right.value shouldBe registerWithoutIdResponseJson
+        response.right.value shouldBe registerWithoutIdResponse
     }
   }
 
-  it should "handle FORBIDDEN (403) - INVALID_SUBMISSION" in {
-
-    server.stubFor(
-      post(urlEqualTo(registerOrganisationWithoutIdUrl))
-        .willReturn(
-          forbidden
-            .withHeader("Content-Type", "application/json")
-            .withBody(errorResponse("INVALID_SUBMISSION"))
-        )
-    )
-
-    connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant) map {
-      response =>
-        response.left.value shouldBe a[ForbiddenException]
-        response.left.value.message should include("INVALID_SUBMISSION")
-    }
-
-  }
-
-  it should "handle CONFLICT (409)" in {
-    server.stubFor(
-      post(urlEqualTo(registerOrganisationWithoutIdUrl))
-        .willReturn(
-          aResponse()
-            .withStatus(CONFLICT)
-        )
-    )
-    connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant).map {
-      response =>
-        response.left.value shouldBe a[ConflictException]
-    }
-  }
 
   it should behave like errorHandlerForPostApiFailures(
     connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant),
@@ -865,6 +818,6 @@ object RegistrationConnectorSpec {
     )
 
   val registerIndividualWithoutIdRequestJson: JsValue =
-    Json.toJson(registerIndividualWithoutIdRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(testCorrelationId))
+    Json.toJson(registerIndividualWithoutIdRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(testCorrelationId))
 
 }
