@@ -44,7 +44,7 @@ class DirectorOrPartnerDetailTypeItemWritesSpec extends WordSpec with MustMatche
         ("middleName", "Does Does"),
         ("lastName", "Doe"),
         ("dateOfBirth", "2019-01-31"),
-        ("referenceOrNino", "SL211111A"),
+        ("nino", "SL211111A"),
         ("noNinoReason", "he can't find it"),
         ("utr", "123456789"),
         ("noUtrReason", "he can't find it")).foreach { testElement =>
