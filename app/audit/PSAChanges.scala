@@ -25,7 +25,7 @@ case class PSAChanges(
                             response: Option[JsValue]
                           ) extends AuditEvent {
 
-  override def auditType: String = "PSAChanges"
+  override def auditType: String = "PSAVariation"
 
   override def details: Map[String, String] =
     Map(
