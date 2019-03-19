@@ -16,7 +16,7 @@
 
 package service
 
-import audit.{PSASubscription, SchemeAuditService, StubSuccessfulAuditService}
+import audit.{PSAChanges, SchemeAuditService, PSASubscription, StubSuccessfulAuditService}
 import base.SpecBase
 import models.PensionSchemeAdministrator
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
@@ -121,6 +121,49 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
   }
 
+  it should "send an audit event on success" in {
+
+    val fixture = testFixture()
+
+    val requestJson = updatePsaRequestJson(psaJson)
+
+    fixture.schemeService.updatePSA(psaId, psaJson).map {
+      httpResponse =>
+        fixture.auditService.lastEvent shouldBe
+          Some(
+            PSAChanges(
+              legalStatus = "test-legal-status",
+              status = Status.OK,
+              request = requestJson,
+              response = Some(httpResponse.right.value)
+            )
+          )
+    }
+
+  }
+
+  it should "send an audit event on failure" in {
+
+    val fixture = testFixture()
+    val requestJson = updatePsaRequestJson(psaJson)
+
+    fixture.schemeConnector.setUpdatePsaResponse(Future.successful(Left(new BadRequestException("bad request"))))
+
+    fixture.schemeService.updatePSA(psaId, psaJson).map {
+      _ =>
+        fixture.auditService.lastEvent shouldBe
+          Some(
+            PSAChanges(
+              legalStatus = "test-legal-status",
+              status = Status.BAD_REQUEST,
+              request = requestJson,
+              response = None
+            )
+          )
+    }
+
+  }
+
 }
 
 object SchemeServiceImplSpec extends SpecBase {
@@ -171,10 +214,14 @@ object SchemeServiceImplSpec extends SpecBase {
   )
 
   def registerPsaRequestJson(userAnswersJson: JsValue): JsValue = {
-    implicit val contactAddressEnabled: Boolean = true
     val psa = userAnswersJson.as[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)
     val requestJson = Json.toJson(psa)(PensionSchemeAdministrator.psaSubmissionWrites)
+    requestJson
+  }
 
+  def updatePsaRequestJson(userAnswersJson: JsValue): JsValue = {
+    val psa = userAnswersJson.as[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)
+    val requestJson = Json.toJson(psa)(PensionSchemeAdministrator.psaUpdateWrites)
     requestJson
   }
 

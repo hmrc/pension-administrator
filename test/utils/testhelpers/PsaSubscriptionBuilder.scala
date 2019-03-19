@@ -88,6 +88,7 @@ object PsaSubscriptionBuilder {
                                            "postcode":"LN12 4DC",
                                            "country":"GB"
                                         },
+                                        "declarationWorkingKnowledge" : false,
                                         "adviserName": "sgfdgssd",
                                         "adviserDetails":{
                                            "email":"aaa@yahoo.com",
