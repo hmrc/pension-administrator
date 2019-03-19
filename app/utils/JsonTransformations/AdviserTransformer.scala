@@ -37,4 +37,13 @@ class AdviserTransformer @Inject()(addressTransformer: AddressTransformer) exten
       (addressTransformer.getDifferentAddress(__ \ 'adviserAddress, __ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'addressDetails)
         orElse doNothing)) reduce
   }
+
+  val getWorkingKnowledge: Reads[JsObject] = {
+    (__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'name).read[String].flatMap {
+          _ =>
+              (__ \ "declarationWorkingKnowledge").json.put(JsBoolean(false))
+        } orElse {
+            (__ \ "declarationWorkingKnowledge").json.put(JsBoolean(true))
+        }
+      }
 }

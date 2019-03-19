@@ -684,7 +684,8 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                        "country" : "GB"
                    }
                 }
-              ]
+              ],
+              "declarationWorkingKnowledge" : true
           }"""
   )
 
@@ -759,7 +760,8 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                       },
                       "directorAddressYears" : "over_a_year"
                     }
-         ]
+         ],
+         "declarationWorkingKnowledge": true
         }"""
   )
 
@@ -962,6 +964,7 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
              "email" : "acme_pensions@test.com",
              "phone" : "0044-0987654232"
      },
+     "declarationWorkingKnowledge" : false,
      "adviserAddress" : {
              "addressLine1" : "10 London Road",
              "addressLine2" : "Oldpark",
