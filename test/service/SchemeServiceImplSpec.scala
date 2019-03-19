@@ -16,7 +16,7 @@
 
 package service
 
-import audit.{PSAChanges, SchemeAuditService, PSASubscription, StubSuccessfulAuditService}
+import audit.{PSAChanges, PSASubscription, SchemeAuditService, StubSuccessfulAuditService}
 import base.SpecBase
 import models.PensionSchemeAdministrator
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
@@ -31,8 +31,8 @@ import scala.concurrent.Future
 
 class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues {
 
-  import utils.FakeDesConnector._
   import SchemeServiceImplSpec._
+  import utils.FakeDesConnector._
 
   "registerPSA" should "return the result from the connector" in {
 

@@ -105,7 +105,7 @@ class SchemeAuditService@Inject()(fs: FeatureSwitchManagementService) {
         )
       )
     case Failure(t) =>
-      Logger.error("Error in DesConnector", t)
+      Logger.error("Error in sending audit event for get PSA details", t)
 
   }
 

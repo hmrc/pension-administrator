@@ -203,7 +203,8 @@ trait PsaSubscriptionDetailsGenerators {
     )
   }
 
-  val psaDetailsGenerator: Gen[JsObject] = psaSubscriptionDetailsGenerator.map(psaSubscriptionDetails => Json.obj("psaSubscriptionDetails" -> psaSubscriptionDetails))
+  val psaDetailsGenerator: Gen[JsObject] = psaSubscriptionDetailsGenerator.map(
+    psaSubscriptionDetails => Json.obj("psaSubscriptionDetails" -> psaSubscriptionDetails))
 }
 
 

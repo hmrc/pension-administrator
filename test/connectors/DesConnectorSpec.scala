@@ -16,18 +16,13 @@
 
 package connectors
 
-import audit.{AuditService, PSARemovalFromSchemeAuditEvent, StubSuccessfulAuditService}
-import audit.{AuditService, PSADetails, StubSuccessfulAuditService}
+import audit.{AuditService, PSADetails, PSARemovalFromSchemeAuditEvent, StubSuccessfulAuditService}
 import base.JsonFileReader
-import com.github.tomakehurst.wiremock.client.WireMock._
-import config.FeatureSwitchManagementService
 import com.github.tomakehurst.wiremock.client.WireMock.{serverError, _}
-import config.AppConfig
+import config.FeatureSwitchManagementService
 import connectors.helper.ConnectorBehaviours
 import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
 import org.joda.time.LocalDate
-import org.mockito.Matchers
-import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
@@ -46,8 +41,6 @@ import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.testhelpers.PsaSubscriptionBuilder._
 import utils.{FakeDesConnector, FakeFeatureSwitchManagementService, StubLogger, WireMockHelper}
-
-import scala.concurrent.Future
 
 class DesConnectorSpec extends AsyncFlatSpec
   with WireMockHelper
