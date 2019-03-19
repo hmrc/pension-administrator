@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,20 @@
 
 package audit
 
+import com.google.inject.Inject
+import config.FeatureSwitchManagementService
 import models.PensionSchemeAdministrator
 import play.api.Logger
 import play.api.http.Status
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HttpException
+import utils.Toggles.IsVariationsEnabled
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
-trait SchemeAuditService {
+class SchemeAuditService@Inject()(fs: FeatureSwitchManagementService) {
 
   def sendPSASubscriptionEvent(psa: PensionSchemeAdministrator, request: JsValue)(sendEvent: PSASubscription => Unit)
                                       (implicit rh: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
@@ -52,6 +55,58 @@ trait SchemeAuditService {
       )
     case Failure(t) =>
       Logger.error("Error in registration connector", t)
+  }
+
+  def sendPSADetailsEvent(psaId: String)(sendEvent: PSADetails => Unit)
+                         (implicit rh: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+
+
+
+    case Success(Right(psaSubscription)) =>
+      sendEvent(
+        PSADetails(
+          psaId = psaId,
+          psaName = getName(psaSubscription),
+          status = Status.OK,
+          response = Some(psaSubscription)
+        )
+      )
+    case Success(Left(e)) =>
+      sendEvent(
+        PSADetails(
+          psaId = psaId,
+          psaName = None,
+          status = e.responseCode,
+          response = None
+        )
+      )
+    case Failure(t) =>
+      Logger.error("Error in DesConnector", t)
+
+  }
+
+  private def getName(psaSubscription: JsValue): Option[String] = {
+    if (fs.get(IsVariationsEnabled)) {
+      (psaSubscription \ "registrationInfo" \ "legalStatus").as[String] match {
+        case "Individual" =>
+          Some(Seq((psaSubscription \ "individualDetails" \ "firstName").asOpt[String],
+            (psaSubscription \ "individualDetails" \ "middleName").asOpt[String],
+            (psaSubscription \ "individualDetails" \ "lastName").asOpt[String]).flatten(s => s).mkString(" "))
+        case "Partnership" => (psaSubscription \ "partnershipDetails" \ "companyName").asOpt[String]
+        case "Limited Company" => (psaSubscription \ "businessDetails" \ "companyName").asOpt[String]
+        case _ => None
+      }
+    } else {
+      (psaSubscription \ "customerIdentification" \ "legalStatus").as[String] match {
+        case "Individual" =>
+          Some(Seq((psaSubscription \ "individual" \ "firstName").asOpt[String],
+            (psaSubscription \ "individual" \ "middleName").asOpt[String],
+            (psaSubscription \ "individual" \ "lastName").asOpt[String]).flatten(s => s).mkString(" "))
+        case "Partnership" => (psaSubscription \ "organisationOrPartner" \ "name").asOpt[String]
+        case "Limited Company" => (psaSubscription \ "organisationOrPartner" \ "name").asOpt[String]
+        case _ => None
+      }
+    }
   }
 
 }

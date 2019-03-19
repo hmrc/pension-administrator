@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 
 package controllers
 
-import audit.testdoubles.StubSuccessfulAuditService
-import audit.{AuditService, EmailAuditEvent}
+import audit.{AuditService, EmailAuditEvent, StubSuccessfulAuditService}
 import base.SpecBase
 import models._
 import models.enumeration.JourneyType

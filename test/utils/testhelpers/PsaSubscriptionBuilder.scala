@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,59 @@ object PsaSubscriptionBuilder {
 
   val psaSubscription = PsaSubscription(false, customerId, None, Some(individual), address, contactDetails,
   true, Some(previousAddress), Some(Seq(director1, director2)), Some(pensionsAdvisor))
-
+  
+  val psaSubscriptionUserAnswers = """{
+                                        "areYouInUK" : true,
+                                        "registrationInfo":{  
+                                           "legalStatus":"Individual",
+                                           "sapNumber":"",
+                                           "noIdentifier":false,
+                                           "customerType":"UK",
+                                           "idType":"NINO",
+                                           "idNumber":"AA999999A"
+                                        },
+                                        "individualNino":"AA999999A",
+                                        "individualDetails":{  
+                                           "firstName":"abcdefghijkl",
+                                           "middleName":"abcdefghijkl",
+                                           "lastName":"abcdefjkl"
+                                        },
+                                        "individualDateOfBirth":"1947-03-29",
+                                        "individualContactAddress":{  
+                                           "addressLine1":"Telford1",
+                                           "addressLine2":"Telford2",
+                                           "addressLine3":"Telford3",
+                                           "addressLine4":"Telford3",
+                                           "postcode":"TF3 4ER",
+                                           "country":"GB"
+                                        },
+                                        "individualContactDetails":{  
+                                           "phone":" ",
+                                           "email":"aaa@aa.com"
+                                        },
+                                        "individualAddressYears":"under_a_year",
+                                        "individualPreviousAddress":{  
+                                           "addressLine1":"London1",
+                                           "addressLine2":"London2",
+                                           "addressLine3":"London3",
+                                           "addressLine4":"London4",
+                                           "postcode":"LN12 4DC",
+                                           "country":"GB"
+                                        },
+                                        "adviserName": "sgfdgssd",
+                                        "adviserDetails":{
+                                           "email":"aaa@yahoo.com",
+                                           "phone":"0044-0987654232"
+                                        },
+                                        "adviserAddress":{  
+                                           "addressLine1":"addline1",
+                                           "addressLine2":"addline2",
+                                           "addressLine3":"addline3",
+                                           "addressLine4":"addline4 ",
+                                           "postcode":"56765",
+                                           "country":"AD"
+                                        }
+                                     }""".stripMargin
 }
 
 

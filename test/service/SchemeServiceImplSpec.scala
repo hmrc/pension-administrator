@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package service
 
-import audit.{PSASubscription, StubSuccessfulAuditService}
+import audit.{PSASubscription, SchemeAuditService, StubSuccessfulAuditService}
 import base.SpecBase
 import models.PensionSchemeAdministrator
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
@@ -25,7 +25,7 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
-import utils.FakeDesConnector
+import utils.{FakeDesConnector, FakeFeatureSwitchManagementService}
 
 import scala.concurrent.Future
 
@@ -99,6 +99,28 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
   }
 
+
+  "updatePSA" should "return the result from the connector" in {
+
+    val fixture = testFixture()
+
+    fixture.schemeService.updatePSA(psaId, psaJson).map {
+      httpResponse =>
+        httpResponse.right.value shouldBe updatePsaResponseJson
+    }
+
+  }
+
+  it should "throw BadRequestException if the JSON cannot be parsed as PensionSchemeAdministrator" in {
+
+    val fixture = testFixture()
+
+    recoverToSucceededIf[BadRequestException] {
+      fixture.schemeService.updatePSA(psaId, Json.obj())
+    }
+
+  }
+
 }
 
 object SchemeServiceImplSpec extends SpecBase {
@@ -106,7 +128,8 @@ object SchemeServiceImplSpec extends SpecBase {
   trait TestFixture {
     val schemeConnector: FakeDesConnector = new FakeDesConnector()
     val auditService: StubSuccessfulAuditService = new StubSuccessfulAuditService()
-    val schemeService: SchemeServiceImpl = new SchemeServiceImpl(schemeConnector, auditService, appConfig) {
+    val schemeAuditService: SchemeAuditService = new SchemeAuditService(new FakeFeatureSwitchManagementService(false))
+    val schemeService: SchemeServiceImpl = new SchemeServiceImpl(schemeConnector, auditService, appConfig, schemeAuditService) {
     }
   }
 

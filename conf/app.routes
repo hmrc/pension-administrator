@@ -8,6 +8,8 @@ POST        /register-with-no-id/individual             controllers.Registration
 GET         /psa-subscription-details                   controllers.SchemeController.getPsaDetails
 POST        /register-psa                               controllers.SchemeController.registerPSA
 POST        /remove-psa                                 controllers.SchemeController.removePsa
+DELETE      /deregister-psa/:psaId                      controllers.SchemeController.deregisterPsa(psaId: String)
+POST        /psa-variation/:psaId                       controllers.SchemeController.updatePSA(psaId: String)
 
 GET         /get-name                                   controllers.AssociationController.getName
 GET         /get-email                                  controllers.AssociationController.getEmail
@@ -18,6 +20,9 @@ GET         /journey-cache/manage-pensions/:id          controllers.ManagePensio
 POST        /journey-cache/manage-pensions/:id          controllers.ManagePensionsCacheController.save(id: String)
 DELETE      /journey-cache/manage-pensions/:id          controllers.ManagePensionsCacheController.remove(id: String)
 
+GET         /journey-cache/psa/:id                      controllers.PSACacheController.get(id: String)
+POST        /journey-cache/psa/:id                      controllers.PSACacheController.save(id: String)
+DELETE      /journey-cache/psa/:id                      controllers.PSACacheController.remove(id: String)
 
 POST        /email-response/:journeyType/*id            controllers.EmailResponseController.retrieveStatus(journeyType: JourneyType.Name, id: String)
 POST        /invite                                     controllers.InvitationController.invite
@@ -27,3 +32,5 @@ GET         /invitation/get-for-invitee                 controllers.InvitationsC
 GET         /invitation/get                             controllers.InvitationsCacheController.get
 POST        /invitation/add                             controllers.InvitationsCacheController.add
 DELETE      /invitation                                 controllers.InvitationsCacheController.remove
+
+GET         /can-deregister/:id                         controllers.DeregistrationController.canDeregister(id: String)

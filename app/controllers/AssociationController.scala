@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,18 @@
 
 package controllers
 
-import com.google.inject.Inject
 import connectors.AssociationConnector
+import javax.inject.Inject
 import models.{AcceptedInvitation, PSAMinimalDetails}
 import play.api.Logger
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, RequestHeader}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{AuthRetrievals, ErrorHandler}
-
 import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.concurrent.Future
 
 class AssociationController @Inject()(
@@ -40,7 +40,7 @@ class AssociationController @Inject()(
       val psaId = request.headers.get("psaId")
       psaId match {
         case Some(id) =>
-          getPSAMinimalDetails(id).map {
+          associationConnector.getPSAMinimalDetails(PsaId(id)).map {
             case Right(psaDetails) => Ok(Json.toJson(psaDetails))
             case Left(e) => result(e)
           }
@@ -76,7 +76,7 @@ class AssociationController @Inject()(
   def getEmail: Action[AnyContent] = Action.async {
     implicit request =>
       retrievals.getPsaId flatMap {
-        case Some(psaId) => getPSAMinimalDetails(psaId.id) map {
+        case Some(psaId) => associationConnector.getPSAMinimalDetails(psaId) map {
           case Right(psaDetails) => Ok(psaDetails.email)
           case Left(e) => result(e)
         }
@@ -103,11 +103,8 @@ class AssociationController @Inject()(
 
   }
 
-  private def getPSAMinimalDetails(id: String)(implicit hc: HeaderCarrier): Future[Either[HttpException, PSAMinimalDetails]] = {
-    associationConnector.getPSAMinimalDetails(PsaId(id))
-  }
-
-  private def getPSAMinimalDetails(psaId: Option[PsaId])(implicit hc: HeaderCarrier): Future[Either[HttpException, PSAMinimalDetails]] = {
+  private def getPSAMinimalDetails(psaId: Option[PsaId])(
+    implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {
     psaId map {
       id =>
         associationConnector.getPSAMinimalDetails(id)

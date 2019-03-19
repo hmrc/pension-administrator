@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,20 @@ class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers wit
         val result = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.numberOfDirectorOrPartners mustBe None
+      }
+
+      "We have a flag for isMoreThanTenDirectorsOrPartnersChanged" in {
+        val psaWithUpdatedMoreThan10Directors = input + ("isMoreThanTenDirectorsOrPartnersChanged" -> JsBoolean(true)) + ("moreThanTenDirectors" -> JsBoolean(true))
+        val result = psaWithUpdatedMoreThan10Directors.as[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)
+
+        result.numberOfDirectorOrPartners.value.isChanged mustBe Some(true)
+      }
+
+      "We have a flag for areDirectorsOrPartnersChanged" in {
+        val psaWithDirectorsOrPartnersUpdated = input + ("areDirectorsOrPartnersChanged" -> JsBoolean(true))
+        val result = psaWithDirectorsOrPartnersUpdated.as[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)
+
+        result.changeOfDirectorOrPartnerDetails mustBe Some(true)
       }
 
       "We have contact details" in {

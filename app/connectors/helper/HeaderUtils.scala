@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,20 @@ import config.AppConfig
 import play.Logger
 import uk.gov.hmrc.http.HeaderCarrier
 
-class HeaderUtils @Inject() (config: AppConfig) {
+class HeaderUtils @Inject()(config: AppConfig) {
 
   val maxLengthCorrelationId = 32
 
+  def desHeaderWithoutCorrelationId: Seq[(String, String)] = {
+    Seq("Environment" -> config.desEnvironment,
+      "Authorization" -> config.authorization,
+      "Content-Type" -> "application/json"
+    )
+  }
+
   def desHeader(implicit hc: HeaderCarrier): Seq[(String, String)] = {
     val requestId = getCorrelationId(hc.requestId.map(_.value))
-
-    Seq("Environment" -> config.desEnvironment, "Authorization" -> config.authorization,
-      "Content-Type" -> "application/json", "CorrelationId" -> requestId)
+    desHeaderWithoutCorrelationId ++ Seq("CorrelationId" -> requestId)
   }
 
   def getCorrelationId(requestId: Option[String]): String = {

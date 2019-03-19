@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package models
 
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, Json, Reads, __}
+import play.api.libs.json._
 
 case class PensionAdvisorDetail(name: String, addressDetail: Address, contactDetail: ContactDetails)
 
@@ -25,13 +25,23 @@ object PensionAdvisorDetail {
   implicit val formats = Json.format[PensionAdvisorDetail]
 
   val apiReads: Reads[Option[PensionAdvisorDetail]] = (
-    (JsPath \ "adviserDetails").readNullable((__ \ "name").readNullable[String]) and
+    (JsPath \ "adviserName").readNullable[String] and
       (JsPath \ "adviserAddress").readNullable[Address] and
       (JsPath \ "adviserDetails").readNullable(ContactDetails.apiReads)
     ) ((name, address, contactDetails) => {
     (name, address, contactDetails) match {
-      case (Some(name), Some(address), Some(contactDetails)) => Some(PensionAdvisorDetail(name.get, address, contactDetails))
+      case (Some(adviserName), Some(address), Some(contactDetails)) =>
+        Some(PensionAdvisorDetail(adviserName, address, contactDetails))
       case _ => None
     }
   })
+
+  val psaUpdateWrites: Writes[PensionAdvisorDetail] = (
+    (JsPath \ "name").write[String] and
+      (JsPath \ "addressDetails").write[Address](Address.updateWrites) and
+      (JsPath \ "contactDetails").write[ContactDetails]
+    ) (
+    details =>
+      (details.name, details.addressDetail, details.contactDetail)
+  )
 }

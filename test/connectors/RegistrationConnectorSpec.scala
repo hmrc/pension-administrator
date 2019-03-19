@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 
 package connectors
 
-import audit.testdoubles.StubSuccessfulAuditService
-import audit.{AuditService, PSARegistration}
+import audit.{AuditService, PSARegistration, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours
-import models.User
+import models.{SuccessResponse, User}
 import models.registrationnoid._
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
@@ -72,7 +71,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual).map {
       response =>
-        response.right.value shouldBe registerIndividualResponse
+        response.right.value shouldBe registerIndividualResponse.as[SuccessResponse]
     }
 
   }
@@ -88,12 +87,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual) map {
-      response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_NINO")
-    }
 
+    recoverToExceptionIf[Upstream4xxResponse](connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual)) map {
+      ex =>
+        ex.upstreamResponseCode shouldBe BAD_REQUEST
+        ex.message should include("INVALID_NINO")
+    }
   }
 
   it should "handle CONFLICT (409)" in {
@@ -104,13 +103,14 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             .withStatus(CONFLICT)
         )
     )
-    connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual).map {
-      response =>
-        response.left.value shouldBe a[ConflictException]
+
+    recoverToExceptionIf[Upstream4xxResponse](connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual)) map {
+      ex =>
+        ex.upstreamResponseCode shouldBe CONFLICT
     }
   }
 
-  it should behave like errorHandlerForPostApiFailures(
+  it should behave like errorHandlerForPostApiFailures[SuccessResponse](
     connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual),
     registerIndividualWithIdUrl
   )
@@ -138,7 +138,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             isUk = Some(true),
             status = OK,
             request = testRegisterDataIndividual,
-            response = Some(registerIndividualResponse)
+            response = Some(Json.toJson(registerIndividualResponse.as[SuccessResponse]))
           )
         ) shouldBe true
     }
@@ -206,7 +206,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation).map {
       response =>
-        response.right.value shouldBe registerOrganisationResponse
+        response.right.value shouldBe registerOrganisationResponse.as[SuccessResponse]
     }
 
   }
@@ -222,25 +222,11 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation) map {
-      response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_UTR")
-    }
+    recoverToExceptionIf[Upstream4xxResponse](connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation)) map {
+      ex =>
 
-  }
-
-  it should "handle CONFLICT (409)" in {
-    server.stubFor(
-      post(urlEqualTo(registerOrganisationWithIdUrl))
-        .willReturn(
-          aResponse()
-            .withStatus(CONFLICT)
-        )
-    )
-    connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation).map {
-      response =>
-        response.left.value shouldBe a[ConflictException]
+        ex.upstreamResponseCode shouldBe BAD_REQUEST
+        ex.message should include("INVALID_UTR")
     }
   }
 
@@ -335,49 +321,17 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant).map {
       response =>
-        response.right.value shouldBe registerWithoutIdResponseJson
+        response.right.value shouldBe registerWithoutIdResponse
     }
   }
 
-  it should "handle FORBIDDEN (403) - INVALID_SUBMISSION" in {
-
-    server.stubFor(
-      post(urlEqualTo(registerOrganisationWithoutIdUrl))
-        .willReturn(
-          forbidden
-            .withHeader("Content-Type", "application/json")
-            .withBody(errorResponse("INVALID_SUBMISSION"))
-        )
-    )
-
-    connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant) map {
-      response =>
-        response.left.value shouldBe a[ForbiddenException]
-        response.left.value.message should include("INVALID_SUBMISSION")
-    }
-
-  }
-
-  it should "handle CONFLICT (409)" in {
-    server.stubFor(
-      post(urlEqualTo(registerOrganisationWithoutIdUrl))
-        .willReturn(
-          aResponse()
-            .withStatus(CONFLICT)
-        )
-    )
-    connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant).map {
-      response =>
-        response.left.value shouldBe a[ConflictException]
-    }
-  }
 
   it should behave like errorHandlerForPostApiFailures(
     connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant),
     registerOrganisationWithoutIdUrl
   )
 
-  it should "send a PSARegistration audit event on success" in {
+  it should "send a PSARegWithoutId audit event on success" in {
 
     server.stubFor(
       post(urlEqualTo(registerOrganisationWithoutIdUrl))
@@ -405,7 +359,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should "send a PSARegistration audit event on not found" in {
+  it should "send a PSARegWithoutId audit event on not found" in {
 
     server.stubFor(
       post(urlEqualTo(registerOrganisationWithoutIdUrl))
@@ -431,7 +385,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should "not send a PSARegistration audit event on failure" in {
+  it should "not send a PSARegWithoutId audit event on failure" in {
 
     server.stubFor(
       post(urlEqualTo(registerOrganisationWithoutIdUrl))
@@ -627,6 +581,87 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
   }
 
+  it should "send a PSARegWithoutId audit event on success" in {
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .withHeader("Authorization", matching("^.+$"))
+          .withHeader("Content-Type", equalTo("application/json"))
+          .withHeader("Environment", matching("^.+$"))
+          .withRequestBody(equalToJson(Json.stringify(registerIndividualWithoutIdRequestJson)))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withHeader("Content-Type", "application/json")
+              .withBody(Json.stringify(registerWithoutIdResponseJson))
+          )
+      )
+
+    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
+      _ =>
+        auditService.verifySent(
+          PSARegistration(
+            withId = false,
+            externalId = testIndividual.externalId,
+            psaType = "Individual",
+            found = true,
+            isUk = Some(false),
+            status = OK,
+            request = Json.toJson(registerIndividualWithoutIdRequest),
+            response = Some(registerWithoutIdResponseJson)
+          )
+        ) shouldBe true
+    }
+  }
+
+  it should "send a PSARegWithoutId audit event on not found" in {
+
+   server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(BAD_REQUEST)
+              .withBody(errorResponse("INVALID_PAYLOAD"))
+          )
+      )
+
+    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
+      _ =>
+        auditService.verifySent(
+          PSARegistration(
+            withId = false,
+            externalId = testIndividual.externalId,
+            psaType = "Individual",
+            found = false,
+            isUk = None,
+            status = BAD_REQUEST,
+            request = Json.toJson(registerIndividualWithoutIdRequest),
+            response = None
+          )
+        ) shouldBe true
+    }
+  }
+
+  it should "not send a PSARegWithoutId audit event on failure" in {
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(INTERNAL_SERVER_ERROR)
+          )
+      )
+
+    recoverToExceptionIf[Upstream5xxResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
+      ex =>
+        ex.reportAs shouldBe BAD_GATEWAY
+        auditService.verifyNothingSent shouldBe true
+    }
+  }
+
 }
 
 // scalastyle:off magic.number
@@ -783,6 +818,6 @@ object RegistrationConnectorSpec {
     )
 
   val registerIndividualWithoutIdRequestJson: JsValue =
-    Json.toJson(registerIndividualWithoutIdRequest)(RegistrationConnectorImpl.writesRegistrationNoIdIndividualRequest(testCorrelationId))
+    Json.toJson(registerIndividualWithoutIdRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(testCorrelationId))
 
 }

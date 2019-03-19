@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ case class PSARegistration(
                             request: JsValue,
                             response: Option[JsValue]
                           ) extends AuditEvent {
-  override def auditType: String = "PSARegistration"
+
+  override def auditType: String = if(withId) "PSARegistration" else "PSARegWithoutId"
 
   override def details: Map[String, String] =
     Map(

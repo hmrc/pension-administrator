@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import com.google.inject.Inject
 import play.api.Configuration
 import play.modules.reactivemongo.ReactiveMongoComponent
 
+import scala.concurrent.ExecutionContext
+
 class ManagePensionsCacheRepository @Inject()(
                                         config: Configuration,
                                         component: ReactiveMongoComponent
-                                      ) extends PensionAdministratorCacheRepository(
+                                      )(implicit val ec: ExecutionContext) extends PensionAdministratorCacheRepository(
   config.underlying.getString("mongodb.pension-administrator-cache.manage-pensions.name"),
   Some(config.underlying.getInt("mongodb.pension-administrator-cache.manage-pensions.timeToLiveInSeconds")),
   component,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,16 @@ trait Samples {
   val ukAddressSample = UkAddress("line1", Some("line2"), Some("line3"), Some("line4"), "GB", "NE1")
   val numberOfDirectorOrPartnersSample = NumberOfDirectorOrPartnersType(isMorethanTenDirectors = Some(true), isMorethanTenPartners = Some(true))
   val previousAddressDetailsSample = PreviousAddressDetails(isPreviousAddressLast12Month = false)
+  val previousAddressDetailsSample2 = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
   val contactDetailsSample = ContactDetails("07592113", email = "test@test.com")
+
+  val pensionAdvisorDetail = PensionAdvisorDetail(name = "xyz",
+    addressDetail = nonUkAddressSample,
+    contactDetail = contactDetailsSample)
+
   val declarationSample = PensionSchemeAdministratorDeclarationType(box1 = true, box2 = true, box3 = true, box4 = true, Some(true), None, box7 = true, None)
+  val declarationSample2 = PensionSchemeAdministratorDeclarationType(box1 = true,
+    box2 = true, box3 = true, box4 = true, Some(true), None, box7 = true, Some(pensionAdvisorDetail))
   val pensionSchemeAdministratorSample = PensionSchemeAdministrator(customerType = "TestCustomer",
     legalStatus = "Limited Company",
     sapNumber = "NumberTest",
@@ -45,6 +53,17 @@ trait Samples {
     numberOfDirectorOrPartners = Some(numberOfDirectorOrPartnersSample),
     directorOrPartnerDetail = None, declaration = declarationSample)
   val correspondenceCommonDetails = CorrespondenceCommonDetail(nonUkAddressSample, contactDetailsSample)
+
+  def pensionSchemeAdministratorSample2(personType: String) = {
+    val item1 = directorOrPartnerSample(personType) copy (previousAddressDetail = previousAddressDetailsSample2)
+    val item2 = item1 copy(firstName = "Paul", middleName = None, lastName = "Stephens", previousAddressDetail = previousAddressDetailsSample2)
+
+    pensionSchemeAdministratorSample copy(
+      directorOrPartnerDetail = Some(List(item1, item2)
+      ),
+      declaration = declarationSample2,
+      individualDetail = Some(individualSample))
+  }
 
   def directorOrPartnerSample(personType: String): DirectorOrPartnerDetailTypeItem = DirectorOrPartnerDetailTypeItem(sequenceId = "000",
     entityType = personType.capitalize,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,10 @@ import models.Invitation
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
+import repositories.InvitationsCacheRepository
+import service.MongoDBFailedException
+import play.api.libs.json.Json
+import play.api.mvc.{Action, AnyContent, Result}
 import repositories.InvitationsCacheRepository
 import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}

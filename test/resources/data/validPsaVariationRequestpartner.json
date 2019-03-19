@@ -1,0 +1,150 @@
+{
+  "customerIdentificationDetails" : {
+    "legalStatus": "Limited Company",
+    "idType": "TestId",
+    "idNumber": "TestIdNumber",
+    "noIdentifier": true
+  },
+  "individualDetails": {
+    "firstName": "John",
+    "middleName": "Does Does",
+    "lastName": "Doe",
+    "dateOfBirth": "2019-01-31"
+  },
+  "correspondenceAddressDetails": {
+    "line1": "line1",
+    "line2": "line2",
+    "line3": "line3",
+    "line4": "line4",
+    "countryCode": "GB",
+    "postalCode": "NE1",
+    "nonUKAddress":false
+  },
+  "correspondenceContactDetails": {
+    "changeFlag" : false,
+    "telephone": "07592113",
+    "email": "test@test.com"
+  },
+  "previousAddressDetails": {
+    "changeFlag" : false,
+    "isPreviousAddressLast12Month": true,
+    "previousAddressDetails": {
+      "line1": "line1",
+      "line2": "line2",
+      "line3": "line3",
+      "line4": "line4",
+      "countryCode": "GB",
+      "postalCode": "NE1",
+      "nonUKAddress":false
+    }
+  },
+  "numberOfDirectorOrPartners": {
+    "changeFlag": false,
+    "isMoreThanTenDirectors": true,
+    "isMoreThanTenPartners": true
+  },
+  "directorOrPartnerDetails": [
+    {
+      "sequenceId": "000",
+      "entityType": "Partner",
+      "firstName": "John",
+      "middleName": "Does Does",
+      "lastName": "Doe",
+      "dateOfBirth": "2019-01-31",
+      "nino": "SL211111A",
+      "noNinoReason": "he can't find it",
+      "utr": "123456789",
+      "noUtrReason": "he can't find it",
+      "correspondenceCommonDetails": {
+        "addressDetails": {
+          "line1": "line1",
+          "line2": "line2",
+          "line3": "line3",
+          "line4": "line4",
+          "postalCode": "NE1",
+          "countryCode": "IT",
+          "nonUKAddress": true
+        },
+        "contactDetails": {
+          "telephone": "07592113",
+          "email": "test@test.com"
+        }
+      },
+      "previousAddressDetails": {
+        "isPreviousAddressLast12Month": true,
+        "previousAddressDetails": {
+          "line1": "line1",
+          "line2": "line2",
+          "line3": "line3",
+          "line4": "line4",
+	      "postalCode": "NE1",
+          "countryCode": "GB",
+          "nonUKAddress":false
+        }
+      }
+    },
+    {
+      "sequenceId": "000",
+      "entityType": "Partner",
+      "firstName": "Paul",
+      "lastName": "Stephens",
+      "dateOfBirth": "2019-01-31",
+      "nino": "SL211111A",
+      "noNinoReason": "he can't find it",
+      "utr": "123456789",
+      "noUtrReason": "he can't find it",
+      "correspondenceCommonDetails": {
+        "addressDetails": {
+          "line1": "line1",
+          "line2": "line2",
+          "line3": "line3",
+          "line4": "line4",
+          "postalCode": "NE1",
+          "countryCode": "IT",
+          "nonUKAddress": true
+        },
+        "contactDetails": {
+          "telephone": "07592113",
+          "email": "test@test.com"
+        }
+      },
+      "previousAddressDetails": {
+        "isPreviousAddressLast12Month": true,
+        "previousAddressDetails": {
+          "line1": "line1",
+          "line2": "line2",
+          "line3": "line3",
+          "line4": "line4",
+	      "postalCode": "NE1",
+          "countryCode": "GB",
+          "nonUKAddress":false
+        }
+      }
+    }
+  ],
+  "declarationDetails": {
+    "changeFlag" : false,
+    "box1": true,
+    "box2": true,
+    "box3": true,
+    "box4": true,
+    "box5": true,
+    "box7": true,
+    "pensionAdvisorDetails": {
+      "name": "xyz",
+      "addressDetails": {
+        "line1": "line1",
+        "line2": "line2",
+        "line3": "line3",
+        "line4": "line4",
+        "postalCode": "NE1",
+        "countryCode": "IT",
+        "nonUKAddress":true
+      },
+      "contactDetails": {
+        "telephone": "07592113",
+        "email": "test@test.com"
+      }
+    }
+  }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package models.Reads
 
 import models.ContactDetails
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json.Json
+import play.api.libs.json.{JsBoolean, Json}
 
 class ContactDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues {
 
@@ -33,6 +33,14 @@ class ContactDetailsReadsSpec extends WordSpec with MustMatchers with OptionValu
       "We have an email address" in {
         val result: ContactDetails = input.as[ContactDetails](ContactDetails.apiReads)
         result.email mustBe "test@test.com"
+      }
+
+      "We have an isChanged flag" in {
+        val modifiedContactDetails = input + ("isChanged" -> JsBoolean(true))
+
+        val result = modifiedContactDetails.as[ContactDetails](ContactDetails.apiReads)
+
+        result.isChanged.value mustBe true
       }
     }
   }

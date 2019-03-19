@@ -1,0 +1,32 @@
+{
+  "processingDate":"2001-12-17T09:30:47Z",
+  "psaSubscriptionDetails":{
+    "customerIdentificationDetails":{
+      "legalStatus":"Partnership",
+      "idType":"UTR",
+      "idNumber":"0123456789",
+      "noIdentifier":false
+    },
+    "organisationOrPartnerDetails":{
+      "name":"Acme Partnership",
+      "vatRegistrationNumber":"123456789",
+      "payeReference":"123AB45678"
+    },
+    "correspondenceAddressDetails":{
+      "nonUKAddress":false,
+      "line1":"Flat 1",
+      "line2":"Waterloo House",
+      "line3":"Newcastle",
+      "line4":"Tyne and Wear",
+      "postalCode":"NE1 4ER",
+      "countryCode":"GB"
+    },
+    "correspondenceContactDetails":{
+      "telephone":"0191 644595 ",
+      "email":"acme_partnership@email.com"
+    },
+    "previousAddressDetails":{
+      "isPreviousAddressLast12Month":false
+    }
+  }
+}

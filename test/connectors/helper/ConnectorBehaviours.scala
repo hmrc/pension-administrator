@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,9 @@ import scala.concurrent.Future
 
 trait ConnectorBehaviours extends AsyncFlatSpec with WireMockHelper with EitherValues with Matchers {
 
-  def errorHandlerForPostApiFailures(call: => Future[Either[HttpException, JsValue]], url: String): Unit = {
+  def errorHandlerForPostApiFailures[A](call: => Future[Either[HttpException, A]], url: String): Unit = {
 
     errorHandlerForApiFailures(call, post(urlEqualTo(url)))
-
   }
 
   def errorHandlerForGetApiFailures[A](call: => Future[Either[HttpException, A]], url: String): Unit = {

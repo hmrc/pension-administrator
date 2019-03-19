@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,8 @@ import scala.concurrent.Future
 
 class SchemeController @Inject()(schemeService: SchemeService,
                                  schemeConnector: DesConnector,
-                                 cc: ControllerComponents) extends BackendController(cc) with ErrorHandler {
+                                 cc: ControllerComponents
+                                ) extends BackendController(cc) with ErrorHandler {
 
   def registerPSA: Action[AnyContent] = Action.async {
     implicit request => {
@@ -66,9 +67,31 @@ class SchemeController @Inject()(schemeService: SchemeService,
 
   def removePsa: Action[PsaToBeRemovedFromScheme] = Action.async(parse.json[PsaToBeRemovedFromScheme]) {
     implicit request =>
-      schemeConnector.removePSA(request.body)map {
-        case Right(_) =>  NoContent
+      schemeConnector.removePSA(request.body) map {
+        case Right(_) =>
+          NoContent
         case Left(e) => result(e)
+      }
+  }
+
+  def deregisterPsa(psaId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      schemeConnector.deregisterPSA(psaId).map {
+        case Right(_) => NoContent
+        case Left(e) => result(e)
+      }
+  }
+
+  def updatePSA(psaId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+
+       request.body.asJson match {
+        case Some(jsValue) =>
+          schemeService.updatePSA(psaId, jsValue).map {
+            case Right(_) => Ok
+            case Left(e) => result(e)
+          }
+        case _ => Future.failed(new BadRequestException("No PSA variation details in the header for psa update/variatiosn"))
       }
   }
 }

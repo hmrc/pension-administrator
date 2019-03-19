@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,26 +25,53 @@ import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
 import utils.validationUtils._
 
-class SchemeServiceImpl @Inject()(desConnector: DesConnector,
-                                  auditService: AuditService, appConfig: AppConfig) extends SchemeService with SchemeAuditService {
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
-  override def registerPSA(json: JsValue)
-                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, JsValue]] = {
+class SchemeServiceImpl @Inject()(desConnector: DesConnector,
+                                  auditService: AuditService,
+                                  appConfig: AppConfig,
+                                  schemeAuditService: SchemeAuditService) extends SchemeService{
+
+  override def registerPSA(json: JsValue)(
+    implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
+    convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
+      val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaSubmissionWrites)
+      Logger.debug(s"[PSA-Registration-Outgoing-Payload]$psaJsValue")
+      desConnector.registerPSA(psaJsValue) andThen
+        schemeAuditService.sendPSASubscriptionEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
+    }
+
+  }
+
+  override def updatePSA(psaId: String, json: JsValue)(
+    implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+    Logger.debug(s"[PSA-Variation-Incoming-Payload]$json")
+
+    convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
+      val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaUpdateWrites)
+      Logger.debug(s"[PSA-Variation-Outgoing-Payload]$psaJsValue")
+      desConnector.updatePSA(psaId, psaJsValue)
+    }
+  }
+
+  private def convertPensionSchemeAdministrator(json: JsValue)(
+    block: PensionSchemeAdministrator => Future[Either[HttpException, JsValue]]): Future[Either[HttpException, JsValue]] = {
+
+    Logger.debug(s"[PSA-Variation-InComing-Payload]$json")
+
     Try(json.convertTo[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)) match {
       case Success(pensionSchemeAdministrator) =>
-        val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaSubmissionWrites)
-        Logger.debug(s"[PSA-Registration-Outgoing-Payload]$psaJsValue")
 
-        desConnector.registerPSA(psaJsValue) andThen sendPSASubscriptionEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
+        block(pensionSchemeAdministrator)
 
       case Failure(e) =>
         Logger.warn(s"Bad Request returned from frontend for PSA $e")
         Future.failed(new BadRequestException(s"Bad Request returned from frontend for PSA $e"))
     }
-
   }
 }
+

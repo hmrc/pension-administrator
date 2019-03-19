@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.FakeAuthConnector
+import utils.{FakeAuthConnector, FakeFeatureSwitchManagementService}
 
 import scala.concurrent.Future
 
@@ -50,37 +50,183 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
   private val individualNoIdFrontend = readJsonFromFile("/data/validRegNoIdIndividualFE.json")
   private val individualNoIdToConnector = individualNoIdFrontend.as[RegistrationNoIdIndividualRequest]
-  private val individualNoIdToEmtp = readJsonFromFile("/data/validRegNoIdIndividualToEtmp.json")
 
   private val mockRegistrationConnector = mock[RegistrationConnector]
 
   implicit val mat: Materializer = app.materializer
 
-  private def registrationController(retrievals: Future[_]): RegistrationController =
+  private def registrationController(retrievals: Future[_], isManualIvEnabled: Boolean = true): RegistrationController =
     new RegistrationController(
       new FakeAuthConnector(retrievals),
       mockRegistrationConnector,
-      controllerComponents
+      controllerComponents,
+      FakeFeatureSwitchManagementService(isManualIvEnabled)
     )
 
   before(reset(mockRegistrationConnector))
 
-  "registerWithIdIndividual" must {
+  "registerWithIdIndividual with manual IV enabled" must {
+
+    val mandatoryRequestData = Json.obj("regime" -> "PODA", "requiresNameMatch" -> false, "isAnAgent" -> false)
+    val requestBody = Json.obj("nino" -> nino)
+
+    "return OK when the registration with id is successful for Individual" in {
+
+      val successResponse:SuccessResponse = readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json").as[SuccessResponse]
+
+      when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(mandatoryRequestData))(any(), any(), any()))
+        .thenReturn(Future.successful(Right(successResponse)))
+
+      val result = registrationController(individualRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
+
+      ScalaFutures.whenReady(result) { _ =>
+        status(result) mustBe OK
+        contentAsJson(result) mustEqual Json.toJson(successResponse)
+      }
+    }
+
+    "throw BadRequestException" when {
+      "nino cannot be read from request" in {
+
+        val badRequestGen: Gen[JsObject] = Gen.oneOf(Seq(
+          Json.obj(),
+          Json.obj("bad" -> "request")
+        ))
+
+        forAll(badRequestGen) { badRequest =>
+
+          val result = registrationController(individualRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(badRequest))
+
+          ScalaFutures.whenReady(result.failed) { e =>
+            e mustBe a[BadRequestException]
+            e.getMessage must startWith("Bad Request returned from frontend for Register With Id Individual")
+          }
+
+        }
+
+      }
+
+      "there is no body in the request" in {
+        val result = registrationController(individualRetrievals).registerWithIdIndividual(fakeRequest)
+
+        ScalaFutures.whenReady(result.failed) { e =>
+          e mustBe a[BadRequestException]
+          e.getMessage mustEqual "No request body received for register with Id Individual"
+        }
+      }
+    }
+
+    "return result from registration when connector returns failure" in {
+
+      val connectorFailureGen: Gen[HttpException] = Gen.oneOf(Seq(
+        new BadRequestException("INVALID_PAYLOAD"),
+        new NotFoundException("NOT FOUND"),
+        new ConflictException("CONFLICT")
+      ))
+
+      forAll(connectorFailureGen) { connectorFailure =>
+
+        when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(mandatoryRequestData))(any(), any(), any()))
+          .thenReturn(Future.successful(Left(connectorFailure)))
+
+        val result = registrationController(individualRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
+
+        ScalaFutures.whenReady(result) { _ =>
+          status(result) mustBe connectorFailure.responseCode
+        }
+
+      }
+
+    }
+
+    "throw Exception when authorisation retrievals fails" in {
+
+      val retrievals = InsufficientConfidenceLevel()
+
+      val result = registrationController(Future.failed(retrievals)).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
+
+      ScalaFutures.whenReady(result.failed) { e =>
+        e mustBe a[Exception]
+        e.getMessage mustBe retrievals.msg
+      }
+    }
+
+    "throw Upstream4xxResponse when auth all retrievals are not present" in {
+
+      val retrievalsGen = Gen.oneOf(Seq(
+        new ~(None, None),
+        new ~(None, Some(AffinityGroup.Individual)),
+        new ~(Some(""), None)
+      ))
+
+      forAll(retrievalsGen) { retrievals =>
+
+        val result = registrationController(Future.successful(retrievals)).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
+
+        ScalaFutures.whenReady(result.failed) { e =>
+          e mustBe a[Upstream4xxResponse]
+          e.getMessage mustBe "Not authorized"
+        }
+
+      }
+
+    }
+
+    "throw Upstream5xxResponse when given Upstream5xxResponse from connector" in {
+
+      val failureResponse = Json.obj(
+        "code" -> "SERVER_ERROR",
+        "reason" -> "DES is currently experiencing problems that require live service intervention."
+      )
+
+      when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(mandatoryRequestData))(any(), any(), any()))
+        .thenReturn(Future.failed(Upstream5xxResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
+
+      val result = registrationController(individualRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
+
+      ScalaFutures.whenReady(result.failed) { e =>
+        e mustBe a[Upstream5xxResponse]
+        e.getMessage mustBe failureResponse.toString()
+
+        verify(mockRegistrationConnector, times(1))
+          .registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(mandatoryRequestData))(any(), any(), any())
+      }
+    }
+
+    "throw Exception when any other exception returned from connector" in {
+
+      when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(mandatoryRequestData))(any(), any(), any()))
+        .thenReturn(Future.failed(new Exception("Generic Exception")))
+
+      val result = registrationController(individualRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
+
+      ScalaFutures.whenReady(result.failed) { e =>
+        e mustBe a[Exception]
+        e.getMessage mustBe "Generic Exception"
+
+        verify(mockRegistrationConnector, times(1))
+          .registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(mandatoryRequestData))(any(), any(), any())
+      }
+    }
+  }
+
+  "registerWithIdIndividual with manual IV disabled" must {
 
     val inputRequestData = Json.obj("regime" -> "PODA", "requiresNameMatch" -> false, "isAnAgent" -> false)
 
     "return OK when the registration with id is successful for Individual" in {
 
-      val successResponse = Json.toJson(readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json").as[SuccessResponse])
+      val successResponse = readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json").as[SuccessResponse]
 
       when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(inputRequestData))(any(), any(), any()))
         .thenReturn(Future.successful(Right(successResponse)))
 
-      val result = registrationController(individualRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+      val result = registrationController(individualRetrievalsWithNino,
+        isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
 
       ScalaFutures.whenReady(result) { _ =>
         status(result) mustBe OK
-        contentAsJson(result) mustEqual successResponse
+        contentAsJson(result) mustEqual Json.toJson(successResponse)
       }
     }
 
@@ -97,7 +243,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(inputRequestData))(any(), any(), any()))
           .thenReturn(Future.successful(Left(connectorFailure)))
 
-        val result = registrationController(individualRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+        val result = registrationController(individualRetrievalsWithNino, isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
 
         ScalaFutures.whenReady(result) { _ =>
           status(result) mustBe connectorFailure.responseCode
@@ -111,7 +257,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
       val retrievals = InsufficientConfidenceLevel()
 
-      val result = registrationController(Future.failed(retrievals)).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+      val result = registrationController(Future.failed(retrievals), isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
 
       ScalaFutures.whenReady(result.failed) { e =>
         e mustBe a[Exception]
@@ -133,7 +279,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
       forAll(retrievalsGen) { retrievals =>
 
-        val result = registrationController(Future.successful(retrievals)).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+        val result = registrationController(Future.successful(retrievals), isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
 
         ScalaFutures.whenReady(result.failed) { e =>
           e mustBe a[Upstream4xxResponse]
@@ -154,7 +300,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(inputRequestData))(any(), any(), any()))
         .thenReturn(Future.failed(Upstream5xxResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
 
-      val result = registrationController(individualRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+      val result = registrationController(individualRetrievalsWithNino, isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
 
       ScalaFutures.whenReady(result.failed) { e =>
         e mustBe a[Upstream5xxResponse]
@@ -170,7 +316,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(inputRequestData))(any(), any(), any()))
         .thenReturn(Future.failed(new Exception("Generic Exception")))
 
-      val result = registrationController(individualRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
+      val result = registrationController(individualRetrievalsWithNino, isManualIvEnabled = false).registerWithIdIndividual(fakeRequest.withJsonBody(inputRequestData))
 
       ScalaFutures.whenReady(result.failed) { e =>
         e mustBe a[Exception]
@@ -182,23 +328,22 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
     }
   }
 
+
   "registerWithIdOrganisation" must {
 
     val inputData = Json.obj("utr" -> "1100000000", "organisationName" -> "Test Ltd", "organisationType" -> "LLP")
 
     "return OK when request utr and organisation get successful response from connector" in {
-
-      val input = readJsonFromFile("/data/validRegisterWithIdOrganisationResponse.json")
-      val successResponse = Json.toJson(readJsonFromFile("/data/validRegisterWithIdOrganisationResponse.json").as[SuccessResponse])
+     val successResponse = readJsonFromFile("/data/validRegisterWithIdOrganisationResponse.json").as[SuccessResponse]
 
       when(mockRegistrationConnector.registerWithIdOrganisation(Matchers.eq("1100000000"), any(), any())(any(), any(), any()))
-        .thenReturn(Future.successful(Right(input)))
+        .thenReturn(Future.successful(Right(successResponse)))
 
       val result = registrationController(organisationRetrievals).registerWithIdOrganisation(fakeRequest.withJsonBody(inputData))
 
       ScalaFutures.whenReady(result) { _ =>
         status(result) mustBe OK
-        contentAsJson(result) mustEqual successResponse
+        contentAsJson(result) mustEqual Json.toJson(successResponse)
       }
     }
 
@@ -322,11 +467,11 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     "return OK with successful response from connector" in {
 
-      val successResponse: JsObject = Json.obj(
+      val successResponse: RegisterWithoutIdResponse = Json.obj(
         "processingDate" -> LocalDate.now,
         "sapNumber" -> "1234567890",
         "safeId" -> "XE0001234567890"
-      )
+      ).as[RegisterWithoutIdResponse]
 
       when(mockRegistrationConnector.registrationNoIdOrganisation(any(), Matchers.eq(dataToEmtp))(any(), any(), any()))
         .thenReturn(Future.successful(Right(successResponse)))
@@ -427,7 +572,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       when(mockRegistrationConnector.registrationNoIdIndividual(any(), Matchers.eq(individualNoIdToConnector))(any(), any(), any()))
         .thenReturn(Future.successful(Right(successResponse)))
 
-      val result = call(registrationController(individualNoIdRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
+      val result = call(registrationController(individualRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
 
       ScalaFutures.whenReady(result) { _ =>
         status(result) mustBe OK
@@ -448,7 +593,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         when(mockRegistrationConnector.registrationNoIdIndividual(any(), Matchers.eq(individualNoIdToConnector))(any(), any(), any()))
           .thenReturn(Future.successful(Left(connectorFailure)))
 
-        val result = call(registrationController(individualNoIdRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
+        val result = call(registrationController(individualRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
 
         ScalaFutures.whenReady(result) { _ =>
           status(result) mustBe connectorFailure.responseCode
@@ -481,7 +626,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       when(mockRegistrationConnector.registrationNoIdIndividual(any(), Matchers.eq(individualNoIdToConnector))(any(), any(), any()))
         .thenReturn(Future.failed(Upstream5xxResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
 
-      val result = call(registrationController(individualNoIdRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
+      val result = call(registrationController(individualRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
 
       ScalaFutures.whenReady(result.failed) { e =>
         e mustBe a[Upstream5xxResponse]
@@ -501,9 +646,8 @@ object RegistrationControllerSpec {
 
   private val nino = "test-nino"
   private val externalId = "test-external-id"
-  private val fakeRequest = FakeRequest("POST", "/")
 
-  private val individualRetrievals =
+  private val individualRetrievalsWithNino =
     Future.successful(
       new ~(
         new ~(
@@ -522,7 +666,7 @@ object RegistrationControllerSpec {
       )
     )
 
-  private val individualNoIdRetrievals =
+  private val individualRetrievals =
     Future.successful(
       new ~(
         Some(externalId),
