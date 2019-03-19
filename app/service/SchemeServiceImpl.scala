@@ -51,7 +51,7 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
     convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
       val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaUpdateWrites)
       Logger.debug(s"[PSA-Variation-Outgoing-Payload]$psaJsValue")
-      desConnector.updatePSA(psaId, psaJsValue)
+      desConnector.updatePSA(psaId, psaJsValue) andThen sendPSAChangeEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
     }
   }
 
