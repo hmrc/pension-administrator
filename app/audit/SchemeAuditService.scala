@@ -18,7 +18,7 @@ package audit
 
 import com.google.inject.Inject
 import config.FeatureSwitchManagementService
-import models.PensionSchemeAdministrator
+import models.{PensionSchemeAdministrator, PsaToBeRemovedFromScheme}
 import play.api.Logger
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
@@ -104,6 +104,15 @@ class SchemeAuditService@Inject()(fs: FeatureSwitchManagementService) {
           response = None
         )
       )
+    case Failure(t) =>
+      Logger.error("Error in sending audit event for get PSA details", t)
+
+  }
+
+  def sendPSARemovalAuditEvent(psaToBeRemovedFromScheme: PsaToBeRemovedFromScheme)(sendEvent: PSARemovalFromSchemeAuditEvent => Unit)
+                         (implicit rh: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+    case Success(Right(_)) =>
+      sendEvent(PSARemovalFromSchemeAuditEvent(psaToBeRemovedFromScheme))
     case Failure(t) =>
       Logger.error("Error in sending audit event for get PSA details", t)
 

@@ -107,7 +107,8 @@ class DesConnectorImpl @Inject()(
       implicitly[HeaderCarrier](hc),
       implicitly) map {
       handleGetResponse(_, subscriptionDetailsUrl)
-    } andThen schemeAuditService.sendPSADetailsEvent(psaId)(auditService.sendEvent) andThen logWarning("PSA subscription details")
+    } andThen schemeAuditService.sendPSADetailsEvent(psaId)(auditService.sendEvent) andThen
+      logWarning("PSA subscription details")
 
   }
 
@@ -126,10 +127,8 @@ class DesConnectorImpl @Inject()(
 
     http.POST[JsValue, HttpResponse](removePsaUrl, data)(implicitly, implicitly, hc, implicitly) map {
       handlePostResponse(_, removePsaUrl)
-    } andThen {
-      case Success(Right(_)) =>
-        auditService.sendEvent(PSARemovalFromSchemeAuditEvent(psaToBeRemoved))
-    } andThen logFailures("remove PSA", data, removePsaSchema)
+    } andThen schemeAuditService.sendPSARemovalAuditEvent(psaToBeRemoved)(auditService.sendEvent) andThen
+      logFailures("remove PSA", data, removePsaSchema)
   }
 
   override def deregisterPSA(psaId: String)(implicit
@@ -186,7 +185,7 @@ class DesConnectorImpl @Inject()(
     val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATION_ID")
 
     response.status match {
-      case OK => Right(validateJson(response.json))
+      case OK => Right(validateGetJson(response.json))
       case status => Left(handleErrorResponse("PSA Subscription details", url, response, badResponseSeq))
     }
 
@@ -198,7 +197,7 @@ class DesConnectorImpl @Inject()(
     case Success(Left(e: HttpResponse)) => Logger.warn(s"$endpoint received error response from DES", e)
   }
 
-  private def validateJson(json: JsValue): JsValue = {
+  private def validateGetJson(json: JsValue): JsValue = {
 
     val temporaryMappingTest = json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers)
     if (temporaryMappingTest.isSuccess)
@@ -206,8 +205,6 @@ class DesConnectorImpl @Inject()(
     else {
       Logger.warn(s"PensionAdministratorFailedMapToUserAnswers - [$temporaryMappingTest]")
     }
-
-
     json.validate[PsaSubscription] match {
       case JsSuccess(value, _) =>  if(fs.get(IsVariationsEnabled)) {
         json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).getOrElse(throw new PSAFailedMapToUserAnswersException)
