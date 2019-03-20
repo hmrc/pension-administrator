@@ -31,7 +31,9 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 class SchemeServiceImpl @Inject()(desConnector: DesConnector,
-                                  auditService: AuditService, appConfig: AppConfig) extends SchemeService with SchemeAuditService {
+                                  auditService: AuditService,
+                                  appConfig: AppConfig,
+                                  schemeAuditService: SchemeAuditService) extends SchemeService{
 
   override def registerPSA(json: JsValue)(
     implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, JsValue]] = {
@@ -39,7 +41,8 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
     convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
       val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaSubmissionWrites)
       Logger.debug(s"[PSA-Registration-Outgoing-Payload]$psaJsValue")
-      desConnector.registerPSA(psaJsValue) andThen sendPSASubscriptionEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
+      desConnector.registerPSA(psaJsValue) andThen
+        schemeAuditService.sendPSASubscriptionEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
     }
 
   }
@@ -51,7 +54,8 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
     convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
       val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaUpdateWrites)
       Logger.debug(s"[PSA-Variation-Outgoing-Payload]$psaJsValue")
-      desConnector.updatePSA(psaId, psaJsValue) andThen sendPSAChangeEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
+      desConnector.updatePSA(psaId, psaJsValue) andThen
+        schemeAuditService.sendPSAChangeEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
     }
   }
 

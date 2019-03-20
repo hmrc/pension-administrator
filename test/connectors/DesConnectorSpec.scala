@@ -16,15 +16,13 @@
 
 package connectors
 
-import audit.{AuditService, PSARemovalFromSchemeAuditEvent, StubSuccessfulAuditService}
+import audit.{AuditService, PSADetails, PSARemovalFromSchemeAuditEvent, StubSuccessfulAuditService}
 import base.JsonFileReader
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.{serverError, _}
 import config.FeatureSwitchManagementService
 import connectors.helper.ConnectorBehaviours
 import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
 import org.joda.time.LocalDate
-import org.mockito.Matchers
-import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
@@ -44,8 +42,6 @@ import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.testhelpers.PsaSubscriptionBuilder._
 import utils.{FakeDesConnector, FakeFeatureSwitchManagementService, StubLogger, WireMockHelper}
 
-import scala.concurrent.Future
-
 class DesConnectorSpec extends AsyncFlatSpec
   with WireMockHelper
   with OptionValues
@@ -54,6 +50,11 @@ class DesConnectorSpec extends AsyncFlatSpec
   with ConnectorBehaviours with MockitoSugar{
 
   import DesConnectorSpec._
+
+  override def beforeEach(): Unit = {
+    auditService.reset()
+    super.beforeEach()
+  }
 
   override protected def portConfigKey: String = "microservice.services.des-hod.port"
 
@@ -65,131 +66,141 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   lazy val connector: DesConnector = injector.instanceOf[DesConnector]
 
-//  "DesConnector registerPSA" should "handle OK (200)" in {
-//    val successResponse = Json.obj(
-//      "processingDate" -> LocalDate.now,
-//      "formBundle" -> "1121313",
-//      "psaId" -> "A21999999"
-//    )
-//    server.stubFor(
-//      post(urlEqualTo(registerPsaUrl))
-//        .withHeader("Content-Type", equalTo("application/json"))
-//        .withRequestBody(equalToJson(Json.stringify(registerPsaData)))
-//        .willReturn(
-//          ok(Json.stringify(successResponse))
-//            .withHeader("Content-Type", "application/json")
-//        )
-//    )
-//
-//    connector.registerPSA(registerPsaData).map { response =>
-//      response.right.value shouldBe successResponse
-//    }
-//  }
-//
-//  it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
-//    server.stubFor(
-//      post(urlEqualTo(registerPsaUrl))
-//        .willReturn(
-//          badRequest
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("INVALID_CORRELATION_ID"))
-//        )
-//    )
-//    connector.registerPSA(registerPsaData).map {
-//      response =>
-//        response.left.value shouldBe a[BadRequestException]
-//        response.left.value.message should include("INVALID_CORRELATION_ID")
-//    }
-//  }
-//
-//  it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
-//    server.stubFor(
-//      post(urlEqualTo(registerPsaUrl))
-//        .willReturn(
-//          badRequest
-//            .withHeader("Content-Type", "application/json")
-//            .withBody("INVALID_PAYLOAD")
-//        )
-//    )
-//
-//    logger.reset()
-//    connector.registerPSA(registerPsaData).map {
-//      _ =>
-//        logger.getLogEntries.size shouldBe 1
-//        logger.getLogEntries.head.level shouldBe Level.WARN
-//    }
-//  }
-//
-//  it should "return a ForbiddenException for a 403 INVALID_BUSINESS_PARTNER response" in {
-//    server.stubFor(
-//      post(urlEqualTo(registerPsaUrl))
-//        .willReturn(
-//          forbidden
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("INVALID_BUSINESS_PARTNER"))
-//        )
-//    )
-//
-//    connector.registerPSA(registerPsaData).map {
-//      response =>
-//        response.left.value shouldBe a[ForbiddenException]
-//        response.left.value.message should include("INVALID_BUSINESS_PARTNER")
-//    }
-//  }
-//
-//  it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
-//    server.stubFor(
-//      post(urlEqualTo(registerPsaUrl))
-//        .willReturn(
-//          aResponse()
-//            .withStatus(CONFLICT)
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("DUPLICATE_SUBMISSION"))
-//        )
-//    )
-//    connector.registerPSA(registerPsaData).map {
-//      response =>
-//        response.left.value shouldBe a[ConflictException]
-//        response.left.value.message should include("DUPLICATE_SUBMISSION")
-//    }
-//  }
-//
-//  it should behave like errorHandlerForPostApiFailures[JsValue](
-//    connector.registerPSA(registerPsaData),
-//    registerPsaUrl
-//  )
-//
-//  "DesConnector getPSASubscriptionDetails" should "handle OK (200)" in {
-//
-//    lazy val appWithFeatureEnabled: Application = new GuiceApplicationBuilder().configure(portConfigKey -> server.port().toString,
-//      "auditing.enabled" -> false,
-//      "metrics.enabled" -> false
-//    ).overrides(bind[FeatureSwitchManagementService].toInstance(FakeFeatureSwitchManagementService(false))).build()
-//
-//    val connector: DesConnector = appWithFeatureEnabled.injector.instanceOf[DesConnector]
-//
-//
-//    server.stubFor(
-//         get(urlEqualTo(psaSubscriptionDetailsUrl))
-//           .withHeader("Content-Type", equalTo("application/json"))
-//           .willReturn(
-//             ok(psaSubscriptionData.toString())
-//               .withHeader("Content-Type", "application/json")
-//           )
-//       )
-//       connector.getPSASubscriptionDetails(psaId.value).map { response =>
-//         response.right.value shouldBe Json.toJson(psaSubscription)
-//         server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
-//       }
-//
-//  }
+  "DesConnector registerPSA" should "handle OK (200)" in {
+    val successResponse = Json.obj(
+      "processingDate" -> LocalDate.now,
+      "formBundle" -> "1121313",
+      "psaId" -> "A21999999"
+    )
+    server.stubFor(
+      post(urlEqualTo(registerPsaUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .withRequestBody(equalToJson(Json.stringify(registerPsaData)))
+        .willReturn(
+          ok(Json.stringify(successResponse))
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    connector.registerPSA(registerPsaData).map { response =>
+      response.right.value shouldBe successResponse
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
+    server.stubFor(
+      post(urlEqualTo(registerPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_CORRELATION_ID"))
+        )
+    )
+    connector.registerPSA(registerPsaData).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_CORRELATION_ID")
+    }
+  }
+
+  it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
+    server.stubFor(
+      post(urlEqualTo(registerPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody("INVALID_PAYLOAD")
+        )
+    )
+
+    logger.reset()
+    connector.registerPSA(registerPsaData).map {
+      _ =>
+        logger.getLogEntries.size shouldBe 1
+        logger.getLogEntries.head.level shouldBe Level.WARN
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 INVALID_BUSINESS_PARTNER response" in {
+    server.stubFor(
+      post(urlEqualTo(registerPsaUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_BUSINESS_PARTNER"))
+        )
+    )
+
+    connector.registerPSA(registerPsaData).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("INVALID_BUSINESS_PARTNER")
+    }
+  }
+
+  it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
+    server.stubFor(
+      post(urlEqualTo(registerPsaUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(CONFLICT)
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("DUPLICATE_SUBMISSION"))
+        )
+    )
+    connector.registerPSA(registerPsaData).map {
+      response =>
+        response.left.value shouldBe a[ConflictException]
+        response.left.value.message should include("DUPLICATE_SUBMISSION")
+    }
+  }
+
+  it should behave like errorHandlerForPostApiFailures[JsValue](
+    connector.registerPSA(registerPsaData),
+    registerPsaUrl
+  )
+
+  "DesConnector getPSASubscriptionDetails" should "handle OK (200)" in {
+
+    lazy val appWithFeatureEnabled: Application = new GuiceApplicationBuilder().configure(portConfigKey -> server.port().toString,
+      "auditing.enabled" -> false,
+      "metrics.enabled" -> false
+    ).overrides(bind[FeatureSwitchManagementService].toInstance(FakeFeatureSwitchManagementService(false)),
+      bind[AuditService].toInstance(auditService)).build()
+
+    val connector: DesConnector = appWithFeatureEnabled.injector.instanceOf[DesConnector]
+
+
+    server.stubFor(
+         get(urlEqualTo(psaSubscriptionDetailsUrl))
+           .withHeader("Content-Type", equalTo("application/json"))
+           .willReturn(
+             ok(psaSubscriptionData.toString())
+               .withHeader("Content-Type", "application/json")
+           )
+       )
+       connector.getPSASubscriptionDetails(psaId.value).map { response =>
+         response.right.value shouldBe Json.toJson(psaSubscription)
+         server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
+         auditService.verifySent(
+           PSADetails(
+             psaId = psaId.value,
+             psaName = psaSubscription.name,
+             status = OK,
+             response = Some(Json.toJson(psaSubscription))
+           )
+         ) shouldBe true
+       }
+
+  }
 
   it should "handle OK (200) if variations is enabled" in {
 
     lazy val appWithFeatureEnabled: Application = new GuiceApplicationBuilder().configure(portConfigKey -> server.port().toString,
       "auditing.enabled" -> false,
       "metrics.enabled" -> false
-    ).overrides(bind[FeatureSwitchManagementService].toInstance(FakeFeatureSwitchManagementService(true))).build()
+    ).overrides(bind[FeatureSwitchManagementService].toInstance(FakeFeatureSwitchManagementService(true)),
+      bind[AuditService].toInstance(auditService)).build()
 
     val connector: DesConnector = appWithFeatureEnabled.injector.instanceOf[DesConnector]
 
@@ -204,496 +215,564 @@ class DesConnectorSpec extends AsyncFlatSpec
     connector.getPSASubscriptionDetails(psaId.value).map { response =>
        response.right.value shouldBe Json.parse(psaSubscriptionUserAnswers)
        server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
+      auditService.verifySent(
+        PSADetails(
+          psaId = psaId.value,
+          psaName = psaSubscription.name,
+          status = OK,
+          response = Some(Json.parse(psaSubscriptionUserAnswers))
+        )
+      ) shouldBe true
      }
 
   }
 
-//  it should behave like errorHandlerForGetApiFailures(
-//    connector.getPSASubscriptionDetails(psaId.value),
-//    psaSubscriptionDetailsUrl
-//  )
-//
-//  it should "return a PSAFailedMapToUserAnswersException if the API response cannot be transformed to UserAnswers" in {
-//
-//    val pSASubscriptionDetailsTransformer = mock[PSASubscriptionDetailsTransformer]
-//
-//    when(pSASubscriptionDetailsTransformer.transformToUserAnswers).thenReturn(__.json.copyFrom((__ \ 'hello).json.pick))
-//
-//    lazy val appWithFeatureEnabled: Application = new GuiceApplicationBuilder().configure(portConfigKey -> server.port().toString,
-//      "auditing.enabled" -> false,
-//      "metrics.enabled" -> false
-//    ).overrides(
-//      Seq(bind[FeatureSwitchManagementService].toInstance(FakeFeatureSwitchManagementService(true)),
-//      bind[PSASubscriptionDetailsTransformer].toInstance(pSASubscriptionDetailsTransformer))
-//      ).build()
-//
-//    val connector: DesConnector = appWithFeatureEnabled.injector.instanceOf[DesConnector]
-//
-//    server.stubFor(
-//      get(urlEqualTo(psaSubscriptionDetailsUrl))
-//        .withHeader("Content-Type", equalTo("application/json"))
-//        .willReturn(
-//          ok(psaSubscriptionData.toString())
-//            .withHeader("Content-Type", "application/json")
-//        )
-//    )
-//
-//    recoverToExceptionIf[PSAFailedMapToUserAnswersException](connector.getPSASubscriptionDetails(psaId.value)) map {
-//      ex =>
-//        ex.leftSide shouldBe a[PSAFailedMapToUserAnswersException]
-//    }
-//  }
-//
-//  it should "return a JsResultException if the API response cannot be converted to PsaSubscription" in {
-//    server.stubFor(
-//      get(urlEqualTo(psaSubscriptionDetailsUrl))
-//        .withHeader("Content-Type", equalTo("application/json"))
-//        .willReturn(
-//          ok(invalidPsaSubscriptionResponse.toString())
-//            .withHeader("Content-Type", "application/json")
-//        )
-//    )
-//
-//    recoverToExceptionIf[JsResultException](connector.getPSASubscriptionDetails(psaId.value)) map {
-//      ex =>
-//        ex.leftSide shouldBe a[JsResultException]
-//    }
-//  }
-//
-//  "DesConnector removePSA" should "handle OK (200)" in {
-//    val successResponse = FakeDesConnector.removePsaResponseJson
-//    server.stubFor(
-//      post(urlEqualTo(removePsaUrl))
-//        .withHeader("Content-Type", equalTo("application/json"))
-//        .withRequestBody(equalToJson(Json.stringify(removePsaData)))
-//        .willReturn(
-//          ok(Json.stringify(successResponse))
-//            .withHeader("Content-Type", "application/json")
-//        )
-//    )
-//    connector.removePSA(removePsaDataModel).map { response =>
-//      response.right.value shouldBe successResponse
-//
-//      val expectedAuditEvent = PSARemovalFromSchemeAuditEvent(PsaToBeRemovedFromScheme(
-//        removePsaDataModel.psaId, removePsaDataModel.pstr, removePsaDataModel.removalDate))
-//      auditService.verifySent(expectedAuditEvent) shouldBe true
-//
-//    }
-//  }
-//
-//  it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
-//    server.stubFor(
-//      post(urlEqualTo(removePsaUrl))
-//        .willReturn(
-//          badRequest
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("INVALID_CORRELATION_ID"))
-//        )
-//    )
-//    connector.removePSA(removePsaDataModel).map {
-//      response =>
-//        response.left.value shouldBe a[BadRequestException]
-//        response.left.value.message should include("INVALID_CORRELATION_ID")
-//    }
-//  }
-//
-//  it should "return a BadRequestException for a 400 INVALID_PSTR response" in {
-//    server.stubFor(
-//      post(urlEqualTo(removePsaUrl))
-//        .willReturn(
-//          badRequest
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("INVALID_PSTR"))
-//        )
-//    )
-//    connector.removePSA(removePsaDataModel).map {
-//      response =>
-//        response.left.value shouldBe a[BadRequestException]
-//        response.left.value.message should include("INVALID_PSTR")
-//    }
-//  }
-//
-//  it should "return a BadRequestException for a 400 INVALID_PSAID response" in {
-//    server.stubFor(
-//      post(urlEqualTo(removePsaUrl))
-//        .willReturn(
-//          badRequest
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("INVALID_PSAID"))
-//        )
-//    )
-//    connector.removePSA(removePsaDataModel).map {
-//      response =>
-//        response.left.value shouldBe a[BadRequestException]
-//        response.left.value.message should include("INVALID_PSAID")
-//    }
-//  }
-//
-//  it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
-//    server.stubFor(
-//      post(urlEqualTo(removePsaUrl))
-//        .willReturn(
-//          badRequest
-//            .withHeader("Content-Type", "application/json")
-//            .withBody("INVALID_PAYLOAD")
-//        )
-//    )
-//
-//    logger.reset()
-//    connector.removePSA(removePsaDataModel).map {
-//      _ =>
-//        logger.getLogEntries.size shouldBe 1
-//        logger.getLogEntries.head.level shouldBe Level.WARN
-//    }
-//  }
-//
-//  it should "return a ForbiddenException for a 403 NO_RELATIONSHIP_EXISTS response" in {
-//    server.stubFor(
-//      post(urlEqualTo(removePsaUrl))
-//        .willReturn(
-//          forbidden
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("NO_RELATIONSHIP_EXISTS"))
-//        )
-//    )
-//
-//    connector.removePSA(removePsaDataModel).map {
-//      response =>
-//        response.left.value shouldBe a[ForbiddenException]
-//        response.left.value.message should include("NO_RELATIONSHIP_EXISTS")
-//    }
-//  }
-//
-//  it should "return a ForbiddenException for a 403 NO_OTHER_ASSOCIATED_PSA response" in {
-//    server.stubFor(
-//      post(urlEqualTo(removePsaUrl))
-//        .willReturn(
-//          forbidden
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("NO_OTHER_ASSOCIATED_PSA"))
-//        )
-//    )
-//
-//    connector.removePSA(removePsaDataModel).map {
-//      response =>
-//        response.left.value shouldBe a[ForbiddenException]
-//        response.left.value.message should include("NO_OTHER_ASSOCIATED_PSA")
-//    }
-//  }
-//
-//  it should "return a ForbiddenException for a 403 FUTURE_CEASE_DATE response" in {
-//    server.stubFor(
-//      post(urlEqualTo(removePsaUrl))
-//        .willReturn(
-//          forbidden
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("FUTURE_CEASE_DATE"))
-//        )
-//    )
-//
-//    connector.removePSA(removePsaDataModel).map {
-//      response =>
-//        response.left.value shouldBe a[ForbiddenException]
-//        response.left.value.message should include("FUTURE_CEASE_DATE")
-//    }
-//  }
-//
-//  it should "return a ForbiddenException for a 403 PSAID_NOT_ACTIVE response" in {
-//    server.stubFor(
-//      post(urlEqualTo(removePsaUrl))
-//        .willReturn(
-//          forbidden
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("PSAID_NOT_ACTIVE"))
-//        )
-//    )
-//
-//    connector.removePSA(removePsaDataModel).map {
-//      response =>
-//        response.left.value shouldBe a[ForbiddenException]
-//        response.left.value.message should include("PSAID_NOT_ACTIVE")
-//    }
-//  }
-//
-//  it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
-//    server.stubFor(
-//      post(urlEqualTo(removePsaUrl))
-//        .willReturn(
-//          aResponse()
-//            .withStatus(CONFLICT)
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("DUPLICATE_SUBMISSION"))
-//        )
-//    )
-//    connector.removePSA(removePsaDataModel).map {
-//      response =>
-//        response.left.value shouldBe a[ConflictException]
-//        response.left.value.message should include("DUPLICATE_SUBMISSION")
-//    }
-//  }
-//
-//  it should "return not found exception and failure response details for a 404 response" in {
-//    server.stubFor(
-//      post(urlEqualTo(removePsaUrl))
-//        .willReturn(
-//          aResponse()
-//            .withStatus(NOT_FOUND)
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("NOT_FOUND"))
-//        )
-//    )
-//
-//    connector.removePSA(removePsaDataModel).collect {
-//      case Left(_: NotFoundException) => succeed
-//    }
-//  }
-//
-//  it should behave like errorHandlerForPostApiFailures(
-//    connector.removePSA(removePsaDataModel),
-//    removePsaUrl
-//  )
-//
-//  "DesConnector deregisterPSA" should "handle OK (200)" in {
-//    val successResponse = FakeDesConnector.deregisterPsaResponseJson
-//    server.stubFor(
-//      post(urlEqualTo(deregisterPsaUrl))
-//        .withHeader("Content-Type", equalTo("application/json"))
-//        .withRequestBody(equalToJson(Json.stringify(deregisterPsaData)))
-//        .willReturn(
-//          ok(Json.stringify(successResponse))
-//            .withHeader("Content-Type", "application/json")
-//        )
-//    )
-//
-//    connector.deregisterPSA(psaId.id).map { response =>
-//      response.right.value shouldBe successResponse
-//    }
-//  }
-//
-//  it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
-//    server.stubFor(
-//      post(urlEqualTo(deregisterPsaUrl))
-//        .willReturn(
-//          badRequest
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("INVALID_CORRELATION_ID"))
-//        )
-//    )
-//    connector.deregisterPSA(psaId.id).map {
-//      response =>
-//        response.left.value shouldBe a[BadRequestException]
-//        response.left.value.message should include("INVALID_CORRELATION_ID")
-//    }
-//  }
-//
-//  it should "return a BadRequestException for a 400 INVALID_IDTYPE response" in {
-//    server.stubFor(
-//      post(urlEqualTo(deregisterPsaUrl))
-//        .willReturn(
-//          badRequest
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("INVALID_IDTYPE"))
-//        )
-//    )
-//    connector.deregisterPSA(psaId.id).map {
-//      response =>
-//        response.left.value shouldBe a[BadRequestException]
-//        response.left.value.message should include("INVALID_IDTYPE")
-//    }
-//  }
-//
-//  it should "return a BadRequestException for a 400 INVALID_IDVALUE response" in {
-//    server.stubFor(
-//      post(urlEqualTo(deregisterPsaUrl))
-//        .willReturn(
-//          badRequest
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("INVALID_IDVALUE"))
-//        )
-//    )
-//    connector.deregisterPSA(psaId.id).map {
-//      response =>
-//        response.left.value shouldBe a[BadRequestException]
-//        response.left.value.message should include("INVALID_IDVALUE")
-//    }
-//  }
-//
-//  it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
-//    server.stubFor(
-//      post(urlEqualTo(deregisterPsaUrl))
-//        .willReturn(
-//          badRequest
-//            .withHeader("Content-Type", "application/json")
-//            .withBody("INVALID_PAYLOAD")
-//        )
-//    )
-//
-//    logger.reset()
-//    connector.deregisterPSA(psaId.id).map {
-//      _ =>
-//        logger.getLogEntries.size shouldBe 1
-//        logger.getLogEntries.head.level shouldBe Level.WARN
-//    }
-//  }
-//
-//  it should "return a ForbiddenException for a 403 ACTIVE_RELATIONSHIP_EXISTS response" in {
-//    server.stubFor(
-//      post(urlEqualTo(deregisterPsaUrl))
-//        .willReturn(
-//          forbidden
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("ACTIVE_RELATIONSHIP_EXISTS"))
-//        )
-//    )
-//
-//    connector.deregisterPSA(psaId.id).map {
-//      response =>
-//        response.left.value shouldBe a[ForbiddenException]
-//        response.left.value.message should include("ACTIVE_RELATIONSHIP_EXISTS")
-//    }
-//  }
-//
-//  it should "return a ForbiddenException for a 403 ALREADY_DEREGISTERED response" in {
-//    server.stubFor(
-//      post(urlEqualTo(deregisterPsaUrl))
-//        .willReturn(
-//          forbidden
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("ALREADY_DEREGISTERED"))
-//        )
-//    )
-//
-//    connector.deregisterPSA(psaId.id).map {
-//      response =>
-//        response.left.value shouldBe a[ForbiddenException]
-//        response.left.value.message should include("ALREADY_DEREGISTERED")
-//    }
-//  }
-//
-//  it should "return a ForbiddenException for a 403 INVALID_DEREGISTRATION_DATE response" in {
-//    server.stubFor(
-//      post(urlEqualTo(deregisterPsaUrl))
-//        .willReturn(
-//          forbidden
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("INVALID_DEREGISTRATION_DATE"))
-//        )
-//    )
-//
-//    connector.deregisterPSA(psaId.id).map {
-//      response =>
-//        response.left.value shouldBe a[ForbiddenException]
-//        response.left.value.message should include("INVALID_DEREGISTRATION_DATE")
-//    }
-//  }
-//
-//  it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
-//    server.stubFor(
-//      post(urlEqualTo(deregisterPsaUrl))
-//        .willReturn(
-//          aResponse()
-//            .withStatus(CONFLICT)
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("DUPLICATE_SUBMISSION"))
-//        )
-//    )
-//    connector.deregisterPSA(psaId.id).map {
-//      response =>
-//        response.left.value shouldBe a[ConflictException]
-//        response.left.value.message should include("DUPLICATE_SUBMISSION")
-//    }
-//  }
-//
-//  it should "return not found exception and failure response details for a 404 response" in {
-//    server.stubFor(
-//      post(urlEqualTo(deregisterPsaUrl))
-//        .willReturn(
-//          aResponse()
-//            .withStatus(NOT_FOUND)
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("NOT_FOUND"))
-//        )
-//    )
-//
-//    connector.deregisterPSA(psaId.id).collect {
-//      case Left(_: NotFoundException) => succeed
-//    }
-//  }
-//
-//  "DesConnector updatePSA" should "handle OK (200)" in {
-//    val successResponse = Json.obj(
-//      "processingDate"-> "2001-12-17T09:30:47Z",
-//      "formBundleNumber"-> "12345678912"
-//    )
-//    server.stubFor(
-//      post(urlEqualTo(variationPsaUrl))
-//        .withHeader("Content-Type", equalTo("application/json"))
-//        .withRequestBody(equalToJson(Json.stringify(psaVariationData)))
-//        .willReturn(
-//          ok(Json.stringify(successResponse))
-//            .withHeader("Content-Type", "application/json")
-//        )
-//    )
-//    connector.updatePSA(psaId.id, psaVariationData).map { response =>
-//      response.right.value shouldBe successResponse
-//    }
-//  }
-//
-//  it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
-//    server.stubFor(
-//      post(urlEqualTo(variationPsaUrl))
-//        .willReturn(
-//          badRequest
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("INVALID_CORRELATION_ID"))
-//        )
-//    )
-//    connector.updatePSA(psaId.id, psaVariationData).map {
-//      response =>
-//        response.left.value shouldBe a[BadRequestException]
-//        response.left.value.message should include("INVALID_CORRELATION_ID")
-//    }
-//  }
-//
-//  it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
-//    server.stubFor(
-//      post(urlEqualTo(variationPsaUrl))
-//        .willReturn(
-//          badRequest
-//            .withHeader("Content-Type", "application/json")
-//            .withBody("INVALID_PAYLOAD")
-//        )
-//    )
-//
-//    logger.reset()
-//    connector.updatePSA(psaId.id, psaVariationData).map {
-//      _ =>
-//        logger.getLogEntries.size shouldBe 1
-//        logger.getLogEntries.head.level shouldBe Level.WARN
-//    }
-//  }
-//
-//  it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
-//    server.stubFor(
-//      post(urlEqualTo(variationPsaUrl))
-//        .willReturn(
-//          aResponse()
-//            .withStatus(CONFLICT)
-//            .withHeader("Content-Type", "application/json")
-//            .withBody(errorResponse("DUPLICATE_SUBMISSION"))
-//        )
-//    )
-//    connector.updatePSA(psaId.id, psaVariationData).map {
-//      response =>
-//        response.left.value shouldBe a[ConflictException]
-//        response.left.value.message should include("DUPLICATE_SUBMISSION")
-//    }
-//  }
-//
-//  it should behave like errorHandlerForPostApiFailures(
-//    connector.updatePSA(psaId.id, psaVariationData),
-//    variationPsaUrl
-//  )
+  it should behave like errorHandlerForGetApiFailures(
+    connector.getPSASubscriptionDetails(psaId.value),
+    psaSubscriptionDetailsUrl
+  )
+
+  it should "return a PSAFailedMapToUserAnswersException if the API response cannot be transformed to UserAnswers" in {
+
+    val pSASubscriptionDetailsTransformer = mock[PSASubscriptionDetailsTransformer]
+
+    when(pSASubscriptionDetailsTransformer.transformToUserAnswers).thenReturn(__.json.copyFrom((__ \ 'hello).json.pick))
+
+    lazy val appWithFeatureEnabled: Application = new GuiceApplicationBuilder().configure(portConfigKey -> server.port().toString,
+      "auditing.enabled" -> false,
+      "metrics.enabled" -> false
+    ).overrides(
+      Seq(bind[FeatureSwitchManagementService].toInstance(FakeFeatureSwitchManagementService(true)),
+      bind[PSASubscriptionDetailsTransformer].toInstance(pSASubscriptionDetailsTransformer))
+      ).build()
+
+    val connector: DesConnector = appWithFeatureEnabled.injector.instanceOf[DesConnector]
+
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          ok(psaSubscriptionData.toString())
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    recoverToExceptionIf[PSAFailedMapToUserAnswersException](connector.getPSASubscriptionDetails(psaId.value)) map {
+      ex =>
+        ex.leftSide shouldBe a[PSAFailedMapToUserAnswersException]
+    }
+  }
+
+  it should "return a JsResultException if the API response cannot be converted to PsaSubscription" in {
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          ok(invalidPsaSubscriptionResponse.toString())
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    recoverToExceptionIf[JsResultException](connector.getPSASubscriptionDetails(psaId.value)) map {
+      ex =>
+        ex.leftSide shouldBe a[JsResultException]
+    }
+  }
+
+  it should "send a GetPSADetails audit event on not found" in {
+
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          notFound()
+        )
+    )
+
+    connector.getPSASubscriptionDetails(psaId.value).map { _ =>
+        auditService.verifySent(
+          PSADetails(
+            psaId = psaId.value,
+            psaName = None,
+            status = NOT_FOUND,
+            response = None
+          )
+        ) shouldBe true
+    }
+  }
+
+
+  it should "not send a GetPSADetails audit event on JsResultException if the API response cannot be converted to PsaSubscription" in {
+
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          ok(invalidPsaSubscriptionResponse.toString())
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    recoverToExceptionIf[JsResultException](connector.getPSASubscriptionDetails(psaId.value)) map { _ =>
+      auditService.verifyNothingSent shouldBe true
+    }
+  }
+
+  it should "not send a GetPSADetails audit event on failure" in {
+
+    val failureResponse = Json.obj(
+      "code" -> "INVALID_PAYLOAD",
+      "reason" -> "Submission has not passed validation. Invalid PAYLOAD"
+    )
+
+    server.stubFor(
+      get(urlEqualTo(psaSubscriptionDetailsUrl))
+        .willReturn(
+          serverError
+            .withBody(failureResponse.toString)
+        )
+    )
+
+    recoverToExceptionIf[Upstream5xxResponse](connector.getPSASubscriptionDetails(psaId.value)) map {_ =>
+      auditService.verifyNothingSent shouldBe true
+    }
+
+  }
+
+  "DesConnector removePSA" should "handle OK (200)" in {
+    val successResponse = FakeDesConnector.removePsaResponseJson
+    server.stubFor(
+      post(urlEqualTo(removePsaUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .withRequestBody(equalToJson(Json.stringify(removePsaData)))
+        .willReturn(
+          ok(Json.stringify(successResponse))
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+    connector.removePSA(removePsaDataModel).map { response =>
+      response.right.value shouldBe successResponse
+
+      val expectedAuditEvent = PSARemovalFromSchemeAuditEvent(PsaToBeRemovedFromScheme(
+        removePsaDataModel.psaId, removePsaDataModel.pstr, removePsaDataModel.removalDate))
+      auditService.verifySent(expectedAuditEvent) shouldBe true
+
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
+    server.stubFor(
+      post(urlEqualTo(removePsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_CORRELATION_ID"))
+        )
+    )
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_CORRELATION_ID")
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_PSTR response" in {
+    server.stubFor(
+      post(urlEqualTo(removePsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_PSTR"))
+        )
+    )
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_PSTR")
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_PSAID response" in {
+    server.stubFor(
+      post(urlEqualTo(removePsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_PSAID"))
+        )
+    )
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_PSAID")
+    }
+  }
+
+  it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
+    server.stubFor(
+      post(urlEqualTo(removePsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody("INVALID_PAYLOAD")
+        )
+    )
+
+    logger.reset()
+    connector.removePSA(removePsaDataModel).map {
+      _ =>
+        logger.getLogEntries.size shouldBe 1
+        logger.getLogEntries.head.level shouldBe Level.WARN
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 NO_RELATIONSHIP_EXISTS response" in {
+    server.stubFor(
+      post(urlEqualTo(removePsaUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("NO_RELATIONSHIP_EXISTS"))
+        )
+    )
+
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("NO_RELATIONSHIP_EXISTS")
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 NO_OTHER_ASSOCIATED_PSA response" in {
+    server.stubFor(
+      post(urlEqualTo(removePsaUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("NO_OTHER_ASSOCIATED_PSA"))
+        )
+    )
+
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("NO_OTHER_ASSOCIATED_PSA")
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 FUTURE_CEASE_DATE response" in {
+    server.stubFor(
+      post(urlEqualTo(removePsaUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("FUTURE_CEASE_DATE"))
+        )
+    )
+
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("FUTURE_CEASE_DATE")
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 PSAID_NOT_ACTIVE response" in {
+    server.stubFor(
+      post(urlEqualTo(removePsaUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("PSAID_NOT_ACTIVE"))
+        )
+    )
+
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("PSAID_NOT_ACTIVE")
+    }
+  }
+
+  it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
+    server.stubFor(
+      post(urlEqualTo(removePsaUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(CONFLICT)
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("DUPLICATE_SUBMISSION"))
+        )
+    )
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[ConflictException]
+        response.left.value.message should include("DUPLICATE_SUBMISSION")
+    }
+  }
+
+  it should "return not found exception and failure response details for a 404 response" in {
+    server.stubFor(
+      post(urlEqualTo(removePsaUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(NOT_FOUND)
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("NOT_FOUND"))
+        )
+    )
+
+    connector.removePSA(removePsaDataModel).collect {
+      case Left(_: NotFoundException) => succeed
+    }
+  }
+
+  it should behave like errorHandlerForPostApiFailures(
+    connector.removePSA(removePsaDataModel),
+    removePsaUrl
+  )
+
+  "DesConnector deregisterPSA" should "handle OK (200)" in {
+    val successResponse = FakeDesConnector.deregisterPsaResponseJson
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .withRequestBody(equalToJson(Json.stringify(deregisterPsaData)))
+        .willReturn(
+          ok(Json.stringify(successResponse))
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    connector.deregisterPSA(psaId.id).map { response =>
+      response.right.value shouldBe successResponse
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_CORRELATION_ID"))
+        )
+    )
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_CORRELATION_ID")
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_IDTYPE response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_IDTYPE"))
+        )
+    )
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_IDTYPE")
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_IDVALUE response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_IDVALUE"))
+        )
+    )
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_IDVALUE")
+    }
+  }
+
+  it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody("INVALID_PAYLOAD")
+        )
+    )
+
+    logger.reset()
+    connector.deregisterPSA(psaId.id).map {
+      _ =>
+        logger.getLogEntries.size shouldBe 1
+        logger.getLogEntries.head.level shouldBe Level.WARN
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 ACTIVE_RELATIONSHIP_EXISTS response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("ACTIVE_RELATIONSHIP_EXISTS"))
+        )
+    )
+
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("ACTIVE_RELATIONSHIP_EXISTS")
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 ALREADY_DEREGISTERED response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("ALREADY_DEREGISTERED"))
+        )
+    )
+
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("ALREADY_DEREGISTERED")
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 INVALID_DEREGISTRATION_DATE response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_DEREGISTRATION_DATE"))
+        )
+    )
+
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("INVALID_DEREGISTRATION_DATE")
+    }
+  }
+
+  it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(CONFLICT)
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("DUPLICATE_SUBMISSION"))
+        )
+    )
+    connector.deregisterPSA(psaId.id).map {
+      response =>
+        response.left.value shouldBe a[ConflictException]
+        response.left.value.message should include("DUPLICATE_SUBMISSION")
+    }
+  }
+
+  it should "return not found exception and failure response details for a 404 response" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(NOT_FOUND)
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("NOT_FOUND"))
+        )
+    )
+
+    connector.deregisterPSA(psaId.id).collect {
+      case Left(_: NotFoundException) => succeed
+    }
+  }
+
+  "DesConnector updatePSA" should "handle OK (200)" in {
+    val successResponse = Json.obj(
+      "processingDate"-> "2001-12-17T09:30:47Z",
+      "formBundleNumber"-> "12345678912"
+    )
+    server.stubFor(
+      post(urlEqualTo(variationPsaUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .withRequestBody(equalToJson(Json.stringify(psaVariationData)))
+        .willReturn(
+          ok(Json.stringify(successResponse))
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+    connector.updatePSA(psaId.id, psaVariationData).map { response =>
+      response.right.value shouldBe successResponse
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
+    server.stubFor(
+      post(urlEqualTo(variationPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_CORRELATION_ID"))
+        )
+    )
+    connector.updatePSA(psaId.id, psaVariationData).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_CORRELATION_ID")
+    }
+  }
+
+  it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
+    server.stubFor(
+      post(urlEqualTo(variationPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody("INVALID_PAYLOAD")
+        )
+    )
+
+    logger.reset()
+    connector.updatePSA(psaId.id, psaVariationData).map {
+      _ =>
+        logger.getLogEntries.size shouldBe 1
+        logger.getLogEntries.head.level shouldBe Level.WARN
+    }
+  }
+
+  it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
+    server.stubFor(
+      post(urlEqualTo(variationPsaUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(CONFLICT)
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("DUPLICATE_SUBMISSION"))
+        )
+    )
+    connector.updatePSA(psaId.id, psaVariationData).map {
+      response =>
+        response.left.value shouldBe a[ConflictException]
+        response.left.value.message should include("DUPLICATE_SUBMISSION")
+    }
+  }
+
+  it should behave like errorHandlerForPostApiFailures(
+    connector.updatePSA(psaId.id, psaVariationData),
+    variationPsaUrl
+  )
 
 }
 

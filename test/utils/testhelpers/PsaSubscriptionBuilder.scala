@@ -18,14 +18,13 @@ package utils.testhelpers
 
 import java.time.LocalDate
 
-import models._
-import models.PsaSubscription._
-import play.api.libs.json.JsResultException
+import models.{OrganisationOrPartner, _}
 
 object PsaSubscriptionBuilder {
 
   private val customerId = CustomerIdentification("Individual", Some("NINO"), Some("AA999999A"), true)
   private val individual = IndividualDetailType(Some("Mr"), "abcdefghijkl", Some("abcdefghijkl"), "abcdefjkl", LocalDate.parse("1947-03-29"))
+  val organisationOrPartner = OrganisationOrPartner("organization name", None, None, None)
 
   private val address = CorrespondenceAddress("Telford1", "Telford2",Some("Telford3"), Some("Telford3"), "GB", Some("TF3 4ER"))
   private val director1Address = CorrespondenceAddress("addressline1", "addressline2",Some("addressline3"), Some("addressline4"), "GB", Some("B5 9EX"))

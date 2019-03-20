@@ -16,7 +16,7 @@
 
 package service
 
-import audit.{PSAChanges, PSASubscription, StubSuccessfulAuditService}
+import audit.{PSAChanges, PSASubscription, SchemeAuditService, StubSuccessfulAuditService}
 import base.SpecBase
 import models.PensionSchemeAdministrator
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
@@ -25,14 +25,14 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
-import utils.FakeDesConnector
+import utils.{FakeDesConnector, FakeFeatureSwitchManagementService}
 
 import scala.concurrent.Future
 
 class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues {
 
-  import utils.FakeDesConnector._
   import SchemeServiceImplSpec._
+  import utils.FakeDesConnector._
 
   "registerPSA" should "return the result from the connector" in {
 
@@ -171,7 +171,8 @@ object SchemeServiceImplSpec extends SpecBase {
   trait TestFixture {
     val schemeConnector: FakeDesConnector = new FakeDesConnector()
     val auditService: StubSuccessfulAuditService = new StubSuccessfulAuditService()
-    val schemeService: SchemeServiceImpl = new SchemeServiceImpl(schemeConnector, auditService, appConfig) {
+    val schemeAuditService: SchemeAuditService = new SchemeAuditService(new FakeFeatureSwitchManagementService(false))
+    val schemeService: SchemeServiceImpl = new SchemeServiceImpl(schemeConnector, auditService, appConfig, schemeAuditService) {
     }
   }
 
