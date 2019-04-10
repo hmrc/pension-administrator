@@ -99,11 +99,11 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         }
 
         "We have a previous address flag" in {
-          (transformedJson \ "directorAddressYears").asOpt[String].value mustBe (userAnswersDirector \ "directorAddressYears" ).asOpt[String].value
+          (transformedJson \ "directorAddressYears").asOpt[String].value mustBe (userAnswersDirector \ "directorAddressYears").asOpt[String].value
         }
 
         "We have a previous address" in {
-          (transformedJson \ "directorPreviousAddress" \ "country").asOpt[String].value mustBe (userAnswersDirector \ "directorPreviousAddress" \ "country" ).asOpt[String].value
+          (transformedJson \ "directorPreviousAddress" \ "country").asOpt[String].value mustBe (userAnswersDirector \ "directorPreviousAddress" \ "country").asOpt[String].value
         }
 
         "We have a previous address flag as false and no previous address" in {
@@ -124,6 +124,19 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
           (transformedJson \ 1 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
           (transformedJson \ 2 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
           (transformedJson \ 3 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
+        }
+
+        "We have more than 10 directors" in {
+          val partialPayload = Json.obj(
+            "psaSubscriptionDetails" -> Json.obj(
+              "customerIdentificationDetails" -> legalStatus,
+                    "numberOfDirectorsOrPartnersDetails" -> moreThanTenFlag,
+                    "directorOrPartnerDetails" -> JsArray(Seq.fill(10)(desDirector))
+            )
+          )
+
+          val transformedJson = partialPayload.transform(directorOrPartnerTransformer.getDirectorsOrPartners).asOpt.value
+          (transformedJson \ "moreThanTenDirectors").as[Boolean] mustBe true
         }
       }
     }
@@ -217,4 +230,16 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
                               }
                             }""")
 
+  val moreThanTenFlag: JsValue = Json.parse(
+    """{
+                  "isMorethanTenDirectors":true
+              }""")
+
+  val legalStatus: JsValue = Json.parse(
+    """{
+                  "legalStatus":"Limited Company",
+                  "idType":"UTR",
+                  "idNumber":"0123456789",
+                  "noIdentifier":false
+             }""")
 }

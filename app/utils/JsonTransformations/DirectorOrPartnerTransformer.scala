@@ -65,9 +65,13 @@ class DirectorOrPartnerTransformer @Inject()(addressTransformer: AddressTransfor
   val getDirectorsOrPartners: Reads[JsObject] = {
     (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
       case "Limited Company" => (__ \ 'directors).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails)
-        .read(getDirectorsOrPartners("director")))
+        .read(getDirectorsOrPartners("director"))) and
+        ((__ \ 'moreThanTenDirectors).json
+          .copyFrom((__ \ 'psaSubscriptionDetails \ 'numberOfDirectorsOrPartnersDetails \ 'isMorethanTenDirectors).json.pick) orElse doNothing) reduce
       case "Partnership" => (__ \ 'partners).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails)
-        .read(getDirectorsOrPartners("partner")))
+        .read(getDirectorsOrPartners("partner"))) and
+        ((__ \ 'moreThanTenPartners).json
+          .copyFrom((__ \ 'psaSubscriptionDetails \ 'numberOfDirectorsOrPartnersDetails \ 'isMorethanTenPartners).json.pick) orElse doNothing) reduce
       case _ => doNothing
     }
   }
