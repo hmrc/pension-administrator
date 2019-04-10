@@ -129,6 +129,19 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
           (transformedJson \ 2 \ "partnerDetails" \ "firstName").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "firstName").as[String]
           (transformedJson \ 3 \ "partnerDetails" \ "firstName").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "firstName").as[String]
         }
+
+        "We have exactly than 10 directors" in {
+          val partialPayload = Json.obj(
+            "psaSubscriptionDetails" -> Json.obj(
+              "customerIdentificationDetails" -> legalStatus,
+              "numberOfDirectorsOrPartnersDetails" -> moreThanTenFlag,
+              "directorOrPartnerDetails" -> JsArray(Seq.fill(10)(desPartner))
+            )
+          )
+
+          val transformedJson = partialPayload.transform(directorOrPartnerTransformer.getDirectorsOrPartners).asOpt.value
+          (transformedJson \ "moreThanTenPartners").as[Boolean] mustBe false
+        }
       }
     }
   }
@@ -221,5 +234,18 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
                  }
                }
             }""")
+
+  val moreThanTenFlag: JsValue = Json.parse(
+    """{
+                  "isMorethanTenPartners":false
+              }""")
+
+  val legalStatus: JsValue = Json.parse(
+    """{
+                  "legalStatus":"Partnership",
+                  "idType":"UTR",
+                  "idNumber":"0123456789",
+                  "noIdentifier":false
+             }""")
 
 }
