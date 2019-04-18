@@ -25,6 +25,6 @@ class FeatureToggleSpec extends FeatureToggleBehaviours {
   }
 
   "is-variations-enabled new feature toggle" should {
-    behave like featureToggle("is-variations-enabled", false)
+    behave like featureToggle("is-variations-enabled", true)
   }
 }
