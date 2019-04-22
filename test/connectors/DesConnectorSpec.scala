@@ -699,7 +699,6 @@ class DesConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  //TODO: Test for other response codes
   it should "send a PSADeEnrol audit event on successful deenrolment" in {
 
     val successResponse = FakeDesConnector.deregisterPsaResponseJson
