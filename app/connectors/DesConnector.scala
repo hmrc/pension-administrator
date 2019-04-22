@@ -75,7 +75,7 @@ class DesConnectorImpl @Inject()(
                                   psaSubscriptionDetailsTransformer: PSASubscriptionDetailsTransformer,
                                   fs: FeatureSwitchManagementService,
                                   schemeAuditService: SchemeAuditService
-                                ) extends DesConnector with HttpResponseHelper with ErrorHandler{
+                                ) extends DesConnector with HttpResponseHelper with ErrorHandler with PSADeEnrolAuditService {
 
   override def registerPSA(registerData: JsValue)(implicit
                                                   headerCarrier: HeaderCarrier,
@@ -146,7 +146,9 @@ class DesConnectorImpl @Inject()(
 
     http.POST[JsValue, HttpResponse](deregisterPsaUrl, data)(implicitly, implicitly, hc, implicitly) map {
       handlePostResponse(_, deregisterPsaUrl)
-    } andThen logFailures("deregister PSA", data, deregisterPsaSchema)
+    } andThen sendPSADeEnrolEvent(
+      psaId
+    )(auditService.sendEvent) andThen logFailures("deregister PSA", data, deregisterPsaSchema)
   }
 
   override def updatePSA(psaId: String, data: JsValue)(implicit
