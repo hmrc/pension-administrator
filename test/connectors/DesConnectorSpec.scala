@@ -16,7 +16,7 @@
 
 package connectors
 
-import audit.{AuditService, PSADetails, PSARemovalFromSchemeAuditEvent, StubSuccessfulAuditService}
+import audit._
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock.{serverError, _}
 import config.FeatureSwitchManagementService
@@ -698,6 +698,114 @@ class DesConnectorSpec extends AsyncFlatSpec
       case Left(_: NotFoundException) => succeed
     }
   }
+
+  it should "send a PSADeEnrol audit event on successful deenrolment" in {
+
+    val successResponse = FakeDesConnector.deregisterPsaResponseJson
+
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .willReturn(
+          ok(Json.stringify(successResponse))
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    connector.deregisterPSA(psaId.value).map { _ =>
+      auditService.verifySent(
+        PSADeEnrol(
+          psaId = psaId.value,
+          status = OK,
+          response = Some(successResponse)
+        )
+      ) shouldBe true
+    }
+  }
+
+  it should "send a PSADeEnrol audit event on deenrolment failure (400)" in {
+
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody("INVALID_PAYLOAD")
+        )
+    )
+
+    connector.deregisterPSA(psaId.value).map {_ =>
+      auditService.verifySent(
+        PSADeEnrol(
+          psaId = psaId.value,
+          status = BAD_REQUEST,
+          response = None
+        )
+      ) shouldBe true
+    }
+
+  }
+
+  it should "send a PSADeEnrol audit event on deenrolment failure (404)" in {
+
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(NOT_FOUND)
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("NOT_FOUND"))
+        )
+    )
+
+    connector.deregisterPSA(psaId.value).map {_ =>
+      auditService.verifySent(
+        PSADeEnrol(
+          psaId = psaId.value,
+          status = NOT_FOUND,
+          response = None
+        )
+      ) shouldBe true
+    }
+
+  }
+
+  it should "send a PSADeEnrol audit event on deenrolment failure (403)" in {
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("ALREADY_DEREGISTERED"))
+        )
+    )
+
+    connector.deregisterPSA(psaId.value).map {_ =>
+      auditService.verifySent(
+        PSADeEnrol(
+          psaId = psaId.value,
+          status = FORBIDDEN,
+          response = None
+        )
+      ) shouldBe true
+    }
+  }
+
+  it should "not send a PSADeEnrol audit event on deenrolment failure" in {
+
+    server.stubFor(
+      post(urlEqualTo(deregisterPsaUrl))
+        .willReturn(
+          serverError
+        )
+    )
+    logger.reset()
+    recoverToExceptionIf[Upstream5xxResponse](connector.deregisterPSA(psaId.value)) map {_ =>
+      auditService.verifyNothingSent shouldBe true
+    }
+
+  }
+
 
   "DesConnector updatePSA" should "handle OK (200)" in {
     val successResponse = Json.obj(
