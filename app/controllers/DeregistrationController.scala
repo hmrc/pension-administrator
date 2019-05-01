@@ -29,22 +29,15 @@ class DeregistrationController @Inject()(
                                           schemeConnector: SchemeConnector,
                                           cc: ControllerComponents
                                         )(implicit val ec: ExecutionContext) extends BaseController(cc) with ErrorHandler {
-  private[controllers] def parseSchemes(jsValue: JsValue): Seq[String] = {
-    (JsPath \ "schemeDetail") (jsValue).flatMap (
-      _.validate[JsArray] match {
-        case JsSuccess(jsArray, _) =>
-          jsArray.value.map(scheme => (JsPath \ "schemeStatus") (scheme).head.as[String])
-        case JsError(ex) =>
-          throw new RuntimeException("Unable to read schemes:" + ex.toString)
-      }
-    )
-  }
 
   def canDeregister(psaId: String): Action[AnyContent] = Action.async {
     implicit request =>
       schemeConnector.listOfSchemes(psaId).map {
         case Right(jsValue) =>
-          Ok(Json.toJson(!parseSchemes(jsValue).exists(_ != "Wound-up")))
+          val canDereg = (JsPath \ "schemeDetail") (jsValue)
+            .flatMap(_.validate[JsArray].asOpt)
+            .foldRight(true)((jsArray, accumulator) => accumulator && jsArray.value.isEmpty)
+          Ok(Json.toJson(canDereg))
         case Left(e) =>
           result(e)
       }

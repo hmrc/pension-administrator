@@ -74,13 +74,13 @@ class DeregistrationControllerSpec extends SpecBase with MockitoSugar with Befor
       contentAsJson(result) mustEqual JsBoolean(true)
     }
 
-    "return OK and true when canDeregister called with psa ID having only wound-up schemes" in {
+    "return OK and false when canDeregister called with psa ID having only wound-up schemes" in {
       when(mockSchemeConnector.listOfSchemes(Matchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Right(validListSchemesWoundUpOnlyResponse)))
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
-      contentAsJson(result) mustEqual JsBoolean(true)
+      contentAsJson(result) mustEqual JsBoolean(false)
     }
 
     "return OK and false when canDeregister called with psa ID having both wound-up schemes and non-wound-up schemes" in {
@@ -97,11 +97,6 @@ class DeregistrationControllerSpec extends SpecBase with MockitoSugar with Befor
         .thenReturn(Future.successful(Left(new BadRequestException("bad request"))))
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
       status(result) mustBe BAD_REQUEST
-    }
-
-    "return seq of scheme statuses from parsed schemes" in {
-      val result = deregistrationController.parseSchemes(validListSchemesIncWoundUpResponse)
-      result mustBe Seq("Wound-up", "Open")
     }
   }
 }
