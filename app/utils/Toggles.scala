@@ -17,7 +17,5 @@
 package utils
 
 object Toggles {
-
-  val IsManualIVEnabled: String = "is-iv-enabled"
   val IsVariationsEnabled: String = "is-variations-enabled"
 }
