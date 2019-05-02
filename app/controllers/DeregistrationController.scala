@@ -34,7 +34,11 @@ class DeregistrationController @Inject()(
     implicit request =>
       schemeConnector.listOfSchemes(psaId).map {
         case Right(jsValue) =>
-          Ok(Json.toJson((JsPath \ "schemeDetail") (jsValue).isEmpty))
+
+          val listOfSchemes  = (JsPath \ "schemeDetail") (jsValue)
+          val canDeregister = listOfSchemes.isEmpty || listOfSchemes.equals(List(JsArray.empty))
+
+          Ok(Json.toJson(canDeregister))
         case Left(e) =>
           result(e)
       }
