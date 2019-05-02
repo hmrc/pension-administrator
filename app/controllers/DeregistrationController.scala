@@ -34,10 +34,7 @@ class DeregistrationController @Inject()(
     implicit request =>
       schemeConnector.listOfSchemes(psaId).map {
         case Right(jsValue) =>
-          val canDereg = (JsPath \ "schemeDetail") (jsValue)
-            .flatMap(_.validate[JsArray].asOpt)
-            .foldRight(true)((jsArray, accumulator) => accumulator && jsArray.value.isEmpty)
-          Ok(Json.toJson(canDereg))
+          Ok(Json.toJson((JsPath \ "schemeDetail") (jsValue).isEmpty))
         case Left(e) =>
           result(e)
       }
