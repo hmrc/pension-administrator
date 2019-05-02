@@ -18,6 +18,7 @@ package controllers.testonly
 
 import base.SpecBase
 import config.FeatureSwitchManagementService
+import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import play.api.test.Helpers._
@@ -67,6 +68,22 @@ class TestFeatureSwitchManagerControllerSpec extends SpecBase with MockitoSugar 
     "return No Content when reset is done successfully" in {
       val result = controller.reset("test-toggle")(fakeRequest)
       status(result) mustBe NO_CONTENT
+    }
+
+    "get is called" must {
+      "return Ok and the value as json body for true" in {
+        when(fakeFeatureSwitchManagerService.get(Matchers.any())).thenReturn(true)
+        val result = controller.get("test-toggle")(fakeRequest)
+        status(result) mustBe OK
+        contentAsString(result) mustBe "true"
+      }
+
+      "return Ok and the value as json body for false" in {
+        when(fakeFeatureSwitchManagerService.get(Matchers.any())).thenReturn(false)
+        val result = controller.get("test-toggle")(fakeRequest)
+        status(result) mustBe OK
+        contentAsString(result) mustBe "false"
+      }
     }
   }
 }

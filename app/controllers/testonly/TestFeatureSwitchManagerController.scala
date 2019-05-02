@@ -19,6 +19,7 @@ package controllers.testonly
 import com.google.inject.Inject
 import config.FeatureSwitchManagementService
 import play.api.Logger
+import play.api.libs.json.JsBoolean
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.{BackendController, FrontendController}
 
@@ -57,5 +58,10 @@ class TestFeatureSwitchManagerController @Inject()(
       fs.reset(featureSwitch)
       Logger.debug(s"[Pension-Administrator][ToggleResetSuccess] - ${featureSwitch}")
       NoContent
+  }
+
+  def get(featureSwitch:String):Action[AnyContent] = Action {
+    implicit request =>
+      Ok(JsBoolean(fs.get(featureSwitch)))
   }
 }
