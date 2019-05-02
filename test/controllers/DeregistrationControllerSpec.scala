@@ -19,7 +19,6 @@ package controllers
 import akka.stream.Materializer
 import base.{JsonFileReader, SpecBase}
 import connectors.SchemeConnector
-import controllers.DeregistrationControllerSpec.psaId
 import org.mockito.Matchers
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -56,15 +55,6 @@ class DeregistrationControllerSpec extends SpecBase with MockitoSugar with Befor
       contentAsJson(result) mustEqual JsBoolean(false)
     }
 
-    "return OK and true when canDeregister called with psa ID having no schemes" in {
-      when(mockSchemeConnector.listOfSchemes(Matchers.eq(psaId))(any(), any(), any()))
-        .thenReturn(Future.successful(Right(listSchemesResponseEmpty)))
-      val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
-
-      status(result) mustBe OK
-      contentAsJson(result) mustEqual JsBoolean(true)
-    }
-
     "return OK and true when canDeregister called with psa ID having no scheme detail item at all" in {
       when(mockSchemeConnector.listOfSchemes(Matchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Right(listSchemesResponseNoSchemeDetail)))
@@ -74,13 +64,13 @@ class DeregistrationControllerSpec extends SpecBase with MockitoSugar with Befor
       contentAsJson(result) mustEqual JsBoolean(true)
     }
 
-    "return OK and true when canDeregister called with psa ID having only wound-up schemes" in {
+    "return OK and false when canDeregister called with psa ID having only wound-up schemes" in {
       when(mockSchemeConnector.listOfSchemes(Matchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Right(validListSchemesWoundUpOnlyResponse)))
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
-      contentAsJson(result) mustEqual JsBoolean(true)
+      contentAsJson(result) mustEqual JsBoolean(false)
     }
 
     "return OK and false when canDeregister called with psa ID having both wound-up schemes and non-wound-up schemes" in {
@@ -98,11 +88,6 @@ class DeregistrationControllerSpec extends SpecBase with MockitoSugar with Befor
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
       status(result) mustBe BAD_REQUEST
     }
-
-    "return seq of scheme statuses from parsed schemes" in {
-      val result = deregistrationController.parseSchemes(validListSchemesIncWoundUpResponse)
-      result mustBe Seq("Wound-up", "Open")
-    }
   }
 }
 
@@ -110,16 +95,12 @@ object DeregistrationControllerSpec extends JsonFileReader {
   private val validListSchemesWoundUpOnlyResponse = readJsonFromFile("/data/validListOfSchemesWoundUpOnlyResponse.json")
   private val validListSchemesIncWoundUpResponse = readJsonFromFile("/data/validListOfSchemesIncWoundUpResponse.json")
   private val validListSchemesResponse = readJsonFromFile("/data/validListOfSchemesResponse.json")
-  private val listSchemesResponseEmpty = Json.parse( """{
-                                           |  "processingDate": "2001-12-17T09:30:47Z",
-                                           |  "totalSchemesRegistered": "0",
-                                           |  "schemeDetail": []
-                                           |}""".stripMargin )
 
-  private val listSchemesResponseNoSchemeDetail = Json.parse( """{
-                                                       |  "processingDate": "2001-12-17T09:30:47Z",
-                                                       |  "totalSchemesRegistered": "0"
-                                                       |}""".stripMargin )
+  private val listSchemesResponseNoSchemeDetail = Json.parse(
+    """{
+      |  "processingDate": "2001-12-17T09:30:47Z",
+      |  "totalSchemesRegistered": "0"
+      |}""".stripMargin)
   private val psaId = "A123456"
 
 }
