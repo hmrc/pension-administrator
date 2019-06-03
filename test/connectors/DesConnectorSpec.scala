@@ -19,7 +19,6 @@ package connectors
 import audit._
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock.{serverError, _}
-import config.FeatureSwitchManagementService
 import connectors.helper.ConnectorBehaviours
 import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
 import org.joda.time.LocalDate
@@ -40,7 +39,7 @@ import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.testhelpers.PsaSubscriptionBuilder._
-import utils.{FakeDesConnector, FakeFeatureSwitchManagementService, StubLogger, WireMockHelper}
+import utils.{FakeDesConnector, StubLogger, WireMockHelper}
 
 class DesConnectorSpec extends AsyncFlatSpec
   with WireMockHelper
@@ -165,42 +164,7 @@ class DesConnectorSpec extends AsyncFlatSpec
     lazy val appWithFeatureEnabled: Application = new GuiceApplicationBuilder().configure(portConfigKey -> server.port().toString,
       "auditing.enabled" -> false,
       "metrics.enabled" -> false
-    ).overrides(bind[FeatureSwitchManagementService].toInstance(FakeFeatureSwitchManagementService(false)),
-      bind[AuditService].toInstance(auditService)).build()
-
-    val connector: DesConnector = appWithFeatureEnabled.injector.instanceOf[DesConnector]
-
-
-    server.stubFor(
-         get(urlEqualTo(psaSubscriptionDetailsUrl))
-           .withHeader("Content-Type", equalTo("application/json"))
-           .willReturn(
-             ok(psaSubscriptionData.toString())
-               .withHeader("Content-Type", "application/json")
-           )
-       )
-       connector.getPSASubscriptionDetails(psaId.value).map { response =>
-         response.right.value shouldBe Json.toJson(psaSubscription)
-         server.findAll(getRequestedFor(urlPathEqualTo(psaSubscriptionDetailsUrl))).size() shouldBe 1
-         auditService.verifySent(
-           PSADetails(
-             psaId = psaId.value,
-             psaName = psaSubscription.name,
-             status = OK,
-             response = Some(Json.toJson(psaSubscription))
-           )
-         ) shouldBe true
-       }
-
-  }
-
-  it should "handle OK (200) if variations is enabled" in {
-
-    lazy val appWithFeatureEnabled: Application = new GuiceApplicationBuilder().configure(portConfigKey -> server.port().toString,
-      "auditing.enabled" -> false,
-      "metrics.enabled" -> false
-    ).overrides(bind[FeatureSwitchManagementService].toInstance(FakeFeatureSwitchManagementService(true)),
-      bind[AuditService].toInstance(auditService)).build()
+    ).overrides(bind[AuditService].toInstance(auditService)).build()
 
     val connector: DesConnector = appWithFeatureEnabled.injector.instanceOf[DesConnector]
 
@@ -242,8 +206,7 @@ class DesConnectorSpec extends AsyncFlatSpec
       "auditing.enabled" -> false,
       "metrics.enabled" -> false
     ).overrides(
-      Seq(bind[FeatureSwitchManagementService].toInstance(FakeFeatureSwitchManagementService(true)),
-      bind[PSASubscriptionDetailsTransformer].toInstance(pSASubscriptionDetailsTransformer))
+      Seq(bind[PSASubscriptionDetailsTransformer].toInstance(pSASubscriptionDetailsTransformer))
       ).build()
 
     val connector: DesConnector = appWithFeatureEnabled.injector.instanceOf[DesConnector]

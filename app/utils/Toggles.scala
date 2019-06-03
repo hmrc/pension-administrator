@@ -17,5 +17,5 @@
 package utils
 
 object Toggles {
-  val IsVariationsEnabled: String = "is-variations-enabled"
+
 }

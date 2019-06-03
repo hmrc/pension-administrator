@@ -29,7 +29,6 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
-import utils.Toggles.IsVariationsEnabled
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -208,11 +207,8 @@ class DesConnectorImpl @Inject()(
       Logger.warn(s"PensionAdministratorFailedMapToUserAnswers - [$temporaryMappingTest]")
     }
     json.validate[PsaSubscription] match {
-      case JsSuccess(value, _) =>  if(fs.get(IsVariationsEnabled)) {
+      case JsSuccess(value, _) =>
         json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).getOrElse(throw new PSAFailedMapToUserAnswersException)
-      } else {
-        Json.toJson(value)
-      }
       case JsError(errors) => throw new JsResultException(errors)
     }
   }
