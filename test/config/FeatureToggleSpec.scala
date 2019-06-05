@@ -19,7 +19,5 @@ package config
 import toggles.FeatureToggleBehaviours
 
 class FeatureToggleSpec extends FeatureToggleBehaviours {
-  "is-variations-enabled new feature toggle" should {
-    behave like featureToggle("is-variations-enabled", true)
-  }
+
 }

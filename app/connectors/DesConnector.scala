@@ -18,7 +18,7 @@ package connectors
 
 import audit._
 import com.google.inject.{ImplementedBy, Inject}
-import config.{AppConfig, FeatureSwitchManagementService}
+import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.{PsaSubscription, PsaToBeRemovedFromScheme}
 import org.joda.time.LocalDate
@@ -29,7 +29,6 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
-import utils.Toggles.IsVariationsEnabled
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -73,7 +72,6 @@ class DesConnectorImpl @Inject()(
                                   invalidPayloadHandler: InvalidPayloadHandler,
                                   headerUtils: HeaderUtils,
                                   psaSubscriptionDetailsTransformer: PSASubscriptionDetailsTransformer,
-                                  fs: FeatureSwitchManagementService,
                                   schemeAuditService: SchemeAuditService
                                 ) extends DesConnector with HttpResponseHelper with ErrorHandler with PSADeEnrolAuditService {
 
@@ -208,11 +206,8 @@ class DesConnectorImpl @Inject()(
       Logger.warn(s"PensionAdministratorFailedMapToUserAnswers - [$temporaryMappingTest]")
     }
     json.validate[PsaSubscription] match {
-      case JsSuccess(value, _) =>  if(fs.get(IsVariationsEnabled)) {
+      case JsSuccess(value, _) =>
         json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).getOrElse(throw new PSAFailedMapToUserAnswersException)
-      } else {
-        Json.toJson(value)
-      }
       case JsError(errors) => throw new JsResultException(errors)
     }
   }

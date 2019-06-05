@@ -25,7 +25,7 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
-import utils.{FakeDesConnector, FakeFeatureSwitchManagementService}
+import utils.FakeDesConnector
 
 import scala.concurrent.Future
 
@@ -171,7 +171,7 @@ object SchemeServiceImplSpec extends SpecBase {
   trait TestFixture {
     val schemeConnector: FakeDesConnector = new FakeDesConnector()
     val auditService: StubSuccessfulAuditService = new StubSuccessfulAuditService()
-    val schemeAuditService: SchemeAuditService = new SchemeAuditService(new FakeFeatureSwitchManagementService(false))
+    val schemeAuditService: SchemeAuditService = new SchemeAuditService()
     val schemeService: SchemeServiceImpl = new SchemeServiceImpl(schemeConnector, auditService, appConfig, schemeAuditService) {
     }
   }
