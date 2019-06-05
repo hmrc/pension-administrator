@@ -18,7 +18,7 @@ package connectors
 
 import audit._
 import com.google.inject.{ImplementedBy, Inject}
-import config.{AppConfig, FeatureSwitchManagementService}
+import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.{PsaSubscription, PsaToBeRemovedFromScheme}
 import org.joda.time.LocalDate
@@ -72,7 +72,6 @@ class DesConnectorImpl @Inject()(
                                   invalidPayloadHandler: InvalidPayloadHandler,
                                   headerUtils: HeaderUtils,
                                   psaSubscriptionDetailsTransformer: PSASubscriptionDetailsTransformer,
-                                  fs: FeatureSwitchManagementService,
                                   schemeAuditService: SchemeAuditService
                                 ) extends DesConnector with HttpResponseHelper with ErrorHandler with PSADeEnrolAuditService {
 

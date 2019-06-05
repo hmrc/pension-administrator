@@ -17,7 +17,6 @@
 package audit
 
 import com.google.inject.Inject
-import config.FeatureSwitchManagementService
 import models.{PensionSchemeAdministrator, PsaToBeRemovedFromScheme}
 import play.api.Logger
 import play.api.http.Status
@@ -28,7 +27,7 @@ import uk.gov.hmrc.http.HttpException
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
-class SchemeAuditService@Inject()(fs: FeatureSwitchManagementService) {
+class SchemeAuditService@Inject()() {
 
   def sendPSASubscriptionEvent(psa: PensionSchemeAdministrator, request: JsValue)(sendEvent: PSASubscription => Unit)
                                       (implicit rh: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
