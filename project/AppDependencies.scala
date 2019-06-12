@@ -28,7 +28,7 @@ object AppDependencies {
   private val scalacheckVersion = "1.14.0"
   private val domainVersion = "5.6.0-play-26"
   private val scalacheckGenRegexp = "0.1.1"
-  private val bootstrapVersion = "0.32.0"
+  private val bootstrapVersion = "0.40.0"
   private val playJsonVersion = "2.6.10"
   private val scalaTestVersion = "3.0.5"
   private val reactiveMongoVersion = "7.19.0-play-26"
