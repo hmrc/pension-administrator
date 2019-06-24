@@ -77,6 +77,23 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
       }
     }
 
+    it should "return 400 when the request body cannot be parsed as valid json" in {
+
+      when(repo.insert(any())(any())).thenReturn(Future.successful(true))
+      when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
+
+      val badJson = Json.obj(
+        "abc" -> "def"
+      )
+
+      recoverToExceptionIf[BadRequestException](
+        call(controller.add, FakeRequest().withJsonBody(badJson))).map {
+        ex =>
+          ex.responseCode mustBe BAD_REQUEST
+          ex.message mustBe "not valid value for PSA Invitation"
+      }
+    }
+
     it should "throw an exception when the call is not authorised" in {
 
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.failed {
@@ -113,7 +130,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
 
   // scalastyle:on method.length
 
-  private def validCacheControllerWithGet(s: String, map: Map[String, String], testMethod: () => Action[AnyContent]): Unit = {
+  private def validCacheControllerWithGet(s: String, map: Map[String, String], testMethod: () => Action[AnyContent], invalidMap: Map[String, String]): Unit = {
     s"$s should work for request with headers: $map" should "return 200 and the relevant data when it exists" in {
       when(repo.getByKeys(eqTo(map))(any())) thenReturn Future.successful(Some(invitationList))
       when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
@@ -147,6 +164,13 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
       val result = testMethod()(FakeRequest().withHeaders(map.toSeq: _*))
       an[UnauthorizedException] must be thrownBy status(result)
     }
+
+    it should "return bad request when required request headers not present" in {
+      when(repo.getByKeys(eqTo(map))(any())) thenReturn Future.successful(Some(invitationList))
+      when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+      val result = testMethod()(FakeRequest().withHeaders(invalidMap.toSeq: _*))
+      status(result) mustEqual BAD_REQUEST
+    }
   }
 
 
@@ -170,9 +194,9 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
   }
 
   "InvitationsCacheController" should behave like validCacheControllerWithInsert
-  it should behave like validCacheControllerWithGet("get", mapBothKeys, controller.get _)
-  it should behave like validCacheControllerWithGet("getForScheme", mapPstr, controller.getForScheme _)
-  it should behave like validCacheControllerWithGet("getForInvitee", mapInviteePsaId, controller.getForInvitee _)
+  it should behave like validCacheControllerWithGet("get", mapBothKeys, controller.get _, Map())
+  it should behave like validCacheControllerWithGet("getForScheme", mapPstr, controller.getForScheme _, mapInviteePsaId)
+  it should behave like validCacheControllerWithGet("getForInvitee", mapInviteePsaId, controller.getForInvitee _, mapPstr)
   it should behave like validCacheControllerWithRemove("remove")
 }
 
