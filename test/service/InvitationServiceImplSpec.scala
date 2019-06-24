@@ -61,6 +61,15 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
     }
   }
 
+  it should "throw exception when no organisation name or individual details returned in minimal details" in {
+    running() { app =>
+      val fixture = testFixture(app)
+      recoverToSucceededIf[IllegalArgumentException](
+        fixture.invitationService.invitePSA(invitationJson(blankPsaId, johnDoe.individualDetails.value.name))
+      )
+    }
+  }
+
   it should "return successfully when an organisation PSA exists and names match" in {
     running() { app =>
       val fixture = testFixture(app)
@@ -296,7 +305,9 @@ object InvitationServiceImplSpec extends MockitoSugar {
   val joeBloggs = PSAMinimalDetails("joe.bloggs@email.com", false, None, Some(IndividualDetails("Joe", Some("Herbert"), "Bloggs")))
 
   val acmeLtdPsaId = PsaId("A2000003")
+  val blankPsaId = PsaId("A2222222")
   val acmeLtd = PSAMinimalDetails("info@acme.com", false, Some("Acme Ltd"), None)
+  val blank = PSAMinimalDetails("info@acme.com", false, None, None)
 
   val notFoundPsaId = PsaId("A2000004")
   val associatedPsaId = PsaId("A2000005")
@@ -321,6 +332,7 @@ class FakeAssociationConnector extends AssociationConnector {
       case `johnDoePsaId` | `associatedPsaId` => Future.successful(Right(johnDoe))
       case `joeBloggsPsaId` | `exceptionResponsePsaId` => Future.successful(Right(joeBloggs))
       case `acmeLtdPsaId` | `invalidResponsePsaId` => Future.successful(Right(acmeLtd))
+      case `blankPsaId` => Future.successful(Right(blank))
       case `notFoundPsaId` => Future.successful(Left(new NotFoundException("NOT_FOUND")))
       case unknownPsaId => throw new IllegalArgumentException(s"FakeAssociationConnector cannot handle PSA Id $unknownPsaId")
     }
