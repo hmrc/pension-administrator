@@ -42,7 +42,7 @@ lazy val microservice = Project(AppDependencies.appName, file("."))
     PlayKeys.devSettings += "play.server.http.port" -> "8205"
   )
   .settings(
-    ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*handlers.*;.*components.*;.*models.*;.*repositories.*;.*AuthRetrievals;" +
+    ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*handlers.*;.*components.*;.*models.*;.*repositories.*;.*AuthRetrievals;.*MongoDiagnosticsController;" +
       ".*BuildInfo.*;.*javascript.*;.*Routes.*;.*GuiceInjector;",
     ScoverageKeys.coverageMinimum := 50,
     ScoverageKeys.coverageFailOnMinimum := true,
