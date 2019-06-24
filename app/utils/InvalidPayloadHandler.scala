@@ -59,7 +59,7 @@ class InvalidPayloadHandlerImpl @Inject()(logger: LoggerLike) extends InvalidPay
 
     set.map {
       message =>
-        val value = valueFromJson(message, json)
+        val value = InvalidPayloadHandlerImpl.valueFromJson(message, json)
         ValidationFailure(message.getType, message.getMessage, value)
     }
 
@@ -92,8 +92,10 @@ class InvalidPayloadHandlerImpl @Inject()(logger: LoggerLike) extends InvalidPay
     logger.warn(msg.toString())
 
   }
+}
 
-  private def valueFromJson(message: ValidationMessage, json: JsValue): Option[String] = {
+object InvalidPayloadHandlerImpl {
+  private[utils] def valueFromJson(message: ValidationMessage, json: JsValue): Option[String] = {
     message.getType match {
       case "enum" | "format" | "maximum" | "maxLength" | "minimum" | "minLength" | "pattern" | "type" =>
         JSONPath.query(message.getPath, json) match {
@@ -112,7 +114,6 @@ class InvalidPayloadHandlerImpl @Inject()(logger: LoggerLike) extends InvalidPay
       .replaceAll("[a-zA-Z]", "x")
       .replaceAll("[0-9]", "9")
   }
-
 }
 
 case class ValidationFailure(failureType: String, message: String, value: Option[String])
