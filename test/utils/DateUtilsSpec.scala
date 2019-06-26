@@ -26,9 +26,7 @@ class DateUtilsSpec extends SpecBase {
         DateTime.parse("2015-07-02T08:26:39.035Z"),
         2
       )
-      val expectedResult = DateTime.parse("2015-07-05T00:00:00.000+01:00")
-      result.toDate mustBe expectedResult.toDate
-      result.getMillis mustBe expectedResult.getMillis
+      result.getMillis mustBe 1436050800000L
     }
   }
 }
