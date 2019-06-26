@@ -52,7 +52,7 @@ class MongoDiagnosticsController @Inject()(config: Configuration,
 
   }
 
-  def fetchDiagnostics(): Future[Seq[String]] = {
+  private def fetchDiagnostics(): Future[Seq[String]] = {
 
     val db = component.mongoConnector.db()
 
@@ -73,7 +73,7 @@ class MongoDiagnosticsController @Inject()(config: Configuration,
 
   }
 
-  def collectionDiagnostics(collection: BSONCollection): Future[Seq[String]] = {
+  private def collectionDiagnostics(collection: BSONCollection): Future[Seq[String]] = {
 
     for {
       rows <- rowCount(collection)
@@ -95,7 +95,7 @@ class MongoDiagnosticsController @Inject()(config: Configuration,
 
   }
 
-  def indexInfo(collection: BSONCollection): Future[String] = {
+  private def indexInfo(collection: BSONCollection): Future[String] = {
 
     collection.indexesManager.list() map {
       indexes =>
@@ -108,7 +108,7 @@ class MongoDiagnosticsController @Inject()(config: Configuration,
 
   }
 
-  def minLastUpdated(collection: BSONCollection): Future[String] = {
+  private def minLastUpdated(collection: BSONCollection): Future[String] = {
 
     import collection.BatchCommands.AggregationFramework.{Group, MinField}
 
@@ -120,7 +120,7 @@ class MongoDiagnosticsController @Inject()(config: Configuration,
     })
   }
 
-  def ids(collection: BSONCollection): Future[String] = {
+  private def ids(collection: BSONCollection): Future[String] = {
 
     val query = BSONDocument()
     val projection = BSONDocument("_id" -> 0, "id" -> 1)
@@ -138,10 +138,7 @@ class MongoDiagnosticsController @Inject()(config: Configuration,
 
   }
 
-  def rowCount(collection: BSONCollection): Future[Int] = {
-
+  private def rowCount(collection: BSONCollection): Future[Int] = {
     collection.count()
-
   }
-
 }

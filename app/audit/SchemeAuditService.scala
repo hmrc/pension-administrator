@@ -88,7 +88,7 @@ class SchemeAuditService@Inject()() {
       sendEvent(
         PSADetails(
           psaId = psaId,
-          psaName = getName(psaSubscription),
+          psaName = SchemeAuditService.getName(psaSubscription),
           status = Status.OK,
           response = Some(psaSubscription)
         )
@@ -115,8 +115,10 @@ class SchemeAuditService@Inject()() {
       Logger.error("Error in sending audit event for get PSA details", t)
 
   }
+}
 
-  private def getName(psaSubscription: JsValue): Option[String] = {
+object SchemeAuditService {
+  private[audit] def getName(psaSubscription: JsValue): Option[String] = {
     (psaSubscription \ "registrationInfo" \ "legalStatus").as[String] match {
       case "Individual" =>
         Some(Seq((psaSubscription \ "individualDetails" \ "firstName").asOpt[String],
@@ -127,5 +129,4 @@ class SchemeAuditService@Inject()() {
       case _ => None
     }
   }
-
 }
