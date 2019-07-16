@@ -184,13 +184,24 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
     }
   }
 
-  it should "return ForbiddenException if an organisation PSA Id can be found and the name MATCHes" in {
+  it should "return ForbiddenException if an organisation PSA Id can be found and the name matches and already associated" in {
     running() { app =>
       val fixture = testFixture(app)
       fixture.invitationService.invitePSA(invitationJson(associatedPsaId, johnDoe.individualDetails.value.name)) map {
         response =>
           response.left.value shouldBe a[ForbiddenException]
           response.left.value.message should include("The invitation is to a PSA already associated with this scheme")
+      }
+    }
+  }
+
+  it should "return NotFoundException if an organisation PSA Id can be found and the name doesn't match and already associated" in {
+    running() { app =>
+      val fixture = testFixture(app)
+      fixture.invitationService.invitePSA(invitationJson(associatedPsaId, "waa")) map {
+        response =>
+          response.left.value shouldBe a[NotFoundException]
+          response.left.value.message should include("The name and PSA Id do not match")
       }
     }
   }
