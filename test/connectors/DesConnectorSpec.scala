@@ -161,13 +161,6 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   "DesConnector getPSASubscriptionDetails" should "handle OK (200)" in {
 
-    lazy val appWithFeatureEnabled: Application = new GuiceApplicationBuilder().configure(portConfigKey -> server.port().toString,
-      "auditing.enabled" -> false,
-      "metrics.enabled" -> false
-    ).overrides(bind[AuditService].toInstance(auditService)).build()
-
-    val connector: DesConnector = appWithFeatureEnabled.injector.instanceOf[DesConnector]
-
      server.stubFor(
        get(urlEqualTo(psaSubscriptionDetailsUrl))
          .withHeader("Content-Type", equalTo("application/json"))
@@ -202,14 +195,14 @@ class DesConnectorSpec extends AsyncFlatSpec
 
     when(pSASubscriptionDetailsTransformer.transformToUserAnswers).thenReturn(__.json.copyFrom((__ \ 'hello).json.pick))
 
-    lazy val appWithFeatureEnabled: Application = new GuiceApplicationBuilder().configure(portConfigKey -> server.port().toString,
+    lazy val app: Application = new GuiceApplicationBuilder().configure(portConfigKey -> server.port().toString,
       "auditing.enabled" -> false,
       "metrics.enabled" -> false
     ).overrides(
       Seq(bind[PSASubscriptionDetailsTransformer].toInstance(pSASubscriptionDetailsTransformer))
       ).build()
 
-    val connector: DesConnector = appWithFeatureEnabled.injector.instanceOf[DesConnector]
+    val connector: DesConnector = app.injector.instanceOf[DesConnector]
 
     server.stubFor(
       get(urlEqualTo(psaSubscriptionDetailsUrl))

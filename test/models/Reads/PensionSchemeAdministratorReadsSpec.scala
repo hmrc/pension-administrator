@@ -24,8 +24,6 @@ import utils.JsonUtils._
 
 class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
 
-  implicit val contactAddressEnabled: Boolean = true
-
   "JSON Payload of a PSA" should {
     "Map to a valid PensionSchemeAdministrator object" when {
       val input = Json.obj("existingPSA" -> Json.obj("isExistingPSA" -> JsBoolean(false)), "registrationInfo" -> Json.obj("legalStatus" -> "Limited Company",
@@ -122,7 +120,7 @@ class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers wit
         result.previousAddressDetail.isPreviousAddressLast12Month mustBe pensionSchemeAdministratorSample.previousAddressDetail.isPreviousAddressLast12Month
       }
 
-      "We have correspondence address when the contact Address toggle is on" in {
+      "We have correspondence address" in {
         val result = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.correspondenceAddressDetail mustBe ukAddressSample
