@@ -17,7 +17,6 @@
 package controllers
 
 import com.google.inject.Inject
-import config.FeatureSwitchManagementService
 import connectors.RegistrationConnector
 import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest}
 import models.{Organisation, SuccessResponse}
