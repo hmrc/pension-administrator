@@ -34,7 +34,7 @@ class PensionSchemeAdministratorReadsPartnershipSpec extends WordSpec with MustM
         "customerType" -> "TestCustomer",
         "idType" -> JsString("TestId"),
         "idNumber" -> JsString("TestIdNumber")),
-        "contactDetails" -> Json.obj("phone" -> "07592113", "email" -> "test@test.com"),
+        "partnershipContactDetails" -> Json.obj("phone" -> "07592113", "email" -> "test@test.com"),
         "companyAddressYears" -> JsString("over_a_year"),
         "companyContactAddress" -> JsObject(Map("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"), "addressLine3" -> JsString("line3"),
           "addressLine4" -> JsString("line4"), "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))),
@@ -46,7 +46,9 @@ class PensionSchemeAdministratorReadsPartnershipSpec extends WordSpec with MustM
         "declarationWorkingKnowledge" -> "workingKnowledge") + ("directors" -> JsArray(Seq(testDirectorOrPartner("director"))))
 
       "We have a valid legalStatus" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads).asOpt.value
+        val xx = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads)
+        println( "\n>>>" + xx)
+        val result = xx.asOpt.value
 
         result.legalStatus mustEqual pensionSchemeAdministratorSample.legalStatus
       }
