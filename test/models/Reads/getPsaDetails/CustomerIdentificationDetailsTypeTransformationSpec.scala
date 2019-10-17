@@ -228,7 +228,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       }
 
       "we have vat" in {
-        (transformedJson \ "companyDetails" \ "vatRegistrationNumber").as[String] mustBe "123456789"
+        (transformedJson \ "vat").as[String] mustBe "123456789"
       }
 
       "we don't have a vat" in {
@@ -236,11 +236,11 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
           companyInputJson.transform((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
 
-        (transformedJson \ "companyDetails" \ "vatRegistrationNumber").asOpt[String] mustBe None
+        (transformedJson \ "vat").asOpt[String] mustBe None
       }
 
       "we have a paye" in {
-        (transformedJson \ "companyDetails" \ "payeEmployerReferenceNumber").as[String] mustBe "123AB45678"
+        (transformedJson \ "paye").as[String] mustBe "123AB45678"
       }
 
       "we have address line 1" in {
@@ -703,10 +703,8 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
             "idNumber" : "0123456789"
           },
           "companyRegistrationNumber" : "AB123456",
-          "companyDetails" : {
-             "vatRegistrationNumber" : "123456789",
-             "payeEmployerReferenceNumber" : "123AB45678"
-           },
+          "vat" : "123456789",
+          "paye" : "123AB45678",
           "companyContactAddress" : {
             "addressLine1" : "Flat 4",
             "addressLine2" : "Central Tower",
