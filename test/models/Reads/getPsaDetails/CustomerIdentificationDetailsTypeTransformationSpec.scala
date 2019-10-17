@@ -207,11 +207,11 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       lazy val transformedJson = companyInputJson.transform(transformer.transformToUserAnswers).asOpt.value
 
       "we have company name" in {
-        (transformedJson \ "businessDetails" \ "companyName").as[String] mustBe "Global Pensions Ltd"
+        (transformedJson \ "businessName").as[String] mustBe "Global Pensions Ltd"
       }
 
       "we have idType UTR we correctly map the UTR number" in {
-        (transformedJson \ "businessDetails" \ "uniqueTaxReferenceNumber").asOpt[String] mustBe Some("0123456789")
+        (transformedJson \ "utr").asOpt[String] mustBe Some("0123456789")
       }
 
       "we don't have an idtype of UTR" in {
@@ -220,7 +220,7 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
 
         val idTransformJson = inputWithIdTypeNino.transform(transformer.transformToUserAnswers).asOpt.value
 
-        (idTransformJson \ "businessDetails" \ "uniqueTaxReferenceNumber").asOpt[String] mustBe None
+        (idTransformJson \ "utr").asOpt[String] mustBe None
       }
 
       "we have a crn" in {
@@ -691,10 +691,8 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
 
   val expectedCompanyJson: JsValue = Json.parse(
     """{
-          "businessDetails" : {
-            "uniqueTaxReferenceNumber" : "0123456789",
-             "companyName" : "Global Pensions Ltd"
-          },
+          "businessName" : "Global Pensions Ltd",
+          "utr" : "0123456789",
           "areYouInUK" : true,
           "registrationInfo" : {
             "legalStatus" : "Limited Company",

@@ -50,8 +50,8 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
 
 
   private val getOrganisationOrPartnerDetails: Reads[JsObject] = {
-    legalStatusTransformer.returnPathBasedOnLegalStatus(__, __ \ 'businessDetails, __ \ 'partnershipDetails).flatMap { orgPath =>
-      (orgPath \ 'companyName).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'name).json.pick)
+    legalStatusTransformer.returnPathBasedOnLegalStatus(__, __ \ 'businessName, __ \ 'partnershipDetails \ 'companyName).flatMap { orgPath =>
+      orgPath.json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'name).json.pick)
     }
   }
 

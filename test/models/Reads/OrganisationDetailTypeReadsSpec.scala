@@ -139,7 +139,7 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
 
 object OrganisationDetailTypeReadsSpec {
   private val companyDetails = Json.obj("vat" -> JsString("VAT11111"), "paye" -> JsString("PAYE11111"),
-    "companyRegistrationNumber" -> JsString("CRN11111"), "businessDetails" -> Json.obj("companyName" -> JsString("Test Name")))
+    "companyRegistrationNumber" -> JsString("CRN11111"), "businessName" -> JsString("Test Name"))
 
   private def orgDetailWithoutVat(entityType: String) = {
     if (entityType == "Partnership") {
