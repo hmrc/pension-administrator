@@ -45,7 +45,7 @@ class IndividualTransformer @Inject()(legalStatusTransformer: LegalStatusTransfo
       (__ \ 'individualDateOfBirth).json.copyFrom((individualDetailsPath \ 'dateOfBirth).json.pick) reduce
   }
 
-  def getContact(userAnswersPath: JsPath): Reads[JsObject] = {
+  private def getContact(userAnswersPath: JsPath): Reads[JsObject] = {
     val contactAddressPath = __ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails
     (userAnswersPath \ 'phone).json.copyFrom((contactAddressPath \ 'telephone).json.pick) and
       ((userAnswersPath \ 'email).json.copyFrom((contactAddressPath \ 'email).json.pick) //TODO: Mandatory in frontend but optional in DES
@@ -53,5 +53,9 @@ class IndividualTransformer @Inject()(legalStatusTransformer: LegalStatusTransfo
   }
 
   val getContactDetails: Reads[JsObject] =
-    legalStatusTransformer.returnPathBasedOnLegalStatus(__ \ 'individualContactDetails, __ \ 'contactDetails, __ \ 'partnershipContactDetails).flatMap(getContact)
+    legalStatusTransformer.returnPathBasedOnLegalStatus(
+      individualPath = __ \ 'individualContactDetails,
+      companyPath = __ \ 'contactDetails,
+      partnershipPath = __ \ 'partnershipContactDetails
+    ).flatMap(getContact)
 }

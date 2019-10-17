@@ -193,7 +193,7 @@ object PensionSchemeAdministrator {
     ) ((legalStatus, sapNumber, noIdentifier, customerType, idType, idNumber) => (legalStatus, sapNumber, noIdentifier, customerType, idType, idNumber))
 
   private val contactDetailsReads: Reads[ContactDetails] = {
-    JsPath.read(ContactDetails.apiReads) orElse 
+    JsPath.read(ContactDetails.apiReads) orElse
       (JsPath \ "individualContactDetails").read(ContactDetails.apiReads) orElse
       (JsPath \ "partnershipContactDetails").read(ContactDetails.apiReads)
   }

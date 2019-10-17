@@ -35,5 +35,5 @@ object ContactDetails {
     (JsPath \ "telephone").write[String] and
       (JsPath \ "email").write[String] and
       (JsPath \ "changeFlag").write[Boolean]
-  )(contactDetails => (contactDetails.telephone,contactDetails.email,contactDetails.isChanged.fold(false)(identity)))
+  )(contactDetails => (contactDetails.telephone, contactDetails.email, contactDetails.isChanged.fold(false)(identity)))
 }
