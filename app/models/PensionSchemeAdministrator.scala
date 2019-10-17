@@ -199,14 +199,17 @@ object PensionSchemeAdministrator {
 
   private val previousAddressReads: Reads[PreviousAddressDetails] = {
     (JsPath.read(PreviousAddressDetails.apiReads("company"))
+
+      orElse JsPath.read(PreviousAddressDetails.apiReads("partnership"))
       orElse JsPath.read(PreviousAddressDetails.apiReads("individual"))
-      orElse JsPath.read(PreviousAddressDetails.apiReads("partnership")))
+
+      )
   }
 
   private val contactAddressReads: Reads[Address] = {
     (JsPath \ "companyContactAddress").read[Address] orElse
-      (JsPath \ "individualContactAddress").read[Address] orElse
-      (JsPath \ "partnershipContactAddress").read[Address]
+      (JsPath \ "partnershipContactAddress").read[Address] orElse
+      (JsPath \ "individualContactAddress").read[Address]
   }
 
   private val organisationLegalStatus = Seq("Limited Company", "Partnership")

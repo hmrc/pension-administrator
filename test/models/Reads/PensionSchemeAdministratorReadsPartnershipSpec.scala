@@ -22,7 +22,7 @@ import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.{Json, _}
 import utils.JsonUtils._
 
-class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class PensionSchemeAdministratorReadsPartnershipSpec extends WordSpec with MustMatchers with OptionValues with Samples {
 
   implicit val contactAddressEnabled: Boolean = true
 

@@ -52,6 +52,25 @@ trait Samples {
     previousAddressDetail = previousAddressDetailsSample,
     numberOfDirectorOrPartners = Some(numberOfDirectorOrPartnersSample),
     directorOrPartnerDetail = None, declaration = declarationSample)
+
+
+  val pensionSchemeAdministratorSampleIndividual = PensionSchemeAdministrator(customerType = "TestCustomer",
+    legalStatus = "Individual",
+    sapNumber = "NumberTest",
+    noIdentifier = true,
+    idType = Some("TestId"),
+    idNumber = Some("TestIdNumber"),
+    organisationDetail = None,
+    individualDetail = Some(IndividualDetailType(
+      title = None, firstName = "John", middleName = Some("Does Does"),
+      lastName = "Doe", dateOfBirth = LocalDate.parse("2019-01-31"))),
+    pensionSchemeAdministratoridentifierStatus = PensionSchemeAdministratorIdentifierStatusType(isExistingPensionSchemaAdministrator = false),
+    correspondenceAddressDetail = ukAddressSample,
+    correspondenceContactDetail = contactDetailsSample,
+    previousAddressDetail = previousAddressDetailsSample,
+    numberOfDirectorOrPartners = None,
+    directorOrPartnerDetail = None, declaration = declarationSample)
+
   val correspondenceCommonDetails = CorrespondenceCommonDetail(nonUkAddressSample, contactDetailsSample)
 
   def pensionSchemeAdministratorSample2(personType: String) = {
