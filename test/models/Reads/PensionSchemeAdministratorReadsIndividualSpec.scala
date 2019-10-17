@@ -16,7 +16,7 @@
 
 package models.Reads
 
-import models.{Address, PensionSchemeAdministrator, Samples, UkAddress, Reads => _}
+import models.{PensionSchemeAdministrator, Samples, UkAddress, Reads => _}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.{Json, _}
 
@@ -34,7 +34,6 @@ class PensionSchemeAdministratorReadsIndividualSpec extends WordSpec with MustMa
         ),
         "individualContactDetails" -> Json.obj("phone" -> "07592113", "email" -> "test@test.com"),
         "individualAddressYears" -> JsString("over_a_year"),
-        //  "individualPreviousAddress" -> JsObject(Map("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"), "addressLine3" -> JsString("line3"))),
         "individualContactAddress" -> JsObject(Map("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"), "addressLine3" -> JsString("line3"),
           "addressLine4" -> JsString("line4"), "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))),
         "individualDetails" -> Json.obj(
