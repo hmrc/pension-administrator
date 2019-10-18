@@ -27,19 +27,22 @@ class PensionSchemeAdministratorReadsCompanySpec extends WordSpec with MustMatch
 
   "JSON Payload of a PSA" should {
     "Map to a valid PensionSchemeAdministrator object" when {
-      val input = Json.obj("existingPSA" -> Json.obj("isExistingPSA" -> JsBoolean(false)), "registrationInfo" -> Json.obj("legalStatus" -> "Limited Company",
-        "sapNumber" -> "NumberTest",
-        "noIdentifier" -> JsBoolean(true),
-        "customerType" -> "TestCustomer",
-        "idType" -> JsString("TestId"),
-        "idNumber" -> JsString("TestIdNumber")),
+      val input = Json.obj("existingPSA" -> Json.obj(
+        "isExistingPSA" -> JsBoolean(false)),
+        "registrationInfo" -> Json.obj("legalStatus" -> "Limited Company",
+          "sapNumber" -> "NumberTest",
+          "noIdentifier" -> JsBoolean(true),
+          "customerType" -> "TestCustomer",
+          "idType" -> JsString("TestId"),
+          "idNumber" -> JsString("TestIdNumber")
+        ),
         "contactDetails" -> Json.obj("phone" -> "07592113", "email" -> "test@test.com"),
         "companyAddressYears" -> JsString("over_a_year"),
         "companyContactAddress" -> JsObject(Map("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"), "addressLine3" -> JsString("line3"),
-          "addressLine4" -> JsString("line4"), "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))),
+         "addressLine4" -> JsString("line4"), "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))),
         "companyDetails" -> Json.obj("vatRegistrationNumber" -> JsString("VAT11111"), "payeEmployerReferenceNumber" -> JsString("PAYE11111")),
         "companyRegistrationNumber" -> JsString("CRN11111"),
-        "businessDetails" -> Json.obj("companyName" -> JsString("Company Test")),
+        "businessName" -> JsString("Company Test"),
         "declaration" -> JsBoolean(true),
         "declarationFitAndProper" -> JsBoolean(true),
         "declarationWorkingKnowledge" -> "workingKnowledge") + ("directors" -> JsArray(Seq(testDirectorOrPartner("director"))))
