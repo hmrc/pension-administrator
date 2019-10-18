@@ -26,7 +26,6 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
 
   "A JSON Payload containing organisation detials" must {
 
-
     "Reading optional keys from Json for partnershipPaye " must {
 
       "We dont have optional parent of VAT registration number" in {
@@ -89,7 +88,6 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
 
     }
 
-
     Seq(("Company", companyDetails), ("Partnership", partnershipDetails)).foreach { entityType =>
       val (orgType, orgData) = entityType
       s"Map correctly to a $orgType OrganisationDetailType model" when {
@@ -119,14 +117,6 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
           result.crnNumber mustBe companySample.crnNumber
         }
 
-        "We have no company details" in {
-          val orgDetailsWithNoCompanyDetails = companyDetails - "companyDetails"
-
-          val result = orgDetailsWithNoCompanyDetails.as[OrganisationDetailType](OrganisationDetailType.CompanyApiReads)
-
-          result.vatRegistrationNumber mustBe None
-        }
-
         "We have no VAT registration number" in {
           val companyDetails = orgDetailWithoutVat(orgType)
 
@@ -148,15 +138,14 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
 }
 
 object OrganisationDetailTypeReadsSpec {
-  private val companyDetails = Json.obj("companyDetails" -> Json.obj("vatRegistrationNumber" -> JsString("VAT11111"),
-    "payeEmployerReferenceNumber" -> JsString("PAYE11111")),
-    "companyRegistrationNumber" -> JsString("CRN11111"), "businessDetails" -> Json.obj("companyName" -> JsString("Test Name")))
+  private val companyDetails = Json.obj("vat" -> JsString("VAT11111"), "paye" -> JsString("PAYE11111"),
+    "companyRegistrationNumber" -> JsString("CRN11111"), "businessName" -> JsString("Test Name"))
 
   private def orgDetailWithoutVat(entityType: String) = {
     if (entityType == "Partnership") {
       partnershipDetails + ("partnershipVat" -> Json.obj("hasVat" -> JsBoolean(false)))
     } else {
-      companyDetails + ("companyDetails" -> Json.obj("payeEmployerReferenceNumber" -> JsString("PAYE11111")))
+      companyDetails - "vat"
     }
   }
 
@@ -164,7 +153,7 @@ object OrganisationDetailTypeReadsSpec {
     if (entityType == "Partnership") {
       partnershipDetails + ("partnershipPaye" -> Json.obj("hasPaye" -> JsBoolean(false)))
     } else {
-      companyDetails + ("companyDetails" -> Json.obj("vatRegistrationNumber" -> JsString("VAT11111")))
+      companyDetails - "paye"
     }
   }
 

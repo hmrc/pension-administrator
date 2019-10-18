@@ -22,31 +22,34 @@ import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.{Json, _}
 import utils.JsonUtils._
 
-class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class PensionSchemeAdministratorReadsPartnershipSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+
+  implicit val contactAddressEnabled: Boolean = true
 
   "JSON Payload of a PSA" should {
     "Map to a valid PensionSchemeAdministrator object" when {
-      val input = Json.obj("existingPSA" -> Json.obj("isExistingPSA" -> JsBoolean(false)), "registrationInfo" -> Json.obj("legalStatus" -> "Limited Company",
+      val input = Json.obj("existingPSA" -> Json.obj("isExistingPSA" -> JsBoolean(false)), "registrationInfo" -> Json.obj("legalStatus" -> "Partnership",
         "sapNumber" -> "NumberTest",
         "noIdentifier" -> JsBoolean(true),
         "customerType" -> "TestCustomer",
         "idType" -> JsString("TestId"),
         "idNumber" -> JsString("TestIdNumber")),
-        "contactDetails" -> Json.obj("phone" -> "07592113", "email" -> "test@test.com"),
-        "companyAddressYears" -> JsString("over_a_year"),
-        "companyContactAddress" -> JsObject(Map("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"), "addressLine3" -> JsString("line3"),
+        "partnershipContactDetails" -> Json.obj("phone" -> "07592113", "email" -> "test@test.com"),
+        "partnershipAddressYears" -> JsString("over_a_year"),
+        "partnershipContactAddress" -> JsObject(Map("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"), "addressLine3" -> JsString("line3"),
           "addressLine4" -> JsString("line4"), "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))),
-        "companyDetails" -> Json.obj("vatRegistrationNumber" -> JsString("VAT11111"), "payeEmployerReferenceNumber" -> JsString("PAYE11111")),
+        "partnershipDetails" -> Json.obj("vatRegistrationNumber" -> JsString("VAT11111"), "payeEmployerReferenceNumber" -> JsString("PAYE11111")),
         "companyRegistrationNumber" -> JsString("CRN11111"),
-        "businessDetails" -> Json.obj("companyName" -> JsString("Company Test")),
+        "businessName" -> JsString("Company Test"),
         "declaration" -> JsBoolean(true),
         "declarationFitAndProper" -> JsBoolean(true),
-        "declarationWorkingKnowledge" -> "workingKnowledge") + ("directors" -> JsArray(Seq(testDirectorOrPartner("director"))))
+        "declarationWorkingKnowledge" -> "workingKnowledge") + ("partners" -> JsArray(Seq(testDirectorOrPartner("partner"))))
 
       "We have a valid legalStatus" in {
+
         val result = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads).asOpt.value
 
-        result.legalStatus mustEqual pensionSchemeAdministratorSample.legalStatus
+        result.legalStatus mustEqual pensionSchemeAdministratorSamplePartnership.legalStatus
       }
 
       "We have a valid sapNumber" in {
@@ -120,7 +123,7 @@ class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers wit
         result.previousAddressDetail.isPreviousAddressLast12Month mustBe pensionSchemeAdministratorSample.previousAddressDetail.isPreviousAddressLast12Month
       }
 
-      "We have correspondence address" in {
+      "We have correspondence address when the contact Address toggle is on" in {
         val result = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.correspondenceAddressDetail mustBe ukAddressSample
@@ -154,71 +157,10 @@ class PensionSchemeAdministratorReadsSpec extends WordSpec with MustMatchers wit
         result.organisationDetail.value.crnNumber mustBe companySample.crnNumber
       }
 
-      "We have individual details" in {
-        val inputWithIndividualDetails = input + ("individualDetails" -> Json.obj("firstName" -> JsString("John"),
-          "lastName" -> JsString("Doe"),
-          "middleName" -> JsString("Does Does"),
-          "dateOfBirth" -> JsString("2019-01-31"))) + ("registrationInfo" -> Json.obj("legalStatus" -> "Individual",
-          "sapNumber" -> "NumberTest",
-          "noIdentifier" -> JsBoolean(true),
-          "customerType" -> "TestCustomer",
-          "idType" -> JsString("TestId"),
-          "idNumber" -> JsString("TestIdNumber"))) - "businessDetails" - "companyDetails" - "companyRegistrationNumber"
-
-        val result = Json.fromJson[PensionSchemeAdministrator](inputWithIndividualDetails)(PensionSchemeAdministrator.apiReads).asOpt.value
-
-        result.individualDetail.value.dateOfBirth mustBe individualSample.dateOfBirth
-      }
-
       "We have organisation details but no individual details" in {
         val result = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.individualDetail mustBe None
-      }
-
-      "We have individual details but no organisation details" in {
-        val inputWithIndividualDetails = input + ("individualDetails" -> Json.obj("firstName" -> JsString("John"),
-          "lastName" -> JsString("Doe"),
-          "middleName" -> JsString("Does Does"),
-          "dateOfBirth" -> JsString("2019-01-31"))) + ("registrationInfo" -> Json.obj("legalStatus" -> "Individual",
-          "sapNumber" -> "NumberTest",
-          "noIdentifier" -> JsBoolean(true),
-          "customerType" -> "TestCustomer",
-          "idType" -> JsString("TestId"),
-          "idNumber" -> JsString("TestIdNumber"))) - "businessDetails" - "companyDetails" - "companyRegistrationNumber"
-
-        val result = Json.fromJson[PensionSchemeAdministrator](inputWithIndividualDetails)(PensionSchemeAdministrator.apiReads).asOpt.value
-
-        result.organisationDetail mustBe None
-      }
-
-      "We have individual with Individual Contact Details" in {
-        val expectedContactDetails = contactDetailsSample.copy(telephone = "11111")
-        val individiualContactDetails = "individualContactDetails" -> Json.obj("phone" -> "11111", "email" -> "test@test.com")
-        val result =
-          Json.fromJson[PensionSchemeAdministrator](input + individiualContactDetails - "contactDetails")(PensionSchemeAdministrator.apiReads).asOpt.value
-
-        result.correspondenceContactDetail.telephone mustBe expectedContactDetails.telephone
-      }
-
-      "We have an individual contact address" in {
-        renameElement(input, "companyContactAddress", "individualContactAddress").fold(
-          invalid => throw JsResultException(invalid),
-          json => {
-            val result = Json.fromJson[PensionSchemeAdministrator](json)(PensionSchemeAdministrator.apiReads).asOpt.value
-
-            result.correspondenceAddressDetail.asInstanceOf[UkAddress] mustBe ukAddressSample
-          }
-        )
-      }
-
-      "We have an individual previous address" in {
-        val expectedIndividualPreviousAddress = previousAddressDetailsSample.copy(isPreviousAddressLast12Month = false, None)
-        val individualPreviousAddress = "individualAddressYears" -> JsString("over_a_year")
-        val result =
-          Json.fromJson[PensionSchemeAdministrator](input + individualPreviousAddress - "companyAddressYears")(PensionSchemeAdministrator.apiReads).asOpt.value
-
-        result.previousAddressDetail.isPreviousAddressLast12Month mustBe expectedIndividualPreviousAddress.isPreviousAddressLast12Month
       }
 
       "The user is not an existing PSA user" in {

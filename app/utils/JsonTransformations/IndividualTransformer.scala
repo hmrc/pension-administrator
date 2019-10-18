@@ -23,17 +23,21 @@ import play.api.libs.json.{__, _}
 
 class IndividualTransformer @Inject()(legalStatusTransformer: LegalStatusTransformer) extends JsonTransformer {
   val getNinoOrUtr: Reads[JsObject] = {
-    legalStatusTransformer.returnPathBasedOnLegalStatus(__ \ 'individualNino, __ \ 'businessDetails, __ \ 'partnershipDetails).flatMap { userAnswersPath =>
       (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").readNullable[String].flatMap { value =>
         if (value.contains("UTR")) {
-          ((userAnswersPath \ 'uniqueTaxReferenceNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
-            orElse doNothing)
+          legalStatusTransformer.returnPathBasedOnLegalStatus(__ \ 'individualNino, __ \ 'utr, __ \ 'partnershipDetails \ 'uniqueTaxReferenceNumber)
+            .flatMap { userAnswersPath =>
+            (userAnswersPath.json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
+              orElse doNothing)
+          }
         } else {
-          (userAnswersPath.json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
-            orElse doNothing)
+          legalStatusTransformer.returnPathBasedOnLegalStatus(__ \ 'individualNino, __ \ 'businessDetails, __ \ 'partnershipDetails)
+            .flatMap { userAnswersPath =>
+            (userAnswersPath.json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
+              orElse doNothing)
+          }
         }
       }
-    }
   }
 
   val getIndividualDetails: Reads[JsObject] = {
@@ -45,7 +49,7 @@ class IndividualTransformer @Inject()(legalStatusTransformer: LegalStatusTransfo
       (__ \ 'individualDateOfBirth).json.copyFrom((individualDetailsPath \ 'dateOfBirth).json.pick) reduce
   }
 
-  def getContact(userAnswersPath: JsPath): Reads[JsObject] = {
+  private def getContact(userAnswersPath: JsPath): Reads[JsObject] = {
     val contactAddressPath = __ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails
     (userAnswersPath \ 'phone).json.copyFrom((contactAddressPath \ 'telephone).json.pick) and
       ((userAnswersPath \ 'email).json.copyFrom((contactAddressPath \ 'email).json.pick) //TODO: Mandatory in frontend but optional in DES
@@ -53,5 +57,9 @@ class IndividualTransformer @Inject()(legalStatusTransformer: LegalStatusTransfo
   }
 
   val getContactDetails: Reads[JsObject] =
-    legalStatusTransformer.returnPathBasedOnLegalStatus(__ \ 'individualContactDetails, __ \ 'contactDetails, __ \ 'partnershipContactDetails).flatMap(getContact)
+    legalStatusTransformer.returnPathBasedOnLegalStatus(
+      individualPath = __ \ 'individualContactDetails,
+      companyPath = __ \ 'contactDetails,
+      partnershipPath = __ \ 'partnershipContactDetails
+    ).flatMap(getContact)
 }

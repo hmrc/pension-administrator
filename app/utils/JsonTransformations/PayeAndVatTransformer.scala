@@ -28,9 +28,9 @@ class PayeAndVatTransformer @Inject()() extends JsonTransformer {
 
     (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
       case "Limited Company" =>
-        ((__ \ 'companyDetails \ 'vatRegistrationNumber).json.copyFrom(vatRegistrationNumber.json.pick)
+        ((__ \ 'vat).json.copyFrom(vatRegistrationNumber.json.pick)
           orElse doNothing) and
-          ((__ \ 'companyDetails \ 'payeEmployerReferenceNumber).json.copyFrom(paye.json.pick)
+          ((__ \ 'paye).json.copyFrom(paye.json.pick)
             orElse doNothing) reduce
       case "Partnership" =>
         val vatReads = (__ \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails" \ "vatRegistrationNumber").read[String].flatMap { _ =>
