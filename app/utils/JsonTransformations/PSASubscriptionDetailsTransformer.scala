@@ -62,7 +62,7 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
     val isNonUK = (__ \ "psaSubscriptionDetails" \ "correspondenceAddressDetails" \ "nonUKAddress")
       .json.pick[JsBoolean].map{v => JsBoolean(!v.as[Boolean])}
 
-    ((__ \ 'areYouInUK).json.copyFrom(isNonUK))
+    (__ \ 'areYouInUK).json.copyFrom(isNonUK)
 
   }
 }

@@ -53,6 +53,20 @@ trait Samples {
     numberOfDirectorOrPartners = Some(numberOfDirectorOrPartnersSample),
     directorOrPartnerDetail = None, declaration = declarationSample)
 
+  val pensionSchemeAdministratorSamplePartnership = PensionSchemeAdministrator(customerType = "TestCustomer",
+    legalStatus = "Partnership",
+    sapNumber = "NumberTest",
+    noIdentifier = true,
+    idType = Some("TestId"),
+    idNumber = Some("TestIdNumber"),
+    organisationDetail = None,
+    individualDetail = None,
+    pensionSchemeAdministratoridentifierStatus = PensionSchemeAdministratorIdentifierStatusType(isExistingPensionSchemaAdministrator = false),
+    correspondenceAddressDetail = ukAddressSample,
+    correspondenceContactDetail = contactDetailsSample,
+    previousAddressDetail = previousAddressDetailsSample,
+    numberOfDirectorOrPartners = Some(numberOfDirectorOrPartnersSample),
+    directorOrPartnerDetail = None, declaration = declarationSample)
 
   val pensionSchemeAdministratorSampleIndividual = PensionSchemeAdministrator(customerType = "TestCustomer",
     legalStatus = "Individual",

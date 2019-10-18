@@ -192,11 +192,10 @@ object PensionSchemeAdministrator {
       (JsPath \ "idNumber").readNullable[String]
     ) ((legalStatus, sapNumber, noIdentifier, customerType, idType, idNumber) => (legalStatus, sapNumber, noIdentifier, customerType, idType, idNumber))
 
-  private val contactDetailsReads: Reads[ContactDetails] = {
-    ContactDetails.apiReads orElse
+  private val contactDetailsReads: Reads[ContactDetails] =
+    (JsPath \ "contactDetails").read(ContactDetails.apiReads) orElse
       (JsPath \ "individualContactDetails").read(ContactDetails.apiReads) orElse
       (JsPath \ "partnershipContactDetails").read(ContactDetails.apiReads)
-  }
 
   private val previousAddressReads: Reads[PreviousAddressDetails] = {
     (JsPath.read(PreviousAddressDetails.apiReads("company"))

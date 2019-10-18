@@ -28,7 +28,7 @@ class PensionSchemeAdministratorReadsPartnershipSpec extends WordSpec with MustM
 
   "JSON Payload of a PSA" should {
     "Map to a valid PensionSchemeAdministrator object" when {
-      val input = Json.obj("existingPSA" -> Json.obj("isExistingPSA" -> JsBoolean(false)), "registrationInfo" -> Json.obj("legalStatus" -> "Limited Company",
+      val input = Json.obj("existingPSA" -> Json.obj("isExistingPSA" -> JsBoolean(false)), "registrationInfo" -> Json.obj("legalStatus" -> "Partnership",
         "sapNumber" -> "NumberTest",
         "noIdentifier" -> JsBoolean(true),
         "customerType" -> "TestCustomer",
@@ -40,17 +40,17 @@ class PensionSchemeAdministratorReadsPartnershipSpec extends WordSpec with MustM
           "addressLine4" -> JsString("line4"), "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))),
         "partnershipDetails" -> Json.obj("vatRegistrationNumber" -> JsString("VAT11111"), "payeEmployerReferenceNumber" -> JsString("PAYE11111")),
         "companyRegistrationNumber" -> JsString("CRN11111"),
-        "businessDetails" -> Json.obj("companyName" -> JsString("Company Test")),
+        "businessName" -> JsString("Company Test"),
         "declaration" -> JsBoolean(true),
         "declarationFitAndProper" -> JsBoolean(true),
-        "declarationWorkingKnowledge" -> "workingKnowledge") + ("directors" -> JsArray(Seq(testDirectorOrPartner("director"))))
+        "declarationWorkingKnowledge" -> "workingKnowledge") + ("partners" -> JsArray(Seq(testDirectorOrPartner("partner"))))
 
       "We have a valid legalStatus" in {
         val xx = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads)
         println( "\n>>>" + xx)
         val result = xx.asOpt.value
 
-        result.legalStatus mustEqual pensionSchemeAdministratorSample.legalStatus
+        result.legalStatus mustEqual pensionSchemeAdministratorSamplePartnership.legalStatus
       }
 
       "We have a valid sapNumber" in {
