@@ -46,9 +46,8 @@ class PensionSchemeAdministratorReadsPartnershipSpec extends WordSpec with MustM
         "declarationWorkingKnowledge" -> "workingKnowledge") + ("partners" -> JsArray(Seq(testDirectorOrPartner("partner"))))
 
       "We have a valid legalStatus" in {
-        val xx = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads)
-        println( "\n>>>" + xx)
-        val result = xx.asOpt.value
+
+        val result = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.legalStatus mustEqual pensionSchemeAdministratorSamplePartnership.legalStatus
       }
