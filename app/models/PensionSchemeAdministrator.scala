@@ -193,24 +193,20 @@ object PensionSchemeAdministrator {
     ) ((legalStatus, sapNumber, noIdentifier, customerType, idType, idNumber) => (legalStatus, sapNumber, noIdentifier, customerType, idType, idNumber))
 
   private val contactDetailsReads: Reads[ContactDetails] = {
-    JsPath.read(ContactDetails.apiReads) orElse 
-      (JsPath \ "individualContactDetails").read(ContactDetails.apiReads) orElse
-      (JsPath \ "partnershipContactDetails").read(ContactDetails.apiReads)
+    ((JsPath \ "contactDetails").read(ContactDetails.apiReads) orElse (JsPath \ "individualContactDetails").read(ContactDetails.apiReads)
+      orElse (JsPath \ "partnershipContactDetails").read(ContactDetails.apiReads))
   }
 
   private val previousAddressReads: Reads[PreviousAddressDetails] = {
     (JsPath.read(PreviousAddressDetails.apiReads("company"))
-
-      orElse JsPath.read(PreviousAddressDetails.apiReads("partnership"))
       orElse JsPath.read(PreviousAddressDetails.apiReads("individual"))
-
-      )
+      orElse JsPath.read(PreviousAddressDetails.apiReads("partnership")))
   }
 
   private val contactAddressReads: Reads[Address] = {
     (JsPath \ "companyContactAddress").read[Address] orElse
-      (JsPath \ "partnershipContactAddress").read[Address] orElse
-      (JsPath \ "individualContactAddress").read[Address]
+      (JsPath \ "individualContactAddress").read[Address] orElse
+      (JsPath \ "partnershipContactAddress").read[Address]
   }
 
   private val organisationLegalStatus = Seq("Limited Company", "Partnership")
