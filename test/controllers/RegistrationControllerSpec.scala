@@ -37,7 +37,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.{FakeAuthConnector, FakeFeatureSwitchManagementService}
+import utils.FakeAuthConnector
 
 import scala.concurrent.Future
 
@@ -55,17 +55,16 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
   implicit val mat: Materializer = app.materializer
 
-  private def registrationController(retrievals: Future[_], isManualIvEnabled: Boolean = true): RegistrationController =
+  private def registrationController(retrievals: Future[_]): RegistrationController =
     new RegistrationController(
       new FakeAuthConnector(retrievals),
       mockRegistrationConnector,
-      controllerComponents,
-      FakeFeatureSwitchManagementService(isManualIvEnabled)
+      controllerComponents
     )
 
   before(reset(mockRegistrationConnector))
 
-  "registerWithIdIndividual with manual IV enabled" must {
+  "registerWithIdIndividual " must {
 
     val mandatoryRequestData = Json.obj("regime" -> "PODA", "requiresNameMatch" -> false, "isAnAgent" -> false)
     val requestBody = Json.obj("nino" -> nino)
@@ -518,8 +517,6 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       }
     }
   }
-
-
 
 }
 

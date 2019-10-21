@@ -17,7 +17,6 @@
 package controllers
 
 import com.google.inject.Inject
-import config.FeatureSwitchManagementService
 import connectors.RegistrationConnector
 import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest}
 import models.{Organisation, SuccessResponse}
@@ -38,8 +37,7 @@ import scala.util.{Failure, Success, Try}
 class RegistrationController @Inject()(
                                         override val authConnector: AuthConnector,
                                         registerConnector: RegistrationConnector,
-                                        cc: ControllerComponents,
-                                        fs: FeatureSwitchManagementService
+                                        cc: ControllerComponents
                                       ) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 
   def registerWithIdIndividual: Action[AnyContent] = Action.async {
