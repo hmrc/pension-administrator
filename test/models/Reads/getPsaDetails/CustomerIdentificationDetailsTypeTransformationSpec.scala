@@ -734,10 +734,10 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                         "lastName" : "Baker",
                         "dateOfBirth" : "1980-03-01"
                       },
-                      "directorNino" : {
-                        "nino" : "JC000001A",
-                        "hasNino" : true
+                      "nino" : {
+                        "value" : "JC000001A"
                       },
+                      "noNinoReason" : "test",
                       "directorUtr" : {
                         "utr" : "0123456789",
                         "hasUtr" : true
