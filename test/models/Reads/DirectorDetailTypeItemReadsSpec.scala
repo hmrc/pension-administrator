@@ -67,7 +67,7 @@ class DirectorDetailTypeItemReadsSpec extends WordSpec with MustMatchers with Op
         }
 
         s"We have $personType NINO details" when {
-          "We have a director nino and reason" in {
+          s"We have a $personType nino and reason" in {
             val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
 
             result.head.referenceOrNino mustBe directorOrPartnerSample(personType).referenceOrNino
@@ -84,28 +84,19 @@ class DirectorDetailTypeItemReadsSpec extends WordSpec with MustMatchers with Op
         }
 
         s"We have $personType UTR details" when {
-          s"We have a $personType utr" in {
+          s"We have a $personType utr and reason" in {
             val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
 
             result.head.utr mustBe directorOrPartnerSample(personType).utr
+            result.head.noUtrReason mustBe directorOrPartnerSample(personType).noUtrReason
           }
 
-          "There is no UTR" in {
-            val directorNoUtr = directorsOrPartners.value :+ (directorsOrPartners.head.as[JsObject] +
-              (s"${personType}Utr" -> Json.obj("hasUtr" -> JsBoolean(false))))
-
-            val result = JsArray(directorNoUtr).as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
+          "We don't have a utr or reason" in {
+            val directorsNoUtr = directorsOrPartners.value :+ (directorsOrPartners.head.as[JsObject] - "utr" - "noUtrReason")
+            val result = JsArray(directorsNoUtr).as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
 
             result.last.utr mustBe None
-          }
-
-          "We have a reason for not having utr" in {
-            val directorNoUtr = directorsOrPartners.value :+ (directorsOrPartners.head.as[JsObject] +
-              (s"${personType}Utr" -> Json.obj("reason" -> JsString("he can't find it"))))
-
-            val result = JsArray(directorNoUtr).as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
-
-            result.last.noUtrReason mustBe directorOrPartnerSample(personType).noUtrReason
+            result.last.noUtrReason mustBe None
           }
         }
 
@@ -153,6 +144,8 @@ object DirectorDetailTypeItemReadsSpec {
     "dateOfBirth" -> JsString("2019-01-31")),
     "nino" -> Json.obj("value" -> JsString("SL211111A")),
     "noNinoReason" -> JsString("he can't find it"),
+    "utr" -> Json.obj("value" -> JsString("123456789")),
+    "noUtrReason" -> JsString("he can't find it"),
     s"${personType}Utr" -> Json.obj("hasUtr" -> JsBoolean(true), "utr" -> JsString("123456789")),
     s"${personType}AddressYears" -> JsString("over_a_year")
   ) + (s"${personType}ContactDetails" -> Json.obj("email" -> "test@test.com", "phone" -> "07592113")) + (s"${personType}Address" ->

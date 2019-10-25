@@ -738,10 +738,10 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                         "value" : "JC000001A"
                       },
                       "noNinoReason" : "test",
-                      "directorUtr" : {
-                        "utr" : "0123456789",
-                        "hasUtr" : true
+                      "utr" : {
+                        "value" : "0123456789"
                       },
+                      "noUtrReason" : "test",
                       "directorAddress" : {
                         "addressLine1" : "1 Director Road",
                         "addressLine2" : "Clifton",
