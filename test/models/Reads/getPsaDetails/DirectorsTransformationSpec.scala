@@ -57,9 +57,9 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         }
 
         "We don't have nino but have a nino reason" in {
-          val inputJson = desDirector.as[JsObject]
+          val inputJson = desDirector.as[JsObject] - "nino"
 
-          val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorsOrPartners("director")).asOpt.value
+          val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
 
           (transformedJson \ "noNinoReason").as[String] mustBe "test"
         }
