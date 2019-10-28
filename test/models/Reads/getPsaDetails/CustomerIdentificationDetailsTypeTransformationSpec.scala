@@ -730,10 +730,10 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                     {
                       "directorDetails" : {
                         "firstName" : "Ann",
-                        "middleName" : "Sarah",
-                        "lastName" : "Baker",
-                        "dateOfBirth" : "1980-03-01"
+                         "middleName" : "Sarah",
+                        "lastName" : "Baker"
                       },
+                      "dateOfBirth" : "1980-03-01",
                       "directorNino" : {
                         "nino" : "JC000001A",
                         "hasNino" : true

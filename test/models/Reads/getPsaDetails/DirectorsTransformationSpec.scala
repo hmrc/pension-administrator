@@ -49,7 +49,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         }
 
         "We have a DOB" in {
-          (transformedJson \ "directorDetails" \ "dateOfBirth").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "dateOfBirth").as[String]
+          (transformedJson \ "dateOfBirth").as[String] mustBe (userAnswersDirector \ "dateOfBirth").as[String]
         }
 
         "We have a nino" in {
@@ -152,9 +152,9 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
                        "firstName" : "Ann",
                        "middleName" : "Sarah",
                        "lastName" : "Baker",
-                       "dateOfBirth" : "1980-03-01",
                        "isDeleted" : false
                      },
+                     "dateOfBirth" : "1980-03-01",
                      "directorNino" : {
                        "hasNino" : true,
                        "nino" : "JC000001A"
