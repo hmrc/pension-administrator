@@ -44,7 +44,10 @@ object IndividualDetailType {
     (JsPath \ s"${individualType}Details" \ "firstName").read[String] and
       (JsPath \ s"${individualType}Details" \ "lastName").read[String] and
       (JsPath \ s"${individualType}Details" \ "middleName").readNullable[String] and
-      ((JsPath \ "individualDateOfBirth").read[LocalDate] orElse (JsPath \ s"${individualType}Details" \ "dateOfBirth").read[LocalDate])
+      //TODO Remove orElse parts when individual and partner transformations are changed
+      ((JsPath \ "dateOfBirth").read[LocalDate] orElse
+        (JsPath \ "individualDateOfBirth").read[LocalDate] orElse
+        (JsPath \ s"${individualType}Details" \ "dateOfBirth").read[LocalDate])
     ) ((name, lastName, middleName, dateOfBirth) => IndividualDetailType(None, name, middleName, lastName, dateOfBirth))
 }
 

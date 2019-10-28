@@ -52,15 +52,15 @@ class DirectorOrPartnerTransformer @Inject()(addressTransformer: AddressTransfor
     .copyFrom((__ \ 'firstName).json.pick) and
     ((__ \ s"${directorOrPartner}Details" \ 'middleName).json.copyFrom((__ \ 'middleName).json.pick) orElse doNothing) and
     (__ \ s"${directorOrPartner}Details" \ 'lastName).json.copyFrom((__ \ 'lastName).json.pick) and
-    (__ \ s"${directorOrPartner}Details" \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
-    (
-      if (directorOrPartner == "director") {
+    (if (directorOrPartner.contains("director")) {
+      (__ \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
         ((__ \ "nino" \ 'value).json.copyFrom((__ \ 'nino).json.pick) orElse doNothing) and
-          ((__ \ 'noNinoReason).json.copyFrom((__ \ 'noNinoReason).json.pick) orElse doNothing) reduce
-      } else {
-        getDirectorOrPartnerNino(directorOrPartner)
-      }
-    ) and
+        ((__ \ 'noNinoReason).json.copyFrom((__ \ 'noNinoReason).json.pick) orElse doNothing) reduce
+    }
+    else {
+      (__ \ s"${directorOrPartner}Details" \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
+        getDirectorOrPartnerNino(directorOrPartner) reduce
+    }) and
     getDirectorOrPartnerUtr(directorOrPartner) and
     addressTransformer.getDifferentAddress(__ \ s"${directorOrPartner}Address", __ \ "correspondenceCommonDetails" \ "addressDetails") and
     getDirectorOrPartnerContactDetails(directorOrPartner) and
