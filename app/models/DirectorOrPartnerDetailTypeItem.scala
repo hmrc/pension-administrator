@@ -87,7 +87,11 @@ object DirectorOrPartnerDetailTypeItem {
         val directorsOrPartners: Seq[JsResult[DirectorOrPartnerDetailTypeItem]] =
           filterDeletedDirectorOrPartner(personType, elements).zipWithIndex.map { directorOrPartner =>
             val (directorOrPartnerDetails, index) = directorOrPartner
-            directorOrPartnerDetails.validate[DirectorOrPartnerDetailTypeItem](DirectorOrPartnerDetailTypeItem.directorOrPartnerReads(index, personType))
+            if(personType == "director") {
+              directorOrPartnerDetails.validate[DirectorOrPartnerDetailTypeItem](DirectorOrPartnerDetailTypeItem.directorReads(index, personType))
+            } else {
+              directorOrPartnerDetails.validate[DirectorOrPartnerDetailTypeItem](DirectorOrPartnerDetailTypeItem.directorOrPartnerReads(index, personType))
+            }
           }
         directorsOrPartners.foldLeft[JsResult[List[DirectorOrPartnerDetailTypeItem]]](JsSuccess(List.empty)) {
           (directors, currentDirector) => {
@@ -131,6 +135,30 @@ object DirectorOrPartnerDetailTypeItem {
         dateOfBirth = directorOrPartnerPersonalDetails.dateOfBirth,
         referenceOrNino = ninoDetails.flatMap(_._1),
         noNinoReason = ninoDetails.flatMap(_._2),
+        utr = utrDetails.flatMap(_._1),
+        noUtrReason = utrDetails.flatMap(_._2),
+        correspondenceCommonDetail = addressCommonDetails,
+        previousAddressDetail = previousAddress))
+
+  //TODO - It is duplicate but once partner is also done the old one can be removed
+  def directorReads(index: Int, personType: String): Reads[DirectorOrPartnerDetailTypeItem] = (
+    JsPath.read(IndividualDetailType.apiReads(personType)) and
+      (JsPath \ "nino").readNullable[String]((__ \ "value").read[String]) and
+      (JsPath \ "noNinoReason").readNullable[String] and
+      (JsPath \ s"${personType}Utr").readNullable(directorOrPartnerReferenceReads("hasUtr", "utr")) and
+      JsPath.read(PreviousAddressDetails.apiReads(personType)) and
+      JsPath.read(CorrespondenceCommonDetail.apiReads(personType))
+    ) (
+    (directorOrPartnerPersonalDetails, nino, noNinoReason, utrDetails, previousAddress, addressCommonDetails) =>
+      DirectorOrPartnerDetailTypeItem(sequenceId = f"$index%03d",
+        entityType = personType.capitalize,
+        title = None,
+        firstName = directorOrPartnerPersonalDetails.firstName,
+        middleName = directorOrPartnerPersonalDetails.middleName,
+        lastName = directorOrPartnerPersonalDetails.lastName,
+        dateOfBirth = directorOrPartnerPersonalDetails.dateOfBirth,
+        referenceOrNino = nino,
+        noNinoReason = noNinoReason,
         utr = utrDetails.flatMap(_._1),
         noUtrReason = utrDetails.flatMap(_._2),
         correspondenceCommonDetail = addressCommonDetails,

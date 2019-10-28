@@ -53,18 +53,15 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         }
 
         "We have a nino" in {
-          (transformedJson \ "directorNino" \ "hasNino").as[Boolean] mustBe (userAnswersDirector \ "directorNino" \ "hasNino").as[Boolean]
-          (transformedJson \ "directorNino" \ "nino").as[String] mustBe (userAnswersDirector \ "directorNino" \ "nino").as[String]
+          (transformedJson \ "nino" \ "value").as[String] mustBe (userAnswersDirector \ "nino" \ "value").as[String]
         }
 
-        "We don't have a nino" in {
+        "We don't have nino but have a nino reason" in {
           val inputJson = desDirector.as[JsObject] - "nino"
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
 
-          (transformedJson \ "directorNino" \ "hasNino").as[Boolean] mustBe false
-          //TODO: reason is not mandatory but mandatory in our frontend. Potential issues.
-          (transformedJson \ "directorNino" \ "reason").as[String] mustBe "test"
+          (transformedJson \ "noNinoReason").as[String] mustBe "test"
         }
 
         "We have a utr" in {
@@ -155,10 +152,9 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
                        "isDeleted" : false
                      },
                      "dateOfBirth" : "1980-03-01",
-                     "directorNino" : {
-                       "hasNino" : true,
-                       "nino" : "JC000001A"
-                     },
+                     "nino" : {
+                        "value" : "JC000001A"
+                      },
                      "directorUtr" : {
                        "hasUtr" : true,
                        "utr" : "0123456789"
