@@ -364,11 +364,11 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
       lazy val transformedJson = partnershipInputJson.transform(transformer.transformToUserAnswers).asOpt.value
 
       "we have partnership name" in {
-        (transformedJson \ "partnershipDetails" \ "companyName").as[String] mustBe "Acme Partnership"
+        (transformedJson \ "businessName").as[String] mustBe "Acme Partnership"
       }
 
       "we have idType UTR we correctly map the UTR number" in {
-        (transformedJson \ "partnershipDetails" \ "uniqueTaxReferenceNumber").asOpt[String] mustBe Some("0123456789")
+        (transformedJson \ "utr").asOpt[String] mustBe Some("0123456789")
       }
 
       "we don't have an idtype of UTR" in {
@@ -604,10 +604,8 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
 
   val expectedPartnershipJson = Json.parse(
     """{
-              "partnershipDetails" : {
-                  "companyName" : "Acme Partnership",
-                  "uniqueTaxReferenceNumber" : "0123456789"
-              },
+              "businessName" : "Acme Partnership",
+              "utr" : "0123456789",
               "areYouInUK" : true,
               "registrationInfo" : {
                   "legalStatus" : "Partnership",
