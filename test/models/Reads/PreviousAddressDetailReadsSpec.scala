@@ -46,7 +46,7 @@ class PreviousAddressDetailReadsSpec extends WordSpec with MustMatchers with Opt
 
         val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("company"))
 
-        result.previousAddressDetails.value.asInstanceOf[UkAddress].countryCode mustBe ukAddressSample.countryCode
+        result.address.value.asInstanceOf[UkAddress].countryCode mustBe ukAddressSample.countryCode
       }
 
       "we have a non UK address with no postcode" in {
@@ -56,7 +56,7 @@ class PreviousAddressDetailReadsSpec extends WordSpec with MustMatchers with Opt
 
         val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("company"))
 
-        result.previousAddressDetails.value.asInstanceOf[InternationalAddress].postalCode mustBe None
+        result.address.value.asInstanceOf[InternationalAddress].postalCode mustBe None
       }
 
       "we have an isChanged flag" in {

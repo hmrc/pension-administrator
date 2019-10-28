@@ -164,22 +164,22 @@ class PensionSchemeAdministratorReadsCompanySpec extends WordSpec with MustMatch
       "The user is not an existing PSA user" in {
         val result = Json.fromJson[PensionSchemeAdministrator](input)(PensionSchemeAdministrator.apiReads).asOpt.value
 
-        result.pensionSchemeAdministratoridentifierStatus.isExistingPensionSchemaAdministrator mustBe
-          pensionSchemeAdministratorSample.pensionSchemeAdministratoridentifierStatus.isExistingPensionSchemaAdministrator
+        result.pensionSchemeAdministratorIdentifierStatus.isExistingPensionSchemaAdministrator mustBe
+          pensionSchemeAdministratorSample.pensionSchemeAdministratorIdentifierStatus.isExistingPensionSchemaAdministrator
       }
 
       "The user is an existing PSA user with no previous reference" in {
         val existingPSA = "existingPSA" -> Json.obj("isExistingPSA" -> JsBoolean(true))
         val result = Json.fromJson[PensionSchemeAdministrator](input + existingPSA)(PensionSchemeAdministrator.apiReads).asOpt.value
 
-        result.pensionSchemeAdministratoridentifierStatus.isExistingPensionSchemaAdministrator mustBe true
+        result.pensionSchemeAdministratorIdentifierStatus.isExistingPensionSchemaAdministrator mustBe true
       }
 
       "The user is an existing PSA user with previous reference number" in {
         val existingPSA = "existingPSA" -> Json.obj("isExistingPSA" -> JsBoolean(true), "existingPSAId" -> JsString("TestId"))
         val result = Json.fromJson[PensionSchemeAdministrator](input + existingPSA)(PensionSchemeAdministrator.apiReads).asOpt.value
 
-        result.pensionSchemeAdministratoridentifierStatus.existingPensionSchemaAdministratorReference mustBe Some("TestId")
+        result.pensionSchemeAdministratorIdentifierStatus.existingPensionSchemaAdministratorReference mustBe Some("TestId")
       }
 
       "We have a declaration" in {

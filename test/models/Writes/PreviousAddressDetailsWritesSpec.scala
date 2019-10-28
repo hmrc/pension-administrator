@@ -43,7 +43,7 @@ class PreviousAddressDetailsWritesSpec extends WordSpec with MustMatchers with O
       }
 
       "we have a previous address" in {
-        (result \ "previousAddressDetails" \ "line1").as[String] mustBe previousAddress.previousAddressDetails.value.asInstanceOf[UkAddress].addressLine1
+        (result \ "previousAddressDetails" \ "line1").as[String] mustBe previousAddress.address.value.asInstanceOf[UkAddress].addressLine1
       }
 
       "we have an isChanged flag" in {
