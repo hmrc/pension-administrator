@@ -730,18 +730,18 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                     {
                       "directorDetails" : {
                         "firstName" : "Ann",
-                        "middleName" : "Sarah",
-                        "lastName" : "Baker",
-                        "dateOfBirth" : "1980-03-01"
+                         "middleName" : "Sarah",
+                        "lastName" : "Baker"
                       },
+                      "dateOfBirth" : "1980-03-01",
                       "nino" : {
-                        "value" : "JC000001A"
-                      },
-                      "noNinoReason" : "test",
+                         "value" : "JC000001A"
+                       },
+                       "noNinoReason" : "test",
                       "utr" : {
-                        "value" : "0123456789"
-                      },
-                      "noUtrReason" : "test",
+                         "value" : "0123456789"
+                       },
+                       "noUtrReason" : "test",
                       "directorAddress" : {
                         "addressLine1" : "1 Director Road",
                         "addressLine2" : "Clifton",
