@@ -65,18 +65,15 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         }
 
         "We have a utr" in {
-          (transformedJson \ "directorUtr" \ "hasUtr").as[Boolean] mustBe (userAnswersDirector \ "directorUtr" \ "hasUtr").as[Boolean]
-          (transformedJson \ "directorUtr" \ "utr").as[String] mustBe (userAnswersDirector \ "directorUtr" \ "utr").as[String]
+          (transformedJson \ "utr" \ "value").as[String] mustBe (userAnswersDirector \ "utr" \ "value").as[String]
         }
 
-        "We don't have a utr" in {
+        "We don't have a utr but have a reason" in {
           val inputJson = desDirector.as[JsObject] - "utr"
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
 
-          (transformedJson \ "directorUtr" \ "hasUtr").as[Boolean] mustBe false
-          //TODO: reason is not mandatory but mandatory in our frontend. Potential issues.
-          (transformedJson \ "directorUtr" \ "reason").as[String] mustBe "test"
+          (transformedJson \ "noUtrReason").as[String] mustBe "test"
         }
 
         //TODO: DES has director address details as not mandatory but we have it as mandatory in frontend (correspondenceCommonDetails wrapper). Potential issues.
@@ -155,10 +152,9 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
                      "nino" : {
                         "value" : "JC000001A"
                       },
-                     "directorUtr" : {
-                       "hasUtr" : true,
-                       "utr" : "0123456789"
-                     },
+                      "utr" : {
+                        "value" : "0123456789"
+                      },
                      "directorAddress" : {
                        "addressLine1" : "1 Director Road",
                        "addressLine2" : "Some District",

@@ -55,13 +55,16 @@ class DirectorOrPartnerTransformer @Inject()(addressTransformer: AddressTransfor
     (if (directorOrPartner.contains("director")) {
       (__ \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
         ((__ \ "nino" \ 'value).json.copyFrom((__ \ 'nino).json.pick) orElse doNothing) and
-        ((__ \ 'noNinoReason).json.copyFrom((__ \ 'noNinoReason).json.pick) orElse doNothing) reduce
+        ((__ \ 'noNinoReason).json.copyFrom((__ \ 'noNinoReason).json.pick) orElse doNothing) and
+        ((__ \ "utr" \ 'value).json.copyFrom((__ \ 'utr).json.pick) orElse doNothing) and
+        ((__ \ 'noUtrReason).json.copyFrom((__ \ 'noUtrReason).json.pick) orElse doNothing) reduce
     }
     else {
       (__ \ s"${directorOrPartner}Details" \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
-        getDirectorOrPartnerNino(directorOrPartner) reduce
-    }) and
-    getDirectorOrPartnerUtr(directorOrPartner) and
+        getDirectorOrPartnerNino(directorOrPartner) and
+        getDirectorOrPartnerUtr(directorOrPartner) reduce
+    }
+      ) and
     addressTransformer.getDifferentAddress(__ \ s"${directorOrPartner}Address", __ \ "correspondenceCommonDetails" \ "addressDetails") and
     getDirectorOrPartnerContactDetails(directorOrPartner) and
     addressTransformer.getAddressYears(addressYearsPath = __ \ s"${directorOrPartner}AddressYears") and
