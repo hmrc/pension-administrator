@@ -47,18 +47,11 @@ object PreviousAddressDetails {
       (JsPath \ s"${typeOfAddressDetail}PreviousAddress").readNullable[Address] and
       (JsPath \ s"${typeOfAddressDetail}PreviousAddressIsChanged").readNullable[Boolean] and
       (JsPath \ s"${typeOfAddressDetail}TradingOverAYear").readNullable[Boolean]
-    ) ((addressLast12Months, address, isChanged, tradingTime) => {
-    previousAddressDetails(addressLast12Months, address, isChanged, tradingTime)
-  })
-
-  private def previousAddressDetails(addressYears: String,
-                                     previousAddress: Option[Address],
-                                     isChanged: Option[Boolean] = None,
-                                     tradingTime: Option[Boolean] = None): PreviousAddressDetails =
-
+    ) ((addressYears, previousAddress, isChanged, tradingTime) => {
     PreviousAddressDetails(
       isPreviousAddressLast12Month = addressYears == "under_a_year" && (tradingTime getOrElse true),
       address = previousAddress,
       isChanged = isChanged
     )
+  })
 }
