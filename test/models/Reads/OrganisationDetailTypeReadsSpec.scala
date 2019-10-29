@@ -60,21 +60,11 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
 
     "Reading optional keys from Json for partnershipPaye " must {
 
-      "We dont have optional parent of Paye number" in {
+      "We dont Paye number" in {
 
         val partnershipDetailsWithoutOption = Json.obj("partnershipVat" -> Json.obj("vat" -> JsString("VAT11111"), "hasVat" -> JsBoolean(true)),
           "partnershipDetails" -> Json.obj("companyName" -> JsString("Company Test")))
 
-        val result = partnershipDetailsWithoutOption.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
-
-        result.payeReference mustBe None
-      }
-
-      "We have optional parent and dont have Paye number" in {
-
-        val partnershipDetailsWithoutOption = Json.obj("partnershipVat" -> Json.obj("vat" -> JsString("VAT11111"), "hasVat" -> JsBoolean(true)),
-          "partnershipPaye" -> Json.obj("hasPaye" -> JsBoolean(true)),
-          "partnershipDetails" -> Json.obj("companyName" -> JsString("Company Test")))
         val result = partnershipDetailsWithoutOption.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
 
         result.payeReference mustBe None
@@ -151,13 +141,13 @@ object OrganisationDetailTypeReadsSpec {
 
   private def orgDetailWithoutPaye(entityType: String): JsValue = {
     if (entityType == "Partnership") {
-      partnershipDetails + ("partnershipPaye" -> Json.obj("hasPaye" -> JsBoolean(false)))
+      partnershipDetails - "paye"
     } else {
       companyDetails - "paye"
     }
   }
 
   private val partnershipDetails = Json.obj("partnershipVat" -> Json.obj("vat" -> JsString("VAT11111"), "hasVat" -> JsBoolean(true)),
-    "partnershipPaye" -> Json.obj("paye" -> JsString("PAYE11111"), "hasPaye" -> JsBoolean(true)),
+    "paye" -> JsString("PAYE11111"),
     "partnershipDetails" -> Json.obj("companyName" -> JsString("Test Name")))
 }
