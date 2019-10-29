@@ -25,7 +25,7 @@ import play.api.libs.json.{JsPath, JsValue, Json, OFormat, Reads, Writes}
 trait PSADetail
 
 object PSADetail {
-  val companyReads: Reads[PSADetail] = JsPath.read[OrganisationDetailType](OrganisationDetailType.CompanyApiReads).map(c => c.asInstanceOf[PSADetail])
+  val companyReads: Reads[PSADetail] = JsPath.read[OrganisationDetailType](OrganisationDetailType.companyApiReads).map(c => c.asInstanceOf[PSADetail])
   val individualDetailsReads: Reads[PSADetail] = JsPath.read[IndividualDetailType](IndividualDetailType.apiReads("individual")).map(
     c => c.asInstanceOf[PSADetail])
   val partnershipReads: Reads[PSADetail] = JsPath.read[OrganisationDetailType](
@@ -72,14 +72,14 @@ object NumberOfDirectorOrPartnersType {
 
   val psaUpdateWrites: Writes[NumberOfDirectorOrPartnersType] = (
     (JsPath \ "isMoreThanTenDirectors").writeNullable[Boolean] and
-    (JsPath \ "isMoreThanTenPartners").writeNullable[Boolean] and
-    (JsPath \ "changeFlag").write[Boolean]
+      (JsPath \ "isMoreThanTenPartners").writeNullable[Boolean] and
+      (JsPath \ "changeFlag").write[Boolean]
     ) (
     numberOfDirectorOrPartnersType =>
       (numberOfDirectorOrPartnersType.isMorethanTenDirectors,
         numberOfDirectorOrPartnersType.isMorethanTenPartners,
         numberOfDirectorOrPartnersType.isChanged.fold(false)(identity))
-    )
+  )
 
 }
 
@@ -108,7 +108,7 @@ case class PensionSchemeAdministrator(customerType: String, legalStatus: String,
                                       idNumber: Option[String] = None, sapNumber: String, noIdentifier: Boolean,
                                       organisationDetail: Option[OrganisationDetailType] = None,
                                       individualDetail: Option[IndividualDetailType] = None,
-                                      pensionSchemeAdministratoridentifierStatus: PensionSchemeAdministratorIdentifierStatusType,
+                                      pensionSchemeAdministratorIdentifierStatus: PensionSchemeAdministratorIdentifierStatusType,
                                       correspondenceAddressDetail: Address,
                                       correspondenceContactDetail: ContactDetails,
                                       previousAddressDetail: PreviousAddressDetails,
@@ -120,16 +120,16 @@ case class PensionSchemeAdministrator(customerType: String, legalStatus: String,
 object PensionSchemeAdministrator {
   implicit val formats: OFormat[PensionSchemeAdministrator] = Json.format[PensionSchemeAdministrator]
 
-  val customerIdentificationDetailsWrites : Writes[(String, Option[String],Option[String],Boolean)] = (
+  val customerIdentificationDetailsWrites: Writes[(String, Option[String], Option[String], Boolean)] = (
     (JsPath \ "legalStatus").write[String] and
       (JsPath \ "idType").writeNullable[String] and
       (JsPath \ "idNumber").writeNullable[String] and
       (JsPath \ "noIdentifier").write[Boolean]
-    )(details => (details._1, details._2,details._3,details._4))
+    ) (details => (details._1, details._2, details._3, details._4))
 
   val psaUpdateWrites: Writes[PensionSchemeAdministrator] =
     (
-        (JsPath \ "customerIdentificationDetails").write(customerIdentificationDetailsWrites) and
+      (JsPath \ "customerIdentificationDetails").write(customerIdentificationDetailsWrites) and
         (JsPath \ "organisationDetails").writeNullable[OrganisationDetailType] and
         (JsPath \ "individualDetails").writeNullable[IndividualDetailType] and
         (JsPath \ "correspondenceAddressDetails").write[Address](Address.updateWrites) and
@@ -140,15 +140,18 @@ object PensionSchemeAdministrator {
         (JsPath \ "changeOfDirectorOrPartnerDetails").writeNullable[Boolean] and
         (JsPath \ "declarationDetails").write(PensionSchemeAdministratorDeclarationType.psaUpdateWrites)
       ) (psaSubmission => (
-      (psaSubmission.legalStatus,psaSubmission.idType,psaSubmission.idNumber,psaSubmission.noIdentifier),
+      (psaSubmission.legalStatus, psaSubmission.idType, psaSubmission.idNumber, psaSubmission.noIdentifier),
       psaSubmission.organisationDetail,
       psaSubmission.individualDetail,
       psaSubmission.correspondenceAddressDetail,
       psaSubmission.correspondenceContactDetail,
       psaSubmission.previousAddressDetail,
       psaSubmission.numberOfDirectorOrPartners,
-      psaSubmission.directorOrPartnerDetail.map(directors => directors.map(director =>
-        Json.toJson(director)(DirectorOrPartnerDetailTypeItem.psaUpdateWrites))),
+      psaSubmission.directorOrPartnerDetail.map(directors =>
+        directors.map(director =>
+          Json.toJson(director)(DirectorOrPartnerDetailTypeItem.psaUpdateWrites)
+        )
+      ),
       psaSubmission.changeOfDirectorOrPartnerDetails,
       psaSubmission.declaration))
 
@@ -169,7 +172,8 @@ object PensionSchemeAdministrator {
         (JsPath \ "numberOfDirectorOrPartners").writeNullable[NumberOfDirectorOrPartnersType] and
         (JsPath \ "directorOrPartnerDetail").writeNullable[List[JsValue]] and
         (JsPath \ "declaration").write[PensionSchemeAdministratorDeclarationType]
-      ) (psaSubmission => (psaSubmission.customerType,
+      ) (psaSubmission => (
+      psaSubmission.customerType,
       psaSubmission.legalStatus,
       psaSubmission.idType,
       psaSubmission.idNumber,
@@ -177,7 +181,7 @@ object PensionSchemeAdministrator {
       psaSubmission.noIdentifier,
       psaSubmission.organisationDetail,
       psaSubmission.individualDetail,
-      psaSubmission.pensionSchemeAdministratoridentifierStatus,
+      psaSubmission.pensionSchemeAdministratorIdentifierStatus,
       psaSubmission.correspondenceAddressDetail,
       psaSubmission.correspondenceContactDetail,
       psaSubmission.previousAddressDetail,
@@ -219,7 +223,7 @@ object PensionSchemeAdministrator {
                                           isMoreThanTenDirectorsOrPartnersChanged: Option[Boolean]): Option[NumberOfDirectorOrPartnersType] =
     (isThereMoreThanTenDirectors, isThereMoreThanTenPartners) match {
       case (None, None) => None
-      case _ => Some(NumberOfDirectorOrPartnersType(isThereMoreThanTenDirectors, isThereMoreThanTenPartners,isMoreThanTenDirectorsOrPartnersChanged))
+      case _ => Some(NumberOfDirectorOrPartnersType(isThereMoreThanTenDirectors, isThereMoreThanTenPartners, isMoreThanTenDirectorsOrPartnersChanged))
     }
 
   private def directorOrPartnerDetail(legalStatus: String, directorsOrPartners: Seq[Option[scala.List[DirectorOrPartnerDetailTypeItem]]]) = {
@@ -266,7 +270,7 @@ object PensionSchemeAdministrator {
       idType = registrationInfo._5,
       idNumber = registrationInfo._6,
       numberOfDirectorOrPartners = numberOfDirectorsOrPartners(isThereMoreThanTenDirectors, isThereMoreThanTenPartners, isMoreThanTenDirectorsOrPartnersChanged),
-      pensionSchemeAdministratoridentifierStatus = isExistingPSA,
+      pensionSchemeAdministratorIdentifierStatus = isExistingPSA,
       correspondenceAddressDetail = correspondenceAddress,
       correspondenceContactDetail = contactDetails,
       previousAddressDetail = previousAddressDetails,

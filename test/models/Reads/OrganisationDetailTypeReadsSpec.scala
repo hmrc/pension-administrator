@@ -18,7 +18,7 @@ package models.Reads
 
 import models.{OrganisationDetailType, Samples}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json.{JsBoolean, JsString, Json}
+import play.api.libs.json.{JsBoolean, JsString, JsValue, Json}
 
 class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
 
@@ -91,7 +91,7 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
     Seq(("Company", companyDetails), ("Partnership", partnershipDetails)).foreach { entityType =>
       val (orgType, orgData) = entityType
       s"Map correctly to a $orgType OrganisationDetailType model" when {
-        val apiReads = if (orgType == "Company") OrganisationDetailType.CompanyApiReads else OrganisationDetailType.partnershipApiReads
+        val apiReads = if (orgType == "Company") OrganisationDetailType.companyApiReads else OrganisationDetailType.partnershipApiReads
 
         "We have a name" in {
           val result = orgData.as[OrganisationDetailType](apiReads)
@@ -112,7 +112,7 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
         }
 
         "We have a Company Registration Number" in {
-          val result = companyDetails.as[OrganisationDetailType](OrganisationDetailType.CompanyApiReads)
+          val result = companyDetails.as[OrganisationDetailType](OrganisationDetailType.companyApiReads)
 
           result.crnNumber mustBe companySample.crnNumber
         }
@@ -141,7 +141,7 @@ object OrganisationDetailTypeReadsSpec {
   private val companyDetails = Json.obj("vat" -> JsString("VAT11111"), "paye" -> JsString("PAYE11111"),
     "companyRegistrationNumber" -> JsString("CRN11111"), "businessName" -> JsString("Test Name"))
 
-  private def orgDetailWithoutVat(entityType: String) = {
+  private def orgDetailWithoutVat(entityType: String): JsValue = {
     if (entityType == "Partnership") {
       partnershipDetails + ("partnershipVat" -> Json.obj("hasVat" -> JsBoolean(false)))
     } else {
@@ -149,7 +149,7 @@ object OrganisationDetailTypeReadsSpec {
     }
   }
 
-  private def orgDetailWithoutPaye(entityType: String) = {
+  private def orgDetailWithoutPaye(entityType: String): JsValue = {
     if (entityType == "Partnership") {
       partnershipDetails + ("partnershipPaye" -> Json.obj("hasPaye" -> JsBoolean(false)))
     } else {

@@ -34,7 +34,7 @@ class SchemeAuditService@Inject()() {
     case Success(Right(json)) =>
       sendEvent(
         PSASubscription(
-          existingUser = psa.pensionSchemeAdministratoridentifierStatus.isExistingPensionSchemaAdministrator,
+          existingUser = psa.pensionSchemeAdministratorIdentifierStatus.isExistingPensionSchemaAdministrator,
           legalStatus = psa.legalStatus,
           status = Status.OK,
           request = request,
@@ -44,7 +44,7 @@ class SchemeAuditService@Inject()() {
     case Success(Left(e)) =>
       sendEvent(
         PSASubscription(
-          existingUser = psa.pensionSchemeAdministratoridentifierStatus.isExistingPensionSchemaAdministrator,
+          existingUser = psa.pensionSchemeAdministratorIdentifierStatus.isExistingPensionSchemaAdministrator,
           legalStatus = psa.legalStatus,
           status = e.responseCode,
           request = request,

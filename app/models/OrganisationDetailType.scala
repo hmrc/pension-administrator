@@ -20,8 +20,11 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, JsPath, OFormat, Reads}
 import play.api.libs.json.JsObject
 
-case class OrganisationDetailType(name: String, crnNumber: Option[String] = None,
-                                  vatRegistrationNumber: Option[String] = None, payeReference: Option[String] = None) extends PSADetail
+case class OrganisationDetailType(name: String,
+                                  crnNumber: Option[String] = None,
+                                  vatRegistrationNumber: Option[String] = None,
+                                  payeReference: Option[String] = None
+                                 ) extends PSADetail
 
 object OrganisationDetailType {
   implicit val formats: OFormat[OrganisationDetailType] = Json.format[OrganisationDetailType]
@@ -31,20 +34,25 @@ object OrganisationDetailType {
       (JsPath \ "partnershipVat").readNullable[PartnershipVat] and
       (JsPath \ "partnershipPaye").readNullable[PartnershipPaye]
     ) ((name, partnershipVat, partnershipPaye) =>
-    OrganisationDetailType(name,
-      None,
-      partnershipVat.flatMap(_.vat),
-      partnershipPaye.flatMap(_.paye)))
+    OrganisationDetailType(
+      name = name,
+      crnNumber = None,
+      vatRegistrationNumber = partnershipVat.flatMap(_.vat),
+      payeReference = partnershipPaye.flatMap(_.paye)
+    ))
 
-  val CompanyApiReads: Reads[OrganisationDetailType] = (
+  val companyApiReads: Reads[OrganisationDetailType] = (
     (JsPath \ "businessName").read[String] and
       (JsPath \ "vat").readNullable[String] and
       (JsPath \ "paye").readNullable[String] and
       (JsPath \ "companyRegistrationNumber").readNullable[String]
     ) ((name, vat, paye, crnNumber) =>
-    OrganisationDetailType(name, vatRegistrationNumber = vat,
-      payeReference = paye,
-      crnNumber = crnNumber))
+    OrganisationDetailType(
+      name = name,
+      crnNumber = crnNumber,
+      vatRegistrationNumber = vat,
+      payeReference = paye
+    ))
 }
 
 
