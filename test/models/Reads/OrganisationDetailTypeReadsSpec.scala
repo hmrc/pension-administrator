@@ -143,7 +143,7 @@ object OrganisationDetailTypeReadsSpec {
 
   private def orgDetailWithoutVat(entityType: String): JsValue = {
     if (entityType == "Partnership") {
-      partnershipDetails + ("partnershipVat" -> Json.obj("hasVat" -> JsBoolean(false)))
+      partnershipDetails - "vat"
     } else {
       companyDetails - "vat"
     }
@@ -157,7 +157,7 @@ object OrganisationDetailTypeReadsSpec {
     }
   }
 
-  private val partnershipDetails = Json.obj("partnershipVat" -> Json.obj("vat" -> JsString("VAT11111"), "hasVat" -> JsBoolean(true)),
+  private val partnershipDetails = Json.obj("vat" -> JsString("VAT11111"), "hasVat" -> JsBoolean(true),
     "partnershipPaye" -> Json.obj("paye" -> JsString("PAYE11111"), "hasPaye" -> JsBoolean(true)),
     "partnershipDetails" -> Json.obj("companyName" -> JsString("Test Name")))
 }
