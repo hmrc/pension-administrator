@@ -145,11 +145,12 @@ object DirectorOrPartnerDetailTypeItem {
     JsPath.read(IndividualDetailType.apiReads(personType)) and
       (JsPath \ "nino").readNullable[String]((__ \ "value").read[String]) and
       (JsPath \ "noNinoReason").readNullable[String] and
-      (JsPath \ s"${personType}Utr").readNullable(directorOrPartnerReferenceReads("hasUtr", "utr")) and
+      (JsPath \ "utr").readNullable[String]((__ \ "value").read[String]) and
+      (JsPath \ "noUtrReason").readNullable[String] and
       JsPath.read(PreviousAddressDetails.apiReads(personType)) and
       JsPath.read(CorrespondenceCommonDetail.apiReads(personType))
     ) (
-    (directorOrPartnerPersonalDetails, nino, noNinoReason, utrDetails, previousAddress, addressCommonDetails) =>
+    (directorOrPartnerPersonalDetails, nino, noNinoReason, utr, noUtrReason, previousAddress, addressCommonDetails) =>
       DirectorOrPartnerDetailTypeItem(sequenceId = f"$index%03d",
         entityType = personType.capitalize,
         title = None,
@@ -159,8 +160,8 @@ object DirectorOrPartnerDetailTypeItem {
         dateOfBirth = directorOrPartnerPersonalDetails.dateOfBirth,
         referenceOrNino = nino,
         noNinoReason = noNinoReason,
-        utr = utrDetails.flatMap(_._1),
-        noUtrReason = utrDetails.flatMap(_._2),
+        utr = utr,
+        noUtrReason = noUtrReason,
         correspondenceCommonDetail = addressCommonDetails,
         previousAddressDetail = previousAddress))
 }
