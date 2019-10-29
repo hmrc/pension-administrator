@@ -51,14 +51,14 @@ object PreviousAddressDetails {
     previousAddressDetails(addressLast12Months, address, isChanged, tradingTime)
   })
 
-  def previousAddressDetails(addressYears: String,
-                             previousAddress: Option[Address],
-                             isChanged: Option[Boolean] = None,
-                             tradingTime: Option[Boolean] = None): PreviousAddressDetails =
+  private def previousAddressDetails(addressYears: String,
+                                     previousAddress: Option[Address],
+                                     isChanged: Option[Boolean] = None,
+                                     tradingTime: Option[Boolean] = None): PreviousAddressDetails =
 
-      PreviousAddressDetails(
-        isPreviousAddressLast12Month = addressYears == "under_a_year" && (tradingTime getOrElse true),
-        address = previousAddress,
-        isChanged = isChanged
-      )
+    PreviousAddressDetails(
+      isPreviousAddressLast12Month = addressYears == "under_a_year" && (tradingTime getOrElse true),
+      address = previousAddress,
+      isChanged = isChanged
+    )
 }
