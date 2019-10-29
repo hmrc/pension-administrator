@@ -23,8 +23,7 @@ import play.api.libs.json.JsObject
 case class OrganisationDetailType(name: String,
                                   crnNumber: Option[String] = None,
                                   vatRegistrationNumber: Option[String] = None,
-                                  payeReference: Option[String] = None,
-                                  tradingTime: Option[Boolean] = None
+                                  payeReference: Option[String] = None
                                  ) extends PSADetail
 
 object OrganisationDetailType {
@@ -33,30 +32,26 @@ object OrganisationDetailType {
   val partnershipApiReads: Reads[OrganisationDetailType] = (
     (JsPath \ "partnershipDetails" \ "companyName").read[String] and
       (JsPath \ "partnershipVat").readNullable[PartnershipVat] and
-      (JsPath \ "partnershipPaye").readNullable[PartnershipPaye] and
-      (JsPath \ "partnershipTradingOverAYear").readNullable[Boolean]
-    ) ((name, partnershipVat, partnershipPaye, tradingTime) =>
+      (JsPath \ "partnershipPaye").readNullable[PartnershipPaye]
+    ) ((name, partnershipVat, partnershipPaye) =>
     OrganisationDetailType(
       name = name,
       crnNumber = None,
       vatRegistrationNumber = partnershipVat.flatMap(_.vat),
-      payeReference = partnershipPaye.flatMap(_.paye),
-      tradingTime = tradingTime
+      payeReference = partnershipPaye.flatMap(_.paye)
     ))
 
   val companyApiReads: Reads[OrganisationDetailType] = (
     (JsPath \ "businessName").read[String] and
       (JsPath \ "vat").readNullable[String] and
       (JsPath \ "paye").readNullable[String] and
-      (JsPath \ "companyRegistrationNumber").readNullable[String] and
-      (JsPath \ "companyTradingOverAYear").readNullable[Boolean]
-    ) ((name, vat, paye, crnNumber, tradingTime) =>
+      (JsPath \ "companyRegistrationNumber").readNullable[String]
+    ) ((name, vat, paye, crnNumber) =>
     OrganisationDetailType(
       name = name,
       crnNumber = crnNumber,
       vatRegistrationNumber = vat,
-      payeReference = paye,
-      tradingTime = tradingTime
+      payeReference = paye
     ))
 }
 

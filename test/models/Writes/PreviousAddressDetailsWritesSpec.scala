@@ -25,7 +25,7 @@ class PreviousAddressDetailsWritesSpec extends WordSpec with MustMatchers with O
   "A previous address details object" should {
     "Map previosaddressdetails inner object as `previousaddresdetail`" when {
       "required" in {
-        val previousAddress = PreviousAddressDetails(true, Some(ukAddressSample))
+        val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
         val result = Json.toJson(previousAddress)(PreviousAddressDetails.psaSubmissionWrites)
 
         result.toString() must include("\"previousAddressDetail\":")

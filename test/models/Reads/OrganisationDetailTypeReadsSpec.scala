@@ -88,40 +88,6 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
 
     }
 
-    "Reading optional keys from Json for tradingTime" must {
-      "not have trading time if not present for partnership" in {
-
-        val result = partnershipDetails.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
-
-        result.tradingTime mustBe None
-      }
-
-      "not have trading time if not present for company" in {
-
-        val result = companyDetails.as[OrganisationDetailType](OrganisationDetailType.companyApiReads)
-
-        result.tradingTime mustBe None
-      }
-
-      "have trading time if present for partnership" in {
-
-        val partnershipDetailsWithTradingTime = partnershipDetails + ("partnershipTradingOverAYear" -> JsBoolean(true))
-
-        val result = partnershipDetailsWithTradingTime.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
-
-        result.tradingTime mustBe Some(true)
-      }
-
-      "have trading time if present for company" in {
-
-        val companyDetailsWithTradingTime = companyDetails + ("companyTradingOverAYear" -> JsBoolean(true))
-
-        val result = companyDetailsWithTradingTime.as[OrganisationDetailType](OrganisationDetailType.companyApiReads)
-
-        result.tradingTime mustBe Some(true)
-      }
-    }
-
     Seq(("Company", companyDetails), ("Partnership", partnershipDetails)).foreach { entityType =>
       val (orgType, orgData) = entityType
       s"Map correctly to a $orgType OrganisationDetailType model" when {
@@ -165,14 +131,6 @@ class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with Op
           val result = companyDetails.as[OrganisationDetailType](apiReads)
 
           result.payeReference mustBe None
-        }
-
-        "We have no tradingTime" in {
-          val companyDetails = orgDetailWithoutPaye(orgType)
-
-          val result = companyDetails.as[OrganisationDetailType](apiReads)
-
-          result.tradingTime mustBe None
         }
       }
     }

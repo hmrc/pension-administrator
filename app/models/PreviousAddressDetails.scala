@@ -45,12 +45,13 @@ object PreviousAddressDetails {
   def apiReads(typeOfAddressDetail: String): Reads[PreviousAddressDetails] = (
     (JsPath \ s"${typeOfAddressDetail}AddressYears").read[String] and
       (JsPath \ s"${typeOfAddressDetail}PreviousAddress").readNullable[Address] and
-      (JsPath \ s"${typeOfAddressDetail}PreviousAddressIsChanged").readNullable[Boolean]
-    ) ((addressLast12Months, address, isChanged) => {
-    previousAddressDetails(addressLast12Months, address, isChanged)
+      (JsPath \ s"${typeOfAddressDetail}PreviousAddressIsChanged").readNullable[Boolean] and
+      (JsPath \ s"${typeOfAddressDetail}TradingOverAYear").readNullable[Boolean]
+    ) ((addressLast12Months, address, isChanged, tradingTime) => {
+    previousAddressDetails(addressLast12Months, address, isChanged, tradingTime)
   })
 
-  def previousAddressDetails(addressYears: String = "",
+  def previousAddressDetails(addressYears: String,
                              previousAddress: Option[Address],
                              isChanged: Option[Boolean] = None,
                              tradingTime: Option[Boolean] = None): PreviousAddressDetails =

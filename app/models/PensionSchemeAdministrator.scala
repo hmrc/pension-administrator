@@ -181,14 +181,7 @@ object PensionSchemeAdministrator {
       psaSubmission.pensionSchemeAdministratorIdentifierStatus,
       psaSubmission.correspondenceAddressDetail,
       psaSubmission.correspondenceContactDetail,
-//      psaSubmission.previousAddressDetail,
-      psaSubmission.organisationDetail.map {
-        orgDetail =>
-          PreviousAddressDetails.previousAddressDetails(
-            previousAddress = Option(psaSubmission.correspondenceAddressDetail),
-            tradingTime = orgDetail.tradingTime
-          )
-      },
+      psaSubmission.previousAddressDetail,
       psaSubmission.numberOfDirectorOrPartners,
       psaSubmission.directorOrPartnerDetail.map(directors => directors.map(director =>
         Json.toJson(director)(DirectorOrPartnerDetailTypeItem.psaSubmissionWrites))),
