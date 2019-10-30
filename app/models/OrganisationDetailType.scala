@@ -30,7 +30,7 @@ object OrganisationDetailType {
   implicit val formats: OFormat[OrganisationDetailType] = Json.format[OrganisationDetailType]
 
   val partnershipApiReads: Reads[OrganisationDetailType] = (
-    (JsPath \ "partnershipDetails" \ "companyName").read[String] and
+    (JsPath \ "businessName").read[String] and
       (JsPath \ "partnershipVat").readNullable[PartnershipVat] and
       (JsPath \ "partnershipPaye").readNullable[PartnershipPaye]
     ) ((name, partnershipVat, partnershipPaye) =>
