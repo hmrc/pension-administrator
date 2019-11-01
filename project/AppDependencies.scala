@@ -22,45 +22,29 @@ object AppDependencies {
 
   val appName = "pension-administrator"
 
-  private val scalaTestPlusPlayVersion = "3.1.2"
-  private val mockitoAllVersion = "1.10.19"
-  private val wireMockVersion = "2.21.0"
-  private val scalacheckVersion = "1.14.0"
-  private val domainVersion = "5.6.0-play-26"
-  private val scalacheckGenRegexp = "0.1.1"
-  private val bootstrapVersion = "0.40.0"
-  private val playJsonVersion = "2.6.10"
-  private val scalaTestVersion = "3.0.5"
-  private val reactiveMongoVersion = "7.16.0-play-26"
-  private val jsonSchemeValidatorVersion = "1.0.3"
-  private val jsonPathVersion = "2.6.0"
-  private val reactiveMongoTestVersion = "4.14.0-play-26"
-  private val hmrcTestVersion = "3.8.0-play-26"
-  private val pegDownVersion = "1.6.0"
-
-  val compile = Seq(
+  val compile: Seq[ModuleID] = Seq(
     ws,
-    "uk.gov.hmrc"             %% "simple-reactivemongo"   % reactiveMongoVersion,
-    "com.typesafe.play"       %% "play-json"              % playJsonVersion,
-    "com.typesafe.play"       %% "play-json-joda"         % playJsonVersion,
-    "uk.gov.hmrc"             %% "bootstrap-play-26"      % bootstrapVersion,
-    "com.networknt"           %  "json-schema-validator"  % jsonSchemeValidatorVersion,
-    "com.josephpconley"       %% "play-jsonpath"          % jsonPathVersion,
-    "uk.gov.hmrc"             %% "domain"                 % domainVersion
+    "uk.gov.hmrc"             %% "simple-reactivemongo"   % "7.20.0-play-26",
+    "com.typesafe.play"       %% "play-json"              % "2.6.10",
+    "com.typesafe.play"       %% "play-json-joda"         % "2.6.10",
+    "uk.gov.hmrc"             %% "bootstrap-play-26"      % "0.40.0",
+    "com.networknt"           %  "json-schema-validator"  % "1.0.3",
+    "com.josephpconley"       %% "play-jsonpath"          % "2.6.0",
+    "uk.gov.hmrc"             %% "domain"                 % "5.6.0-play-26"
   )
 
   def test(scope: String = "test,it"): Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"                 %% "bootstrap-play-26"            % bootstrapVersion          % Test classifier "tests",
-    "uk.gov.hmrc"                 %% "reactivemongo-test"           % reactiveMongoTestVersion  % Test,
-    "uk.gov.hmrc"                 %% "hmrctest"                     % hmrcTestVersion           % scope,
-    "org.scalatest"               %% "scalatest"                    % scalaTestVersion          % scope,
-    "org.pegdown"                  % "pegdown"                      % pegDownVersion            % scope,
-    "org.scalacheck"              %% "scalacheck"                   % scalacheckVersion         % scope,
-    "com.typesafe.play"           %% "play-test"                    % PlayVersion.current       % scope,
-    "org.scalatestplus.play"      %% "scalatestplus-play"           % scalaTestPlusPlayVersion  % scope,
-    "org.mockito"                  % "mockito-all"                  % mockitoAllVersion         % scope,
-    "com.github.tomakehurst"       % "wiremock"                     % wireMockVersion           % scope,
-    "wolfendale"                  %% "scalacheck-gen-regexp"        % scalacheckGenRegexp       % scope
+    "uk.gov.hmrc"                 %% "bootstrap-play-26"            % "0.40.0"            % Test classifier "tests",
+    "uk.gov.hmrc"                 %% "reactivemongo-test"           % "4.15.0-play-26"    % Test,
+    "uk.gov.hmrc"                 %% "hmrctest"                     % "3.9.0-play-26"     % scope,
+    "org.scalatest"               %% "scalatest"                    % "3.0.5"             % scope,
+    "org.pegdown"                  % "pegdown"                      % "1.6.0"             % scope,
+    "org.scalacheck"              %% "scalacheck"                   % "1.14.0"            % scope,
+    "com.typesafe.play"           %% "play-test"                    % PlayVersion.current % scope,
+    "org.scalatestplus.play"      %% "scalatestplus-play"           % "3.1.2"             % scope,
+    "org.mockito"                  % "mockito-all"                  % "1.10.19"           % scope,
+    "com.github.tomakehurst"       % "wiremock"                     % "2.21.0"            % scope,
+    "wolfendale"                  %% "scalacheck-gen-regexp"        % "0.1.1"             % scope
   )
 
   // Fixes a transitive dependency clash between wiremock and scalatestplus-play

@@ -30,14 +30,14 @@ object OrganisationDetailType {
   implicit val formats: OFormat[OrganisationDetailType] = Json.format[OrganisationDetailType]
 
   val partnershipApiReads: Reads[OrganisationDetailType] = (
-    (JsPath \ "partnershipDetails" \ "companyName").read[String] and
-      (JsPath \ "partnershipVat").readNullable[PartnershipVat] and
+    (JsPath \ "businessName").read[String] and
+      (JsPath \ "vat").readNullable[String] and
       (JsPath \ "paye").readNullable[String]
-    ) ((name, partnershipVat, partnershipPaye) =>
+    ) ((name, vat, partnershipPaye) =>
     OrganisationDetailType(
       name = name,
       crnNumber = None,
-      vatRegistrationNumber = partnershipVat.flatMap(_.vat),
+      vatRegistrationNumber = vat,
       payeReference = partnershipPaye
     ))
 
@@ -53,13 +53,6 @@ object OrganisationDetailType {
       vatRegistrationNumber = vat,
       payeReference = paye
     ))
-}
-
-
-case class PartnershipVat(vat: Option[String])
-
-object PartnershipVat {
-  implicit val formats: OFormat[PartnershipVat] = Json.format[PartnershipVat]
 }
 
 case class PartnershipPaye(paye: Option[String])

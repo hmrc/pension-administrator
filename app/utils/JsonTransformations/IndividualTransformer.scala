@@ -22,23 +22,15 @@ import play.api.libs.json.Reads._
 import play.api.libs.json.{__, _}
 
 class IndividualTransformer @Inject()(legalStatusTransformer: LegalStatusTransformer) extends JsonTransformer {
-  val getNinoOrUtr: Reads[JsObject] = {
+  val getNinoOrUtr: Reads[JsObject] =
       (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").readNullable[String].flatMap { value =>
-        if (value.contains("UTR")) {
-          legalStatusTransformer.returnPathBasedOnLegalStatus(__ \ 'individualNino, __ \ 'utr, __ \ 'partnershipDetails \ 'uniqueTaxReferenceNumber)
-            .flatMap { userAnswersPath =>
-            (userAnswersPath.json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
+        if (value.contains("UTR"))
+            ( (__ \ 'utr).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
               orElse doNothing)
-          }
-        } else {
-          legalStatusTransformer.returnPathBasedOnLegalStatus(__ \ 'individualNino, __ \ 'businessDetails, __ \ 'partnershipDetails)
-            .flatMap { userAnswersPath =>
-            (userAnswersPath.json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
+        else
+            ((__ \ 'individualNino).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
               orElse doNothing)
-          }
-        }
       }
-  }
 
   val getIndividualDetails: Reads[JsObject] = {
     val individualDetailsPath = __ \ 'psaSubscriptionDetails \ 'individualDetails
