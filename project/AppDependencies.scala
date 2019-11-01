@@ -31,14 +31,14 @@ object AppDependencies {
   private val bootstrapVersion = "0.40.0"
   private val playJsonVersion = "2.6.10"
   private val scalaTestVersion = "3.0.5"
-  private val reactiveMongoVersion = "7.16.0-play-26"
+  private val reactiveMongoVersion = "7.20.0-play-26"
   private val jsonSchemeValidatorVersion = "1.0.3"
   private val jsonPathVersion = "2.6.0"
-  private val reactiveMongoTestVersion = "4.14.0-play-26"
-  private val hmrcTestVersion = "3.8.0-play-26"
+  private val reactiveMongoTestVersion = "4.15.0-play-26"
+  private val hmrcTestVersion = "3.9.0-play-26"
   private val pegDownVersion = "1.6.0"
 
-  val compile = Seq(
+  val compile: Seq[ModuleID] = Seq(
     ws,
     "uk.gov.hmrc"             %% "simple-reactivemongo"   % reactiveMongoVersion,
     "com.typesafe.play"       %% "play-json"              % playJsonVersion,
