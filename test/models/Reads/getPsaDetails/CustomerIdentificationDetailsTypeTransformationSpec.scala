@@ -559,7 +559,6 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                 "entityType":"Partner",
                 "title":"Mr",
                 "firstName":"Bruce",
-                "middleName":"John",
                 "lastName":"Allen",
                 "dateOfBirth":"1980-03-01",
                 "nino":"JC000001A",
@@ -648,10 +647,9 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                 {
                    "partnerDetails" : {
                        "firstName" : "Bruce",
-                       "middleName" : "John",
-                       "lastName" : "Allen",
-                       "dateOfBirth" : "1980-03-01"
+                       "lastName" : "Allen"
                    },
+                   "dateOfBirth" : "1980-03-01",
                    "partnerNino" : {
                        "hasNino" : true,
                        "nino" : "JC000001A"

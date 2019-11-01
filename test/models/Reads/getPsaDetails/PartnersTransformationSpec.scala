@@ -35,10 +35,6 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
           (transformedJson \ "partnerDetails" \ "firstName").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "firstName").as[String]
         }
 
-        "We have a middle name" in {
-          (transformedJson \ "partnerDetails" \ "middleName").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "middleName").as[String]
-        }
-
         "We don't have a middle name" in {
           val inputJson = desPartner.as[JsObject] - "middleName"
 
@@ -52,7 +48,7 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
         }
 
         "We have a DOB" in {
-          (transformedJson \ "partnerDetails" \ "dateOfBirth").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "dateOfBirth").as[String]
+          (transformedJson \ "dateOfBirth").as[String] mustBe (userAnswersPartner \ "dateOfBirth").as[String]
         }
 
         "We have a nino" in {
@@ -154,11 +150,10 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
 """{
             "partnerDetails" : {
                      "firstName" : "Bruce",
-                     "middleName" : "John",
                      "lastName" : "Allen",
-                     "dateOfBirth" : "1980-03-01",
                      "isDeleted" : false
                  },
+                     "dateOfBirth" : "1980-03-01",
                  "partnerNino" : {
                      "hasNino" : true,
                      "nino" : "JC000001A"
@@ -197,7 +192,6 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
                "entityType":"Partner",
                "title":"Mr",
                "firstName":"Bruce",
-               "middleName":"John",
                "lastName":"Allen",
                "dateOfBirth":"1980-03-01",
                "nino":"JC000001A",
