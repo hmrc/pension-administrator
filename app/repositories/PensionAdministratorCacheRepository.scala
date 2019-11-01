@@ -126,13 +126,13 @@ abstract class PensionAdministratorCacheRepository(
     }
     val selector = BSONDocument("id" -> id)
     val modifier = BSONDocument("$set" -> document)
-    collection.update(selector, modifier, upsert = true)
+    collection.update(ordered = false).one(selector, modifier, upsert = true)
       .map(_.ok)
   }
 
   def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
     if (encrypted) {
-      collection.find(BSONDocument("id" -> id)).one[DataEntry].map {
+      collection.find(BSONDocument("id" -> id), projection = Option.empty[JsObject]).one[DataEntry].map {
         _.map {
           dataEntry =>
             val dataAsString = new String(dataEntry.data.byteArray, StandardCharsets.UTF_8)
@@ -141,7 +141,7 @@ abstract class PensionAdministratorCacheRepository(
         }
       }
     } else {
-      collection.find(BSONDocument("id" -> id)).one[JsonDataEntry].map {
+      collection.find(BSONDocument("id" -> id), projection = Option.empty[JsObject]).one[JsonDataEntry].map {
         _.map {
           dataEntry =>
             dataEntry.data
@@ -152,14 +152,14 @@ abstract class PensionAdministratorCacheRepository(
 
   def getLastUpdated(id: String)(implicit ec: ExecutionContext): Future[Option[DateTime]] = {
     if (encrypted) {
-      collection.find(BSONDocument("id" -> id)).one[DataEntry].map {
+      collection.find(BSONDocument("id" -> id), projection = Option.empty[JsObject]).one[DataEntry].map {
         _.map {
           dataEntry =>
             dataEntry.lastUpdated
         }
       }
     } else {
-      collection.find(BSONDocument("id" -> id)).one[JsonDataEntry].map {
+      collection.find(BSONDocument("id" -> id), projection = Option.empty[JsObject]).one[JsonDataEntry].map {
         _.map {
           dataEntry =>
             dataEntry.lastUpdated
