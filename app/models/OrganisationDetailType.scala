@@ -32,13 +32,13 @@ object OrganisationDetailType {
   val partnershipApiReads: Reads[OrganisationDetailType] = (
     (JsPath \ "businessName").read[String] and
       (JsPath \ "vat").readNullable[String] and
-      (JsPath \ "partnershipPaye").readNullable[PartnershipPaye]
+      (JsPath \ "paye").readNullable[String]
     ) ((name, vat, partnershipPaye) =>
     OrganisationDetailType(
       name = name,
       crnNumber = None,
       vatRegistrationNumber = vat,
-      payeReference = partnershipPaye.flatMap(_.paye)
+      payeReference = partnershipPaye
     ))
 
   val companyApiReads: Reads[OrganisationDetailType] = (

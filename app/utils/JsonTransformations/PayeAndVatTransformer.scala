@@ -38,10 +38,8 @@ class PayeAndVatTransformer @Inject()() extends JsonTransformer {
             (__ \ 'partnershipVat \ 'hasVat).json.put(JsBoolean(true)) reduce
         } orElse (__ \ 'partnershipVat \ 'hasVat).json.put(JsBoolean(false))
 
-        val payeReads = (__ \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails" \ "payeReference").read[String].flatMap { _ =>
-          (__ \ 'partnershipPaye \ 'paye).json.copyFrom(paye.json.pick) and
-            (__ \ 'partnershipPaye \ 'hasPaye).json.put(JsBoolean(true)) reduce
-        } orElse (__ \ 'partnershipPaye \ 'hasPaye).json.put(JsBoolean(false))
+        val payeReads = ((__ \ 'paye).json.copyFrom(paye.json.pick)
+          orElse doNothing)
 
         vatReads and payeReads reduce
       case "Individual" => doNothing

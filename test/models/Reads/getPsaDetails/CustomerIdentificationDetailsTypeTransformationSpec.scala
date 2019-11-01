@@ -380,6 +380,10 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends WordSpec with 
         (idTransformJson \ "partnershipDetails" \ "uniqueTaxReferenceNumber").asOpt[String] mustBe None
       }
 
+      "we have a paye" in {
+        (transformedJson \ "paye").as[String] mustBe "123AB45678"
+      }
+
       "we have address line 1" in {
         (transformedJson \ "partnershipContactAddress" \ "addressLine1").as[String] mustBe "Flat 1"
       }
@@ -640,10 +644,7 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                   "hasVat" : true,
                   "vat" : "123456789"
               },
-              "partnershipPaye" : {
-                  "hasPaye" : true,
-                  "paye" : "123AB45678"
-              },
+              "paye" : "123AB45678",
               "partners" : [
                 {
                    "partnerDetails" : {
