@@ -22,7 +22,7 @@ import play.api.libs.json._
 import base.CommonHelper
 
 class DirectorOrPartnerDetailTypeItemWritesSpec extends WordSpec with MustMatchers with OptionValues with CommonHelper with Samples {
-  "An object of a directorOrPartner detail type item" should {
+  "An object of a partner detail type item" should {
     Seq("Director", "Partner").foreach { personType =>
       s"Map $personType previousaddressdetails inner object as `previousaddresdetail`" when {
         "required" in {

@@ -22,12 +22,12 @@ import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
 
 
-class DirectorOrPartnerDetailTypeItemReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class PartnerDetailTypeItemReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
 
-  import DirectorOrPartnerDetailTypeItemReadsSpec._
+  import PartnerDetailTypeItemReadsSpec._
 
-  "JSON Payload of a Director" should {
-    "Map correctly into a DirectorOrPartnerDetailTypeItem" when {
+  "JSON Payload of a Partner" should {
+    "Map correctly into a Partner" when {
 
       Seq(("partner", partners)).foreach { entity =>
         val (personType, personDetails) = entity
@@ -68,27 +68,19 @@ class DirectorOrPartnerDetailTypeItemReadsSpec extends WordSpec with MustMatcher
         }
 
         s"We have $personType NINO details" when {
-          "We have a director nino" in {
+          s"We have a $personType nino and reason" in {
             val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
 
             result.head.referenceOrNino mustBe directorOrPartnerSample(personType).referenceOrNino
+            result.head.noNinoReason mustBe directorOrPartnerSample(personType).noNinoReason
           }
 
-          "We don't have a nino" in {
-            val directorsNoNino = directorsOrPartners.value :+ (directorsOrPartners.head.as[JsObject] +
-              (s"${personType}Nino" -> Json.obj("hasNino" -> JsBoolean(false))))
+          "We don't have a nino or reason" in {
+            val directorsNoNino = directorsOrPartners.value :+ (directorsOrPartners.head.as[JsObject] - "nino" - "noNinoReason")
             val result = JsArray(directorsNoNino).as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
 
             result.last.referenceOrNino mustBe None
-          }
-
-          "We have a reason for not having nino" in {
-            val directorsNoNino = directorsOrPartners.value :+
-              (directorsOrPartners.head.as[JsObject] + (s"${personType}Nino" -> Json.obj("reason" -> JsString("he can't find it"))))
-
-            val result = JsArray(directorsNoNino).as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
-
-            result.last.noNinoReason mustBe directorOrPartnerSample(personType).noNinoReason
+            result.last.noNinoReason mustBe None
           }
         }
 
@@ -155,17 +147,18 @@ class DirectorOrPartnerDetailTypeItemReadsSpec extends WordSpec with MustMatcher
   }
 }
 
-object DirectorOrPartnerDetailTypeItemReadsSpec {
+object PartnerDetailTypeItemReadsSpec {
 
-  private def directorOrPartner(personType: String) = Json.obj(s"${personType}Details" -> Json.obj("firstName" -> JsString("John"),
+  private def partner(personType: String) = Json.obj(s"${personType}Details" -> Json.obj("firstName" -> JsString("John"),
     "lastName" -> JsString("Doe"),
     "middleName" -> JsString("Does Does"),
     "dateOfBirth" -> JsString("2019-01-31")),
-    s"${personType}Nino" -> Json.obj("hasNino" -> JsBoolean(true), "nino" -> JsString("SL211111A")),
+    "nino" -> Json.obj("value" -> JsString("SL211111A")),
+    "noNinoReason" -> JsString("he can't find it"),
     s"${personType}Utr" -> Json.obj("hasUtr" -> JsBoolean(true), "utr" -> JsString("123456789")),
     s"${personType}AddressYears" -> JsString("over_a_year")
   ) + (s"${personType}ContactDetails" -> Json.obj("email" -> "test@test.com", "phone" -> "07592113")) + (s"${personType}Address" ->
     Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"), "country" -> JsString("IT")))
 
-  val partners = Seq(directorOrPartner("partner"), directorOrPartner("partner"))
+  val partners = Seq(partner("partner"), partner("partner"))
 }

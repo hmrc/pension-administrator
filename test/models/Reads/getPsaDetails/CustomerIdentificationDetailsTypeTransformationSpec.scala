@@ -653,10 +653,10 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                        "lastName" : "Allen",
                        "dateOfBirth" : "1980-03-01"
                    },
-                   "partnerNino" : {
-                       "hasNino" : true,
-                       "nino" : "JC000001A"
+                   "nino" : {
+                       "value" : "JC000001A"
                    },
+                   "noNinoReason" : "test",
                    "partnerUtr" : {
                        "hasUtr" : true,
                        "utr" : "0123456789"

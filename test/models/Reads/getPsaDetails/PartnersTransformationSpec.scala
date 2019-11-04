@@ -56,19 +56,15 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
         }
 
         "We have a nino" in {
-          (transformedJson \ "partnerNino" \ "hasNino").as[Boolean] mustBe (userAnswersPartner \ "partnerNino" \ "hasNino").as[Boolean]
-          (transformedJson \ "partnerNino" \ "nino").as[String] mustBe (userAnswersPartner \ "partnerNino" \ "nino").as[String]
+          (transformedJson \ "nino" \ "value").as[String] mustBe (userAnswersPartner \ "nino" \ "value").as[String]
         }
 
-        "We don't have a nino" in {
-
+        "We don't have nino but have a nino reason" in {
           val inputJson = desPartner.as[JsObject] - "nino"
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("partner")).asOpt.value
 
-          (transformedJson \ "partnerNino" \ "hasNino").as[Boolean] mustBe false
-          //TODO: reason is not mandatory but mandatory in our frontend. Potential issues.
-          (transformedJson \ "partnerNino" \ "reason").as[String] mustBe "test"
+          (transformedJson \ "noNinoReason").as[String] mustBe "test"
         }
 
         "We have a utr" in {
@@ -159,9 +155,8 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
                      "dateOfBirth" : "1980-03-01",
                      "isDeleted" : false
                  },
-                 "partnerNino" : {
-                     "hasNino" : true,
-                     "nino" : "JC000001A"
+                 "nino" : {
+                      "value" : "JC000001A"
                  },
                  "partnerUtr" : {
                      "hasUtr" : true,
@@ -201,7 +196,7 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
                "lastName":"Allen",
                "dateOfBirth":"1980-03-01",
                "nino":"JC000001A",
-               "noNinoReason":"test",
+               "noNinoReason" : "test",
                "utr":"0123456789",
                "noUtrReason":"test",
                "correspondenceCommonDetails":{
