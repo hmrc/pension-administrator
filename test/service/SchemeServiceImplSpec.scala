@@ -99,7 +99,6 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
   }
 
-
   "updatePSA" should "return the result from the connector" in {
 
     val fixture = testFixture()
@@ -205,9 +204,9 @@ object SchemeServiceImplSpec extends SpecBase {
     ),
     "individualDetails" -> Json.obj(
       "firstName" -> "test-first-name",
-      "lastName" -> "test-last-name",
-      "dateOfBirth" -> "2000-01-01"
+      "lastName" -> "test-last-name"
     ),
+    "individualDateOfBirth" -> "2000-01-01",
     "declaration" -> true,
     "declarationWorkingKnowledge" -> "test-declaration-working-knowledge",
     "declarationFitAndProper" -> true
