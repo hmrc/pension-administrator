@@ -16,20 +16,19 @@
 
 package models.Reads
 
-import models.{InternationalAddress, PreviousAddressDetails, Samples}
-import models.{Reads => _, _}
+import models.{InternationalAddress, PreviousAddressDetails, Samples, Reads => _, _}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json._
 
 
-class PartnerDetailTypeItemReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class DirectorOrPartnerDetailTypeItemReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
 
-  import PartnerDetailTypeItemReadsSpec._
+  import DirectorOrPartnerDetailTypeItemReadsSpec._
 
-  "JSON Payload of a Partner" should {
-    "Map correctly into a Partner" when {
+  "JSON Payload of a Director" should {
+    "Map correctly into a DirectorOrPartnerDetailTypeItem" when {
 
-      Seq(("partner", partners)).foreach { entity =>
+      Seq(("director", directors), ("partner", partners)).foreach { entity =>
         val (personType, personDetails) = entity
         val directorsOrPartners = JsArray(personDetails)
         s"We have $personType user details" when {
@@ -85,28 +84,19 @@ class PartnerDetailTypeItemReadsSpec extends WordSpec with MustMatchers with Opt
         }
 
         s"We have $personType UTR details" when {
-          s"We have a $personType utr" in {
+          s"We have a $personType utr and reason" in {
             val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
 
             result.head.utr mustBe directorOrPartnerSample(personType).utr
+            result.head.noUtrReason mustBe directorOrPartnerSample(personType).noUtrReason
           }
 
-          "There is no UTR" in {
-            val directorNoUtr = directorsOrPartners.value :+ (directorsOrPartners.head.as[JsObject] +
-              (s"${personType}Utr" -> Json.obj("hasUtr" -> JsBoolean(false))))
-
-            val result = JsArray(directorNoUtr).as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
+          "We don't have a utr or reason" in {
+            val directorsNoUtr = directorsOrPartners.value :+ (directorsOrPartners.head.as[JsObject] - "utr" - "noUtrReason")
+            val result = JsArray(directorsNoUtr).as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
 
             result.last.utr mustBe None
-          }
-
-          "We have a reason for not having utr" in {
-            val directorNoUtr = directorsOrPartners.value :+ (directorsOrPartners.head.as[JsObject] +
-              (s"${personType}Utr" -> Json.obj("reason" -> JsString("he can't find it"))))
-
-            val result = JsArray(directorNoUtr).as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
-
-            result.last.noUtrReason mustBe directorOrPartnerSample(personType).noUtrReason
+            result.last.noUtrReason mustBe None
           }
         }
 
@@ -146,19 +136,23 @@ class PartnerDetailTypeItemReadsSpec extends WordSpec with MustMatchers with Opt
     }
   }
 }
+object DirectorOrPartnerDetailTypeItemReadsSpec {
 
-object PartnerDetailTypeItemReadsSpec {
-
-  private def partner(personType: String) = Json.obj(
+  private def directorOrPartner(personType: String): JsObject = Json.obj(
     s"${personType}Details" -> Json.obj("firstName" -> JsString("John"),
     "lastName" -> JsString("Doe")),
     "dateOfBirth" -> JsString("2019-01-31"),
     "nino" -> Json.obj("value" -> JsString("SL211111A")),
     "noNinoReason" -> JsString("he can't find it"),
+    "utr" -> Json.obj("value" -> JsString("123456789")),
+    "noUtrReason" -> JsString("he can't find it"),
     s"${personType}Utr" -> Json.obj("hasUtr" -> JsBoolean(true), "utr" -> JsString("123456789")),
     s"${personType}AddressYears" -> JsString("over_a_year")
   ) + (s"${personType}ContactDetails" -> Json.obj("email" -> "test@test.com", "phone" -> "07592113")) + (s"${personType}Address" ->
     Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"), "country" -> JsString("IT")))
 
-  val partners = Seq(partner("partner"), partner("partner"))
+  val directors = Seq(directorOrPartner("director"), directorOrPartner("director"))
+  val partners = Seq(directorOrPartner("partner"), directorOrPartner("partner"))
 }
+
+
