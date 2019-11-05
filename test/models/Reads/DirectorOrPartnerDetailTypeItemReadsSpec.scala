@@ -157,10 +157,10 @@ class DirectorOrPartnerDetailTypeItemReadsSpec extends WordSpec with MustMatcher
 
 object DirectorOrPartnerDetailTypeItemReadsSpec {
 
-  private def directorOrPartner(personType: String) = Json.obj(s"${personType}Details" -> Json.obj("firstName" -> JsString("John"),
-    "lastName" -> JsString("Doe"),
-    "middleName" -> JsString("Does Does"),
-    "dateOfBirth" -> JsString("2019-01-31")),
+  private def directorOrPartner(personType: String) = Json.obj(
+    s"${personType}Details" -> Json.obj("firstName" -> JsString("John"),
+    "lastName" -> JsString("Doe")),
+    "dateOfBirth" -> JsString("2019-01-31"),
     s"${personType}Nino" -> Json.obj("hasNino" -> JsBoolean(true), "nino" -> JsString("SL211111A")),
     s"${personType}Utr" -> Json.obj("hasUtr" -> JsBoolean(true), "utr" -> JsString("123456789")),
     s"${personType}AddressYears" -> JsString("over_a_year")
