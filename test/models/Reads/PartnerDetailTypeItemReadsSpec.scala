@@ -149,10 +149,10 @@ class PartnerDetailTypeItemReadsSpec extends WordSpec with MustMatchers with Opt
 
 object PartnerDetailTypeItemReadsSpec {
 
-  private def partner(personType: String) = Json.obj(s"${personType}Details" -> Json.obj("firstName" -> JsString("John"),
-    "lastName" -> JsString("Doe"),
-    "middleName" -> JsString("Does Does"),
-    "dateOfBirth" -> JsString("2019-01-31")),
+  private def partner(personType: String) = Json.obj(
+    s"${personType}Details" -> Json.obj("firstName" -> JsString("John"),
+    "lastName" -> JsString("Doe")),
+    "dateOfBirth" -> JsString("2019-01-31"),
     "nino" -> Json.obj("value" -> JsString("SL211111A")),
     "noNinoReason" -> JsString("he can't find it"),
     s"${personType}Utr" -> Json.obj("hasUtr" -> JsBoolean(true), "utr" -> JsString("123456789")),

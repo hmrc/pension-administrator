@@ -121,11 +121,12 @@ trait Samples {
 
   val pensionAdviserSample = PensionAdvisorDetail("John", ukAddressSample, contactDetailsSample)
 
-  def testDirectorOrPartner(personType: String): JsObject = Json.obj(s"${personType}Details" -> Json.obj("firstName" -> JsString("John"),
-    "lastName" -> JsString("Doe"),
-    "middleName" -> JsString("Does Does"),
+  def testDirectorOrPartner(personType: String): JsObject = Json.obj(s"${personType}Details" -> Json.obj(
+      "firstName" -> JsString("John"),
+      "lastName" -> JsString("Doe"),
+      "isDeleted" -> JsBoolean(false)
+    ),
     "dateOfBirth" -> JsString("2019-01-31"),
-    "isDeleted" -> JsBoolean(false)),
     s"${personType}Nino" -> Json.obj("hasNino" -> JsBoolean(true), "nino" -> JsString("SL211111A")),
     s"${personType}Utr" -> Json.obj("hasUtr" -> JsBoolean(true), "utr" -> JsString("123456789")),
     s"${personType}AddressYears" -> JsString("over_a_year")) +
