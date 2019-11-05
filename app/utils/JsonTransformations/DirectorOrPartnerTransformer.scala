@@ -22,9 +22,6 @@ import play.api.libs.json.Reads._
 import play.api.libs.json.{__, _}
 
 class DirectorOrPartnerTransformer @Inject()(addressTransformer: AddressTransformer) extends JsonTransformer {
-  private def getDirectorOrPartnerNino(directorOrPartner: String): Reads[JsObject] = {
-    getNinoOrUtr(directorOrPartner, "Nino")
-  }
 
   private def getDirectorOrPartnerUtr(directorOrPartner: String): Reads[JsObject] = {
     getNinoOrUtr(directorOrPartner, "Utr")
@@ -60,7 +57,8 @@ class DirectorOrPartnerTransformer @Inject()(addressTransformer: AddressTransfor
         ((__ \ 'noUtrReason).json.copyFrom((__ \ 'noUtrReason).json.pick) orElse doNothing) reduce
     }
     else {
-        getDirectorOrPartnerNino(directorOrPartner) and
+      ((__ \ "nino" \ 'value).json.copyFrom((__ \ 'nino).json.pick) orElse doNothing) and
+        ((__ \ 'noNinoReason).json.copyFrom((__ \ 'noNinoReason).json.pick) orElse doNothing) and
         getDirectorOrPartnerUtr(directorOrPartner) reduce
     }
       ) and

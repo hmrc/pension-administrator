@@ -120,12 +120,13 @@ object DirectorOrPartnerDetailTypeItem {
 
   def directorOrPartnerReads(index: Int, personType: String): Reads[DirectorOrPartnerDetailTypeItem] = (
     JsPath.read(IndividualDetailType.apiReads(personType)) and
-      (JsPath \ s"${personType}Nino").readNullable(directorOrPartnerReferenceReads("hasNino", "nino")) and
+      (JsPath \ "nino").readNullable[String]((__ \ "value").read[String]) and
+      (JsPath \ "noNinoReason").readNullable[String] and
       (JsPath \ s"${personType}Utr").readNullable(directorOrPartnerReferenceReads("hasUtr", "utr")) and
       JsPath.read(PreviousAddressDetails.apiReads(personType)) and
       JsPath.read(CorrespondenceCommonDetail.apiReads(personType))
     ) (
-    (directorOrPartnerPersonalDetails, ninoDetails, utrDetails, previousAddress, addressCommonDetails) =>
+    (directorOrPartnerPersonalDetails, nino, noNinoReason, utrDetails, previousAddress, addressCommonDetails) =>
       DirectorOrPartnerDetailTypeItem(sequenceId = f"$index%03d",
         entityType = personType.capitalize,
         title = None,
@@ -133,8 +134,8 @@ object DirectorOrPartnerDetailTypeItem {
         middleName = directorOrPartnerPersonalDetails.middleName,
         lastName = directorOrPartnerPersonalDetails.lastName,
         dateOfBirth = directorOrPartnerPersonalDetails.dateOfBirth,
-        referenceOrNino = ninoDetails.flatMap(_._1),
-        noNinoReason = ninoDetails.flatMap(_._2),
+        referenceOrNino = nino,
+        noNinoReason = noNinoReason,
         utr = utrDetails.flatMap(_._1),
         noUtrReason = utrDetails.flatMap(_._2),
         correspondenceCommonDetail = addressCommonDetails,
