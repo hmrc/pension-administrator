@@ -64,18 +64,15 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
         }
 
         "We have a utr" in {
-          (transformedJson \ "partnerUtr" \ "hasUtr").as[Boolean] mustBe (userAnswersPartner \ "partnerUtr" \ "hasUtr").as[Boolean]
-          (transformedJson \ "partnerUtr" \ "utr").as[String] mustBe (userAnswersPartner \ "partnerUtr" \ "utr").as[String]
+          (transformedJson \ "utr" \ "value").as[String] mustBe (userAnswersPartner \ "utr" \ "value").as[String]
         }
 
-        "We don't have a utr" in {
-          val inputJson = desPartner.as[JsObject] - "utr"
+        "We don't have utr but have a utr reason" in {
+          val inputJson = desPartner.as[JsObject] - "nino"
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("partner")).asOpt.value
 
-          (transformedJson \ "partnerUtr" \ "hasUtr").as[Boolean] mustBe false
-          //TODO: reason is not mandatory but mandatory in our frontend. Potential issues.
-          (transformedJson \ "partnerUtr" \ "reason").as[String] mustBe "test"
+          (transformedJson \ "noUtrReason").as[String] mustBe "test"
         }
 
         //TODO: DES has partner address details as not mandatory but we have it as mandatory in frontend (correspondenceCommonDetails wrapper). Potential issues.
@@ -153,9 +150,8 @@ class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionV
                  "nino" : {
                        "value" : "JC000001A"
                   },
-                 "partnerUtr" : {
-                     "hasUtr" : true,
-                     "utr" : "0123456789"
+                 "utr" : {
+                     "value" : "0123456789"
                  },
                  "partnerAddress" : {
                      "addressLine1" : "1 Partner Road",
