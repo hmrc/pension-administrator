@@ -34,8 +34,8 @@ object DirectorOrPartnerDetailTypeItem {
   implicit val formats: OFormat[DirectorOrPartnerDetailTypeItem] = Json.format[DirectorOrPartnerDetailTypeItem]
 
 
-  private val commonElements : Writes[(String,String,Option[String],String,
-    Option[String],String,LocalDate,Option[String],Option[String],Option[String])] = (
+  private val commonElements: Writes[(String, String, Option[String], String,
+    Option[String], String, LocalDate, Option[String], Option[String], Option[String])] = (
     (JsPath \ "sequenceId").write[String] and
       (JsPath \ "entityType").write[String] and
       (JsPath \ "title").writeNullable[String] and
@@ -46,9 +46,9 @@ object DirectorOrPartnerDetailTypeItem {
       (JsPath \ "noNinoReason").writeNullable[String] and
       (JsPath \ "utr").writeNullable[String] and
       (JsPath \ "noUtrReason").writeNullable[String]
-    )( x=> x)
+    ) (x => x)
 
-  private def commonElementsToTuple(directorOrPartner:DirectorOrPartnerDetailTypeItem) = {
+  private def commonElementsToTuple(directorOrPartner: DirectorOrPartnerDetailTypeItem) = {
     (directorOrPartner.sequenceId,
       directorOrPartner.entityType,
       directorOrPartner.title,
@@ -61,21 +61,21 @@ object DirectorOrPartnerDetailTypeItem {
       directorOrPartner.noUtrReason)
   }
 
-  val psaSubmissionWrites : Writes[DirectorOrPartnerDetailTypeItem] = (
+  val psaSubmissionWrites: Writes[DirectorOrPartnerDetailTypeItem] = (
     JsPath.write(commonElements) and
       (JsPath \ "referenceOrNino").writeNullable[String] and
       (JsPath \ "previousAddressDetail").write(PreviousAddressDetails.psaSubmissionWrites) and
-        (JsPath \ "correspondenceCommonDetail").write[CorrespondenceCommonDetail])(directorOrPartner =>
+      (JsPath \ "correspondenceCommonDetail").write[CorrespondenceCommonDetail]) (directorOrPartner =>
     (commonElementsToTuple(directorOrPartner),
       directorOrPartner.referenceOrNino,
       directorOrPartner.previousAddressDetail,
       directorOrPartner.correspondenceCommonDetail))
 
-  val psaUpdateWrites : Writes[DirectorOrPartnerDetailTypeItem] = (
+  val psaUpdateWrites: Writes[DirectorOrPartnerDetailTypeItem] = (
     JsPath.write(commonElements) and
       (JsPath \ "nino").writeNullable[String] and
       (JsPath \ "previousAddressDetails").write(PreviousAddressDetails.psaUpdateWritesWithNoUpdateFlag) and
-      (JsPath \ "correspondenceCommonDetails").write[CorrespondenceCommonDetail](CorrespondenceCommonDetail.psaUpdateWrites))(directorOrPartner =>
+      (JsPath \ "correspondenceCommonDetails").write[CorrespondenceCommonDetail](CorrespondenceCommonDetail.psaUpdateWrites)) (directorOrPartner =>
     (commonElementsToTuple(directorOrPartner),
       directorOrPartner.referenceOrNino,
       directorOrPartner.previousAddressDetail,
@@ -87,11 +87,7 @@ object DirectorOrPartnerDetailTypeItem {
         val directorsOrPartners: Seq[JsResult[DirectorOrPartnerDetailTypeItem]] =
           filterDeletedDirectorOrPartner(personType, elements).zipWithIndex.map { directorOrPartner =>
             val (directorOrPartnerDetails, index) = directorOrPartner
-            if(personType == "director") {
-              directorOrPartnerDetails.validate[DirectorOrPartnerDetailTypeItem](DirectorOrPartnerDetailTypeItem.directorReads(index, personType))
-            } else {
-              directorOrPartnerDetails.validate[DirectorOrPartnerDetailTypeItem](DirectorOrPartnerDetailTypeItem.directorOrPartnerReads(index, personType))
-            }
+            directorOrPartnerDetails.validate[DirectorOrPartnerDetailTypeItem](DirectorOrPartnerDetailTypeItem.directorOrPartnerReads(index, personType))
           }
         directorsOrPartners.foldLeft[JsResult[List[DirectorOrPartnerDetailTypeItem]]](JsSuccess(List.empty)) {
           (directors, currentDirector) => {
@@ -119,30 +115,6 @@ object DirectorOrPartnerDetailTypeItem {
     ) ((referenceNumber, reason) => (referenceNumber, reason))
 
   def directorOrPartnerReads(index: Int, personType: String): Reads[DirectorOrPartnerDetailTypeItem] = (
-    JsPath.read(IndividualDetailType.apiReads(personType)) and
-      (JsPath \ "nino").readNullable[String]((__ \ "value").read[String]) and
-      (JsPath \ "noNinoReason").readNullable[String] and
-      (JsPath \ s"${personType}Utr").readNullable(directorOrPartnerReferenceReads("hasUtr", "utr")) and
-      JsPath.read(PreviousAddressDetails.apiReads(personType)) and
-      JsPath.read(CorrespondenceCommonDetail.apiReads(personType))
-    ) (
-    (directorOrPartnerPersonalDetails, nino, noNinoReason, utrDetails, previousAddress, addressCommonDetails) =>
-      DirectorOrPartnerDetailTypeItem(sequenceId = f"$index%03d",
-        entityType = personType.capitalize,
-        title = None,
-        firstName = directorOrPartnerPersonalDetails.firstName,
-        middleName = directorOrPartnerPersonalDetails.middleName,
-        lastName = directorOrPartnerPersonalDetails.lastName,
-        dateOfBirth = directorOrPartnerPersonalDetails.dateOfBirth,
-        referenceOrNino = nino,
-        noNinoReason = noNinoReason,
-        utr = utrDetails.flatMap(_._1),
-        noUtrReason = utrDetails.flatMap(_._2),
-        correspondenceCommonDetail = addressCommonDetails,
-        previousAddressDetail = previousAddress))
-
-  //TODO - It is duplicate but once partner is also done the old one can be removed
-  def directorReads(index: Int, personType: String): Reads[DirectorOrPartnerDetailTypeItem] = (
     JsPath.read(IndividualDetailType.apiReads(personType)) and
       (JsPath \ "nino").readNullable[String]((__ \ "value").read[String]) and
       (JsPath \ "noNinoReason").readNullable[String] and

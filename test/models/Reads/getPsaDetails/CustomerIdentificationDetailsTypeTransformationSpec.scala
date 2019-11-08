@@ -655,10 +655,10 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                         "value" : "JC000001A"
                     },
                     "noNinoReason" : "test",
-                   "partnerUtr" : {
-                       "hasUtr" : true,
-                       "utr" : "0123456789"
+                   "utr" : {
+                       "value" : "0123456789"
                    },
+                   "noUtrReason" : "test",
                    "partnerAddress" : {
                        "addressLine1" : "1 Partner Road",
                        "addressLine2" : "Clifton",
