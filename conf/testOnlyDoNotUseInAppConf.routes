@@ -12,7 +12,7 @@
 # Add all the application routes to the prod.routes file
 ->         /                          prod.Routes
 
-GET         /test-only/mongo-diagnostics                          controllers.MongoDiagnosticsController.mongoDiagnostics()
+GET         /test-only/mongo-diagnostics                          controllers.cache.MongoDiagnosticsController.mongoDiagnostics()
 
 GET        /pension-administrator/test-only/toggle-on/:featureSwitch     controllers.testonly.TestFeatureSwitchManagerController.toggleOn(featureSwitch: String)
 GET        /pension-administrator/test-only/toggle-off/:featureSwitch    controllers.testonly.TestFeatureSwitchManagerController.toggleOff(featureSwitch: String)

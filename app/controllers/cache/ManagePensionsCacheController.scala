@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers
+package controllers.cache
 
 import com.google.inject.Inject
 import play.api.Configuration

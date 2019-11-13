@@ -43,6 +43,11 @@ object CollectionDiagnostics {
         )
     }
 
+    collection.count().foreach { count =>
+      Logger.warn(
+        s"\nRow count for collection ${collection.name} : $count\n\n"
+      )
+    }
   }
 
   def indexInfo(collection: JSONCollection): Future[Seq[IndexDef]] = {

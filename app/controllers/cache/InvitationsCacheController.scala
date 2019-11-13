@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers
+package controllers.cache
 
 import com.google.inject.Inject
 import models.Invitation
@@ -23,15 +23,11 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
 import repositories.InvitationsCacheRepository
 import service.MongoDBFailedException
-import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, Result}
-import repositories.InvitationsCacheRepository
-import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationsCacheController @Inject()(

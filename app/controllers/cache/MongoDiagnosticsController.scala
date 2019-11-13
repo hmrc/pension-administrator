@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers
+package controllers.cache
 
 import java.text.SimpleDateFormat
 import java.util.Date

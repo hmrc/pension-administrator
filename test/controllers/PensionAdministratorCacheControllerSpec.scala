@@ -18,6 +18,7 @@ package controllers
 
 import akka.stream.Materializer
 import akka.util.ByteString
+import controllers.cache.PensionAdministratorCacheController
 import org.apache.commons.lang3.RandomUtils
 import org.joda.time.DateTime
 import org.mockito.Matchers.{eq => eqTo, _}
@@ -34,8 +35,8 @@ import play.api.test.{FakeRequest, Injecting}
 import repositories.PensionAdministratorCacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers with MockitoSugar with Injecting with GuiceOneAppPerSuite {

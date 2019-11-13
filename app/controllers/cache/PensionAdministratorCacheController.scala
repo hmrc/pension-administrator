@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers
+package controllers.cache
 
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json.Json
@@ -23,9 +23,9 @@ import play.api.{Configuration, Logger}
 import repositories.PensionAdministratorCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import scala.concurrent.ExecutionContext.Implicits.global
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 abstract class PensionAdministratorCacheController(
                                               config: Configuration,
@@ -50,9 +50,9 @@ abstract class PensionAdministratorCacheController(
   def get(id: String): Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
-        Logger.debug("controllers.PensionAdministratorCacheController.get: Authorised Request " + id)
+        Logger.debug("controllers.cache.PensionAdministratorCacheController.get: Authorised Request " + id)
         repository.get(id).map { response =>
-          Logger.debug(s"controllers.PensionAdministratorCacheController.get: Response for request Id $id is $response")
+          Logger.debug(s"controllers.cache.PensionAdministratorCacheController.get: Response for request Id $id is $response")
           response.map {
             Ok(_)
           }
@@ -64,9 +64,9 @@ abstract class PensionAdministratorCacheController(
   def lastUpdated(id: String): Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
-        Logger.debug("controllers.PensionAdministratorCacheController.get: Authorised Request " + id)
+        Logger.debug("controllers.cache.PensionAdministratorCacheController.get: Authorised Request " + id)
         repository.getLastUpdated(id).map { response =>
-          Logger.debug("controllers.PensionAdministratorCacheController.get: Response " + response)
+          Logger.debug("controllers.cache.PensionAdministratorCacheController.get: Response " + response)
           response.map { date => Ok(Json.toJson(date)) }
             .getOrElse(NotFound)
         }
