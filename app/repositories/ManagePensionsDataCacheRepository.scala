@@ -22,10 +22,10 @@ import play.modules.reactivemongo.ReactiveMongoComponent
 
 import scala.concurrent.ExecutionContext
 
-class ManagePensionsCacheRepository @Inject()(
+class ManagePensionsDataCacheRepository @Inject()(
                                         config: Configuration,
                                         component: ReactiveMongoComponent
-                                      )(implicit val ec: ExecutionContext) extends PensionAdministratorCacheRepository(
+                                      )(implicit val ec: ExecutionContext) extends ManageCacheRepository(
   config.underlying.getString("mongodb.pension-administrator-cache.manage-pensions.name"),
   Some(config.underlying.getInt("mongodb.pension-administrator-cache.manage-pensions.timeToLiveInSeconds")),
   component,

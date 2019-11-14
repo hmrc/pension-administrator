@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package controllers
+package controllers.cache
 
 import akka.stream.Materializer
 import akka.util.ByteString
-import controllers.cache.InvitationsCacheController
 import org.apache.commons.lang3.RandomUtils
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._

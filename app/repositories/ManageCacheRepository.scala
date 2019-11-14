@@ -32,7 +32,7 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.{ExecutionContext, Future}
 
-abstract class PensionAdministratorCacheRepository(
+abstract class ManageCacheRepository(
                                               index: String,
                                               ttl: Option[Int],
                                               component: ReactiveMongoComponent,
