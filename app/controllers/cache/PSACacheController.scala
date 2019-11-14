@@ -22,6 +22,7 @@ import play.api.mvc.ControllerComponents
 import repositories.PSACacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
 
+//TODO: Remove this once old collection row count is 0
 class PSACacheController @Inject()(
                                            config: Configuration,
                                            repository: PSACacheRepository,
