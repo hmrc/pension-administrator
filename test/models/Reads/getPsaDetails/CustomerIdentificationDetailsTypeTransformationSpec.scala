@@ -953,10 +953,8 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
        "country" : "GB"
      },
      "adviserName": "Acme Pensions Ltd",
-     "adviserDetails" : {
-             "email" : "acme_pensions@test.com",
-             "phone" : "0044-0987654232"
-     },
+     "adviserEmail" : "acme_pensions@test.com",
+     "adviserPhone" : "0044-0987654232",
      "declarationWorkingKnowledge" : false,
      "adviserAddress" : {
              "addressLine1" : "10 London Road",

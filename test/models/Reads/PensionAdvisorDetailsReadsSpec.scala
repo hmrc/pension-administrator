@@ -25,7 +25,7 @@ class PensionAdvisorDetailsReadsSpec extends WordSpec with MustMatchers with Opt
 
   "A JSON Payload containing a pension adviser detail" should {
     "Map correctly to a valid representation of a PensionAdvisorDetail" when {
-      val input = Json.obj("adviserName" -> JsString("John"), "adviserDetails" -> Json.obj("phone" -> "07592113", "email" -> "test@test.com"),
+      val input = Json.obj("adviserName" -> JsString("John"), "adviserPhone" -> "07592113", "adviserEmail" -> "test@test.com",
         "adviserAddress" -> Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"),
           "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"),
           "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB")))
