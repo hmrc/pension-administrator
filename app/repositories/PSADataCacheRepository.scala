@@ -48,18 +48,39 @@ class PSADataCacheRepository @Inject()(
 
   private def expireAt: DateTime = DateTime.now(DateTimeZone.UTC).toLocalDate.plusDays(expireInDays + 1).toDateTimeAtStartOfDay()
 
-  private val index = Index(Seq(("id", IndexType.Ascending)), Some("credId"), background = true,
-    unique = true, options = BSONDocument("expireAfterSeconds" -> 0))
+  private val ttl = 0
 
-  collection.indexesManager.ensure(index) map { result =>
-    Logger.debug(message = s"Attempt to create Mongo index $index" +
-      s"(unique = ${index.unique}) on collection $collectionName was successful and result is: $result")
-    result
-  } recover {
-    case e => Logger.error(message = s"Attempt to create Mongo index $index (unique = ${index.unique}) was unsuccessful", e)
-      false
+  (for {
+    _ <- ensureIndex(fields = Seq("expireAt"), indexName = "dataExpiry", ttl = Some(ttl))
+    _ <- ensureIndex(fields = Seq("id"), indexName = "credId", isUnique = true)
+  } yield {
+    ()
+  }) recoverWith {
+    case t: Throwable => Future.successful(Logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
   } andThen {
     case _ => CollectionDiagnostics.logCollectionInfo(collection)
+  }
+
+  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None, isUnique: Boolean = false): Future[Boolean] = {
+    val fieldIndexes = fields.map((_, IndexType.Ascending))
+    val index = {
+      val defaultIndex = Index(fieldIndexes, Some(indexName), background = true, unique = isUnique)
+      ttl.map(ttl => defaultIndex.copy(options = BSONDocument("expireAfterSeconds" -> ttl))).fold(defaultIndex)(identity)
+    }
+
+    val indexCreationDescription = {
+      def addExpireAfterSecondsDescription(s: String): String = ttl.fold(s)(ttl => s"$s (expireAfterSeconds = $ttl)")
+
+      addExpireAfterSecondsDescription(s"Attempt to create Mongo index $index (unique = ${index.unique}))")
+    }
+
+    collection.indexesManager.ensure(index) map { result =>
+      Logger.debug(indexCreationDescription + s" was successful and result is: $result")
+      result
+    } recover {
+      case e => Logger.error(indexCreationDescription + s" was unsuccessful", e)
+        false
+    }
   }
 
   def upsert(credId: String, userData: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
@@ -129,6 +150,7 @@ class PSADataCacheRepository @Inject()(
                                                  lastUpdated: DateTime,
                                                  expireAt: DateTime
                                                )
+
   private object DataEntryWithoutEncryption {
 
     def applyDataEntry(id: String,
