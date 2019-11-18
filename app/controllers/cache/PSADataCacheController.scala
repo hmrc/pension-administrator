@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-package controllers
+package controllers.cache
 
-import play.api.libs.json.JodaWrites._
-import play.api.libs.json.Json
+import com.google.inject.Inject
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.api.{Configuration, Logger}
-import repositories.PensionAdministratorCacheRepository
+import repositories.PSADataCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-import scala.concurrent.{ExecutionContext, Future}
-
-abstract class PensionAdministratorCacheController(
-                                              config: Configuration,
-                                              repository: PensionAdministratorCacheRepository,
-                                              val authConnector: AuthConnector,
-                                              cc: ControllerComponents
-                                            ) extends BackendController(cc) with AuthorisedFunctions {
-
-  private val maxSize: Int = config.underlying.getInt("mongodb.pension-administrator-cache.maxSize")
-
+class PSADataCacheController @Inject()(
+                                        config: Configuration,
+                                        repository: PSADataCacheRepository,
+                                        val authConnector: AuthConnector,
+                                        cc: ControllerComponents
+                                      ) extends BackendController(cc) with AuthorisedFunctions {
   def save(id: String): Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
@@ -50,24 +46,12 @@ abstract class PensionAdministratorCacheController(
   def get(id: String): Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
-        Logger.debug("controllers.PensionAdministratorCacheController.get: Authorised Request " + id)
+        Logger.debug(message = "controllers.cache.PSADataCacheController.get: Authorised Request " + id)
         repository.get(id).map { response =>
-          Logger.debug(s"controllers.PensionAdministratorCacheController.get: Response for request Id $id is $response")
+          Logger.debug(message = s"controllers.cache.PSADataCacheController.get: Response for request Id $id is $response")
           response.map {
             Ok(_)
           }
-            .getOrElse(NotFound)
-        }
-      }
-  }
-
-  def lastUpdated(id: String): Action[AnyContent] = Action.async {
-    implicit request =>
-      authorised() {
-        Logger.debug("controllers.PensionAdministratorCacheController.get: Authorised Request " + id)
-        repository.getLastUpdated(id).map { response =>
-          Logger.debug("controllers.PensionAdministratorCacheController.get: Response " + response)
-          response.map { date => Ok(Json.toJson(date)) }
             .getOrElse(NotFound)
         }
       }

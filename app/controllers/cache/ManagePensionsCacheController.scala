@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package controllers
+package controllers.cache
 
 import com.google.inject.Inject
 import play.api.Configuration
 import play.api.mvc.ControllerComponents
-import repositories.PSACacheRepository
+import repositories.ManagePensionsDataCacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
 
-class PSACacheController @Inject()(
-                                           config: Configuration,
-                                           repository: PSACacheRepository,
-                                           authConnector: AuthConnector,
-                                           cc: ControllerComponents
+class ManagePensionsCacheController @Inject()(
+                                               config: Configuration,
+                                               repository: ManagePensionsDataCacheRepository,
+                                               authConnector: AuthConnector,
+                                               cc: ControllerComponents
                                  ) extends PensionAdministratorCacheController(config, repository, authConnector, cc)

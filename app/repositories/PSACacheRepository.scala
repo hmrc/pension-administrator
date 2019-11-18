@@ -22,10 +22,11 @@ import play.modules.reactivemongo.ReactiveMongoComponent
 
 import scala.concurrent.ExecutionContext
 
+//TODO: Once the partial data row count from this repo is 0 then remove this Repository
 class PSACacheRepository @Inject()(
                                         config: Configuration,
                                         component: ReactiveMongoComponent
-                                      )(implicit val ec: ExecutionContext) extends PensionAdministratorCacheRepository(
+                                      )(implicit val ec: ExecutionContext) extends ManageCacheRepository(
   config.underlying.getString("mongodb.pension-administrator-cache.psa-journey.name"),
   Some(config.underlying.getInt("mongodb.pension-administrator-cache.psa-journey.timeToLiveInSeconds")),
   component,
