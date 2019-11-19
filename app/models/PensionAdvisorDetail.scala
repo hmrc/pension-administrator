@@ -27,11 +27,12 @@ object PensionAdvisorDetail {
   val apiReads: Reads[Option[PensionAdvisorDetail]] = (
     (JsPath \ "adviserName").readNullable[String] and
       (JsPath \ "adviserAddress").readNullable[Address] and
-      (JsPath \ "adviserDetails").readNullable(ContactDetails.apiReads)
-    ) ((name, address, contactDetails) => {
-    (name, address, contactDetails) match {
-      case (Some(adviserName), Some(address), Some(contactDetails)) =>
-        Some(PensionAdvisorDetail(adviserName, address, contactDetails))
+      (JsPath \ "adviserEmail").readNullable[String] and
+      (JsPath \ "adviserPhone").readNullable[String]
+    ) ((name, address, email, phone) => {
+    (name, address, email, phone) match {
+      case (Some(adviserName), Some(address), Some(email), Some(phone)) =>
+        Some(PensionAdvisorDetail(adviserName, address, ContactDetails(telephone = phone, email = email)))
       case _ => None
     }
   })

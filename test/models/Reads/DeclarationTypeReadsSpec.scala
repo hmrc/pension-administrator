@@ -80,14 +80,15 @@ class DeclarationTypeReadsSpec extends WordSpec with MustMatchers with OptionVal
 
         "set as 'adviser' containing adviser details" in {
           val adviserName = "adviserName" -> JsString("John")
-          val adviserDetails = "adviserDetails" -> Json.obj("phone" -> "07592113", "email" -> "test@test.com")
+          val adviserPhone = "adviserPhone" -> JsString("07592113")
+          val adviserEmail = "adviserEmail" -> JsString("test@test.com")
 
           val adviserAddress = "adviserAddress" -> Json.obj("addressLine1" -> JsString("line1"),
             "addressLine2" -> JsString("line2"), "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"),
             "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))
 
           val workingKnowledge = "declarationWorkingKnowledge" -> JsString("adviser")
-          val result = (declaration + workingKnowledge + adviserName + adviserDetails + adviserAddress).as[PensionSchemeAdministratorDeclarationType](
+          val result = (declaration + workingKnowledge + adviserName + adviserEmail + adviserPhone + adviserAddress).as[PensionSchemeAdministratorDeclarationType](
             PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box6.value mustBe true

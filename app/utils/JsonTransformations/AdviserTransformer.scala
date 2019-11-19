@@ -26,11 +26,11 @@ class AdviserTransformer @Inject()(addressTransformer: AddressTransformer) exten
     (((__ \ 'adviserName).json
       .copyFrom((__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'name).json.pick)
       orElse doNothing) and
-      ((__ \ 'adviserDetails \ 'email).json
+      ((__ \ 'adviserEmail).json
         .copyFrom(
         (__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'contactDetails \ 'email).json.pick)
         orElse doNothing) and
-      ((__ \ 'adviserDetails \ 'phone).json
+      ((__ \ 'adviserPhone).json
         .copyFrom(
         (__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'contactDetails \ 'telephone).json.pick)
         orElse doNothing) and

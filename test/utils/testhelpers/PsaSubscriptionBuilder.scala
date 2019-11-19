@@ -90,10 +90,8 @@ object PsaSubscriptionBuilder {
                                         },
                                         "declarationWorkingKnowledge" : false,
                                         "adviserName": "sgfdgssd",
-                                        "adviserDetails":{
-                                           "email":"aaa@yahoo.com",
-                                           "phone":"0044-0987654232"
-                                        },
+                                        "adviserEmail":"aaa@yahoo.com",
+                                        "adviserPhone":"0044-0987654232",
                                         "adviserAddress":{  
                                            "addressLine1":"addline1",
                                            "addressLine2":"addline2",
