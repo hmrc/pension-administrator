@@ -125,7 +125,7 @@ class MongoDiagnosticsController @Inject()(config: Configuration,
     val query = BSONDocument()
     val projection = BSONDocument("_id" -> 0, "id" -> 1)
 
-    collection.find(query, projection)
+    collection.find(query, Option(projection))
       .cursor[BSONDocument]()
       .collect[Seq](-1, Cursor.FailOnError[Seq[BSONDocument]]())
       .map {

@@ -18,11 +18,16 @@ package models
 
 import org.joda.time.LocalDate
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, Json, Reads, Writes}
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json.JodaReads._
+import play.api.libs.json.{JsPath, Json, Reads, Writes}
 
-case class CorrespondenceAddress(addressLine1: String, addressLine2: String, addressLine3: Option[String], addressLine4: Option[String], countryCode: String, postalCode: Option[String])
+case class CorrespondenceAddress(addressLine1: String,
+                                 addressLine2: String,
+                                 addressLine3: Option[String],
+                                 addressLine4: Option[String],
+                                 countryCode: String,
+                                 postalCode: Option[String])
 
 object CorrespondenceAddress {
   implicit val writes: Writes[CorrespondenceAddress] = Json.writes[CorrespondenceAddress]
@@ -39,24 +44,24 @@ object CorrespondenceAddress {
 case class CorrespondenceDetails(address: CorrespondenceAddress, contactDetails: Option[PsaContactDetails])
 
 object CorrespondenceDetails {
-  implicit val writes : Writes[CorrespondenceDetails] = Json.writes[CorrespondenceDetails]
-  implicit val reads : Reads[CorrespondenceDetails] = (
+  implicit val writes: Writes[CorrespondenceDetails] = Json.writes[CorrespondenceDetails]
+  implicit val reads: Reads[CorrespondenceDetails] = (
     (JsPath \ "addressDetails").read[CorrespondenceAddress] and
       (JsPath \ "contactDetails").readNullable[PsaContactDetails]
-    )(CorrespondenceDetails.apply _)
+    ) (CorrespondenceDetails.apply _)
 }
 
 
 case class CustomerIdentification(legalStatus: String, typeOfId: Option[String], number: Option[String], isOverseasCustomer: Boolean)
 
 object CustomerIdentification {
-  implicit val reads : Reads[CustomerIdentification] = (
+  implicit val reads: Reads[CustomerIdentification] = (
     (JsPath \ "legalStatus").read[String] and
       (JsPath \ "idType").readNullable[String] and
       (JsPath \ "idNumber").readNullable[String] and
       (JsPath \ "noIdentifier").read[Boolean]
-    )(CustomerIdentification.apply _)
-  implicit val writes : Writes[CustomerIdentification] = Json.writes[CustomerIdentification]
+    ) (CustomerIdentification.apply _)
+  implicit val writes: Writes[CustomerIdentification] = Json.writes[CustomerIdentification]
 }
 
 
@@ -73,8 +78,8 @@ case class DirectorOrPartner(isDirectorOrPartner: String,
                              correspondenceDetails: Option[CorrespondenceDetails])
 
 object DirectorOrPartner {
-  implicit val writes : Writes[DirectorOrPartner] = Json.writes[DirectorOrPartner]
-  implicit val reads : Reads[DirectorOrPartner] = (
+  implicit val writes: Writes[DirectorOrPartner] = Json.writes[DirectorOrPartner]
+  implicit val reads: Reads[DirectorOrPartner] = (
     (JsPath \ "entityType").read[String] and
       (JsPath \ "title").readNullable[String] and
       (JsPath \ "firstName").read[String] and
@@ -86,54 +91,54 @@ object DirectorOrPartner {
       (JsPath \ "previousAddressDetails" \ "isPreviousAddressLast12Month").read[Boolean] and
       (JsPath \ "previousAddressDetails" \ "previousAddress").readNullable[CorrespondenceAddress] and
       (JsPath \ "correspondenceCommonDetails").readNullable[CorrespondenceDetails]
-    )((entityType,title,name,middleName,surname,dob,nino,utr,isSameAddress,previousAddress,correspondence) =>
-    DirectorOrPartner(entityType,title,name,middleName,surname,dob,nino,utr,isSameAddress,previousAddress,correspondence))
+    ) ((entityType, title, name, middleName, surname, dob, nino, utr, isSameAddress, previousAddress, correspondence) =>
+    DirectorOrPartner(entityType, title, name, middleName, surname, dob, nino, utr, isSameAddress, previousAddress, correspondence))
 }
 
 
 case class OrganisationOrPartner(name: String, crn: Option[String], vatRegistration: Option[String], paye: Option[String])
 
 object OrganisationOrPartner {
-  implicit val writes : Writes[OrganisationOrPartner] = Json.writes[OrganisationOrPartner]
-  implicit val reads : Reads[OrganisationOrPartner] = (
+  implicit val writes: Writes[OrganisationOrPartner] = Json.writes[OrganisationOrPartner]
+  implicit val reads: Reads[OrganisationOrPartner] = (
     (JsPath \ "name").read[String] and
       (JsPath \ "crnNumber").readNullable[String] and
       (JsPath \ "vatRegistrationNumber").readNullable[String] and
       (JsPath \ "payeReference").readNullable[String]
-    )(OrganisationOrPartner.apply _)
+    ) (OrganisationOrPartner.apply _)
 }
 
 case class PensionAdvisor(name: String, address: CorrespondenceAddress, contactDetails: Option[PsaContactDetails])
 
 object PensionAdvisor {
-  implicit val writes : Writes[PensionAdvisor] = Json.writes[PensionAdvisor]
-  implicit val reads : Reads[PensionAdvisor] = (
+  implicit val writes: Writes[PensionAdvisor] = Json.writes[PensionAdvisor]
+  implicit val reads: Reads[PensionAdvisor] = (
     (JsPath \ "name").read[String] and
       (JsPath \ "addressDetails").read[CorrespondenceAddress] and
       (JsPath \ "contactDetails").readNullable[PsaContactDetails]
-    )(PensionAdvisor.apply _)
+    ) (PensionAdvisor.apply _)
 }
 
 
 case class PsaContactDetails(telephone: String, email: Option[String])
 
 object PsaContactDetails {
-  implicit val writes : Writes[PsaContactDetails] = Json.writes[PsaContactDetails]
-  implicit val reads : Reads[PsaContactDetails] = (
+  implicit val writes: Writes[PsaContactDetails] = Json.writes[PsaContactDetails]
+  implicit val reads: Reads[PsaContactDetails] = (
     (JsPath \ "telephone").read[String] and
-      (JsPath \ "email").readNullable[String])(PsaContactDetails.apply _)
+      (JsPath \ "email").readNullable[String]) (PsaContactDetails.apply _)
 }
 
 
 case class PsaSubscription(isSuspended: Boolean, customerIdentification: CustomerIdentification,
                            organisationOrPartner: Option[OrganisationOrPartner], individual: Option[IndividualDetailType], address: CorrespondenceAddress,
                            contact: PsaContactDetails, isSameAddressForLast12Months: Boolean, previousAddress: Option[CorrespondenceAddress],
-                           directorsOrPartners: Option[Seq[DirectorOrPartner]], pensionAdvisor: Option[PensionAdvisor]){
+                           directorsOrPartners: Option[Seq[DirectorOrPartner]], pensionAdvisor: Option[PensionAdvisor]) {
 
 
   def name: Option[String] = {
     (individual, organisationOrPartner) match {
-      case (Some(ind),None) => Some(Seq(ind.firstName,ind.middleName.getOrElse(),ind.lastName).mkString(" "))
+      case (Some(ind), None) => Some(Seq(ind.firstName, ind.middleName.getOrElse(""), ind.lastName).mkString(" "))
       case (None, Some(org)) => Some(org.name)
       case _ => None
     }
@@ -141,8 +146,8 @@ case class PsaSubscription(isSuspended: Boolean, customerIdentification: Custome
 }
 
 object PsaSubscription {
-  implicit val writes : Writes[PsaSubscription] = Json.writes[PsaSubscription]
-  implicit val reads : Reads[PsaSubscription] = (
+  implicit val writes: Writes[PsaSubscription] = Json.writes[PsaSubscription]
+  implicit val reads: Reads[PsaSubscription] = (
     (JsPath \ "psaSubscriptionDetails" \ "isPSASuspension").read[Boolean] and
       (JsPath \ "psaSubscriptionDetails" \ "customerIdentificationDetails").read[CustomerIdentification] and
       (JsPath \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails").readNullable[OrganisationOrPartner] and
@@ -153,8 +158,8 @@ object PsaSubscription {
       (JsPath \ "psaSubscriptionDetails" \ "previousAddressDetails" \ "previousAddress").readNullable[CorrespondenceAddress] and
       (JsPath \ "psaSubscriptionDetails" \ "directorOrPartnerDetails").readNullable[Seq[DirectorOrPartner]] and
       (JsPath \ "psaSubscriptionDetails" \ "declarationDetails" \ "pensionAdvisorDetails").readNullable[PensionAdvisor]
-    )((isSuspended,customerIdentification, organisationOrPartnerDetails, individual, address, contactDetails,
-       isSameAddress, prevAddress, directorOrPartner, advisor) =>
-    PsaSubscription(isSuspended,customerIdentification,organisationOrPartnerDetails, individual, address,
+    ) ((isSuspended, customerIdentification, organisationOrPartnerDetails, individual, address, contactDetails,
+        isSameAddress, prevAddress, directorOrPartner, advisor) =>
+    PsaSubscription(isSuspended, customerIdentification, organisationOrPartnerDetails, individual, address,
       contactDetails, isSameAddress, prevAddress, directorOrPartner, advisor))
 }
