@@ -167,7 +167,7 @@ class InvitationsCacheRepository @Inject()(
       (BSONDocument(inviteePsaIdKey -> invitation.inviteePsaId.value, pstrKey -> invitation.pstr),
         BSONDocument("$set" -> Json.toJson(record)))
     }
-    collection.update(selector, modifier, upsert = true)
+    collection.update(ordered = false).one(selector, modifier, upsert = true)
       .map(_.ok)
   }
 
@@ -186,7 +186,7 @@ class InvitationsCacheRepository @Inject()(
   def getByKeys(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Option[List[Invitation]]] = {
     if (encrypted) {
       val encryptedMapOfKeys = encryptKeys(mapOfKeys)
-      val queryBuilder = collection.find(encryptedMapOfKeys)
+      val queryBuilder = collection.find(encryptedMapOfKeys, None)(implicitly, BSONDocumentWrites)
       queryBuilder.cursor[DataEntry](ReadPreference.primary).collect[List](-1, Cursor.FailOnError[List[DataEntry]]()).map { de =>
         val listOfInvitationsJson = de.map {
           dataEntry =>
@@ -197,7 +197,7 @@ class InvitationsCacheRepository @Inject()(
         listToOption(listOfInvitationsJson)
       }
     } else {
-      val queryBuilder = collection.find(mapOfKeys)
+      val queryBuilder = collection.find(mapOfKeys, None)(implicitly, BSONDocumentWrites)
       queryBuilder.cursor[JsonDataEntry](ReadPreference.primary).collect[List](-1, Cursor.FailOnError[List[JsonDataEntry]]()).map { de =>
         val listOfInvitationsJson = de.map {
           dataEntry =>

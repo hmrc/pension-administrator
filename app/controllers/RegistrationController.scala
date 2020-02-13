@@ -114,7 +114,7 @@ class RegistrationController @Inject()(
 
 
   private def retrieveUser(fn: models.User => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
-    authorised().retrieve(Retrievals.externalId and Retrievals.affinityGroup) {
+    authorised().retrieve(v2.Retrievals.externalId and v2.Retrievals.affinityGroup) {
       case Some(externalId) ~ Some(affinityGroup) =>
         fn(models.User(externalId, affinityGroup))
       case _ =>

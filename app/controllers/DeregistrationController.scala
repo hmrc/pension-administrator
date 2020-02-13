@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import connectors.SchemeConnector
 import play.api.libs.json._
 import play.api.mvc._
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.ErrorHandler
 
 import scala.concurrent.ExecutionContext
@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext
 class DeregistrationController @Inject()(
                                           schemeConnector: SchemeConnector,
                                           cc: ControllerComponents
-                                        )(implicit val ec: ExecutionContext) extends BaseController(cc) with ErrorHandler {
+                                        )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler {
 
   def canDeregister(psaId: String): Action[AnyContent] = Action.async {
     implicit request =>
