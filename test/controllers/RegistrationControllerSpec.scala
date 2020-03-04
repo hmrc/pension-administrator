@@ -22,7 +22,7 @@ import connectors.RegistrationConnector
 import models._
 import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
 import org.joda.time.LocalDate
-import org.mockito.Matchers
+import org.mockito.{ArgumentCaptor, Matchers}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalacheck.Gen
@@ -71,7 +71,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     "return OK when the registration with id is successful for Individual" in {
 
-      val successResponse:SuccessResponse = readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json").as[SuccessResponse]
+      val successResponse: SuccessResponse = readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json").as[SuccessResponse]
 
       when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(mandatoryRequestData))(any(), any(), any()))
         .thenReturn(Future.successful(Right(successResponse)))
@@ -213,10 +213,29 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     val inputData = Json.obj("utr" -> "1100000000", "organisationName" -> "Test Ltd", "organisationType" -> "LLP")
 
-    "return OK when request utr and organisation get successful response from connector" in {
-     val successResponse = readJsonFromFile("/data/validRegisterWithIdOrganisationResponse.json").as[SuccessResponse]
+    "return OK when request utr and organisation get successful response from connector, stripping out any invalid characters from the name" in {
+      val inputData = Json.obj(
+        "utr" -> "1100000000",
+        "organisationName" -> """(Test) %"Ltd"^$£!""",
+        "organisationType" -> "LLP"
+      )
 
-      when(mockRegistrationConnector.registerWithIdOrganisation(Matchers.eq("1100000000"), any(), any())(any(), any(), any()))
+      val successResponse = readJsonFromFile("/data/validRegisterWithIdOrganisationResponse.json").as[SuccessResponse]
+
+      val expectedJsonForConnector = Json.obj(
+        "regime" -> "PODA",
+        "requiresNameMatch" -> true,
+        "isAnAgent" -> false,
+        "organisation" -> Json.obj(
+          "organisationName" -> "Test Ltd",
+          "organisationType" -> "LLP"
+        )
+      )
+
+      val jsonCaptor = ArgumentCaptor.forClass(classOf[JsValue])
+
+      when(mockRegistrationConnector
+        .registerWithIdOrganisation(Matchers.eq("1100000000"), any(), jsonCaptor.capture())(any(), any(), any()))
         .thenReturn(Future.successful(Right(successResponse)))
 
       val result = registrationController(organisationRetrievals).registerWithIdOrganisation(fakeRequest.withJsonBody(inputData))
@@ -224,6 +243,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       ScalaFutures.whenReady(result) { _ =>
         status(result) mustBe OK
         contentAsJson(result) mustEqual Json.toJson(successResponse)
+        jsonCaptor.getValue mustEqual expectedJsonForConnector
       }
     }
 
