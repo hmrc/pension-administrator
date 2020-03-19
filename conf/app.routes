@@ -20,11 +20,6 @@ GET         /journey-cache/manage-pensions/:id          controllers.cache.Manage
 POST        /journey-cache/manage-pensions/:id          controllers.cache.ManagePensionsCacheController.save(id: String)
 DELETE      /journey-cache/manage-pensions/:id          controllers.cache.ManagePensionsCacheController.remove(id: String)
 
-# the below routes will be removed once we move completely to the new collection
-GET         /journey-cache/psa/:id                      controllers.cache.PSACacheController.get(id: String)
-POST        /journey-cache/psa/:id                      controllers.cache.PSACacheController.save(id: String)
-DELETE      /journey-cache/psa/:id                      controllers.cache.PSACacheController.remove(id: String)
-
 GET         /journey-cache/psa-data/:id                 controllers.cache.PSADataCacheController.get(id: String)
 POST        /journey-cache/psa-data/:id                 controllers.cache.PSADataCacheController.save(id: String)
 DELETE      /journey-cache/psa-data/:id                 controllers.cache.PSADataCacheController.remove(id: String)
