@@ -35,7 +35,7 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
                                                  individualTransformer: IndividualTransformer) extends JsonTransformer {
 
   lazy val transformToUserAnswers: Reads[JsObject] =
-      registrationInfoTransformer.getRegistrationInfo and
+    (registrationInfoTransformer.getRegistrationInfo and
       individualTransformer.getNinoOrUtr and
       getCrn and
       getOrganisationOrPartnerDetails.orElse(individualTransformer.getIndividualDetails) and
@@ -46,7 +46,7 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
       addressTransformer.getPreviousAddressBasedOnLegalStatus and
       adviserTransformer.getAdviser and
       directorOrPartnerTransformer.getDirectorsOrPartners and
-      getAreYouInUK and adviserTransformer.getWorkingKnowledge reduce
+      getAreYouInUK and adviserTransformer.getWorkingKnowledge).reduce
 
 
   private val getOrganisationOrPartnerDetails: Reads[JsObject] = {
@@ -55,8 +55,20 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
     }
   }
 
-  private val getCrn = ((__ \ 'companyRegistrationNumber).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'crnNumber).json.pick)
-    orElse doNothing)
+  private val getCrn: Reads[JsObject] = {
+    (__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails).read(__.read(readsCrn)).orElse(doNothing)
+  }
+
+  def readsCrn: Reads[JsObject] =  {
+    (__ \ 'crnNumber).read[String].flatMap { _ =>
+      ((__ \ 'hasCrn).json.put(JsBoolean(true)) and
+        (__ \ "companyRegistrationNumber").json.copyFrom((__ \ 'crnNumber).json.pick)).reduce
+    } orElse {
+      (__ \ 'hasCrn).json.put(JsBoolean(false))
+    } orElse {
+      doNothing
+    }
+  }
 
   private val getAreYouInUK: Reads[JsObject] = {
     val isNonUK = (__ \ "psaSubscriptionDetails" \ "correspondenceAddressDetails" \ "nonUKAddress")

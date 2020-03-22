@@ -639,10 +639,10 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                   "email" : "acme_partnership@email.com",
                   "phone" : "0191 644595 "
               },
-              "partnershipVat" : {
-                  "hasVat" : true,
-                  "vat" : "123456789"
-              },
+              "hasCrn": false,
+              "hasVat": true,
+              "hasPaye": true,
+              "vat" : "123456789",
               "paye" : "123AB45678",
               "partners" : [
                 {
@@ -651,14 +651,14 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                        "lastName" : "Allen"
                    },
                    "dateOfBirth" : "1980-03-01",
+                   "hasNino": true,
+                   "hasUtr": true,
                    "nino" : {
                         "value" : "JC000001A"
                     },
-                    "noNinoReason" : "test",
                    "utr" : {
                        "value" : "0123456789"
                    },
-                   "noUtrReason" : "test",
                    "partnerAddress" : {
                        "addressLine1" : "1 Partner Road",
                        "addressLine2" : "Clifton",
@@ -700,6 +700,9 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
             "idNumber" : "0123456789"
           },
           "companyRegistrationNumber" : "AB123456",
+          "hasCrn": true,
+          "hasVat": true,
+          "hasPaye": true,
           "vat" : "123456789",
           "paye" : "123AB45678",
           "companyContactAddress" : {
@@ -731,14 +734,14 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
                         "lastName" : "Baker"
                       },
                       "dateOfBirth" : "1980-03-01",
+                      "hasNino": true,
+                      "hasUtr": true,
                       "nino" : {
                          "value" : "JC000001A"
                        },
-                       "noNinoReason" : "test",
                       "utr" : {
                          "value" : "0123456789"
                        },
-                       "noUtrReason" : "test",
                       "directorAddress" : {
                         "addressLine1" : "1 Director Road",
                         "addressLine2" : "Clifton",
