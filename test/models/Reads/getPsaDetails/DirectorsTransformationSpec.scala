@@ -53,6 +53,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
         }
 
         "We have a nino" in {
+          (transformedJson \ "hasNino").as[Boolean] mustBe (userAnswersDirector \ "hasNino").as[Boolean]
           (transformedJson \ "nino" \ "value").as[String] mustBe (userAnswersDirector \ "nino" \ "value").as[String]
         }
 
@@ -60,11 +61,12 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
           val inputJson = desDirector.as[JsObject] - "nino"
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
-
+          (transformedJson \ "hasNino").as[Boolean] mustBe false
           (transformedJson \ "noNinoReason").as[String] mustBe "test"
         }
 
         "We have a utr" in {
+          (transformedJson \ "hasUtr").as[Boolean] mustBe (userAnswersDirector \ "hasUtr").as[Boolean]
           (transformedJson \ "utr" \ "value").as[String] mustBe (userAnswersDirector \ "utr" \ "value").as[String]
         }
 
@@ -72,7 +74,7 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
           val inputJson = desDirector.as[JsObject] - "utr"
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
-
+          (transformedJson \ "hasUtr").as[Boolean] mustBe false
           (transformedJson \ "noUtrReason").as[String] mustBe "test"
         }
 
@@ -148,10 +150,12 @@ class DirectorsTransformationSpec extends WordSpec with MustMatchers with Option
                        "lastName" : "Baker",
                        "isDeleted" : false
                      },
+                     "hasNino" : true,
                      "dateOfBirth" : "1980-03-01",
                      "nino" : {
                         "value" : "JC000001A"
                       },
+                      "hasUtr": true,
                       "utr" : {
                         "value" : "0123456789"
                       },

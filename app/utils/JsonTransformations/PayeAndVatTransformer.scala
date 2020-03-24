@@ -23,26 +23,38 @@ import play.api.libs.json.{__, _}
 
 class PayeAndVatTransformer @Inject()() extends JsonTransformer {
   val getPayeAndVat: Reads[JsObject] = {
-    val vatRegistrationNumber = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber
-    val paye = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'payeReference
-
     (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
       case "Limited Company" =>
-        ((__ \ 'vat).json.copyFrom(vatRegistrationNumber.json.pick)
-          orElse doNothing) and
-          ((__ \ 'paye).json.copyFrom(paye.json.pick)
-            orElse doNothing) reduce
+        (getVat and
+          getPaye).reduce
       case "Partnership" =>
-        val vatReads = (__ \ "psaSubscriptionDetails" \ "organisationOrPartnerDetails" \ "vatRegistrationNumber").read[String].flatMap { _ =>
-          (__ \ 'partnershipVat \ 'vat).json.copyFrom(vatRegistrationNumber.json.pick) and
-            (__ \ 'partnershipVat \ 'hasVat).json.put(JsBoolean(true)) reduce
-        } orElse (__ \ 'partnershipVat \ 'hasVat).json.put(JsBoolean(false))
-
-        val payeReads = ((__ \ 'paye).json.copyFrom(paye.json.pick)
-          orElse doNothing)
-
-        vatReads and payeReads reduce
+        (getVat and
+          getPaye).reduce
       case "Individual" => doNothing
+    }
+  }
+
+  private def getVat: Reads[JsObject] = {
+    val vatRegistrationNumber = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber
+    vatRegistrationNumber.read[String].flatMap { _ =>
+      (__ \ 'hasVat).json.put(JsBoolean(true)) and
+        (__ \ "vat").json.copyFrom(vatRegistrationNumber.json.pick) reduce
+    } orElse {
+      (__ \ 'hasVat).json.put(JsBoolean(false))
+    } orElse {
+      doNothing
+    }
+  }
+
+  private def getPaye: Reads[JsObject] = {
+    val paye = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'payeReference
+    paye.read[String].flatMap { _ =>
+      (__ \ 'hasPaye).json.put(JsBoolean(true)) and
+        (__ \ "paye").json.copyFrom(paye.json.pick) reduce
+    } orElse {
+      (__ \ 'hasPaye).json.put(JsBoolean(false))
+    } orElse {
+      doNothing
     }
   }
 }

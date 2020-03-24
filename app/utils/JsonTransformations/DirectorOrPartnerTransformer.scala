@@ -30,15 +30,35 @@ class DirectorOrPartnerTransformer @Inject()(addressTransformer: AddressTransfor
         .copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'email).json.pick) reduce
   }
 
+  private def getNino: Reads[JsObject] =
+    (__ \ "nino").read[String].flatMap { _ =>
+      (__ \ 'hasNino).json.put(JsBoolean(true)) and
+        (__ \ "nino" \ 'value).json.copyFrom((__ \ 'nino).json.pick) reduce
+    } orElse {
+      (__ \ 'hasNino).json.put(JsBoolean(false)) and
+        (__ \ 'noNinoReason).json.copyFrom((__ \ 'noNinoReason).json.pick) reduce
+    } orElse {
+      doNothing
+    }
+
+  private def getUtr: Reads[JsObject] =
+    (__ \ "utr").read[String].flatMap { _ =>
+      (__ \ 'hasUtr).json.put(JsBoolean(true)) and
+        (__ \ "utr" \ 'value).json.copyFrom((__ \ 'utr).json.pick) reduce
+    } orElse {
+      (__ \ 'hasUtr).json.put(JsBoolean(false)) and
+        (__ \ 'noUtrReason).json.copyFrom((__ \ 'noUtrReason).json.pick) reduce
+    } orElse {
+      doNothing
+    }
+
   def getDirectorOrPartner(directorOrPartner: String): Reads[JsObject] = (__ \ s"${directorOrPartner}Details" \ 'firstName).json
     .copyFrom((__ \ 'firstName).json.pick) and
     ((__ \ s"${directorOrPartner}Details" \ 'middleName).json.copyFrom((__ \ 'middleName).json.pick) orElse doNothing) and
     (__ \ s"${directorOrPartner}Details" \ 'lastName).json.copyFrom((__ \ 'lastName).json.pick) and
     (__ \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
-    ((__ \ "nino" \ 'value).json.copyFrom((__ \ 'nino).json.pick) orElse doNothing) and
-    ((__ \ 'noNinoReason).json.copyFrom((__ \ 'noNinoReason).json.pick) orElse doNothing) and
-    ((__ \ "utr" \ 'value).json.copyFrom((__ \ 'utr).json.pick) orElse doNothing) and
-    ((__ \ 'noUtrReason).json.copyFrom((__ \ 'noUtrReason).json.pick) orElse doNothing) and
+    getNino and
+    getUtr and
     addressTransformer.getDifferentAddress(__ \ s"${directorOrPartner}Address", __ \ "correspondenceCommonDetails" \ "addressDetails") and
     getDirectorOrPartnerContactDetails(directorOrPartner) and
     addressTransformer.getAddressYears(addressYearsPath = __ \ s"${directorOrPartner}AddressYears") and
