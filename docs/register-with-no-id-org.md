@@ -1,6 +1,6 @@
 Register-with-no-id
 -----------------------
-Register with no Id for NON-UK Organisation. This is for business matching.
+Register without Id for NON-UK Organisation. This is for business matching.
 
 * **URL**
 
