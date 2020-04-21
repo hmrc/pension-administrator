@@ -1,0 +1,174 @@
+Psa-variation
+-----------------------
+Updates the pension scheme administrator details
+
+* **URL**
+
+  `/psa-variation/:psaId`
+
+* **Method**
+
+  `POST`
+  
+* **URL Parameter**
+
+  `psaId`
+
+* **Example Payload**
+
+```json
+{
+   "customerIdentificationDetails":{
+      "legalStatus":"Individual",
+      "idType":"NINO",
+      "idNumber":"QQ123456C",
+      "noIdentifier":true
+   },
+   "organisationDetails":{
+      "name":"ABC Ltd",
+      "crnNumber":"12345678",
+      "vatRegistrationNumber":"145899025",
+      "payeReference":"123A"
+   },
+   "individualDetails":{
+      "title":"Mr",
+      "firstName":"John",
+      "middleName":"A",
+      "lastName":"Smith",
+      "dateOfBirth":"1960-02-29"
+   },
+   "correspondenceAddressDetails":{
+      "changeFlag":true,
+      "addressType":"NON-UK",
+      "line1":"24/456",
+      "line2":"ABC Towers",
+      "line3":"DEF Colony ",
+      "line4":"Mumbai",
+      "postalCode":"516369",
+      "countryCode":"IN"
+   },
+   "correspondenceContactDetails":{
+      "changeFlag":true,
+      "telephone":"0121234567",
+      "mobileNumber":"07888654234",
+      "fax":"01211289653",
+      "email":"aaa@aa.com"
+   },
+   "previousAddressDetails":{
+      "changeFlag":true,
+      "isPreviousAddressLast12Month":true,
+      "previousAddressDetails":{
+         "addressType":"NON-UK",
+         "line1":"54-123/A",
+         "line2":"Mega Colony",
+         "line3":"RK Puram",
+         "line4":"Bangalore",
+         "postalCode":"5000001",
+         "countryCode":"IN"
+      }
+   },
+   "numberOfDirectorOrPartners":{
+      "changeFlag":true,
+      "isMoreThanTenDirectors":true,
+      "isMoreThanTenPartners":true
+   },
+   "changeOfDirectorOrPartnerDetails":true,
+   "directorOrPartnerDetails":[
+      {
+         "sequenceId":"123",
+         "entityType":"Director",
+         "title":"Mr",
+         "firstName":"James",
+         "middleName":"S",
+         "lastName":"Little",
+         "dateOfBirth":"1970-02-28",
+         "referenceOrNino":"123",
+         "noNinoReason":"jsjsj",
+         "utr":"1234567890",
+         "noUtrReason":" ",
+         "correspondenceCommonDetails":{
+            "addressDetails":{
+               "addressType":"NON-UK",
+               "line1":"Plaza 2",
+               "line2":"Iron Masters Way",
+               "line3":"Telford",
+               "line4":"Shropshire",
+               "postalCode":"TF3 4NT",
+               "countryCode":"IN"
+            },
+            "contactDetails":{
+               "telephone":"01952222222 ",
+               "mobileNumber":"07222345678 ",
+               "fax":"01952333333 ",
+               "email":"bb@bb.com"
+            }
+         },
+         "previousAddressDetails":{
+            "isPreviousAddressLast12Month":true,
+            "previousAddressDetails":{
+               "addressType":"NON-UK",
+               "line1":"Matheson House",
+               "line2":"R301/01",
+               "line3":"Telford",
+               "line4":"Shropshire",
+               "postalCode":"TF3 4ER",
+               "countryCode":"US"
+            }
+         }
+      }
+   ],
+   "declaration":{
+      "changeFlag":true,
+      "box1":true,
+      "box2":true,
+      "box3":true,
+      "box4":true,
+      "box5":true,
+      "box6":true,
+      "box7":true,
+      "pensionAdvisorDetails":{
+         "name":" ",
+         "addressDetails":{
+            "addressType":"NON-UK",
+            "line1":"123 Kenilworth Road",
+            "line2":"Kenilworth",
+            "line3":"Coventry",
+            "line4":"Warwickshire",
+            "postalCode":"CV3 4RT",
+            "countryCode":"IN"
+         },
+         "contactDetails":{
+            "telephone":"0121234567",
+            "mobileNumber":"07345673453",
+            "fax":"0121222777",
+            "email":"cc@cc.com"
+         }
+      }
+   }
+}
+
+```
+
+* **Success Response:**
+
+  * **Code:** 200 <br />
+
+* **Error Response:**
+
+  * **Code:** 400 BAD_REQUEST <br />
+    **Content:** `{
+                     "code": "INVALID_PAYLOAD",
+                     "reason": "Submission has not passed validation. Invalid Payload."
+                  }`
+
+  * **Code:** 409 CONFLICT <br />
+    **Content:** `{
+                              "code": "DUPLICATE_SUBMISSION",
+                              "reason": "Duplicate submissionacknowledgement reference from remote endpoint returned"
+                          }`
+    
+  * **Code:** 4XX Upstream4xxResponse <br />
+
+  OR anything else
+
+  * **Code:** 5XX Upstream5xxResponse <br />
