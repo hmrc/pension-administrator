@@ -70,7 +70,6 @@ class RegistrationController @Inject()(
                   org.organisationName.replaceAll("""[^a-zA-Z0-9- '&\/]+""", ""))
                 val registerWithIdData = mandatoryPODSData(true).as[JsObject] ++
                   Json.obj("organisation" -> Json.toJson(orgWithInvalidCharactersRemoved))
-                println("\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>. registerWithIdData "+registerWithIdData)
                 registerConnector.registerWithIdOrganisation(utr, user, registerWithIdData) map handleResponse
               case Failure(e) =>
                 Logger.warn(s"Bad Request returned from frontend for Register With Id Organisation $e")
