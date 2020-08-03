@@ -30,7 +30,7 @@ import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, Upstream4xxResponse}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, Upstream4xxResponse, UpstreamErrorResponse}
 import utils.{StubLogger, WireMockHelper}
 
 class SchemeConnectorSpec extends AsyncFlatSpec
@@ -114,7 +114,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToSucceededIf[Upstream4xxResponse] {
+    recoverToSucceededIf[UpstreamErrorResponse] {
       connector.listOfSchemes(psaId.id)
     }
   }

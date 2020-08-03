@@ -50,9 +50,9 @@ trait ConnectorBehaviours extends AsyncFlatSpec with WireMockHelper with EitherV
           )
       )
 
-      recoverToExceptionIf[Upstream5xxResponse](call) map {
+      recoverToExceptionIf[UpstreamErrorResponse](call) map {
         ex =>
-          ex.upstreamResponseCode shouldBe INTERNAL_SERVER_ERROR
+          ex.statusCode shouldBe INTERNAL_SERVER_ERROR
       }
     }
 

@@ -27,31 +27,39 @@ trait HttpResponseHelper extends HttpErrorFunctions {
     override def read(method: String, url: String, response: HttpResponse): HttpResponse = response
   }
 
-  def handleErrorResponse(methodContext: String, url: String, response: HttpResponse, badResponseSeq: Seq[String]): HttpException =
+  def handleErrorResponse(methodContext: String,
+                          url: String,
+                          response: HttpResponse,
+                          badResponseSeq: Seq[String]): HttpException =
+
     response.status match {
-      case BAD_REQUEST if badResponseSeq.exists(response.body.contains(_)) => new BadRequestException(response.body)
-      case NOT_FOUND => new NotFoundException(response.body)
+      case BAD_REQUEST if badResponseSeq.exists(response.body.contains(_)) =>
+        new BadRequestException(response.body)
+      case NOT_FOUND =>
+        new NotFoundException(response.body)
       case status if is4xx(status) =>
-        throw Upstream4xxResponse(upstreamResponseMessage(methodContext, url, status, response.body), status, status, response.allHeaders)
+        throw UpstreamErrorResponse(
+          upstreamResponseMessage(methodContext, url, status, response.body), status, status, response.headers
+        )
       case status if is5xx(status) =>
-        throw Upstream5xxResponse(upstreamResponseMessage(methodContext, url, status, response.body), status, BAD_GATEWAY)
+        throw UpstreamErrorResponse(
+          upstreamResponseMessage(methodContext, url, status, response.body), status, BAD_GATEWAY
+        )
       case _ =>
         throw new UnrecognisedHttpResponseException(methodContext, url, response)
     }
 
   def parseJson(json: String, method: String, url: String): JsValue = {
-
     try {
       Json.parse(json)
     }
     catch {
       case _: JsonParseException => throw new BadGatewayException(s"$method to $url returned a response that was not JSON")
     }
-
   }
 
   def validateJson[T](json: JsValue, method: String, url: String, onInvalid: JsValue => Unit)
-    (implicit reads: Reads[T]): T = {
+                     (implicit reads: Reads[T]): T = {
 
     json.validate[T].fold(
       invalid => {
@@ -63,16 +71,12 @@ trait HttpResponseHelper extends HttpErrorFunctions {
       },
       identity
     )
-
   }
 
   def parseAndValidateJson[T](json: String, method: String, url: String, onInvalid: JsValue => Unit)
-    (implicit reads: Reads[T]): T = {
-
+                             (implicit reads: Reads[T]): T = {
     validateJson(parseJson(json, method, url), method, url, onInvalid)
-
   }
-
 }
 
 class UnrecognisedHttpResponseException(method: String, url: String, response: HttpResponse)

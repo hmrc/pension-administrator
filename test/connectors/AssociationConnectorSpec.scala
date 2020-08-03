@@ -174,9 +174,9 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Upstream5xxResponse](connector.getPSAMinimalDetails(psaId)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getPSAMinimalDetails(psaId)) map {
       ex =>
-        ex.upstreamResponseCode shouldBe INTERNAL_SERVER_ERROR
+        ex.statusCode shouldBe INTERNAL_SERVER_ERROR
         ex.getMessage should startWith("PSA minimal details")
         ex.message should include(Json.parse(errorResponse).toString)
         ex.reportAs shouldBe BAD_GATEWAY
@@ -259,7 +259,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Upstream5xxResponse](connector.getPSAMinimalDetails(psaId)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getPSAMinimalDetails(psaId)) map {
       _ =>
         auditService.verifyNothingSent shouldBe true
     }

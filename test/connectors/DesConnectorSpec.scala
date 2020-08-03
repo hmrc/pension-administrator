@@ -289,7 +289,7 @@ class DesConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Upstream5xxResponse](connector.getPSASubscriptionDetails(psaId.value)) map {_ =>
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getPSASubscriptionDetails(psaId.value)) map {_ =>
       auditService.verifyNothingSent shouldBe true
     }
 
@@ -756,7 +756,7 @@ class DesConnectorSpec extends AsyncFlatSpec
         )
     )
     logger.reset()
-    recoverToExceptionIf[Upstream5xxResponse](connector.deregisterPSA(psaId.value)) map {_ =>
+    recoverToExceptionIf[UpstreamErrorResponse](connector.deregisterPSA(psaId.value)) map {_ =>
       auditService.verifyNothingSent shouldBe true
     }
 

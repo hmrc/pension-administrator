@@ -25,7 +25,7 @@ import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, Upstream4xxResponse}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.ErrorHandler
 import utils.validationUtils._
@@ -119,7 +119,7 @@ class RegistrationController @Inject()(
       case Some(externalId) ~ Some(affinityGroup) =>
         fn(models.User(externalId, affinityGroup))
       case _ =>
-        Future.failed(Upstream4xxResponse("Not authorized", UNAUTHORIZED, UNAUTHORIZED))
+        Future.failed(UpstreamErrorResponse("Not authorized", UNAUTHORIZED, UNAUTHORIZED))
     }
   }
 }
