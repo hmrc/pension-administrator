@@ -71,20 +71,11 @@ class InvitationControllerSpec extends AsyncFlatSpec with MustMatchers  {
       }
     }
 
-    it should "throw Upstream5xxResponse when service throws Upstream5xxResponse" in {
+    it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
 
-      fakeInvitationService.setInvitePsaResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+      fakeInvitationService.setInvitePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
-      recoverToSucceededIf[Upstream5xxResponse] {
-        controller.invite()(fakeRequest.withJsonBody(invitation))
-      }
-    }
-
-    it should "throw UpStream4xxResponse when service throws UpStream4xxResponse" in {
-
-      fakeInvitationService.setInvitePsaResponse(Future.failed(Upstream4xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
-
-      recoverToSucceededIf[Upstream4xxResponse] {
+      recoverToSucceededIf[UpstreamErrorResponse] {
         controller.invite()(fakeRequest.withJsonBody(invitation))
       }
     }

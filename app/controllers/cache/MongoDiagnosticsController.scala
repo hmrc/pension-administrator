@@ -20,10 +20,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import javax.inject.Inject
-import play.api.Configuration
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.Cursor
+import reactivemongo.api.{Cursor, ReadConcern}
 import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.bson.{BSONDocument, BSONString}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
@@ -32,8 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.postfixOps
 
-class MongoDiagnosticsController @Inject()(config: Configuration,
-                                           component: ReactiveMongoComponent,
+class MongoDiagnosticsController @Inject()(component: ReactiveMongoComponent,
                                            cc: ControllerComponents) extends BackendController(cc) {
 
   // scalastyle:off magic.number
@@ -138,7 +136,13 @@ class MongoDiagnosticsController @Inject()(config: Configuration,
 
   }
 
-  private def rowCount(collection: BSONCollection): Future[Int] = {
-    collection.count()
+  private def rowCount(collection: BSONCollection): Future[Long] = {
+    collection.count(
+      selector = None,
+      limit = None,
+      skip = 0,
+      hint = None,
+      readConcern = ReadConcern.Available
+    )
   }
 }

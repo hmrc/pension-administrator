@@ -88,9 +88,9 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     )
 
 
-    recoverToExceptionIf[Upstream4xxResponse](connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual)) map {
       ex =>
-        ex.upstreamResponseCode shouldBe BAD_REQUEST
+        ex.statusCode shouldBe BAD_REQUEST
         ex.message should include("INVALID_NINO")
     }
   }
@@ -104,9 +104,9 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Upstream4xxResponse](connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual)) map {
       ex =>
-        ex.upstreamResponseCode shouldBe CONFLICT
+        ex.statusCode shouldBe CONFLICT
     }
   }
 
@@ -186,7 +186,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Upstream5xxResponse](connector.registerWithIdIndividual(testNino, testIndividual, invalidData)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdIndividual(testNino, testIndividual, invalidData)) map {
       _ =>
         auditService.verifyNothingSent shouldBe true
     }
@@ -222,10 +222,10 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Upstream4xxResponse](connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation)) map {
       ex =>
 
-        ex.upstreamResponseCode shouldBe BAD_REQUEST
+        ex.statusCode shouldBe BAD_REQUEST
         ex.message should include("INVALID_UTR")
     }
   }
@@ -301,7 +301,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Upstream5xxResponse](connector.registerWithIdOrganisation(testUtr, testOrganisation, invalidData)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdOrganisation(testUtr, testOrganisation, invalidData)) map {
       _ =>
         auditService.verifyNothingSent shouldBe true
     }
@@ -394,7 +394,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Upstream5xxResponse](connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant)) map {
       _ =>
         auditService.verifyNothingSent shouldBe true
     }
@@ -556,7 +556,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
           )
       )
 
-    recoverToExceptionIf[Upstream5xxResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
       ex =>
         ex.reportAs shouldBe BAD_GATEWAY
     }
@@ -574,7 +574,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
           )
       )
 
-    recoverToExceptionIf[Upstream5xxResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
       ex =>
         ex.reportAs shouldBe BAD_GATEWAY
     }
@@ -655,7 +655,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
           )
       )
 
-    recoverToExceptionIf[Upstream5xxResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
       ex =>
         ex.reportAs shouldBe BAD_GATEWAY
         auditService.verifyNothingSent shouldBe true
@@ -715,7 +715,7 @@ object RegistrationConnectorSpec {
       "phoneNumber" -> JsNull,"mobileNumber" -> JsNull,"faxNumber" -> JsNull,"emailAddress" ->JsNull
   ))
 
-  val organisationRegistrant = OrganisationRegistrant(
+  val organisationRegistrant: OrganisationRegistrant = OrganisationRegistrant(
     OrganisationName("Name"),
     Address("addressLine1", "addressLine2", None, None, None, "US")
   )
@@ -727,7 +727,7 @@ object RegistrationConnectorSpec {
   implicit val hc: HeaderCarrier = HeaderCarrier(requestId = Some(RequestId(testCorrelationId)))
   implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
-  val registerWithoutIdResponse = RegisterWithoutIdResponse(
+  val registerWithoutIdResponse: RegisterWithoutIdResponse = RegisterWithoutIdResponse(
     "XE0001234567890",
     "1234567890"
   )
@@ -802,7 +802,7 @@ object RegistrationConnectorSpec {
     ).toString()
   }
 
-  val registerIndividualWithoutIdRequest =
+  val registerIndividualWithoutIdRequest: RegistrationNoIdIndividualRequest =
     RegistrationNoIdIndividualRequest(
       "test-first-name",
       "test-last-name",

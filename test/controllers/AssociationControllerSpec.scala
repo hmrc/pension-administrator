@@ -130,11 +130,11 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
   it should "throw Upstream5xxResponse when connector throws Upstream5xxResponse" in {
 
-    fakeAssociationConnector.setAcceptInvitationResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+    fakeAssociationConnector.setAcceptInvitationResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
-    recoverToExceptionIf[Upstream5xxResponse](controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))) map {
+    recoverToExceptionIf[UpstreamErrorResponse](controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))) map {
       ex =>
-        ex.upstreamResponseCode mustBe SERVICE_UNAVAILABLE
+        ex.statusCode mustBe SERVICE_UNAVAILABLE
         ex.message mustBe "Failed with 5XX"
     }
   }
@@ -221,21 +221,24 @@ object AssociationControllerSpec extends MockitoSugar {
 
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
-  val individual = IndividualDetails("testFirst", Some("testMiddle"), "testLast")
+  val individual: IndividualDetails =
+    IndividualDetails("testFirst", Some("testMiddle"), "testLast")
 
-  val psaMinimalDetailsIndividualUser = PSAMinimalDetails(
-    "test@email.com",
-    isPsaSuspended = true,
-    None,
-    Some(individual)
-  )
+  val psaMinimalDetailsIndividualUser: PSAMinimalDetails =
+    PSAMinimalDetails(
+      "test@email.com",
+      isPsaSuspended = true,
+      None,
+      Some(individual)
+    )
 
-  val psaMinimalDetailsOrganisationUser = PSAMinimalDetails(
-    "test@email.com",
-    isPsaSuspended = true,
-    Some("PSA Ltd."),
-    None
-  )
+  val psaMinimalDetailsOrganisationUser: PSAMinimalDetails =
+    PSAMinimalDetails(
+      "test@email.com",
+      isPsaSuspended = true,
+      Some("PSA Ltd."),
+      None
+    )
 
   class FakeAssociationConnector extends AssociationConnector {
 
@@ -248,9 +251,9 @@ object AssociationControllerSpec extends MockitoSugar {
     def setAcceptInvitationResponse(response: Future[Either[HttpException, Unit]]): Unit = this.acceptInvitationResponse = response
 
     def getPSAMinimalDetails(psaId: PsaId)(implicit
-                                            headerCarrier: HeaderCarrier,
-                                            ec: ExecutionContext,
-                                            request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = minimalPsaDetailsResponse
+                                           headerCarrier: HeaderCarrier,
+                                           ec: ExecutionContext,
+                                           request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = minimalPsaDetailsResponse
 
     override def acceptInvitation(invitation: AcceptedInvitation)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader):
     Future[Either[HttpException, Unit]] = acceptInvitationResponse

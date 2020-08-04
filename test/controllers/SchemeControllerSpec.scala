@@ -114,20 +114,11 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
     }
   }
 
-  it should "throw Upstream5xxResponse when service throws Upstream5xxResponse" in {
+  it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
 
-    fakeSchemeService.setRegisterPsaResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+    fakeSchemeService.setRegisterPsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
-    recoverToSucceededIf[Upstream5xxResponse] {
-      controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
-    }
-  }
-
-  it should "throw UpStream4xxResponse when service throws UpStream4xxResponse" in {
-
-    fakeSchemeService.setRegisterPsaResponse(Future.failed(Upstream4xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
-
-    recoverToSucceededIf[Upstream4xxResponse] {
+    recoverToSucceededIf[UpstreamErrorResponse] {
       controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
     }
   }
@@ -229,20 +220,20 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
   }
 
 
-  it should "throw Upstream5xxResponse when service throws Upstream5xxResponse" in {
+  it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
 
-    fakeDesConnector.setRemovePsaResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+    fakeDesConnector.setRemovePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
-    recoverToSucceededIf[Upstream5xxResponse] {
+    recoverToSucceededIf[UpstreamErrorResponse] {
       call(controller.removePsa, removePsaFakeRequest(removePsaJson))
     }
   }
 
   it should "throw UpStream4xxResponse when service throws UpStream4xxResponse" in {
 
-    fakeDesConnector.setRemovePsaResponse(Future.failed(Upstream4xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+    fakeDesConnector.setRemovePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
-    recoverToSucceededIf[Upstream4xxResponse] {
+    recoverToSucceededIf[UpstreamErrorResponse] {
       call(controller.removePsa, removePsaFakeRequest(removePsaJson))
     }
   }
@@ -312,20 +303,20 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
   }
 
 
-  it should "throw Upstream5xxResponse when service throws Upstream5xxResponse" in {
+  it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
 
-    fakeDesConnector.setDeregisterPsaResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+    fakeDesConnector.setDeregisterPsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
-    recoverToSucceededIf[Upstream5xxResponse] {
+    recoverToSucceededIf[UpstreamErrorResponse] {
       call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
     }
   }
 
   it should "throw UpStream4xxResponse when service throws UpStream4xxResponse" in {
 
-    fakeDesConnector.setDeregisterPsaResponse(Future.failed(Upstream4xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+    fakeDesConnector.setDeregisterPsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
-    recoverToSucceededIf[Upstream4xxResponse] {
+    recoverToSucceededIf[UpstreamErrorResponse] {
       call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
     }
   }
@@ -377,20 +368,20 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMa
     }
   }
 
-  it should "throw Upstream5xxResponse when service throws Upstream5xxResponse" in {
+  it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
 
-    fakeSchemeService.setUpdatePsaResponse(Future.failed(Upstream5xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+    fakeSchemeService.setUpdatePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
-    recoverToSucceededIf[Upstream5xxResponse] {
+    recoverToSucceededIf[UpstreamErrorResponse] {
       controller.updatePSA(psaId.id)(fakeRequest.withJsonBody(psaVariationData))
     }
   }
 
   it should "throw UpStream4xxResponse when service throws UpStream4xxResponse" in {
 
-    fakeSchemeService.setUpdatePsaResponse(Future.failed(Upstream4xxResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+    fakeSchemeService.setUpdatePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
-    recoverToSucceededIf[Upstream4xxResponse] {
+    recoverToSucceededIf[UpstreamErrorResponse] {
       controller.updatePSA(psaId.id)(fakeRequest.withJsonBody(psaVariationData))
     }
   }

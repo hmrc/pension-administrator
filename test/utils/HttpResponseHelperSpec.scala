@@ -32,13 +32,13 @@ class HttpResponseHelperSpec extends FlatSpec with Matchers with GeneratorDriven
 
   import HttpResponseHelperSpec._
 
-  "handleErrorResponse" should "transform Bad Request into Upstream4xxResponse" in {
+  "handleErrorResponse" should "transform Bad Request into UpstreamErrorResponse" in {
     val response = responseFor(BAD_REQUEST)
-    a[Upstream4xxResponse] should be thrownBy fixture()(response)
+    a[UpstreamErrorResponse] should be thrownBy fixture()(response)
   }
 
   it should "transform Bad Request into HttpResponse if response contains the value defined" in {
-    val response = responseFor(BAD_REQUEST, Some("Bad"))
+    val response = responseFor(BAD_REQUEST, "Bad")
     response shouldBe a[HttpResponse]
     response.status shouldBe BAD_REQUEST
     response.body shouldBe s"Message for Bad"
@@ -50,29 +50,29 @@ class HttpResponseHelperSpec extends FlatSpec with Matchers with GeneratorDriven
     response.status shouldBe NOT_FOUND
   }
 
-  it should "transform any other 4xx into Upstream4xxResponse" in {
+  it should "transform any other 4xx into UpstreamErrorResponse" in {
     val userErrors = for (n <- Gen.choose(400, 499) suchThat (n => n != 400 && n != 404)) yield n
     forAll(userErrors) {
       userError =>
-        val ex = the[Upstream4xxResponse] thrownBy fixture()(responseFor(userError))
+        val ex = the[UpstreamErrorResponse] thrownBy fixture()(responseFor(userError))
         ex.reportAs shouldBe userError
-        ex.upstreamResponseCode shouldBe userError
+        ex.statusCode shouldBe userError
     }
   }
 
-  it should "transform any 5xx into Upstream5xxResponse" in {
+  it should "transform any 5xx into UpstreamErrorResponse" in {
     val serverErrors = for (n <- Gen.choose(500, 599)) yield n
 
     forAll(serverErrors) {
       serverError =>
-        val ex = the[Upstream5xxResponse] thrownBy fixture()(responseFor(serverError))
+        val ex = the[UpstreamErrorResponse] thrownBy fixture()(responseFor(serverError))
         ex.reportAs shouldBe BAD_GATEWAY
-        ex.upstreamResponseCode shouldBe serverError
+        ex.statusCode shouldBe serverError
     }
   }
 
   it should "transform any other status into an UnrecognisedHttpResponseException" in {
-    val statuses = for (n <- Gen.choose(0, 1000) suchThat(n => n < 400 || n >= 600)) yield n
+    val statuses = for (n <- Gen.choose(0, 1000) suchThat (n => n < 400 || n >= 600)) yield n
 
     forAll(statuses) {
       status =>
@@ -137,12 +137,15 @@ object HttpResponseHelperSpec {
     new HttpResponseHelper {}
   }
 
-  def fixture(errorSeq : Seq[String] = Seq()): HttpResponse => HttpException = {
-    fixture.handleErrorResponse(testMethod, testUrl, _ ,errorSeq)
+  def fixture(errorSeq: Seq[String] = Seq()): HttpResponse => HttpException = {
+    fixture.handleErrorResponse(testMethod, testUrl, _, errorSeq)
   }
 
-  def responseFor(status: Int, body:Option[String]=None): HttpResponse = {
-    HttpResponse(status, None, Map.empty, Some(s"Message for ${body.getOrElse(status)}"))
+  def responseFor(status: Int, body: String = "None"): HttpResponse = {
+    HttpResponse(
+      status = status,
+      body = s"Message for $body"
+    )
   }
 
   case class Dummy(name: String)

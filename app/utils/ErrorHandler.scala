@@ -37,10 +37,8 @@ trait ErrorHandler {
       Future.failed(new BadRequestException(e.message))
     case e: NotFoundException =>
       Future.failed(new NotFoundException(e.message))
-    case e: Upstream4xxResponse =>
-      Future.failed(Upstream4xxResponse(e.message, e.upstreamResponseCode, e.reportAs))
-    case e: Upstream5xxResponse =>
-      Future.failed(Upstream5xxResponse(e.message, e.upstreamResponseCode, e.reportAs))
+    case e: UpstreamErrorResponse =>
+      Future.failed(UpstreamErrorResponse(e.message, e.statusCode, e.reportAs, e.headers))
     case e: Exception =>
       Future.failed(new Exception(e.getMessage))
   }
@@ -50,19 +48,22 @@ trait ErrorHandler {
     val responseBodyRegex: Regex = """^.*Response body:? '(.*)'$""".r
 
     val httpEntity = ex.message match {
-      case responseBodyRegex(body) => HttpEntity.Strict(ByteString(body), Some("application/json"))
-      case message: String => HttpEntity.Strict(ByteString(message), Some("text/plain"))
-      case _ => HttpEntity.NoEntity
+      case responseBodyRegex(body) =>
+        HttpEntity.Strict(ByteString(body), Some("application/json"))
+      case message: String =>
+        HttpEntity.Strict(ByteString(message), Some("text/plain"))
+      case _ =>
+        HttpEntity.NoEntity
     }
 
     Result(ResponseHeader(ex.responseCode), httpEntity)
   }
 
   protected def logWarning[A](endpoint: String): PartialFunction[Try[Either[HttpException, A]], Unit] = {
-    case Success(Left(e: HttpException)) => Logger.warn(s"$endpoint received error response from DES", e)
-    case Failure(e) => Logger.error(s"$endpoint received error response from DES", e)
+    case Success(Left(e: HttpException)) =>
+      Logger.warn(s"$endpoint received error response from DES", e)
+    case Failure(e) =>
+      Logger.error(s"$endpoint received error response from DES", e)
   }
-
-
 }
 

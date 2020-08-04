@@ -150,7 +150,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       }
     }
 
-    "throw Upstream4xxResponse when auth all retrievals are not present" in {
+    "throw UpstreamErrorResponse when auth all retrievals are not present" in {
 
       val retrievalsGen = Gen.oneOf(Seq(
         new ~(None, None),
@@ -163,7 +163,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         val result = registrationController(Future.successful(retrievals)).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
 
         ScalaFutures.whenReady(result.failed) { e =>
-          e mustBe a[Upstream4xxResponse]
+          e mustBe a[UpstreamErrorResponse]
           e.getMessage mustBe "Not authorized"
         }
 
@@ -171,7 +171,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     }
 
-    "throw Upstream5xxResponse when given Upstream5xxResponse from connector" in {
+    "throw UpstreamErrorResponse when given UpstreamErrorResponse from connector" in {
 
       val failureResponse = Json.obj(
         "code" -> "SERVER_ERROR",
@@ -179,12 +179,12 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       )
 
       when(mockRegistrationConnector.registerWithIdIndividual(Matchers.eq(nino), any(), Matchers.eq(mandatoryRequestData))(any(), any(), any()))
-        .thenReturn(Future.failed(Upstream5xxResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
+        .thenReturn(Future.failed(UpstreamErrorResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
 
       val result = registrationController(individualRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
 
       ScalaFutures.whenReady(result.failed) { e =>
-        e mustBe a[Upstream5xxResponse]
+        e mustBe a[UpstreamErrorResponse]
         e.getMessage mustBe failureResponse.toString()
 
         verify(mockRegistrationConnector, times(1))
@@ -317,7 +317,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       }
     }
 
-    "throw Upstream4xxResponse when auth all retrievals are not present" in {
+    "throw UpstreamErrorResponse when auth all retrievals are not present" in {
 
       val retrievalsGen = Gen.oneOf(Seq(
         new ~(None, None),
@@ -330,7 +330,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         val result = registrationController(Future.successful(retrievals)).registerWithIdOrganisation(fakeRequest.withJsonBody(inputData))
 
         ScalaFutures.whenReady(result.failed) { e =>
-          e mustBe a[Upstream4xxResponse]
+          e mustBe a[UpstreamErrorResponse]
           e.getMessage mustBe "Not authorized"
         }
 
@@ -338,7 +338,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     }
 
-    "throw Upstream5xxResponse when given Upstream5xxResponse from connector" in {
+    "throw UpstreamErrorResponse when given UpstreamErrorResponse from connector" in {
 
       val failureResponse = Json.obj(
         "code" -> "SERVER_ERROR",
@@ -346,12 +346,12 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       )
 
       when(mockRegistrationConnector.registerWithIdOrganisation(Matchers.eq("1100000000"), any(), any())(any(), any(), any()))
-        .thenReturn(Future.failed(Upstream5xxResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
+        .thenReturn(Future.failed(UpstreamErrorResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
 
       val result = registrationController(organisationRetrievals).registerWithIdOrganisation(fakeRequest.withJsonBody(inputData))
 
       ScalaFutures.whenReady(result.failed) { e =>
-        e mustBe a[Upstream5xxResponse]
+        e mustBe a[UpstreamErrorResponse]
         e.getMessage mustBe failureResponse.toString()
 
         verify(mockRegistrationConnector, times(1))
@@ -419,7 +419,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       }
     }
 
-    "throw Upstream4xxResponse when auth all retrievals are not present" in {
+    "throw UpstreamErrorResponse when auth all retrievals are not present" in {
 
       val retrievalsGen = Gen.oneOf(Seq(
         new ~(None, None),
@@ -432,7 +432,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         val result = call(registrationController(Future.successful(retrievals)).registrationNoIdOrganisation, fakeRequest(dataFromFrontend))
 
         ScalaFutures.whenReady(result.failed) { e =>
-          e mustBe a[Upstream4xxResponse]
+          e mustBe a[UpstreamErrorResponse]
           e.getMessage mustBe "Not authorized"
         }
 
@@ -440,7 +440,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     }
 
-    "throw Upstream5xxResponse when given Upstream5xxResponse from connector" in {
+    "throw UpstreamErrorResponse when given UpstreamErrorResponse from connector" in {
 
       val failureResponse = Json.obj(
         "code" -> "SERVER_ERROR",
@@ -448,12 +448,12 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       )
 
       when(mockRegistrationConnector.registrationNoIdOrganisation(any(), Matchers.eq(dataToEmtp))(any(), any(), any()))
-        .thenReturn(Future.failed(Upstream5xxResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
+        .thenReturn(Future.failed(UpstreamErrorResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
 
       val result = call(registrationController(organisationRetrievals).registrationNoIdOrganisation, fakeRequest(dataFromFrontend))
 
       ScalaFutures.whenReady(result.failed) { e =>
-        e mustBe a[Upstream5xxResponse]
+        e mustBe a[UpstreamErrorResponse]
         e.getMessage mustBe failureResponse.toString()
 
         verify(mockRegistrationConnector, times(1))
@@ -503,20 +503,20 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     }
 
-    "throw Upstream4xxResponse when auth all retrievals are not present" in {
+    "throw UpstreamErrorResponse when auth all retrievals are not present" in {
 
       val retrievals = new ~(None, Some(AffinityGroup.Organisation))
 
       val result = call(registrationController(Future.successful(retrievals)).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
 
       ScalaFutures.whenReady(result.failed) { e =>
-        e mustBe a[Upstream4xxResponse]
+        e mustBe a[UpstreamErrorResponse]
         e.getMessage mustBe "Not authorized"
       }
     }
 
 
-    "throw Upstream5xxResponse when given Upstream5xxResponse from connector" in {
+    "throw UpstreamErrorResponse when given UpstreamErrorResponse from connector" in {
 
       val failureResponse = Json.obj(
         "code" -> "SERVER_ERROR",
@@ -524,12 +524,12 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       )
 
       when(mockRegistrationConnector.registrationNoIdIndividual(any(), Matchers.eq(individualNoIdToConnector))(any(), any(), any()))
-        .thenReturn(Future.failed(Upstream5xxResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
+        .thenReturn(Future.failed(UpstreamErrorResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
 
       val result = call(registrationController(individualRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
 
       ScalaFutures.whenReady(result.failed) { e =>
-        e mustBe a[Upstream5xxResponse]
+        e mustBe a[UpstreamErrorResponse]
         e.getMessage mustBe failureResponse.toString()
 
         verify(mockRegistrationConnector, times(1))
