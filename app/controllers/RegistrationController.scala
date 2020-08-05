@@ -67,7 +67,7 @@ class RegistrationController @Inject()(
             Try(((jsBody \ "utr").convertTo[String], jsBody.convertTo[Organisation])) match {
               case Success((utr, org)) =>
                 val orgWithInvalidCharactersRemoved = org.copy( organisationName =
-                  org.organisationName.replaceAll("""[^a-zA-Z0-9 '&\/]+""", ""))
+                  org.organisationName.replaceAll("""[^a-zA-Z0-9- '&\/]+""", ""))
                 val registerWithIdData = mandatoryPODSData(true).as[JsObject] ++
                   Json.obj("organisation" -> Json.toJson(orgWithInvalidCharactersRemoved))
                 registerConnector.registerWithIdOrganisation(utr, user, registerWithIdData) map handleResponse
