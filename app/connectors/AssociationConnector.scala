@@ -48,7 +48,6 @@ trait AssociationConnector {
 @Singleton
 class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
                                          appConfig: AppConfig,
-                                         logger: LoggerLike,
                                          invalidPayloadHandler: InvalidPayloadHandler,
                                          headerUtils: HeaderUtils,
                                          auditService: AuditService)

@@ -16,10 +16,8 @@
 
 package connectors
 
-import audit.AuditService
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
-import connectors.helper.HeaderUtils
 import models.SchemeReferenceNumber
 import play.api.http.Status._
 import play.api.libs.json.JsValue
@@ -27,7 +25,7 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+import utils.{ErrorHandler, HttpResponseHelper}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -46,10 +44,7 @@ trait SchemeConnector {
 
 class SchemeConnectorImpl @Inject()(
                                   http: HttpClient,
-                                  config: AppConfig,
-                                  auditService: AuditService,
-                                  invalidPayloadHandler: InvalidPayloadHandler,
-                                  headerUtils: HeaderUtils
+                                  config: AppConfig
                                 ) extends SchemeConnector with HttpResponseHelper with ErrorHandler {
 
 

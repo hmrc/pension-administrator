@@ -77,7 +77,7 @@ class InvalidPayloadHandlerImpl @Inject()(logger: LoggerLike) extends InvalidPay
     val failures = getFailures(schema, json)
     val msg = new StringBuilder()
 
-    msg.append("Invalid Paylod JSON Failures\n")
+    msg.append("Invalid Payload JSON Failures\n")
     msg.append(s"Failures: ${failures.size}\n")
     msg.append("\n")
 
