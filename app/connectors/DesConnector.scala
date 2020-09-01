@@ -186,7 +186,7 @@ class DesConnectorImpl @Inject()(
 
     response.status match {
       case OK => Right(validateGetJson(response.json))
-      case status => Left(handleErrorResponse("PSA Subscription details", url, response, badResponseSeq))
+      case _ => Left(handleErrorResponse("PSA Subscription details", url, response, badResponseSeq))
     }
 
   }
@@ -206,9 +206,9 @@ class DesConnectorImpl @Inject()(
       Logger.warn(s"PensionAdministratorFailedMapToUserAnswers - [$temporaryMappingTest]")
     }
     json.validate[PsaSubscription] match {
-      case JsSuccess(value, _) =>
+      case JsSuccess(_, _) =>
         json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers).getOrElse(throw new PSAFailedMapToUserAnswersException)
-      case JsError(errors) => throw new JsResultException(errors)
+      case JsError(errors) => throw JsResultException(errors)
     }
   }
 
