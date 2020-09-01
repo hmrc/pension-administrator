@@ -171,7 +171,7 @@ object SchemeServiceImplSpec extends SpecBase {
     val schemeConnector: FakeDesConnector = new FakeDesConnector()
     val auditService: StubSuccessfulAuditService = new StubSuccessfulAuditService()
     val schemeAuditService: SchemeAuditService = new SchemeAuditService()
-    val schemeService: SchemeServiceImpl = new SchemeServiceImpl(schemeConnector, auditService, appConfig, schemeAuditService) {
+    val schemeService: SchemeServiceImpl = new SchemeServiceImpl(schemeConnector, auditService, schemeAuditService) {
     }
   }
 

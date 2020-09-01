@@ -32,7 +32,6 @@ import scala.util.{Failure, Success, Try}
 
 class SchemeServiceImpl @Inject()(desConnector: DesConnector,
                                   auditService: AuditService,
-                                  appConfig: AppConfig,
                                   schemeAuditService: SchemeAuditService) extends SchemeService{
 
   override def registerPSA(json: JsValue)(

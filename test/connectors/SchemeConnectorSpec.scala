@@ -30,7 +30,7 @@ import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, Upstream4xxResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, UpstreamErrorResponse}
 import utils.{StubLogger, WireMockHelper}
 
 class SchemeConnectorSpec extends AsyncFlatSpec
@@ -142,7 +142,7 @@ object SchemeConnectorSpec extends JsonFileReader {
   val logger = new StubLogger()
   val checkForAssociationUrl = "/pensions-scheme/is-psa-associated"
   val listSchemesUrl = "/pensions-scheme/list-of-schemes"
-  val srn = SchemeReferenceNumber("S0987654321")
-  val psaId = PsaId("A7654321")
+  val srn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")
+  val psaId: PsaId = PsaId("A7654321")
 
 }
