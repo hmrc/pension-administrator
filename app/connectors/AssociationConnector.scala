@@ -95,7 +95,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
       case FORBIDDEN if response.body.contains("INVALID_INVITER_PSAID") => Left(new BadRequestException("INVALID_INVITER_PSAID"))
       case FORBIDDEN if response.body.contains("INVALID_INVITEE_PSAID") => Left(new BadRequestException("INVALID_INVITEE_PSAID"))
       case BAD_REQUEST if response.body.contains("INVALID_PAYLOAD") =>
-        invalidPayloadHandler.logFailures("/resources/schemas/createPsaAssociationRequest.json")(response.json)
+        invalidPayloadHandler.logFailures("/resources/schemas/createPsaAssociationRequest.json", url)(response.json)
         Left(new BadRequestException("INVALID PAYLOAD"))
       case _ => Left(handleErrorResponse("POST", url, response, Seq("INVALID_PSTR", "INVALID_CORRELATION_ID")))
     }
@@ -126,7 +126,8 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
     Logger.debug(s"[Accept-Invitation-Outgoing-Payload] - ${acceptedInvitationJsValue.toString()}")
 
     httpClient.POST[JsValue, HttpResponse](url, acceptedInvitationJsValue)(
-      implicitly, implicitly, headerCarrierWithDesHeaders, implicitly) map (processResponse(acceptedInvitation,_, url))
+      implicitly, implicitly, headerCarrierWithDesHeaders, implicitly
+    ) map (processResponse(acceptedInvitation,_, url))
   }
 }
 

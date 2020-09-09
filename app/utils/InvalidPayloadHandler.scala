@@ -31,7 +31,7 @@ trait InvalidPayloadHandler {
 
   def getFailures(schemaFileName: String)(json: JsValue): Set[ValidationFailure]
 
-  def logFailures(schemaFileName: String)(json: JsValue): Unit
+  def logFailures(schemaFileName: String, args: String*)(json: JsValue): Unit
 
 }
 
@@ -65,19 +65,19 @@ class InvalidPayloadHandlerImpl @Inject()(logger: LoggerLike) extends InvalidPay
 
   }
 
-  override def logFailures(schemaFileName: String)(json: JsValue): Unit = {
+  override def logFailures(schemaFileName: String, args: String*)(json: JsValue): Unit = {
 
     val schema = loadSchema(schemaFileName)
-    logFailures(schema, json)
+    logFailures(schema, json, args)
 
   }
 
-  private[utils] def logFailures(schema: JsonSchema, json: JsValue): Unit = {
+  private[utils] def logFailures(schema: JsonSchema, json: JsValue, args: Seq[String]): Unit = {
 
     val failures = getFailures(schema, json)
     val msg = new StringBuilder()
 
-    msg.append("Invalid Payload JSON Failures\n")
+    msg.append(s"Invalid Payload JSON Failures${if (args.nonEmpty) s" for url: ${args.head}"}\n")
     msg.append(s"Failures: ${failures.size}\n")
     msg.append("\n")
 
