@@ -82,13 +82,13 @@ class DesConnectorImpl @Inject()(
 
     val psaSchema = "/resources/schemas/psaSubscription.json"
 
-    val schemeAdminRegisterUrl = config.schemeAdminRegistrationUrl
+    val url = config.schemeAdminRegistrationUrl
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
-    http.POST[JsValue, HttpResponse](schemeAdminRegisterUrl, registerData)(implicitly, implicitly, hc, implicitly) map {
-      handlePostResponse(_, schemeAdminRegisterUrl)
-    } andThen logFailures("register PSA", registerData, psaSchema)
+    http.POST[JsValue, HttpResponse](url, registerData)(implicitly, implicitly, hc, implicitly) map {
+      handlePostResponse(_, url)
+    } andThen logFailures("register PSA", registerData, psaSchema, url)
   }
 
   override def getPSASubscriptionDetails(psaId: String)(implicit
@@ -117,16 +117,16 @@ class DesConnectorImpl @Inject()(
 
     val removePsaSchema = "/resources/schemas/removePsa.json"
 
-    val removePsaUrl = config.removePsaUrl.format(psaToBeRemoved.psaId, psaToBeRemoved.pstr)
+    val url = config.removePsaUrl.format(psaToBeRemoved.psaId, psaToBeRemoved.pstr)
 
     val data: JsValue = Json.obj("ceaseDate" -> psaToBeRemoved.removalDate.toString)
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
-    http.POST[JsValue, HttpResponse](removePsaUrl, data)(implicitly, implicitly, hc, implicitly) map {
-      handlePostResponse(_, removePsaUrl)
+    http.POST[JsValue, HttpResponse](url, data)(implicitly, implicitly, hc, implicitly) map {
+      handlePostResponse(_, url)
     } andThen schemeAuditService.sendPSARemovalAuditEvent(psaToBeRemoved)(auditService.sendEvent) andThen
-      logFailures("remove PSA", data, removePsaSchema)
+      logFailures("remove PSA", data, removePsaSchema, url)
   }
 
   override def deregisterPSA(psaId: String)(implicit
@@ -136,17 +136,17 @@ class DesConnectorImpl @Inject()(
 
     val deregisterPsaSchema = "/resources/schemas/deregisterPsa.json"
 
-    val deregisterPsaUrl = config.deregisterPsaUrl.format(psaId)
+    val url = config.deregisterPsaUrl.format(psaId)
 
     val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
-    http.POST[JsValue, HttpResponse](deregisterPsaUrl, data)(implicitly, implicitly, hc, implicitly) map {
-      handlePostResponse(_, deregisterPsaUrl)
+    http.POST[JsValue, HttpResponse](url, data)(implicitly, implicitly, hc, implicitly) map {
+      handlePostResponse(_, url)
     } andThen sendPSADeEnrolEvent(
       psaId
-    )(auditService.sendEvent) andThen logFailures("deregister PSA", data, deregisterPsaSchema)
+    )(auditService.sendEvent) andThen logFailures("deregister PSA", data, deregisterPsaSchema, url)
   }
 
   override def updatePSA(psaId: String, data: JsValue)(implicit
@@ -156,13 +156,13 @@ class DesConnectorImpl @Inject()(
 
     val psaVariationSchema = "/resources/schemas/psaVariation.json"
 
-    val psaVariationUrl = config.psaVariationDetailsUrl.format(psaId)
+    val url = config.psaVariationDetailsUrl.format(psaId)
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
-    http.POST[JsValue, HttpResponse](psaVariationUrl, data)(implicitly, implicitly, hc, implicitly) map {
-      handlePostResponse(_, psaVariationUrl)
-    } andThen logFailures("Update PSA", data, psaVariationSchema)
+    http.POST[JsValue, HttpResponse](url, data)(implicitly, implicitly, hc, implicitly) map {
+      handlePostResponse(_, url)
+    } andThen logFailures("Update PSA", data, psaVariationSchema, url)
   }
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
@@ -191,9 +191,9 @@ class DesConnectorImpl @Inject()(
 
   }
 
-  private def logFailures(endpoint: String, data: JsValue, schemaPath: String): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+  private def logFailures(endpoint: String, data: JsValue, schemaPath: String, args: String*): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
     case Success(Left(e: BadRequestException)) if e.message.contains("INVALID_PAYLOAD") =>
-      invalidPayloadHandler.logFailures(schemaPath)(data)
+      invalidPayloadHandler.logFailures(schemaPath, args.headOption.getOrElse(""))(data)
     case Success(Left(e: HttpResponse)) => Logger.warn(s"$endpoint received error response from DES", e)
   }
 
