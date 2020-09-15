@@ -94,7 +94,9 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar{
 
   private val invitation = readJsonFromFile("/data/validInvitation.json")
 
-  val response = PSAMinimalDetails("aaa@email.com",true,None,Some(IndividualDetails("John",Some("Doe"),"Doe")))
+  val response = PSAMinimalDetails("aaa@email.com",true,None,Some(IndividualDetails("John",Some("Doe"),"Doe")),
+    rlsFlag = true,
+    deceasedFlag = true)
 
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 

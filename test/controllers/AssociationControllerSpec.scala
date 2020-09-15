@@ -229,7 +229,9 @@ object AssociationControllerSpec extends MockitoSugar {
       "test@email.com",
       isPsaSuspended = true,
       None,
-      Some(individual)
+      Some(individual),
+      rlsFlag = true,
+      deceasedFlag = true
     )
 
   val psaMinimalDetailsOrganisationUser: PSAMinimalDetails =
@@ -237,7 +239,9 @@ object AssociationControllerSpec extends MockitoSugar {
       "test@email.com",
       isPsaSuspended = true,
       Some("PSA Ltd."),
-      None
+      None,
+      rlsFlag = true,
+      deceasedFlag = true
     )
 
   class FakeAssociationConnector extends AssociationConnector {

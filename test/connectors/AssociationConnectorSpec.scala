@@ -503,8 +503,8 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
       |	},
       |	"email": "test@email.com",
       |	"psaSuspensionFlag": true,
-      |	"rlsFlag": false,
-      |	"deceasedFlag": false
+      |	"rlsFlag": true,
+      |	"deceasedFlag": true
       |}""".stripMargin)
 
   val psaMinimalDetailsIndividualUser = PSAMinimalDetails(
@@ -515,7 +515,9 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
       "testFirst",
       Some("testMiddle"),
       "testLast"
-    ))
+    )),
+    rlsFlag = true,
+    deceasedFlag = true
   )
 
   private implicit val rh: RequestHeader = FakeRequest("", "")
@@ -542,7 +544,6 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
     )
 
   private lazy val connector = injector.instanceOf[AssociationConnector]
-  private lazy val config = injector.instanceOf[AppConfig]
 
   "getPSAMinimalDetails with IF toggle switched ON" should "return OK (200) with a JSON payload" in {
 
@@ -864,7 +865,9 @@ object AssociationConnectorSpec extends OptionValues {
       "testFirst",
       Some("testMiddle"),
       "testLast"
-    ))
+    )),
+    rlsFlag = false,
+    deceasedFlag = false
   )
 }
 

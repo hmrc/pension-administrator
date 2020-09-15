@@ -23,7 +23,9 @@ case class PSAMinimalDetails(
                               email: String,
                               isPsaSuspended: Boolean,
                               organisationName: Option[String],
-                              individualDetails: Option[IndividualDetails]
+                              individualDetails: Option[IndividualDetails],
+                              rlsFlag: Boolean,
+                              deceasedFlag: Boolean
                             ) {
 
   def name: Option[String] = {
@@ -41,16 +43,18 @@ object PSAMinimalDetails {
       (JsPath \ "psaMinimalDetails" \ "individualDetails").readNullable[IndividualDetails](IndividualDetails.individualDetailReads) and
       (JsPath \ "psaMinimalDetails" \ "organisationOrPartnershipName").readNullable[String]
     ) ((email, isPsaSuspended, indvDetails, orgName) =>
-    PSAMinimalDetails(email, isPsaSuspended, orgName, indvDetails)
+    PSAMinimalDetails(email, isPsaSuspended, orgName, indvDetails, rlsFlag = false, deceasedFlag = false)
   )
 
   implicit val psaMinimalDetailsIFReads: Reads[PSAMinimalDetails] = (
     (JsPath \ "email").read[String] and
       (JsPath \ "psaSuspensionFlag").read[Boolean] and
       (JsPath \ "minimalDetails" \ "individualDetails").readNullable[IndividualDetails](IndividualDetails.individualDetailReads) and
-      (JsPath \ "minimalDetails" \ "organisationOrPartnershipName").readNullable[String]
-    ) ((email, isPsaSuspended, indvDetails, orgName) =>
-    PSAMinimalDetails(email, isPsaSuspended, orgName, indvDetails)
+      (JsPath \ "minimalDetails" \ "organisationOrPartnershipName").readNullable[String] and
+      (JsPath \ "rlsFlag").read[Boolean] and
+      (JsPath \ "deceasedFlag").read[Boolean]
+    ) ((email, isPsaSuspended, indvDetails, orgName, rlsFlag, deceasedFlag) =>
+    PSAMinimalDetails(email, isPsaSuspended, orgName, indvDetails, rlsFlag, deceasedFlag)
   )
 
   implicit val defaultWrites : Writes[PSAMinimalDetails] = Json.writes[PSAMinimalDetails]

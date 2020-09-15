@@ -319,17 +319,25 @@ object InvitationServiceImplSpec extends MockitoSugar {
 
   val johnDoePsaId = PsaId("A2000001")
   val johnDoeEmail = "john.doe@email.com"
-  val johnDoe = PSAMinimalDetails(johnDoeEmail, false, None, Some(IndividualDetails("John", None, "Doe")))
+  val johnDoe = PSAMinimalDetails(johnDoeEmail, false, None, Some(IndividualDetails("John", None, "Doe")),
+    rlsFlag = true,
+    deceasedFlag = true)
 
   val expiryDate = new DateTime("2018-10-10")
 
   val joeBloggsPsaId = PsaId("A2000002")
-  val joeBloggs = PSAMinimalDetails("joe.bloggs@email.com", false, None, Some(IndividualDetails("Joe", Some("Herbert"), "Bloggs")))
+  val joeBloggs = PSAMinimalDetails("joe.bloggs@email.com", false, None, Some(IndividualDetails("Joe", Some("Herbert"), "Bloggs")),
+    rlsFlag = true,
+    deceasedFlag = true)
 
   val acmeLtdPsaId = PsaId("A2000003")
   val blankPsaId = PsaId("A2222222")
-  val acmeLtd = PSAMinimalDetails("info@acme.com", false, Some("Acme Ltd"), None)
-  val blank = PSAMinimalDetails("info@acme.com", false, None, None)
+  val acmeLtd = PSAMinimalDetails("info@acme.com", false, Some("Acme Ltd"), None,
+    rlsFlag = true,
+    deceasedFlag = true)
+  val blank = PSAMinimalDetails("info@acme.com", false, None, None,
+    rlsFlag = true,
+    deceasedFlag = true)
 
   val notFoundPsaId = PsaId("A2000004")
   val associatedPsaId = PsaId("A2000005")

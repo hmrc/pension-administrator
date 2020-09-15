@@ -71,6 +71,16 @@ class PsaMinimalDetailsReadsSpec extends WordSpec with MustMatchers with OptionV
         val output = orgPayload.as[PSAMinimalDetails](PSAMinimalDetails.psaMinimalDetailsReads)
         output.organisationName mustBe psaMinimalDetailsUser.organisationName
       }
+
+      "we have rlsFlag as defaulting to false" in {
+        val output = individualDetailPayload.as[PSAMinimalDetails](PSAMinimalDetails.psaMinimalDetailsReads)
+        output.rlsFlag mustBe false
+      }
+
+      "we have deceasedFlag as defaulting to false" in {
+        val output = individualDetailPayload.as[PSAMinimalDetails](PSAMinimalDetails.psaMinimalDetailsReads)
+        output.deceasedFlag mustBe false
+      }
     }
   }
 
@@ -96,6 +106,16 @@ class PsaMinimalDetailsReadsSpec extends WordSpec with MustMatchers with OptionV
       "we have minimal detail object with organisation data" in {
         val output = orgIFPayload.as[PSAMinimalDetails](PSAMinimalDetails.psaMinimalDetailsIFReads)
         output.organisationName mustBe psaMinimalDetailsUser.organisationName
+      }
+
+      "we have rlsFlag" in {
+        val output = individualDetailIFPayload.as[PSAMinimalDetails](PSAMinimalDetails.psaMinimalDetailsIFReads)
+        output.rlsFlag mustBe psaMinimalDetailsUser.rlsFlag
+      }
+
+      "we have deceasedFlag" in {
+        val output = individualDetailIFPayload.as[PSAMinimalDetails](PSAMinimalDetails.psaMinimalDetailsIFReads)
+        output.deceasedFlag mustBe psaMinimalDetailsUser.deceasedFlag
       }
     }
   }
@@ -130,8 +150,8 @@ object PsaMinimalDetailsReadsSpec {
       |	},
       |	"email": "test@email.com",
       |	"psaSuspensionFlag": true,
-      |	"rlsFlag": false,
-      |	"deceasedFlag": false
+      |	"rlsFlag": true,
+      |	"deceasedFlag": true
       |}""".stripMargin)
 
   private val orgPayload = Json.parse(
@@ -158,8 +178,8 @@ object PsaMinimalDetailsReadsSpec {
       |	},
       |	"email": "test@email.com",
       |	"psaSuspensionFlag": true,
-      |	"rlsFlag": false,
-      |	"deceasedFlag": false
+      |	"rlsFlag": true,
+      |	"deceasedFlag": true
       |}
       |
     """.stripMargin
@@ -174,7 +194,9 @@ object PsaMinimalDetailsReadsSpec {
       "testFirst",
       Some("testMiddle"),
       "testLast"
-    ))
+    )),
+    rlsFlag = true,
+    deceasedFlag = true
   )
 }
 
