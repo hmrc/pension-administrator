@@ -44,6 +44,15 @@ object PSAMinimalDetails {
     PSAMinimalDetails(email, isPsaSuspended, orgName, indvDetails)
   )
 
+  implicit val psaMinimalDetailsIFReads: Reads[PSAMinimalDetails] = (
+    (JsPath \ "email").read[String] and
+      (JsPath \ "psaSuspensionFlag").read[Boolean] and
+      (JsPath \ "minimalDetails" \ "individualDetails").readNullable[IndividualDetails](IndividualDetails.individualDetailReads) and
+      (JsPath \ "minimalDetails" \ "organisationOrPartnershipName").readNullable[String]
+    ) ((email, isPsaSuspended, indvDetails, orgName) =>
+    PSAMinimalDetails(email, isPsaSuspended, orgName, indvDetails)
+  )
+
   implicit val defaultWrites : Writes[PSAMinimalDetails] = Json.writes[PSAMinimalDetails]
 }
 

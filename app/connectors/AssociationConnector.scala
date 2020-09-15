@@ -19,18 +19,20 @@ package connectors
 import audit.{AssociationAuditService, AuditService}
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
+import config.FeatureSwitchManagementService
 import connectors.helper.HeaderUtils
 import models._
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import play.api.{Logger, LoggerLike}
+import play.api.{LoggerLike, Logger}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+import utils.Toggles
+import utils.{InvalidPayloadHandler, HttpResponseHelper, ErrorHandler}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Future, ExecutionContext}
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
@@ -50,7 +52,9 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
                                          appConfig: AppConfig,
                                          invalidPayloadHandler: InvalidPayloadHandler,
                                          headerUtils: HeaderUtils,
-                                         auditService: AuditService)
+                                         auditService: AuditService,
+                                         fs: FeatureSwitchManagementService
+)
   extends AssociationConnector with HttpResponseHelper with ErrorHandler with AssociationAuditService {
 
   import AssociationConnectorImpl._
@@ -59,15 +63,27 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {
+    if(fs.get(Toggles.ifEnabled)) {
+      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
+        headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
 
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+      val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format("PSA", psaId)
 
-    val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(psaId)
+      httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
+        implicitly) map {
+        handleResponseIF(_, minimalDetailsUrl)
+      } andThen sendGetMinimalPSADetailsEvent(psaId = psaId.id)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
 
-    httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
-      implicitly) map {
-      handleResponse(_, minimalDetailsUrl)
-    } andThen sendGetMinimalPSADetailsEvent(psaId = psaId.id)(auditService.sendEvent) andThen logWarning("PSA minimal details")
+    } else {
+      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+
+      val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(psaId)
+      httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
+        implicitly) map {
+        handleResponse(_, minimalDetailsUrl)
+      } andThen sendGetMinimalPSADetailsEvent(psaId = psaId.id)(auditService.sendEvent) andThen logWarning("PSA minimal details")
+    }
+
 
   }
 
@@ -75,7 +91,23 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
     val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATIONID")
     response.status match {
       case OK =>
-        response.json.validate[PSAMinimalDetails].fold(
+        response.json.validate[PSAMinimalDetails](PSAMinimalDetails.psaMinimalDetailsReads).fold(
+          _ => {
+            invalidPayloadHandler.logFailures("/resources/schemas/getPSAMinimalDetails.json")(response.json)
+            Left(new BadRequestException("INVALID PAYLOAD"))
+          },
+          value =>
+            Right(value)
+        )
+      case _ => Left(handleErrorResponse("PSA minimal details", url, response, badResponseSeq))
+    }
+  }
+
+  private def handleResponseIF(response: HttpResponse, url: String): Either[HttpException, PSAMinimalDetails] = {
+    val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATIONID")
+    response.status match {
+      case OK =>
+        response.json.validate[PSAMinimalDetails](PSAMinimalDetails.psaMinimalDetailsIFReads).fold(
           _ => {
             invalidPayloadHandler.logFailures("/resources/schemas/getPSAMinimalDetails.json")(response.json)
             Left(new BadRequestException("INVALID PAYLOAD"))

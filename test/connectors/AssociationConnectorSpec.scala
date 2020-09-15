@@ -16,12 +16,17 @@
 
 package connectors
 
-import audit.{AuditService, InvitationAcceptanceAuditEvent, MinimalPSADetailsEvent, StubSuccessfulAuditService}
+import audit.AuditService
+import audit.InvitationAcceptanceAuditEvent
+import audit.MinimalPSADetailsEvent
+import audit.StubSuccessfulAuditService
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
+import config.FeatureSwitchManagementService
 import connectors.helper.ConnectorBehaviours
 import models._
 import org.scalatest._
+import org.scalatest.mockito.MockitoSugar
 import org.slf4j.event.Level
 import play.api.LoggerLike
 import play.api.inject.bind
@@ -32,14 +37,17 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
-import utils.{StubLogger, WireMockHelper}
+import utils.StubLogger
+import utils.WireMockHelper
+import org.mockito.{Matchers => MockitoMatchers}
+import org.mockito.Mockito._
 
 class AssociationConnectorSpec extends AsyncFlatSpec
   with Matchers
   with WireMockHelper
   with OptionValues
   with EitherValues
-  with ConnectorBehaviours {
+  with ConnectorBehaviours with MockitoSugar {
 
   import AssociationConnectorSpec._
 
@@ -48,9 +56,11 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   private val logger = new StubLogger()
   private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/$psaId"
   private val acceptInvitationUrl = s"/pension-online/psa-association/pstr/$pstr"
+  private val mockFeatureSwitchManagementService = mock[FeatureSwitchManagementService]
 
   override def beforeEach(): Unit = {
     auditService.reset()
+    when(mockFeatureSwitchManagementService.get(MockitoMatchers.any())).thenReturn(false)
     super.beforeEach()
   }
 
@@ -61,7 +71,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
       bind[AuditService].toInstance(auditService),
-      bind[LoggerLike].toInstance(logger)
+      bind[LoggerLike].toInstance(logger),
+      bind[FeatureSwitchManagementService].toInstance(mockFeatureSwitchManagementService)
     )
 
   private lazy val connector = injector.instanceOf[AssociationConnector]
