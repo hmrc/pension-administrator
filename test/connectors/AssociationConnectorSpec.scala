@@ -23,6 +23,7 @@ import audit.StubSuccessfulAuditService
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import config.FeatureSwitchManagementService
+import connectors.AssociationConnectorSpec.psaId
 import connectors.helper.ConnectorBehaviours
 import models._
 import org.scalatest._
@@ -55,6 +56,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private val logger = new StubLogger()
   private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/$psaId"
+  private val psaMinimalDetailsIFUrl = s"/if/sync/pension-online/psa-min-details/PODS/$psaId"
   private val acceptInvitationUrl = s"/pension-online/psa-association/pstr/$pstr"
   private val mockFeatureSwitchManagementService = mock[FeatureSwitchManagementService]
 
@@ -90,7 +92,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
   }
 
-  "AssociationConnector" should "return OK (200) with a JSON payload" in {
+  "getPSAMinimalDetails with IF toggle switched off" should "return OK (200) with a JSON payload" in {
 
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
@@ -274,8 +276,209 @@ class AssociationConnectorSpec extends AsyncFlatSpec
       _ =>
         auditService.verifyNothingSent shouldBe true
     }
+  }
+
+
+
+
+
+
+
+
+
+  "getPSAMinimalDetails with IF toggle switched ON" should "return OK (200) with a JSON payload" in {
+    when(mockFeatureSwitchManagementService.get(MockitoMatchers.any())).thenReturn(true)
+
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsIFUrl))
+        .willReturn(
+          ok(psaMinimunIndividualDetailIFPayload.toString())
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    connector.getPSAMinimalDetails(psaId).map { response =>
+      response.right.value shouldBe psaMinimalDetailsIndividualUser
+    }
+  }
+
+  it should "return bad request - 400 if response body is invalid" in {
+    when(mockFeatureSwitchManagementService.get(MockitoMatchers.any())).thenReturn(true)
+    val invalidReponse = Json.obj("response" -> "invalid response").toString()
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsIFUrl))
+        .willReturn(
+          ok(invalidReponse)
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    logger.reset()
+
+    connector.getPSAMinimalDetails(psaId).map { response =>
+      logger.getLogEntries.size shouldBe 1
+      logger.getLogEntries.head.level shouldBe Level.WARN
+      response.left.value shouldBe a[BadRequestException]
+      response.left.value.message shouldBe "INVALID PAYLOAD"
+    }
+  }
+
+  it should "return bad request - 400 if body contains INVALID_PSAID" in {
+    when(mockFeatureSwitchManagementService.get(MockitoMatchers.any())).thenReturn(true)
+
+    val errorResponse =
+      """{
+        |	"code": "INVALID_PSAID",
+        |	"reason": "Submission has not passed validation. Invalid parameter PSAID."
+        |}""".stripMargin
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsIFUrl))
+        .willReturn(
+          badRequest().withBody(Json.parse(errorResponse).toString)
+        )
+    )
+
+    connector.getPSAMinimalDetails(psaId).map { response =>
+      response.left.value shouldBe a[BadRequestException]
+      response.left.value.message shouldBe Json.parse(errorResponse).toString()
+    }
+  }
+
+  it should "return bad request - 400 if body contains INVALID_CORRELATIONID" in {
+    when(mockFeatureSwitchManagementService.get(MockitoMatchers.any())).thenReturn(true)
+
+    val errorResponse =
+      """{
+        |	"code": "INVALID_CORRELATIONID",
+        |	"reason": "Submission has not passed validation. Invalid header CorrelationId."
+        |}""".stripMargin
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsIFUrl))
+        .willReturn(
+          badRequest().withBody(Json.parse(errorResponse).toString)
+        )
+    )
+
+    connector.getPSAMinimalDetails(psaId).map { response =>
+      response.left.value shouldBe a[BadRequestException]
+      response.left.value.message shouldBe Json.parse(errorResponse).toString()
+    }
 
   }
+
+  //it should behave like errorHandlerForGetApiFailures(
+  //  connector.getPSAMinimalDetails(psaId),
+  //  psaMinimalDetailsIFUrl
+  //)
+
+  it should "throw Upstream5XX for internal server error - 500" in {
+    when(mockFeatureSwitchManagementService.get(MockitoMatchers.any())).thenReturn(true)
+    val errorResponse =
+      """{
+        |	"code": "SERVER_ERROR",
+        |	"reason": "DES is currently experiencing problems that require live service intervention."
+        |}""".stripMargin
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsIFUrl))
+        .willReturn(
+          serverError().withBody(Json.parse(errorResponse).toString)
+        )
+    )
+
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getPSAMinimalDetails(psaId)) map {
+      ex =>
+        ex.statusCode shouldBe INTERNAL_SERVER_ERROR
+        ex.getMessage should startWith("PSA minimal details")
+        ex.message should include(Json.parse(errorResponse).toString)
+        ex.reportAs shouldBe BAD_GATEWAY
+    }
+  }
+
+  it should "throw exception for other runtime exception" in {
+    when(mockFeatureSwitchManagementService.get(MockitoMatchers.any())).thenReturn(true)
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsIFUrl))
+        .willReturn(
+          noContent()
+        )
+    )
+
+    recoverToExceptionIf[Exception](connector.getPSAMinimalDetails(psaId)) map {
+      ex =>
+        ex.getMessage should startWith("PSA minimal details")
+        ex.getMessage should include("failed with status")
+    }
+  }
+
+  it should "send a GetMinPSADetails audit event on success" in {
+    when(mockFeatureSwitchManagementService.get(MockitoMatchers.any())).thenReturn(true)
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsIFUrl))
+        .willReturn(
+          ok(psaMinimunIndividualDetailIFPayload.toString())
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    connector.getPSAMinimalDetails(psaId).map { response =>
+      auditService.verifySent(
+        MinimalPSADetailsEvent(
+          psaId = psaId.id,
+          psaName = psaMinimalDetailsIndividualUser.name,
+          isPsaSuspended = Some(psaMinimalDetailsIndividualUser.isPsaSuspended),
+          status = OK,
+          response = Some(Json.toJson(psaMinimalDetailsIndividualUser))
+        )
+      ) shouldBe true
+    }
+  }
+
+  it should "send a GetMinPSADetails audit event on not found" in {
+    when(mockFeatureSwitchManagementService.get(MockitoMatchers.any())).thenReturn(true)
+    server.stubFor(
+      post(urlEqualTo(psaMinimalDetailsIFUrl))
+        .willReturn(
+          notFound
+        )
+    )
+
+    connector.getPSAMinimalDetails(psaId).map { response =>
+      auditService.verifySent(
+        MinimalPSADetailsEvent(
+          psaId = psaId.id,
+          psaName = None,
+          isPsaSuspended = None,
+          status = NOT_FOUND,
+          response = None
+        )
+      ) shouldBe true
+    }
+  }
+
+  it should "not send a GetMinPSADetails audit event on failure" in {
+    when(mockFeatureSwitchManagementService.get(MockitoMatchers.any())).thenReturn(true)
+    val errorResponse =
+      """{
+        |	"code": "SERVER_ERROR",
+        |	"reason": "DES is currently experiencing problems that require live service intervention."
+        |}""".stripMargin
+
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsIFUrl))
+        .willReturn(
+          serverError().withBody(Json.parse(errorResponse).toString)
+        )
+    )
+
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getPSAMinimalDetails(psaId)) map {
+      _ =>
+        auditService.verifyNothingSent shouldBe true
+    }
+
+  }
+
+
+
 
   "acceptInvitation" should "check headers" in {
     val correlationId = hc.requestId.map(_.value).getOrElse("test-correlation-id")
@@ -608,6 +811,22 @@ object AssociationConnectorSpec extends OptionValues {
       |	},
       |	"email": "test@email.com",
       |	"psaSuspensionFlag": true
+      |}""".stripMargin)
+
+  private val psaMinimunIndividualDetailIFPayload = Json.parse(
+    """{
+      |	"processingDate": "2001-12-17T09:30:47Z",
+      |	"minimalDetails": {
+      |		"individualDetails": {
+      |			"firstName": "testFirst",
+      |			"middleName": "testMiddle",
+      |			"lastName": "testLast"
+      |		}
+      |	},
+      |	"email": "test@email.com",
+      |	"psaSuspensionFlag": true,
+      |	"rlsFlag": false,
+      |	"deceasedFlag": false
       |}""".stripMargin)
 
   val psaMinimalDetailsIndividualUser = PSAMinimalDetails(
