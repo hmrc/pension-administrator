@@ -42,7 +42,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
 
-  def getPSAMinimalDetails(idValue: String, idType: String)(implicit
+  def getMinimalDetails(idValue: String, idType: String)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]]
@@ -64,7 +64,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   import AssociationConnectorImpl._
 
-  def getPSAMinimalDetails(idValue: String, idType: String)(implicit
+  def getMinimalDetails(idValue: String, idType: String)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {

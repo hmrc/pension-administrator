@@ -65,7 +65,7 @@ class InvitationServiceImpl @Inject()(
       },
       {
         invitation =>
-          handle(associationConnector.getPSAMinimalDetails(invitation.inviteePsaId.id, "PSA")){ psaDetails =>
+          handle(associationConnector.getMinimalDetails(invitation.inviteePsaId.id, "PSA")){ psaDetails =>
             handle(isAssociated(invitation.inviteePsaId, SchemeReferenceNumber(invitation.srn))){
               case false if doNamesMatch(invitation.inviteeName, psaDetails) =>
                 handle(insertInvitation(invitation)){ _ =>

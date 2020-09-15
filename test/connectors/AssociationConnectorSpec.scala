@@ -90,7 +90,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
   }
 
-  "getPSAMinimalDetails with IF toggle switched off" should "return OK (200) with a JSON payload" in {
+  "getMinimalDetails with IF toggle switched off" should "return OK (200) with a JSON payload" in {
 
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
@@ -100,7 +100,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getPSAMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
       response.right.value shouldBe psaMinimalDetailsIndividualUser
     }
   }
@@ -117,7 +117,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
     logger.reset()
 
-    connector.getPSAMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
       logger.getLogEntries.size shouldBe 1
       logger.getLogEntries.head.level shouldBe Level.WARN
       response.left.value shouldBe a[BadRequestException]
@@ -139,7 +139,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getPSAMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
     }
@@ -159,7 +159,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getPSAMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
     }
@@ -167,7 +167,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   }
 
   it should behave like errorHandlerForGetApiFailures(
-    connector.getPSAMinimalDetails(psaId.id, psaType),
+    connector.getMinimalDetails(psaId.id, psaType),
     psaMinimalDetailsUrl
   )
 
@@ -185,7 +185,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.getPSAMinimalDetails(psaId.id, psaType)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType)) map {
       ex =>
         ex.statusCode shouldBe INTERNAL_SERVER_ERROR
         ex.getMessage should startWith("PSA minimal details")
@@ -203,7 +203,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Exception](connector.getPSAMinimalDetails(psaId.id, psaType)) map {
+    recoverToExceptionIf[Exception](connector.getMinimalDetails(psaId.id, psaType)) map {
       ex =>
         ex.getMessage should startWith("PSA minimal details")
         ex.getMessage should include("failed with status")
@@ -220,7 +220,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getPSAMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
       auditService.verifySent(
         MinimalPSADetailsEvent(
           psaId = psaId.id,
@@ -242,7 +242,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getPSAMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
       auditService.verifySent(
         MinimalPSADetailsEvent(
           psaId = psaId.id,
@@ -270,7 +270,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.getPSAMinimalDetails(psaId.id, psaType)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType)) map {
       _ =>
         auditService.verifyNothingSent shouldBe true
     }
@@ -546,7 +546,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
 
   private lazy val connector = injector.instanceOf[AssociationConnector]
 
-  "getPSAMinimalDetails with IF toggle switched ON" should "return OK (200) with a JSON payload" in {
+  "getMinimalDetails with IF toggle switched ON" should "return OK (200) with a JSON payload" in {
 
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
@@ -556,7 +556,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getPSAMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
       response.right.value shouldBe psaMinimalDetailsIndividualUser
     }
   }
@@ -573,7 +573,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
 
     logger.reset()
 
-    connector.getPSAMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
       logger.getLogEntries.size shouldBe 1
       logger.getLogEntries.head.level shouldBe Level.WARN
       response.left.value shouldBe a[BadRequestException]
@@ -595,7 +595,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getPSAMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
     }
@@ -615,7 +615,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getPSAMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
     }
@@ -623,7 +623,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
   }
 
   it should behave like errorHandlerForGetApiFailures(
-    connector.getPSAMinimalDetails(psaId.id, psaType),
+    connector.getMinimalDetails(psaId.id, psaType),
     psaMinimalDetailsUrl
   )
 
@@ -640,7 +640,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.getPSAMinimalDetails(psaId.id, psaType)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType)) map {
       ex =>
         ex.statusCode shouldBe INTERNAL_SERVER_ERROR
         ex.getMessage should startWith("PSA minimal details")
@@ -657,7 +657,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Exception](connector.getPSAMinimalDetails(psaId.id, psaType)) map {
+    recoverToExceptionIf[Exception](connector.getMinimalDetails(psaId.id, psaType)) map {
       ex =>
         ex.getMessage should startWith("PSA minimal details")
         ex.getMessage should include("failed with status")
@@ -673,7 +673,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getPSAMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
       auditService.verifySent(
         MinimalPSADetailsEvent(
           psaId = psaId.id,
@@ -694,7 +694,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getPSAMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
       auditService.verifySent(
         MinimalPSADetailsEvent(
           psaId = psaId.id,
@@ -721,7 +721,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.getPSAMinimalDetails(psaId.id, psaType)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType)) map {
       _ =>
         auditService.verifyNothingSent shouldBe true
     }

@@ -354,7 +354,7 @@ class FakeAssociationConnector extends AssociationConnector {
 
   import InvitationServiceImplSpec._
 
-  def getPSAMinimalDetails(idValue: String, idType: String)
+  def getMinimalDetails(idValue: String, idType: String)
                           (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext,
                            request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {
 

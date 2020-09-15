@@ -39,7 +39,7 @@ class AssociationController @Inject()(
   def getMinimalDetails: Action[AnyContent] = Action.async {
     implicit request =>
       retrieveIdAndTypeFromHeaders{ (administratorId, administratorType) =>
-          associationConnector.getPSAMinimalDetails(administratorId, administratorType).map {
+          associationConnector.getMinimalDetails(administratorId, administratorType).map {
             case Right(psaDetails) => Ok(Json.toJson(psaDetails))
             case Left(e) => result(e)
           }
@@ -81,7 +81,7 @@ class AssociationController @Inject()(
   def getEmail: Action[AnyContent] = Action.async {
     implicit request =>
       retrievals.getPsaId flatMap {
-        case Some(psaId) => associationConnector.getPSAMinimalDetails(psaId.id, "PSA") map {
+        case Some(psaId) => associationConnector.getMinimalDetails(psaId.id, "PSA") map {
           case Right(psaDetails) => Ok(psaDetails.email)
           case Left(e) => result(e)
         }
@@ -112,7 +112,7 @@ class AssociationController @Inject()(
     implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {
     psaId map {
       id =>
-        associationConnector.getPSAMinimalDetails(id.id, "PSA")
+        associationConnector.getMinimalDetails(id.id, "PSA")
     } getOrElse {
       Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
     }
