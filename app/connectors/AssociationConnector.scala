@@ -16,8 +16,11 @@
 
 package connectors
 
-import audit.{AssociationAuditService, AuditService}
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import audit.AssociationAuditService
+import audit.AuditService
+import com.google.inject.ImplementedBy
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import config.AppConfig
 import config.FeatureSwitchManagementService
 import connectors.helper.HeaderUtils
@@ -25,19 +28,21 @@ import models._
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import play.api.{LoggerLike, Logger}
-import uk.gov.hmrc.domain.PsaId
+import play.api.Logger
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Toggles
-import utils.{InvalidPayloadHandler, HttpResponseHelper, ErrorHandler}
+import utils.ErrorHandler
+import utils.HttpResponseHelper
+import utils.InvalidPayloadHandler
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
 
-  def getPSAMinimalDetails(psaId: PsaId)(implicit
+  def getPSAMinimalDetails(idValue: String, idType: String)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]]
@@ -59,7 +64,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   import AssociationConnectorImpl._
 
-  def getPSAMinimalDetails(psaId: PsaId)(implicit
+  def getPSAMinimalDetails(idValue: String, idType: String)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {
@@ -67,21 +72,21 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
       implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
         headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
 
-      val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format("PSA", psaId)
+      val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(idType, idValue)
 
       httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
         implicitly) map {
         handleResponseIF(_, minimalDetailsUrl)
-      } andThen sendGetMinimalPSADetailsEvent(psaId = psaId.id)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
+      } andThen sendGetMinimalPSADetailsEvent(psaId = idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
 
-    } else {
+    } else { // Ignore idType for original API because always PSA
       implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
-      val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(psaId)
+      val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(idValue)
       httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
         implicitly) map {
         handleResponse(_, minimalDetailsUrl)
-      } andThen sendGetMinimalPSADetailsEvent(psaId = psaId.id)(auditService.sendEvent) andThen logWarning("PSA minimal details")
+      } andThen sendGetMinimalPSADetailsEvent(psaId = idValue)(auditService.sendEvent) andThen logWarning("PSA minimal details")
     }
 
 

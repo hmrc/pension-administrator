@@ -254,7 +254,7 @@ object AssociationControllerSpec extends MockitoSugar {
 
     def setAcceptInvitationResponse(response: Future[Either[HttpException, Unit]]): Unit = this.acceptInvitationResponse = response
 
-    def getPSAMinimalDetails(psaId: PsaId)(implicit
+    def getPSAMinimalDetails(idValue: String, idType: String)(implicit
                                            headerCarrier: HeaderCarrier,
                                            ec: ExecutionContext,
                                            request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = minimalPsaDetailsResponse
