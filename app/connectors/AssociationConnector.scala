@@ -77,9 +77,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
       httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
         implicitly) map {
         handleResponseIF(_, minimalDetailsUrl)
-      } andThen sendGetMinimalDetailsEvent(
-        administratorType = idType,
-        administratorId = idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
+      } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
 
     } else { // Ignore idType for original API because always PSA
       implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))

@@ -38,8 +38,8 @@ class AssociationController @Inject()(
                                      ) extends BackendController(cc) with ErrorHandler {
   def getMinimalDetails: Action[AnyContent] = Action.async {
     implicit request =>
-      retrieveIdAndTypeFromHeaders{ (administratorId, administratorType) =>
-          associationConnector.getMinimalDetails(administratorId, administratorType).map {
+      retrieveIdAndTypeFromHeaders{ (idValue, idType) =>
+          associationConnector.getMinimalDetails(idValue, idType).map {
             case Right(psaDetails) => Ok(Json.toJson(psaDetails))
             case Left(e) => result(e)
           }

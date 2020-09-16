@@ -47,9 +47,9 @@ object MinimalPSADetailsEvent {
 }
 
 case class MinimalDetailsEvent(
-  administratorType:String,
-  administratorId: String,
-  administratorName: Option[String],
+  idType:String,
+  idValue: String,
+  name: Option[String],
   isSuspended: Option[Boolean],
   rlsFlag: Option[Boolean],
   deceasedFlag: Option[Boolean],
@@ -61,9 +61,9 @@ case class MinimalDetailsEvent(
 
   override def details: Map[String, String] =
     Map(
-      "administratorType" -> administratorType,
-      "administratorType" -> administratorId,
-      "administratorName" -> administratorName.getOrElse(""),
+      "idType" -> idType,
+      "idType" -> idValue,
+      "name" -> name.getOrElse(""),
       "isPsaSuspended" -> isSuspended.fold("")(_.toString),
       "rlsFlag" -> rlsFlag.fold("")(_.toString),
       "deceasedFlag" -> deceasedFlag.fold("")(_.toString),

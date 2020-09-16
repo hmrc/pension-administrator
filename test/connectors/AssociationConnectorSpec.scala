@@ -677,9 +677,9 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
     connector.getMinimalDetails(psaId.id, psaType).map { response =>
       auditService.verifySent(
         MinimalDetailsEvent(
-          administratorType = "PSA",
-          administratorId = psaId.id,
-          administratorName = psaMinimalDetailsIndividualUser.name,
+          idType = "PSA",
+          idValue = psaId.id,
+          name = psaMinimalDetailsIndividualUser.name,
           isSuspended = Some(psaMinimalDetailsIndividualUser.isPsaSuspended),
           rlsFlag = Some(true),
           deceasedFlag = Some(true),
@@ -701,9 +701,9 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
     connector.getMinimalDetails(psaId.id, psaType).map { response =>
       auditService.verifySent(
         MinimalDetailsEvent(
-          administratorType = "PSA",
-          administratorId = psaId.id,
-          administratorName = None,
+          idType = "PSA",
+          idValue = psaId.id,
+          name = None,
           isSuspended = None,
           rlsFlag = None,
           deceasedFlag = None,
