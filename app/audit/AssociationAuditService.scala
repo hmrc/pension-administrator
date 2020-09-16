@@ -56,6 +56,40 @@ trait AssociationAuditService {
       Logger.error("Error in AssociationConnector connector", t)
   }
 
+  def sendGetMinimalDetailsEvent(administratorType: String, administratorId: String)(sendEvent: MinimalDetailsEvent => Unit)
+    (implicit rh: RequestHeader, ec: ExecutionContext):
+  PartialFunction[Try[Either[HttpException, PSAMinimalDetails]], Unit] = {
+
+    case Success(Right(psaMinimalDetails)) =>
+      sendEvent(
+        MinimalDetailsEvent(
+          administratorType = administratorType,
+          administratorId = administratorId,
+          administratorName = psaMinimalDetails.name,
+          isSuspended = Some(psaMinimalDetails.isPsaSuspended),
+          rlsFlag = Some(psaMinimalDetails.rlsFlag),
+          deceasedFlag = Some(psaMinimalDetails.deceasedFlag),
+          status = Status.OK,
+          response = Some(Json.toJson(psaMinimalDetails))
+        )
+      )
+    case Success(Left(e)) =>
+      sendEvent(
+        MinimalDetailsEvent(
+          administratorType = administratorType,
+          administratorId = administratorId,
+          administratorName = None,
+          isSuspended = None,
+          rlsFlag = None,
+          deceasedFlag = None,
+          status = e.responseCode,
+          response = None
+        )
+      )
+    case Failure(t) =>
+      Logger.error("Error in AssociationConnector connector", t)
+  }
+
   def sendAcceptInvitationAuditEvent(acceptedInvitation: AcceptedInvitation, status: Int,
                                      response: Option[JsValue])(sendEvent: InvitationAcceptanceAuditEvent => Unit)
                                    (implicit rh: RequestHeader, ec: ExecutionContext): Unit = {

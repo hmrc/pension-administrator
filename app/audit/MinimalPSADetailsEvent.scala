@@ -45,3 +45,38 @@ case class MinimalPSADetailsEvent(psaId: String,
 object MinimalPSADetailsEvent {
   implicit val formatsPSASubscription: OFormat[MinimalPSADetailsEvent] = Json.format[MinimalPSADetailsEvent]
 }
+
+case class MinimalDetailsEvent(
+  administratorType:String,
+  administratorId: String,
+  administratorName: Option[String],
+  isSuspended: Option[Boolean],
+  rlsFlag: Option[Boolean],
+  deceasedFlag: Option[Boolean],
+  status: Int,
+  response: Option[JsValue]
+) extends AuditEvent {
+
+  override def auditType: String = "GetMinDetails"
+
+  override def details: Map[String, String] =
+    Map(
+      "administratorType" -> administratorType,
+      "administratorType" -> administratorId,
+      "administratorName" -> administratorName.getOrElse(""),
+      "isPsaSuspended" -> isSuspended.fold("")(_.toString),
+      "rlsFlag" -> rlsFlag.fold("")(_.toString),
+      "deceasedFlag" -> deceasedFlag.fold("")(_.toString),
+      "status" -> status.toString,
+      "response" -> {
+        response match {
+          case Some(json) => Json.stringify(json)
+          case _ => ""
+        }
+      }
+    )
+}
+
+object MinimalDetailsEvent {
+  implicit val formatsPSASubscription: OFormat[MinimalDetailsEvent] = Json.format[MinimalDetailsEvent]
+}

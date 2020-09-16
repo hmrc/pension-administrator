@@ -18,6 +18,7 @@ package connectors
 
 import audit.AuditService
 import audit.InvitationAcceptanceAuditEvent
+import audit.MinimalDetailsEvent
 import audit.MinimalPSADetailsEvent
 import audit.StubSuccessfulAuditService
 import com.github.tomakehurst.wiremock.client.WireMock._
@@ -664,7 +665,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
     }
   }
 
-  it should "send a GetMinPSADetails audit event on success" in {
+  it should "send a GetMinDetails audit event on success" in {
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
@@ -675,10 +676,13 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
 
     connector.getMinimalDetails(psaId.id, psaType).map { response =>
       auditService.verifySent(
-        MinimalPSADetailsEvent(
-          psaId = psaId.id,
-          psaName = psaMinimalDetailsIndividualUser.name,
-          isPsaSuspended = Some(psaMinimalDetailsIndividualUser.isPsaSuspended),
+        MinimalDetailsEvent(
+          administratorType = "PSA",
+          administratorId = psaId.id,
+          administratorName = psaMinimalDetailsIndividualUser.name,
+          isSuspended = Some(psaMinimalDetailsIndividualUser.isPsaSuspended),
+          rlsFlag = Some(true),
+          deceasedFlag = Some(true),
           status = OK,
           response = Some(Json.toJson(psaMinimalDetailsIndividualUser))
         )
@@ -686,7 +690,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
     }
   }
 
-  it should "send a GetMinPSADetails audit event on not found" in {
+  it should "send a GetMinDetails audit event on not found" in {
     server.stubFor(
       post(urlEqualTo(psaMinimalDetailsUrl))
         .willReturn(
@@ -696,10 +700,13 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
 
     connector.getMinimalDetails(psaId.id, psaType).map { response =>
       auditService.verifySent(
-        MinimalPSADetailsEvent(
-          psaId = psaId.id,
-          psaName = None,
-          isPsaSuspended = None,
+        MinimalDetailsEvent(
+          administratorType = "PSA",
+          administratorId = psaId.id,
+          administratorName = None,
+          isSuspended = None,
+          rlsFlag = None,
+          deceasedFlag = None,
           status = NOT_FOUND,
           response = None
         )
