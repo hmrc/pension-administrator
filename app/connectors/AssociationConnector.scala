@@ -109,7 +109,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
   }
 
   private def handleResponseIF(response: HttpResponse, url: String): Either[HttpException, PSAMinimalDetails] = {
-    val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATIONID")
+    val badResponseSeq = Seq("INVALID_IDTYPE", "INVALID_PAYLOAD", "INVALID_CORRELATIONID", "INVALID_REGIME")
     response.status match {
       case OK =>
         response.json.validate[PSAMinimalDetails](PSAMinimalDetails.psaMinimalDetailsIFReads).fold(
@@ -120,7 +120,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
           value =>
             Right(value)
         )
-      case _ => Left(handleErrorResponse("PSA minimal details", url, response, badResponseSeq))
+      case _ => Left(handleErrorResponse("Minimal details", url, response, badResponseSeq))
     }
   }
 

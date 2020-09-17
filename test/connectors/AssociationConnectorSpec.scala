@@ -582,12 +582,52 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
     }
   }
 
-  it should "return bad request - 400 if body contains INVALID_PSAID" in {
+  it should "return bad request - 400 if body contains INVALID_PAYLOAD" in {
 
     val errorResponse =
       """{
-        |	"code": "INVALID_PSAID",
-        |	"reason": "Submission has not passed validation. Invalid parameter PSAID."
+        |	"code": "INVALID_PAYLOAD",
+        |	"reason": "Submission has not passed validation. Invalid parameter idValue."
+        |}""".stripMargin
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsUrl))
+        .willReturn(
+          badRequest().withBody(Json.parse(errorResponse).toString)
+        )
+    )
+
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+      response.left.value shouldBe a[BadRequestException]
+      response.left.value.message shouldBe Json.parse(errorResponse).toString()
+    }
+  }
+
+  it should "return bad request - 400 if body contains INVALID_IDTYPE" in {
+
+    val errorResponse =
+      """{
+        |	"code": "INVALID_IDTYPE",
+        |	"reason": "Submission has not passed validation. Invalid parameter idType."
+        |}""".stripMargin
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsUrl))
+        .willReturn(
+          badRequest().withBody(Json.parse(errorResponse).toString)
+        )
+    )
+
+    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+      response.left.value shouldBe a[BadRequestException]
+      response.left.value.message shouldBe Json.parse(errorResponse).toString()
+    }
+  }
+
+  it should "return bad request - 400 if body contains INVALID_REGIME" in {
+
+    val errorResponse =
+      """{
+        |	"code": "INVALID_REGIME",
+        |	"reason": "Submission has not passed validation. Invalid parameter regime."
         |}""".stripMargin
     server.stubFor(
       get(urlEqualTo(psaMinimalDetailsUrl))
@@ -644,7 +684,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
     recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType)) map {
       ex =>
         ex.statusCode shouldBe INTERNAL_SERVER_ERROR
-        ex.getMessage should startWith("PSA minimal details")
+        ex.getMessage should startWith("Minimal details")
         ex.message should include(Json.parse(errorResponse).toString)
         ex.reportAs shouldBe BAD_GATEWAY
     }
@@ -660,7 +700,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[Exception](connector.getMinimalDetails(psaId.id, psaType)) map {
       ex =>
-        ex.getMessage should startWith("PSA minimal details")
+        ex.getMessage should startWith("Minimal details")
         ex.getMessage should include("failed with status")
     }
   }
