@@ -18,7 +18,7 @@ package controllers
 
 import connectors.AssociationConnector
 import javax.inject.Inject
-import models.{PSAMinimalDetails, AcceptedInvitation}
+import models.{MinimalDetails, AcceptedInvitation}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.Result
@@ -109,7 +109,7 @@ class AssociationController @Inject()(
   }
 
   private def getPSAMinimalDetails(psaId: Option[PsaId])(
-    implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {
+    implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
     psaId map {
       id =>
         associationConnector.getMinimalDetails(id.id, "PSA")

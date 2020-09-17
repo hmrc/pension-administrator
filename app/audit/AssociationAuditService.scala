@@ -16,7 +16,7 @@
 
 package audit
 
-import models.{AcceptedInvitation, PSAMinimalDetails}
+import models.{AcceptedInvitation, MinimalDetails}
 import play.api.Logger
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
@@ -30,7 +30,7 @@ trait AssociationAuditService {
 
   def sendGetMinimalPSADetailsEvent(psaId: String)(sendEvent: MinimalPSADetailsEvent => Unit)
                                    (implicit rh: RequestHeader, ec: ExecutionContext):
-  PartialFunction[Try[Either[HttpException, PSAMinimalDetails]], Unit] = {
+  PartialFunction[Try[Either[HttpException, MinimalDetails]], Unit] = {
 
     case Success(Right(psaMinimalDetails)) =>
       sendEvent(
@@ -58,7 +58,7 @@ trait AssociationAuditService {
 
   def sendGetMinimalDetailsEvent(idType: String, idValue: String)(sendEvent: MinimalDetailsEvent => Unit)
     (implicit rh: RequestHeader, ec: ExecutionContext):
-  PartialFunction[Try[Either[HttpException, PSAMinimalDetails]], Unit] = {
+  PartialFunction[Try[Either[HttpException, MinimalDetails]], Unit] = {
 
     case Success(Right(psaMinimalDetails)) =>
       sendEvent(

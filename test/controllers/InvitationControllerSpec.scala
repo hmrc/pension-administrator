@@ -17,7 +17,7 @@
 package controllers
 
 import base.JsonFileReader
-import models.{IndividualDetails, PSAMinimalDetails}
+import models.{IndividualDetails, MinimalDetails}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.libs.json._
@@ -94,7 +94,7 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar{
 
   private val invitation = readJsonFromFile("/data/validInvitation.json")
 
-  val response = PSAMinimalDetails("aaa@email.com",true,None,Some(IndividualDetails("John",Some("Doe"),"Doe")),
+  val response = MinimalDetails("aaa@email.com",true,None,Some(IndividualDetails("John",Some("Doe"),"Doe")),
     rlsFlag = true,
     deceasedFlag = true)
 

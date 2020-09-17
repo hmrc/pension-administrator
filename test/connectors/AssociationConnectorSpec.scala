@@ -509,7 +509,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
       |	"deceasedFlag": true
       |}""".stripMargin)
 
-  val psaMinimalDetailsIndividualUser = PSAMinimalDetails(
+  val psaMinimalDetailsIndividualUser = MinimalDetails(
     "test@email.com",
     isPsaSuspended = true,
     None,
@@ -906,7 +906,7 @@ object AssociationConnectorSpec extends OptionValues {
       |	"psaSuspensionFlag": true
       |}""".stripMargin)
 
-  val psaMinimalDetailsIndividualUser = PSAMinimalDetails(
+  val psaMinimalDetailsIndividualUser = MinimalDetails(
     "test@email.com",
     isPsaSuspended = true,
     None,

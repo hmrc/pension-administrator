@@ -45,7 +45,7 @@ trait AssociationConnector {
   def getMinimalDetails(idValue: String, idType: String)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
-                                          request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]]
+                                          request: RequestHeader): Future[Either[HttpException, MinimalDetails]]
 
   def acceptInvitation(invitation: AcceptedInvitation)
                       (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]]
@@ -67,7 +67,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
   def getMinimalDetails(idValue: String, idType: String)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
-                                          request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {
+                                          request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
     if(fs.get(Toggles.ifEnabled)) {
       implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
         headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
@@ -85,18 +85,18 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
       val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(idValue)
       httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
         implicitly) map {
-        handleResponse(_, minimalDetailsUrl)
+        handleResponseDES(_, minimalDetailsUrl)
       } andThen sendGetMinimalPSADetailsEvent(psaId = idValue)(auditService.sendEvent) andThen logWarning("PSA minimal details")
     }
 
 
   }
 
-  private def handleResponse(response: HttpResponse, url: String): Either[HttpException, PSAMinimalDetails] = {
+  private def handleResponseDES(response: HttpResponse, url: String): Either[HttpException, MinimalDetails] = {
     val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATIONID")
     response.status match {
       case OK =>
-        response.json.validate[PSAMinimalDetails](PSAMinimalDetails.psaMinimalDetailsReads).fold(
+        response.json.validate[MinimalDetails](MinimalDetails.minimalDetailsDESReads).fold(
           _ => {
             invalidPayloadHandler.logFailures("/resources/schemas/getPSAMinimalDetails.json")(response.json)
             Left(new BadRequestException("INVALID PAYLOAD"))
@@ -108,11 +108,11 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
     }
   }
 
-  private def handleResponseIF(response: HttpResponse, url: String): Either[HttpException, PSAMinimalDetails] = {
+  private def handleResponseIF(response: HttpResponse, url: String): Either[HttpException, MinimalDetails] = {
     val badResponseSeq = Seq("INVALID_IDTYPE", "INVALID_PAYLOAD", "INVALID_CORRELATIONID", "INVALID_REGIME")
     response.status match {
       case OK =>
-        response.json.validate[PSAMinimalDetails](PSAMinimalDetails.psaMinimalDetailsIFReads).fold(
+        response.json.validate[MinimalDetails](MinimalDetails.minimalDetailsIFReads).fold(
           _ => {
             invalidPayloadHandler.logFailures("/resources/schemas/getPSAMinimalDetails.json")(response.json)
             Left(new BadRequestException("INVALID PAYLOAD"))
