@@ -17,5 +17,5 @@
 package utils
 
 object Toggles {
-
+  val ifEnabled: String = "if-enabled"
 }

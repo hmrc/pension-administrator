@@ -224,36 +224,40 @@ object AssociationControllerSpec extends MockitoSugar {
   val individual: IndividualDetails =
     IndividualDetails("testFirst", Some("testMiddle"), "testLast")
 
-  val psaMinimalDetailsIndividualUser: PSAMinimalDetails =
-    PSAMinimalDetails(
+  val psaMinimalDetailsIndividualUser: MinimalDetails =
+    MinimalDetails(
       "test@email.com",
       isPsaSuspended = true,
       None,
-      Some(individual)
+      Some(individual),
+      rlsFlag = true,
+      deceasedFlag = true
     )
 
-  val psaMinimalDetailsOrganisationUser: PSAMinimalDetails =
-    PSAMinimalDetails(
+  val psaMinimalDetailsOrganisationUser: MinimalDetails =
+    MinimalDetails(
       "test@email.com",
       isPsaSuspended = true,
       Some("PSA Ltd."),
-      None
+      None,
+      rlsFlag = true,
+      deceasedFlag = true
     )
 
   class FakeAssociationConnector extends AssociationConnector {
 
-    private var minimalPsaDetailsResponse: Future[Either[HttpException, PSAMinimalDetails]] = Future.successful(Right(psaMinimalDetailsIndividualUser))
+    private var minimalPsaDetailsResponse: Future[Either[HttpException, MinimalDetails]] = Future.successful(Right(psaMinimalDetailsIndividualUser))
 
     private var acceptInvitationResponse: Future[Either[HttpException, Unit]] = Future.successful(Right(()))
 
-    def setPsaMinimalDetailsResponse(response: Future[Either[HttpException, PSAMinimalDetails]]): Unit = this.minimalPsaDetailsResponse = response
+    def setPsaMinimalDetailsResponse(response: Future[Either[HttpException, MinimalDetails]]): Unit = this.minimalPsaDetailsResponse = response
 
     def setAcceptInvitationResponse(response: Future[Either[HttpException, Unit]]): Unit = this.acceptInvitationResponse = response
 
-    def getPSAMinimalDetails(psaId: PsaId)(implicit
+    def getMinimalDetails(idValue: String, idType: String)(implicit
                                            headerCarrier: HeaderCarrier,
                                            ec: ExecutionContext,
-                                           request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = minimalPsaDetailsResponse
+                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = minimalPsaDetailsResponse
 
     override def acceptInvitation(invitation: AcceptedInvitation)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader):
     Future[Either[HttpException, Unit]] = acceptInvitationResponse

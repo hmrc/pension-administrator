@@ -65,7 +65,7 @@ class InvitationServiceImpl @Inject()(
       },
       {
         invitation =>
-          handle(associationConnector.getPSAMinimalDetails(invitation.inviteePsaId)){ psaDetails =>
+          handle(associationConnector.getMinimalDetails(invitation.inviteePsaId.id, "PSA")){ psaDetails =>
             handle(isAssociated(invitation.inviteePsaId, SchemeReferenceNumber(invitation.srn))){
               case false if doNamesMatch(invitation.inviteeName, psaDetails) =>
                 handle(insertInvitation(invitation)){ _ =>
@@ -90,7 +90,7 @@ class InvitationServiceImpl @Inject()(
       case Left(ex) => Left(ex)
     }
 
-  private def doNamesMatch(inviteeName: String, psaDetails: PSAMinimalDetails): Boolean = {
+  private def doNamesMatch(inviteeName: String, psaDetails: MinimalDetails): Boolean = {
 
     val matches = (psaDetails.organisationName, psaDetails.individualDetails) match {
       case (Some(organisationName), _) => doOrganisationNamesMatch(inviteeName, organisationName)
@@ -138,7 +138,7 @@ class InvitationServiceImpl @Inject()(
 
   }
 
-  private def logMismatch(inviteeName: String, psaDetails: PSAMinimalDetails): Unit = {
+  private def logMismatch(inviteeName: String, psaDetails: MinimalDetails): Unit = {
 
     val psaName =
       depersonalise(
@@ -178,7 +178,7 @@ class InvitationServiceImpl @Inject()(
       .replaceAll("[0-9]", "9")
   }
 
-  private def sendInviteeEmail(invitation: Invitation, psaDetails: PSAMinimalDetails, config: AppConfig)
+  private def sendInviteeEmail(invitation: Invitation, psaDetails: MinimalDetails, config: AppConfig)
                               (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
 
     val name = psaDetails.individualDetails.map(_.fullName).getOrElse(psaDetails.organisationName.getOrElse(""))

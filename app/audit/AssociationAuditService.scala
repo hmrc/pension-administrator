@@ -16,7 +16,7 @@
 
 package audit
 
-import models.{AcceptedInvitation, PSAMinimalDetails}
+import models.{AcceptedInvitation, MinimalDetails}
 import play.api.Logger
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
@@ -30,7 +30,7 @@ trait AssociationAuditService {
 
   def sendGetMinimalPSADetailsEvent(psaId: String)(sendEvent: MinimalPSADetailsEvent => Unit)
                                    (implicit rh: RequestHeader, ec: ExecutionContext):
-  PartialFunction[Try[Either[HttpException, PSAMinimalDetails]], Unit] = {
+  PartialFunction[Try[Either[HttpException, MinimalDetails]], Unit] = {
 
     case Success(Right(psaMinimalDetails)) =>
       sendEvent(
@@ -48,6 +48,40 @@ trait AssociationAuditService {
           psaId = psaId,
           psaName = None,
           isPsaSuspended = None,
+          status = e.responseCode,
+          response = None
+        )
+      )
+    case Failure(t) =>
+      Logger.error("Error in AssociationConnector connector", t)
+  }
+
+  def sendGetMinimalDetailsEvent(idType: String, idValue: String)(sendEvent: MinimalDetailsEvent => Unit)
+    (implicit rh: RequestHeader, ec: ExecutionContext):
+  PartialFunction[Try[Either[HttpException, MinimalDetails]], Unit] = {
+
+    case Success(Right(psaMinimalDetails)) =>
+      sendEvent(
+        MinimalDetailsEvent(
+          idType = idType,
+          idValue = idValue,
+          name = psaMinimalDetails.name,
+          isSuspended = Some(psaMinimalDetails.isPsaSuspended),
+          rlsFlag = Some(psaMinimalDetails.rlsFlag),
+          deceasedFlag = Some(psaMinimalDetails.deceasedFlag),
+          status = Status.OK,
+          response = Some(Json.toJson(psaMinimalDetails))
+        )
+      )
+    case Success(Left(e)) =>
+      sendEvent(
+        MinimalDetailsEvent(
+          idType = idType,
+          idValue = idValue,
+          name = None,
+          isSuspended = None,
+          rlsFlag = None,
+          deceasedFlag = None,
           status = e.responseCode,
           response = None
         )

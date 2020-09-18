@@ -18,16 +18,17 @@ package controllers
 
 import connectors.AssociationConnector
 import javax.inject.Inject
-import models.{AcceptedInvitation, PSAMinimalDetails}
+import models.{MinimalDetails, AcceptedInvitation}
 import play.api.Logger
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents, RequestHeader}
+import play.api.mvc.Result
+import play.api.mvc.{ControllerComponents, RequestHeader, AnyContent, Action}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{AuthRetrievals, ErrorHandler}
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class AssociationController @Inject()(
@@ -37,16 +38,20 @@ class AssociationController @Inject()(
                                      ) extends BackendController(cc) with ErrorHandler {
   def getMinimalDetails: Action[AnyContent] = Action.async {
     implicit request =>
-      val psaId = request.headers.get("psaId")
-      psaId match {
-        case Some(id) =>
-          associationConnector.getPSAMinimalDetails(PsaId(id)).map {
+      retrieveIdAndTypeFromHeaders{ (idValue, idType) =>
+          associationConnector.getMinimalDetails(idValue, idType).map {
             case Right(psaDetails) => Ok(Json.toJson(psaDetails))
             case Left(e) => result(e)
           }
-        case _ => Future.failed(new BadRequestException("No PSA Id in the header for get minimal details"))
       }
+  }
 
+  private def retrieveIdAndTypeFromHeaders(block: (String, String) => Future[Result])(implicit request: RequestHeader):Future[Result] = {
+      (request.headers.get("psaId"), request.headers.get("pspId")) match {
+        case (Some(id), None) => block(id, "PSA")
+        case (None, Some(id)) => block(id, "PSP")
+        case _ => Future.failed(new BadRequestException("No PSA or PSP Id in the header for get minimal details"))
+      }
   }
 
   def acceptInvitation: Action[AnyContent] = Action.async {
@@ -76,7 +81,7 @@ class AssociationController @Inject()(
   def getEmail: Action[AnyContent] = Action.async {
     implicit request =>
       retrievals.getPsaId flatMap {
-        case Some(psaId) => associationConnector.getPSAMinimalDetails(psaId) map {
+        case Some(psaId) => associationConnector.getMinimalDetails(psaId.id, "PSA") map {
           case Right(psaDetails) => Ok(psaDetails.email)
           case Left(e) => result(e)
         }
@@ -104,10 +109,10 @@ class AssociationController @Inject()(
   }
 
   private def getPSAMinimalDetails(psaId: Option[PsaId])(
-    implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {
+    implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
     psaId map {
       id =>
-        associationConnector.getPSAMinimalDetails(id)
+        associationConnector.getMinimalDetails(id.id, "PSA")
     } getOrElse {
       Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
     }

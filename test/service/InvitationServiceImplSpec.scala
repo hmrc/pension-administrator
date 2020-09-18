@@ -21,7 +21,7 @@ import config.AppConfig
 import connectors.{AssociationConnector, SchemeConnector}
 import controllers.EmailResponseControllerSpec.fakeAuditService
 import models.enumeration.JourneyType
-import models.{AcceptedInvitation, IndividualDetails, Invitation, PSAMinimalDetails, _}
+import models.{AcceptedInvitation, IndividualDetails, Invitation, MinimalDetails, _}
 import org.joda.time.DateTime
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{never, times, verify, when}
@@ -319,17 +319,25 @@ object InvitationServiceImplSpec extends MockitoSugar {
 
   val johnDoePsaId = PsaId("A2000001")
   val johnDoeEmail = "john.doe@email.com"
-  val johnDoe = PSAMinimalDetails(johnDoeEmail, false, None, Some(IndividualDetails("John", None, "Doe")))
+  val johnDoe = MinimalDetails(johnDoeEmail, false, None, Some(IndividualDetails("John", None, "Doe")),
+    rlsFlag = true,
+    deceasedFlag = true)
 
   val expiryDate = new DateTime("2018-10-10")
 
   val joeBloggsPsaId = PsaId("A2000002")
-  val joeBloggs = PSAMinimalDetails("joe.bloggs@email.com", false, None, Some(IndividualDetails("Joe", Some("Herbert"), "Bloggs")))
+  val joeBloggs = MinimalDetails("joe.bloggs@email.com", false, None, Some(IndividualDetails("Joe", Some("Herbert"), "Bloggs")),
+    rlsFlag = true,
+    deceasedFlag = true)
 
   val acmeLtdPsaId = PsaId("A2000003")
   val blankPsaId = PsaId("A2222222")
-  val acmeLtd = PSAMinimalDetails("info@acme.com", false, Some("Acme Ltd"), None)
-  val blank = PSAMinimalDetails("info@acme.com", false, None, None)
+  val acmeLtd = MinimalDetails("info@acme.com", false, Some("Acme Ltd"), None,
+    rlsFlag = true,
+    deceasedFlag = true)
+  val blank = MinimalDetails("info@acme.com", false, None, None,
+    rlsFlag = true,
+    deceasedFlag = true)
 
   val notFoundPsaId = PsaId("A2000004")
   val associatedPsaId = PsaId("A2000005")
@@ -346,11 +354,11 @@ class FakeAssociationConnector extends AssociationConnector {
 
   import InvitationServiceImplSpec._
 
-  def getPSAMinimalDetails(psaId: PsaId)
+  def getMinimalDetails(idValue: String, idType: String)
                           (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext,
-                           request: RequestHeader): Future[Either[HttpException, PSAMinimalDetails]] = {
+                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
 
-    psaId match {
+    PsaId(idValue) match {
       case `johnDoePsaId` | `associatedPsaId` => Future.successful(Right(johnDoe))
       case `joeBloggsPsaId` | `exceptionResponsePsaId` => Future.successful(Right(joeBloggs))
       case `acmeLtdPsaId` | `invalidResponsePsaId` => Future.successful(Right(acmeLtd))

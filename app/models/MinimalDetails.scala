@@ -19,11 +19,13 @@ package models
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Json, Reads, Writes}
 
-case class PSAMinimalDetails(
+case class MinimalDetails(
                               email: String,
                               isPsaSuspended: Boolean,
                               organisationName: Option[String],
-                              individualDetails: Option[IndividualDetails]
+                              individualDetails: Option[IndividualDetails],
+                              rlsFlag: Boolean,
+                              deceasedFlag: Boolean
                             ) {
 
   def name: Option[String] = {
@@ -34,17 +36,28 @@ case class PSAMinimalDetails(
 
 }
 
-object PSAMinimalDetails {
-  implicit val psaMinimalDetailsReads: Reads[PSAMinimalDetails] = (
+object MinimalDetails {
+  implicit val minimalDetailsDESReads: Reads[MinimalDetails] = (
     (JsPath \ "email").read[String] and
       (JsPath \ "psaSuspensionFlag").read[Boolean] and
       (JsPath \ "psaMinimalDetails" \ "individualDetails").readNullable[IndividualDetails](IndividualDetails.individualDetailReads) and
       (JsPath \ "psaMinimalDetails" \ "organisationOrPartnershipName").readNullable[String]
     ) ((email, isPsaSuspended, indvDetails, orgName) =>
-    PSAMinimalDetails(email, isPsaSuspended, orgName, indvDetails)
+    MinimalDetails(email, isPsaSuspended, orgName, indvDetails, rlsFlag = false, deceasedFlag = false)
   )
 
-  implicit val defaultWrites : Writes[PSAMinimalDetails] = Json.writes[PSAMinimalDetails]
+  implicit val minimalDetailsIFReads: Reads[MinimalDetails] = (
+    (JsPath \ "email").read[String] and
+      (JsPath \ "psaSuspensionFlag").read[Boolean] and
+      (JsPath \ "minimalDetails" \ "individualDetails").readNullable[IndividualDetails](IndividualDetails.individualDetailReads) and
+      (JsPath \ "minimalDetails" \ "organisationOrPartnershipName").readNullable[String] and
+      (JsPath \ "rlsFlag").read[Boolean] and
+      (JsPath \ "deceasedFlag").read[Boolean]
+    ) ((email, isPsaSuspended, indvDetails, orgName, rlsFlag, deceasedFlag) =>
+    MinimalDetails(email, isPsaSuspended, orgName, indvDetails, rlsFlag, deceasedFlag)
+  )
+
+  implicit val defaultWrites : Writes[MinimalDetails] = Json.writes[MinimalDetails]
 }
 
 case class IndividualDetails(
