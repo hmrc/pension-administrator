@@ -525,7 +525,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
   private implicit val rh: RequestHeader = FakeRequest("", "")
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private val logger = new StubLogger()
-  private val psaMinimalDetailsUrl = s"/if/sync/pension-online/psa-min-details/PODS/PSA/$psaId"
+  private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/PODS/PSA/$psaId"
   private val mockFeatureSwitchManagementService = mock[FeatureSwitchManagementService]
 
   override def beforeEach(): Unit = {
