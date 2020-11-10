@@ -1,36 +1,42 @@
 # microservice specific routes
 
-POST        /register-with-no-id/organisation           controllers.RegistrationController.registrationNoIdOrganisation
-POST        /register-with-id/individual                controllers.RegistrationController.registerWithIdIndividual
-POST        /register-with-id/organisation              controllers.RegistrationController.registerWithIdOrganisation
-POST        /register-with-no-id/individual             controllers.RegistrationController.registrationNoIdIndividual
+POST          /register-with-no-id/organisation         controllers.RegistrationController.registrationNoIdOrganisation
+POST          /register-with-id/individual              controllers.RegistrationController.registerWithIdIndividual
+POST          /register-with-id/organisation            controllers.RegistrationController.registerWithIdOrganisation
+POST          /register-with-no-id/individual           controllers.RegistrationController.registrationNoIdIndividual
 
-GET         /psa-subscription-details                   controllers.SchemeController.getPsaDetails
-POST        /register-psa                               controllers.SchemeController.registerPSA
-POST        /remove-psa                                 controllers.SchemeController.removePsa
-DELETE      /deregister-psa/:psaId                      controllers.SchemeController.deregisterPsa(psaId: String)
-POST        /psa-variation/:psaId                       controllers.SchemeController.updatePSA(psaId: String)
+GET           /psa-subscription-details                 controllers.SchemeController.getPsaDetails
+POST          /register-psa                             controllers.SchemeController.registerPSA
+POST          /remove-psa                               controllers.SchemeController.removePsa
+DELETE        /deregister-psa/:psaId                    controllers.SchemeController.deregisterPsa(psaId: String)
+POST          /psa-variation/:psaId                     controllers.SchemeController.updatePSA(psaId: String)
 
-GET         /get-name                                   controllers.AssociationController.getName
-GET         /get-email                                  controllers.AssociationController.getEmail
-GET         /get-minimal-psa                            controllers.AssociationController.getMinimalDetails
-POST        /accept-invitation                          controllers.AssociationController.acceptInvitation
+GET           /get-name                                 controllers.AssociationController.getName
+GET           /get-email                                controllers.AssociationController.getEmail
+GET           /get-minimal-psa                          controllers.AssociationController.getMinimalDetails
+POST          /accept-invitation                        controllers.AssociationController.acceptInvitation
 
-GET         /journey-cache/manage-pensions/:id          controllers.cache.ManagePensionsCacheController.get(id: String)
-POST        /journey-cache/manage-pensions/:id          controllers.cache.ManagePensionsCacheController.save(id: String)
-DELETE      /journey-cache/manage-pensions/:id          controllers.cache.ManagePensionsCacheController.remove(id: String)
+GET           /journey-cache/manage-pensions/:id        controllers.cache.ManagePensionsCacheController.get(id: String)
+POST          /journey-cache/manage-pensions/:id        controllers.cache.ManagePensionsCacheController.save(id: String)
+DELETE        /journey-cache/manage-pensions/:id        controllers.cache.ManagePensionsCacheController.remove(id: String)
 
-GET         /journey-cache/psa-data/:id                 controllers.cache.PSADataCacheController.get(id: String)
-POST        /journey-cache/psa-data/:id                 controllers.cache.PSADataCacheController.save(id: String)
-DELETE      /journey-cache/psa-data/:id                 controllers.cache.PSADataCacheController.remove(id: String)
+GET           /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.get(id: String)
+POST          /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.save(id: String)
+DELETE        /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.remove(id: String)
 
-POST        /email-response/:journeyType/*id            controllers.EmailResponseController.retrieveStatus(journeyType: JourneyType.Name, id: String)
-POST        /invite                                     controllers.InvitationController.invite
+POST          /email-response/:journeyType/*id          controllers.EmailResponseController.retrieveStatus(journeyType: JourneyType.Name, id: String)
+POST          /invite                                   controllers.InvitationController.invite
 
-GET         /invitation/get-for-scheme                  controllers.cache.InvitationsCacheController.getForScheme
-GET         /invitation/get-for-invitee                 controllers.cache.InvitationsCacheController.getForInvitee
-GET         /invitation/get                             controllers.cache.InvitationsCacheController.get
-POST        /invitation/add                             controllers.cache.InvitationsCacheController.add
-DELETE      /invitation                                 controllers.cache.InvitationsCacheController.remove
+GET           /invitation/get-for-scheme                controllers.cache.InvitationsCacheController.getForScheme
+GET           /invitation/get-for-invitee               controllers.cache.InvitationsCacheController.getForInvitee
+GET           /invitation/get                           controllers.cache.InvitationsCacheController.get
+POST          /invitation/add                           controllers.cache.InvitationsCacheController.add
+DELETE        /invitation                               controllers.cache.InvitationsCacheController.remove
 
-GET         /can-deregister/:id                         controllers.DeregistrationController.canDeregister(id: String)
+GET           /can-deregister/:id                       controllers.DeregistrationController.canDeregister(id: String)
+
+# admin routes
+
++nocsrf
+GET           /admin/feature-toggles                    controllers.admin.FeatureTogglesController.get
+PUT           /admin/feature-toggles/:toggleName        controllers.admin.FeatureTogglesController.put(toggleName: FeatureToggleName)
