@@ -150,20 +150,35 @@ class DesConnectorImpl @Inject()(
                                             headerCarrier: HeaderCarrier,
                                             ec: ExecutionContext,
                                             request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-
-    val deregisterPsaSchema = "/resources/schemas/deregisterPsa.json"
-
-    val url = config.deregisterPsaUrl.format(psaId)
-
     val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
+    if(fs.get(Toggles.ifEnabled)) {
 
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
+        headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
+      deregisterAdministrator(
+        config.deregisterPsaIFUrl.format(psaId),
+        data,
+        "/resources/schemas/deregister1469.json",
+        psaId)(hc, implicitly, implicitly)
+    } else {
 
+      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+      deregisterAdministrator(
+        config.deregisterPsaUrl.format(psaId),
+        data,
+        "/resources/schemas/deregisterPsa.json",
+        psaId)(hc, implicitly, implicitly)
+
+  }
+  }
+
+  private def deregisterAdministrator(url: String, data: JsValue, schema: String, psaId: String)
+                                     (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
     http.POST[JsValue, HttpResponse](url, data)(implicitly, implicitly, hc, implicitly) map {
       handlePostResponse(_, url)
     } andThen sendPSADeEnrolEvent(
       psaId
-    )(auditService.sendEvent) andThen logFailures("deregister PSA", data, deregisterPsaSchema, url)
+    )(auditService.sendEvent) andThen logFailures("deregister PSA", data, schema, url)
   }
 
   override def updatePSA(psaId: String, data: JsValue)(implicit

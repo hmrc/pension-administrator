@@ -43,6 +43,7 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
   lazy val removePsaUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.remove.psa")}"
   lazy val removePsaIFUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.if.remove.psa")}"
   lazy val deregisterPsaUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.deregister.psa")}"
+  lazy val deregisterPsaIFUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.if.deregister.psa")}"
 
   lazy val createPsaAssociationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.createPsaAssociation")}"
   lazy val desEnvironment: String = runModeConfiguration.getOptional[String]("microservice.services.des-hod.env").getOrElse("local")
