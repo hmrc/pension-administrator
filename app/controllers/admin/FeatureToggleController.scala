@@ -25,7 +25,7 @@ import utils.ErrorHandler
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class FeatureTogglesController @Inject()(
+class FeatureToggleController @Inject()(
                                           cc: ControllerComponents,
                                           featureToggleService: FeatureToggleService
                                         )(implicit ec: ExecutionContext)

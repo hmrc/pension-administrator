@@ -14,22 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Copyright 2020 HM Revenue & Customs
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package service
 
 import javax.inject.{Inject, Singleton}
@@ -55,16 +39,18 @@ class FeatureToggleService @Inject()(
   )
 
   private def addDefaults(fromDb: Seq[FeatureToggle]): Seq[FeatureToggle] = {
-    val toAdd = defaults.filterNot(d =>fromDb.exists(fdb => fdb.name == d.name))
+    val toAdd = defaults.filterNot(d => fromDb.exists(fdb => fdb.name == d.name))
     fromDb ++ toAdd
   }
 
   def getAll: Future[Seq[FeatureToggle]] =
     cacheApi.getOrElseUpdate[Seq[FeatureToggle]]("toggles", cacheValidFor) {
-      adminDataRepository.getFeatureToggles().map(addDefaults)
+      adminDataRepository
+        .getFeatureToggles
+        .map(addDefaults)
     }
 
-  def set(toggleName: FeatureToggleName, enabled: Boolean): Future[BinaryResult] = {
+  def set(toggleName: FeatureToggleName, enabled: Boolean): Future[BinaryResult] =
     getAll.flatMap {
       currentToggles =>
         val newToggles = currentToggles
@@ -75,10 +61,10 @@ class FeatureToggleService @Inject()(
           case false => OperationFailed
         }
     }
-  }
 
-  def get(name: FeatureToggleName): Future[FeatureToggle] = getAll.map {
-    toggles =>
-      toggles.find(_.name == name).getOrElse(Disabled(name))
-  }
+  def get(name: FeatureToggleName): Future[FeatureToggle] =
+    getAll.map {
+      toggles =>
+        toggles.find(_.name == name).getOrElse(Disabled(name))
+    }
 }

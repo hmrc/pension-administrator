@@ -37,7 +37,12 @@ import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class FeatureToggleServiceSpec extends SpecBase with MockitoSugar with ScalaFutures with MustMatchers {
+class FeatureToggleServiceSpec
+  extends SpecBase
+    with MockitoSugar
+    with ScalaFutures
+    with MustMatchers {
+
   implicit private val arbitraryFeatureToggleName: Arbitrary[FeatureToggleName] =
     Arbitrary {
       Gen.oneOf(FeatureToggleName.toggles)
@@ -69,7 +74,7 @@ class FeatureToggleServiceSpec extends SpecBase with MockitoSugar with ScalaFutu
 
   "When set works in the repo returns a success result" in {
     val adminDataRepository = mock[AdminDataRepository]
-    when(adminDataRepository.getFeatureToggles()).thenReturn(Future.successful(Seq.empty))
+    when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
     when(adminDataRepository.setFeatureToggles(any())).thenReturn(Future.successful(true))
 
     val OUT = new FeatureToggleService(adminDataRepository, new FakeCache())
@@ -90,7 +95,7 @@ class FeatureToggleServiceSpec extends SpecBase with MockitoSugar with ScalaFutu
 
     val OUT = new FeatureToggleService(adminDataRepository, new FakeCache())
 
-    when(adminDataRepository.getFeatureToggles()).thenReturn(Future.successful(Seq.empty))
+    when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
     when(adminDataRepository.setFeatureToggles(any())).thenReturn(Future.successful(false))
 
     whenReady(OUT.set(toggleName = toggleName, enabled = true))(_ mustBe OperationFailed)
@@ -100,7 +105,7 @@ class FeatureToggleServiceSpec extends SpecBase with MockitoSugar with ScalaFutu
     val adminDataRepository = mock[AdminDataRepository]
     val OUT = new FeatureToggleService(adminDataRepository, new FakeCache())
 
-    when(adminDataRepository.getFeatureToggles()).thenReturn(Future.successful(Seq.empty))
+    when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
 
     OUT.getAll.futureValue mustBe Seq(
       Disabled(IntegrationFramework),
@@ -110,14 +115,14 @@ class FeatureToggleServiceSpec extends SpecBase with MockitoSugar with ScalaFutu
 
   "When a toggle doesn't exist in the repo, return default" in {
     val adminDataRepository = mock[AdminDataRepository]
-    when(adminDataRepository.getFeatureToggles()).thenReturn(Future.successful(Seq.empty))
+    when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
     val OUT = new FeatureToggleService(adminDataRepository, new FakeCache())
     OUT.get(IntegrationFramework).futureValue mustBe Disabled(IntegrationFramework)
   }
 
   "When a toggle exists in the repo, override default" in {
     val adminDataRepository = mock[AdminDataRepository]
-    when(adminDataRepository.getFeatureToggles()).thenReturn(Future.successful(Seq(Enabled(IntegrationFramework))))
+    when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq(Enabled(IntegrationFramework))))
     val OUT = new FeatureToggleService(adminDataRepository, new FakeCache())
     OUT.get(IntegrationFramework).futureValue mustBe Enabled(IntegrationFramework)
   }
