@@ -15,7 +15,7 @@
  */
 
 import play.core.PlayVersion
-import play.sbt.PlayImport._
+import play.sbt.PlayImport.{ehcache, _}
 import sbt._
 
 object AppDependencies {
@@ -29,8 +29,8 @@ object AppDependencies {
     "com.typesafe.play"       %% "play-json-joda"         % "2.6.10",
     "uk.gov.hmrc"             %% "bootstrap-play-26"      % "1.16.0",
     "com.networknt"           %  "json-schema-validator"  % "1.0.3",
-    "com.josephpconley"       %% "play-jsonpath"          % "2.6.0",
-    "uk.gov.hmrc"             %% "domain"                 % "5.10.0-play-26"
+    "uk.gov.hmrc"             %% "domain"                 % "5.10.0-play-26",
+    ehcache
   )
 
   def test(scope: String = "test,it"): Seq[ModuleID] = Seq(

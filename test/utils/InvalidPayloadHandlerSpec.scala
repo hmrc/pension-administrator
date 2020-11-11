@@ -28,7 +28,7 @@ class InvalidPayloadHandlerSpec extends SpecBase {
     override def getMessageFormat: MessageFormat = new MessageFormat("")
   }
 
-  private val vm = ValidationMessage.of("enum", emt, "$.abc")
+  private val vm = ValidationMessage.of("enum", emt, "abc")
 
   "valueFromJson" should {
     "return the correct value for a jsnull" in {
@@ -43,7 +43,7 @@ class InvalidPayloadHandlerSpec extends SpecBase {
     }
 
     "return none for a non-valid type" in {
-      val vm = ValidationMessage.of("blah", emt, "$.abc")
+      val vm = ValidationMessage.of("blah", emt, "abc")
       val testJson = Json.obj("abc" -> JsNumber(22))
       val result = InvalidPayloadHandlerImpl.valueFromJson(message = vm , json = testJson)
       result mustBe None

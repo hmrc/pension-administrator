@@ -18,7 +18,6 @@ package controllers.admin
 
 import javax.inject.Inject
 import models.FeatureToggleName
-import models.FeatureToggleName.IntegrationFramework
 import play.api.libs.json.{JsBoolean, Json}
 import play.api.mvc.{AbstractController, Action, AnyContent, ControllerComponents}
 import service.FeatureToggleService
@@ -34,7 +33,10 @@ class FeatureTogglesController @Inject()(
 
   def get(): Action[AnyContent] = Action.async {
     _ =>
-      featureToggleService.getAll.map(toggles => Ok(Json.toJson(toggles)))
+      featureToggleService.getAll.map(
+        toggles => {
+          Ok(Json.toJson(toggles.sortWith(_.name.asString < _.name.asString)))
+        })
   }
 
   def put(toggleName: FeatureToggleName): Action[AnyContent] = Action.async {

@@ -33,31 +33,36 @@
 package service
 
 import javax.inject.{Inject, Singleton}
-import models.FeatureToggle.{Disabled, Enabled}
-import models.FeatureToggleName._
+import models.FeatureToggle._
+import models.FeatureToggleName.{IntegrationFramework, SomeOtherToggle}
 import models._
+import play.api.cache.AsyncCacheApi
 import repositories.AdminDataRepository
 
+import scala.concurrent.duration.{Duration, FiniteDuration, SECONDS => Seconds}
 import scala.concurrent.{ExecutionContext, Future}
-
 
 @Singleton
 class FeatureToggleService @Inject()(
-                                      adminDataRepository: AdminDataRepository
+                                      adminDataRepository: AdminDataRepository,
+                                      cacheApi: AsyncCacheApi
                                     )(implicit ec: ExecutionContext) {
-//  val cacheValidFor: FiniteDuration = Duration(2, Seconds)
+  val cacheValidFor: FiniteDuration = Duration(2, Seconds)
 
   private val defaults: Seq[FeatureToggle] = Seq(
-    Enabled(IntegrationFramework)
+    Disabled(IntegrationFramework),
+    Disabled(SomeOtherToggle)
   )
 
   private def addDefaults(fromDb: Seq[FeatureToggle]): Seq[FeatureToggle] = {
-    val toAdd = defaults.filterNot(d => fromDb.exists(fdb => fdb.name == d.name))
+    val toAdd = defaults.filterNot(d =>fromDb.exists(fdb => fdb.name == d.name))
     fromDb ++ toAdd
   }
 
   def getAll: Future[Seq[FeatureToggle]] =
-    adminDataRepository.getFeatureToggles().map(addDefaults)
+    cacheApi.getOrElseUpdate[Seq[FeatureToggle]]("toggles", cacheValidFor) {
+      adminDataRepository.getFeatureToggles().map(addDefaults)
+    }
 
   def set(toggleName: FeatureToggleName, enabled: Boolean): Future[BinaryResult] = {
     getAll.flatMap {

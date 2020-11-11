@@ -57,12 +57,6 @@ class AdminDataRepository @Inject()(
   val featureToggleDocumentId = "toggles"
 
   val collectionIndexes = Seq(
-//    Index(
-//      key = Seq(("id", IndexType.Ascending)),
-//      name = Some("id"),
-//      background = true,
-//      unique = true
-//    ),
     Index(
       key = Seq((featureToggleDocumentId, IndexType.Ascending)),
       name = Some(featureToggleDocumentId),
@@ -82,7 +76,6 @@ class AdminDataRepository @Inject()(
     case _ => CollectionDiagnostics.logCollectionInfo(collection)
   }
 
-
   private def createIndex(indexes: Seq[Index]): Future[Seq[Boolean]] = {
     Future.sequence(
       indexes.map { index =>
@@ -97,25 +90,26 @@ class AdminDataRepository @Inject()(
     )
   }
 
-  def getFeatureToggles()
-                       (implicit ec: ExecutionContext): Future[Seq[FeatureToggle]] = {
+  def getFeatureToggles(): Future[Seq[FeatureToggle]] = {
 
     implicit val r: Reads[Option[FeatureToggle]] = Reads.optionNoError(FeatureToggle.reads)
 
     collection
       .find(
-        selector = BSONDocument("id" -> featureToggleDocumentId),
+        selector = BSONDocument("_id" -> featureToggleDocumentId),
         projection = Option.empty[JsObject]
-      ).one[JsObject].map(_.map(
+      )
+      .one[JsObject].map(_.map(
       js =>
-        (js \ "toggles").as[Seq[Option[FeatureToggle]]].collect {
-          case Some(toggle) => toggle
-        }
+        (js \ "toggles")
+          .as[Seq[Option[FeatureToggle]]]
+          .collect {
+            case Some(toggle) => toggle
+          }
     )).map(_.getOrElse(Seq.empty[FeatureToggle]))
   }
 
-  def setFeatureToggles(toggles: Seq[FeatureToggle])
-                       (implicit ec: ExecutionContext): Future[Boolean] = {
+  def setFeatureToggles(toggles: Seq[FeatureToggle]): Future[Boolean] = {
 
     val selector = Json.obj(
       "_id" -> featureToggleDocumentId

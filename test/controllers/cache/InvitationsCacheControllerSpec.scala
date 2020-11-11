@@ -37,7 +37,6 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{BadRequestException, UnauthorizedException}
 import utils.testhelpers.InvitationBuilder._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers with MockitoSugar {
@@ -50,7 +49,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
   private val repo = mock[InvitationsCacheRepository]
   private val authConnector: AuthConnector = mock[AuthConnector]
 
-  def controller: InvitationsCacheController = new InvitationsCacheController(configuration, repo, authConnector, cc)
+  def controller: InvitationsCacheController = new InvitationsCacheController(repo, authConnector, cc)
 
   // scalastyle:off method.length
   def validCacheControllerWithInsert(): Unit = {

@@ -27,7 +27,8 @@ import scala.concurrent.ExecutionContext
 
 class TestFeatureSwitchManagerController @Inject()(
                                                     fs: FeatureSwitchManagementService,
-                                                    cc: ControllerComponents)(implicit val ec: ExecutionContext) extends BackendController(cc) {
+                                                    cc: ControllerComponents
+                                                  )(implicit val ec: ExecutionContext) extends BackendController(cc) {
 
   def toggleOn(featureSwitch: String): Action[AnyContent] = Action {
     implicit request =>

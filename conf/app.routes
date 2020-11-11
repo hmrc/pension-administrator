@@ -34,9 +34,3 @@ POST          /invitation/add                           controllers.cache.Invita
 DELETE        /invitation                               controllers.cache.InvitationsCacheController.remove
 
 GET           /can-deregister/:id                       controllers.DeregistrationController.canDeregister(id: String)
-
-# admin routes
-
-+nocsrf
-GET           /admin/feature-toggles                    controllers.admin.FeatureTogglesController.get
-PUT           /admin/feature-toggles/:toggleName        controllers.admin.FeatureTogglesController.put(toggleName: FeatureToggleName)

@@ -18,7 +18,6 @@ package utils
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.ImplementedBy
-import com.josephpconley.jsonpath.JSONPath
 import com.networknt.schema.{JsonSchema, JsonSchemaFactory, ValidationMessage}
 import javax.inject.Inject
 import play.api.LoggerLike
@@ -98,16 +97,21 @@ object InvalidPayloadHandlerImpl {
   private[utils] def valueFromJson(message: ValidationMessage, json: JsValue): Option[String] = {
     message.getType match {
       case "enum" | "format" | "maximum" | "maxLength" | "minimum" | "minLength" | "pattern" | "type" =>
-        JSONPath.query(message.getPath, json) match {
-          case JsBoolean(bool) => Some(bool.toString)
-          case JsNull => Some("null")
-          case JsNumber(n) => Some(depersonalise(n.toString))
-          case JsString(s) => Some(depersonalise(s))
-          case _ => None
+        (json \ message.getPath).toEither match {
+          case Right(jsValue) =>
+            jsValue match {
+              case JsBoolean(bool) => Some(bool.toString)
+              case JsNull => Some("null")
+              case JsNumber(n) => Some(depersonalise(n.toString))
+              case JsString(s) => Some(depersonalise(s))
+              case _ => None
+            }
+          case Left(_) => None
         }
       case _ => None
     }
   }
+
 
   private def depersonalise(value: String): String = {
     value
