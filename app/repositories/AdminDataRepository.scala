@@ -38,7 +38,7 @@ class AdminDataRepository @Inject()(
   implicitly
 ) {
 
-  val featureToggleDocumentId = "toggles"
+  private val featureToggleDocumentId = "toggles"
 
   val collectionIndexes = Seq(
     Index(

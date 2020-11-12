@@ -37,7 +37,7 @@ object AppDependencies {
     "uk.gov.hmrc"                 %% "bootstrap-play-26"            % "1.16.0"            % Test classifier "tests",
     "uk.gov.hmrc"                 %% "reactivemongo-test"           % "4.21.0-play-26"    % Test,
     "uk.gov.hmrc"                 %% "hmrctest"                     % "3.9.0-play-26"     % scope,
-    "org.scalatest"               %% "scalatest"                    % "3.0.5"             % scope,
+    "org.scalatest"               %% "scalatest"                    % "3.0.8"             % scope,
     "org.pegdown"                  % "pegdown"                      % "1.6.0"             % scope,
     "org.scalacheck"              %% "scalacheck"                   % "1.14.0"            % scope,
     "com.typesafe.play"           %% "play-test"                    % PlayVersion.current % scope,

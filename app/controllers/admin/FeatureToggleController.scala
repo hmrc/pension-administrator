@@ -34,9 +34,9 @@ class FeatureToggleController @Inject()(
   def get(): Action[AnyContent] = Action.async {
     _ =>
       featureToggleService.getAll.map(
-        toggles => {
+        toggles =>
           Ok(Json.toJson(toggles.sortWith(_.name.asString < _.name.asString)))
-        })
+        )
   }
 
   def put(toggleName: FeatureToggleName): Action[AnyContent] = Action.async {

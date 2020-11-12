@@ -31,7 +31,7 @@ class FeatureToggleService @Inject()(
                                       adminDataRepository: AdminDataRepository,
                                       cacheApi: AsyncCacheApi
                                     )(implicit ec: ExecutionContext) {
-  val cacheValidFor: FiniteDuration = Duration(2, Seconds)
+  private val cacheValidFor: FiniteDuration = Duration(2, Seconds)
 
   private val defaults: Seq[FeatureToggle] = Seq(
     Disabled(IntegrationFramework),
