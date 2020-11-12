@@ -173,13 +173,13 @@ class DesConnectorImpl @Inject()(
   }
 
   private def deregisterAdministrator(url: String, data: JsValue, schema: String, psaId: String)
-                                     (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                     (implicit hc: HeaderCarrier, ec: ExecutionContext,
+                                      request: RequestHeader): Future[Either[HttpException, JsValue]] =
     http.POST[JsValue, HttpResponse](url, data)(implicitly, implicitly, hc, implicitly) map {
       handlePostResponse(_, url)
-    } andThen sendPSADeEnrolEvent(
-      psaId
-    )(auditService.sendEvent) andThen logFailures("deregister PSA", data, schema, url)
-  }
+    } andThen
+      sendPSADeEnrolEvent(psaId)(auditService.sendEvent) andThen
+      logFailures("deregister PSA", data, schema, url)
 
   override def updatePSA(psaId: String, data: JsValue)(implicit
                                                        headerCarrier: HeaderCarrier,

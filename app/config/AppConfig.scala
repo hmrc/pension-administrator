@@ -46,6 +46,7 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
   lazy val deregisterPsaIFUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.if.deregister.psa")}"
 
   lazy val createPsaAssociationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.createPsaAssociation")}"
+  lazy val createPsaAssociationIFUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.if.createPsaAssociation")}"
   lazy val desEnvironment: String = runModeConfiguration.getOptional[String]("microservice.services.des-hod.env").getOrElse("local")
   lazy val authorization: String = "Bearer " + runModeConfiguration.getOptional[String]("microservice.services.des-hod.authorizationToken").getOrElse("local")
 
