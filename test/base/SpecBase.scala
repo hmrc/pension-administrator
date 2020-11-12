@@ -22,7 +22,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Environment
 import play.api.inject.Injector
 import play.api.mvc.{AnyContentAsEmpty, ControllerComponents}
-import play.api.test.{FakeRequest, Injecting}
+import play.api.test.FakeRequest
 
 trait SpecBase extends PlaySpec with GuiceOneAppPerSuite with JsonFileReader {
   def injector: Injector = app.injector
