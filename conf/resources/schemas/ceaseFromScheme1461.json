@@ -1,0 +1,168 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "API#1461 Cease PSA or PSP from the Scheme Request Schema",
+  "type": "object",
+  "oneOf": [
+    {
+      "description": "Request to Cease PSA, initiated by PSA",
+      "type": "object",
+      "properties": {
+        "ceaseIDType": {
+          "type": "string",
+          "enum": [
+            "PSAID"
+          ]
+        },
+        "ceaseNumber": {
+          "type": "string",
+          "description": "Cease PSAID Number",
+          "pattern": "^A[0-9]{7}$"
+        },
+        "initiatedIDType": {
+          "type": "string",
+          "enum": [
+            "PSAID"
+          ]
+        },
+        "initiatedIDNumber": {
+          "type": "string",
+          "description": "InitiatedID Number",
+          "pattern": "^A[0-9]{7}$"
+        },
+        "ceaseDate": {
+          "type": "string",
+          "pattern": "^(((19|20)([2468][048]|[13579][26]|0[48])|2000)[-]02[-]29|((19|20)[0-9]{2}[-](0[469]|11)[-](0[1-9]|1[0-9]|2[0-9]|30)|(19|20)[0-9]{2}[-](0[13578]|1[02])[-](0[1-9]|[12][0-9]|3[01])|(19|20)[0-9]{2}[-]02[-](0[1-9]|1[0-9]|2[0-8])))$",
+          "description": "Cease Date of PSA from the Scheme (CCYY-MM-DD)"
+        }
+      },
+      "required": [
+        "ceaseIDType",
+        "ceaseNumber",
+        "initiatedIDType",
+        "initiatedIDNumber",
+        "ceaseDate"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "description": "Request to Cease PSP, initiated by PSA",
+      "type": "object",
+      "properties": {
+        "ceaseIDType": {
+          "type": "string",
+          "enum": [
+            "PSPID"
+          ]
+        },
+        "ceaseNumber": {
+          "type": "string",
+          "description": "Cease PSPID Number",
+          "pattern": "^[0|1|2]{1}[0-9]{7}$"
+        },
+        "initiatedIDType": {
+          "type": "string",
+          "enum": [
+            "PSAID"
+          ]
+        },
+        "initiatedIDNumber": {
+          "type": "string",
+          "description": "Initiated PSAID Number",
+          "pattern": "^A[0-9]{7}$"
+        },
+        "ceaseDate": {
+          "type": "string",
+          "pattern": "^(((19|20)([2468][048]|[13579][26]|0[48])|2000)[-]02[-]29|((19|20)[0-9]{2}[-](0[469]|11)[-](0[1-9]|1[0-9]|2[0-9]|30)|(19|20)[0-9]{2}[-](0[13578]|1[02])[-](0[1-9]|[12][0-9]|3[01])|(19|20)[0-9]{2}[-]02[-](0[1-9]|1[0-9]|2[0-8])))$",
+          "description": "Cease Date of PSP from the Scheme (CCYY-MM-DD)"
+        },
+        "declarationCeasePSPDetails": {
+          "$ref": "#/definitions/declarationBox1Type"
+        }
+      },
+      "required": [
+        "ceaseIDType",
+        "ceaseNumber",
+        "initiatedIDType",
+        "initiatedIDNumber",
+        "ceaseDate",
+        "declarationCeasePSPDetails"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "description": "Request to Cease PSP, initiated by PSP",
+      "type": "object",
+      "properties": {
+        "ceaseIDType": {
+          "type": "string",
+          "enum": [
+            "PSPID"
+          ]
+        },
+        "ceaseNumber": {
+          "type": "string",
+          "description": "Cease PSPID Number",
+          "pattern": "^[0|1|2]{1}[0-9]{7}$"
+        },
+        "initiatedIDType": {
+          "type": "string",
+          "enum": [
+            "PSPID"
+          ]
+        },
+        "initiatedIDNumber": {
+          "type": "string",
+          "description": "Initiated PSPID Number",
+          "pattern": "^[0|1|2]{1}[0-9]{7}$"
+        },
+        "ceaseDate": {
+          "type": "string",
+          "pattern": "^(((19|20)([2468][048]|[13579][26]|0[48])|2000)[-]02[-]29|((19|20)[0-9]{2}[-](0[469]|11)[-](0[1-9]|1[0-9]|2[0-9]|30)|(19|20)[0-9]{2}[-](0[13578]|1[02])[-](0[1-9]|[12][0-9]|3[01])|(19|20)[0-9]{2}[-]02[-](0[1-9]|1[0-9]|2[0-8])))$",
+          "description": "Cease Date of PSP from the Scheme (CCYY-MM-DD)"
+        },
+        "declarationCeasePSPDetails": {
+          "$ref": "#/definitions/declarationBox2Type"
+        }
+      },
+      "required": [
+        "ceaseIDType",
+        "ceaseNumber",
+        "initiatedIDType",
+        "initiatedIDNumber",
+        "ceaseDate",
+        "declarationCeasePSPDetails"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "declarationBox1Type": {
+      "description": "This object is applicable and mandatory if CeaseID type is PSPID",
+      "type": "object",
+      "properties": {
+        "declarationBox1": {
+          "description": "This declarationBox1 is applicable and mandatory if the InitiatedID Type is PSAID",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "declarationBox1"
+      ],
+      "additionalProperties": false
+    },
+    "declarationBox2Type": {
+      "description": "This object is applicable and mandatory if CeaseID type is PSPID",
+      "type": "object",
+      "properties": {
+        "declarationBox2": {
+          "description": "This declarationBox2 is applicable and mandatory if the InitiatedID Type is PSPID",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "declarationBox2"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

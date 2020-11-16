@@ -16,36 +16,30 @@
 
 package connectors
 
-import audit.AssociationAuditService
-import audit.AuditService
-import com.google.inject.ImplementedBy
-import com.google.inject.Inject
-import com.google.inject.Singleton
+import audit.{AssociationAuditService, AuditService}
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.FeatureToggleName.IntegrationFramework
 import models._
+import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import play.api.Logger
 import service.FeatureToggleService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import utils.ErrorHandler
-import utils.HttpResponseHelper
-import utils.InvalidPayloadHandler
+import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
 
   def getMinimalDetails(idValue: String, idType: String)(implicit
-                                          headerCarrier: HeaderCarrier,
-                                          ec: ExecutionContext,
-                                          request: RequestHeader): Future[Either[HttpException, MinimalDetails]]
+                                                         headerCarrier: HeaderCarrier,
+                                                         ec: ExecutionContext,
+                                                         request: RequestHeader): Future[Either[HttpException, MinimalDetails]]
 
   def acceptInvitation(invitation: AcceptedInvitation)
                       (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]]
@@ -138,7 +132,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
   }
 
   private def processResponse(acceptedInvitation: AcceptedInvitation, response: HttpResponse, url: String)(
-    implicit request: RequestHeader, ec: ExecutionContext) : Either[HttpException, Unit] = {
+    implicit request: RequestHeader, ec: ExecutionContext): Either[HttpException, Unit] = {
 
     sendAcceptInvitationAuditEvent(acceptedInvitation, response.status,
       if (response.body.isEmpty) None else Some(response.json))(auditService.sendEvent)
@@ -152,17 +146,32 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
   }
 
   def acceptInvitation(acceptedInvitation: AcceptedInvitation)
-                      (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] = {
-    val headerCarrierWithDesHeaders: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
-    val url = appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)
+                      (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
+    featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
+      if (isEnabled) {
 
-    val acceptedInvitationJsValue = Json.toJson(acceptedInvitation)(writesAcceptedInvitation)
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
+          headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
+        val url = appConfig.createPsaAssociationIFUrl.format(acceptedInvitation.pstr)
+        val data = Json.toJson(acceptedInvitation)(writesIFAcceptedInvitation)
+        association(url, data, acceptedInvitation)(hc, implicitly, implicitly)
 
-    Logger.debug(s"[Accept-Invitation-Outgoing-Payload] - ${acceptedInvitationJsValue.toString()}")
+      } else {
 
-    httpClient.POST[JsValue, HttpResponse](url, acceptedInvitationJsValue)(
-      implicitly, implicitly, headerCarrierWithDesHeaders, implicitly
-    ) map (processResponse(acceptedInvitation,_, url))
+        val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+        val url = appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)
+        val data = Json.toJson(acceptedInvitation)(writesAcceptedInvitation)
+        association(url, data, acceptedInvitation)(hc, implicitly, implicitly)
+      }
+    }
+
+  private def association(url: String, data: JsValue, acceptedInvitation: AcceptedInvitation)
+                         (implicit hc: HeaderCarrier, ec: ExecutionContext,
+                          request: RequestHeader): Future[Either[HttpException, Unit]] = {
+    Logger.debug(s"[Accept-Invitation-Outgoing-Payload] - ${data.toString()}")
+    httpClient.POST[JsValue, HttpResponse](url, data)(
+      implicitly, implicitly, hc, implicitly
+    ) map (processResponse(acceptedInvitation, _, url))
   }
 }
 
@@ -196,6 +205,31 @@ object AssociationConnectorImpl {
         optional("line2", nonUkAddress.addressLine2) ++
         optional("line3", nonUkAddress.addressLine3) ++
         optional("line4", nonUkAddress.addressLine4) ++
+        optional("postalCode", nonUkAddress.postalCode)
+      JsObject(underlying)
+  }
+
+  private val ifAddressWrites: Writes[Address] = Writes {
+    case ukAddress: UkAddress =>
+      val underlying = Map[String, JsValue](
+        "nonUKAddress" -> JsString("false"),
+        "addressLine1" -> JsString(ukAddress.addressLine1),
+        "postalCode" -> JsString(ukAddress.postalCode),
+        "countryCode" -> JsString(ukAddress.countryCode)
+      ) ++
+        optional("addressLine2", ukAddress.addressLine2) ++
+        optional("addressLine3", ukAddress.addressLine3) ++
+        optional("addressLine4", ukAddress.addressLine4)
+      JsObject(underlying)
+    case nonUkAddress: InternationalAddress =>
+      val underlying = Map[String, JsValue](
+        "nonUKAddress" -> JsString("true"),
+        "addressLine1" -> JsString(nonUkAddress.addressLine1),
+        "countryCode" -> JsString(nonUkAddress.countryCode)
+      ) ++
+        optional("addressLine2", nonUkAddress.addressLine2) ++
+        optional("addressLine3", nonUkAddress.addressLine3) ++
+        optional("addressLine4", nonUkAddress.addressLine4) ++
         optional("postalCode", nonUkAddress.postalCode)
       JsObject(underlying)
   }
@@ -238,6 +272,46 @@ object AssociationConnectorImpl {
           ),
           "declarationDetails" -> declarationDetails
         )
+      )
+    }
+  }
+
+  val writesIFAcceptedInvitation: Writes[AcceptedInvitation] = Writes {
+    { invite =>
+      val pensionAdviserDetails = invite.pensionAdviserDetails match {
+        case Some(adviser) => Json.obj(
+          "pensionAdviserDetails" -> Json.obj(
+            "name" -> adviser.name,
+            "addressDetails" -> ifAddressWrites.writes(adviser.addressDetail),
+            "contactDetails" -> Json.obj(
+              "email" -> adviser.email
+            )
+          )
+        )
+        case _ => Json.obj()
+      }
+
+      val declarationDuties: (String, JsValue) =
+        if (invite.declarationDuties) {
+          "box5" -> JsBoolean(true)
+        } else {
+          "box6" -> JsString("true")
+        }
+
+      val declarationDetails = Json.obj(
+        "box1" -> invite.declaration,
+        "box2" -> invite.declaration,
+        "box3" -> invite.declaration,
+        "box4" -> invite.declaration
+      ) + declarationDuties ++ pensionAdviserDetails
+
+      Json.obj(
+        "psaAssociationIDsDetails" -> Json.obj(
+          "inviteeIDType" -> "PSAID",
+          "inviteeIDNumber" -> invite.inviteePsaId,
+          "inviterPSAID" -> invite.inviterPsaId
+        ),
+        "psaDeclarationDetails" -> declarationDetails
       )
     }
   }

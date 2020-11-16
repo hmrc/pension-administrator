@@ -20,11 +20,14 @@ import audit._
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock.{serverError, _}
 import connectors.helper.ConnectorBehaviours
+import models.FeatureToggle.{Disabled, Enabled}
+import models.FeatureToggleName.IntegrationFramework
 import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
 import org.joda.time.LocalDate
+import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.scalatest._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.slf4j.event.Level
 import play.api.http.Status._
 import play.api.inject.bind
@@ -35,23 +38,29 @@ import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import play.api.test.Helpers.NOT_FOUND
 import play.api.{Application, LoggerLike}
+import service.FeatureToggleService
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.testhelpers.PsaSubscriptionBuilder._
 import utils.{FakeDesConnector, StubLogger, WireMockHelper}
 
+import scala.concurrent.Future
+
 class DesConnectorSpec extends AsyncFlatSpec
   with WireMockHelper
   with OptionValues
   with RecoverMethods
   with EitherValues
-  with ConnectorBehaviours with MockitoSugar{
+  with ConnectorBehaviours with MockitoSugar {
 
   import DesConnectorSpec._
 
+  private val mockFeatureToggleService = mock[FeatureToggleService]
+
   override def beforeEach(): Unit = {
     auditService.reset()
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Disabled(IntegrationFramework)))
     super.beforeEach()
   }
 
@@ -60,7 +69,8 @@ class DesConnectorSpec extends AsyncFlatSpec
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
       bind[AuditService].toInstance(auditService),
-      bind[LoggerLike].toInstance(logger)
+      bind[LoggerLike].toInstance(logger),
+      bind[FeatureToggleService].toInstance(mockFeatureToggleService)
     )
 
   lazy val connector: DesConnector = injector.instanceOf[DesConnector]
@@ -295,7 +305,7 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   }
 
-  "DesConnector removePSA" should "handle OK (200)" in {
+  "DesConnector removePSA" should "handle OK (200) when toggle is off" in {
     val successResponse = FakeDesConnector.removePsaResponseJson
     server.stubFor(
       post(urlEqualTo(removePsaUrl))
@@ -487,6 +497,206 @@ class DesConnectorSpec extends AsyncFlatSpec
     connector.removePSA(removePsaDataModel),
     removePsaUrl
   )
+
+
+  "Cease PSA with toggle on" should "handle OK (200)" in {
+    val successResponse = FakeDesConnector.removePsaResponseJson
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFramework)))
+    server.stubFor(
+      post(urlEqualTo(ceasePsaFromSchemeUrl))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .withRequestBody(equalToJson(Json.stringify(ceasePsaData)))
+        .willReturn(
+          ok(Json.stringify(successResponse))
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+    connector.removePSA(removePsaDataModel).map { response =>
+      response.right.value shouldBe successResponse
+
+      val expectedAuditEvent = PSARemovalFromSchemeAuditEvent(PsaToBeRemovedFromScheme(
+        removePsaDataModel.psaId, removePsaDataModel.pstr, removePsaDataModel.removalDate))
+      auditService.verifySent(expectedAuditEvent) shouldBe true
+
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFramework)))
+    server.stubFor(
+      post(urlEqualTo(ceasePsaFromSchemeUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_CORRELATION_ID"))
+        )
+    )
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_CORRELATION_ID")
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_PSTR response" in {
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFramework)))
+    server.stubFor(
+      post(urlEqualTo(ceasePsaFromSchemeUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_PSTR"))
+        )
+    )
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_PSTR")
+    }
+  }
+
+  it should "return a BadRequestException for a 400 INVALID_PSAID response" in {
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFramework)))
+    server.stubFor(
+      post(urlEqualTo(ceasePsaFromSchemeUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("INVALID_PSAID"))
+        )
+    )
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_PSAID")
+    }
+  }
+
+  it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFramework)))
+    server.stubFor(
+      post(urlEqualTo(ceasePsaFromSchemeUrl))
+        .willReturn(
+          badRequest
+            .withHeader("Content-Type", "application/json")
+            .withBody("INVALID_PAYLOAD")
+        )
+    )
+
+    logger.reset()
+    connector.removePSA(removePsaDataModel).map {
+      _ =>
+        logger.getLogEntries.size shouldBe 1
+        logger.getLogEntries.head.level shouldBe Level.WARN
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 NO_RELATIONSHIP_EXISTS response" in {
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFramework)))
+    server.stubFor(
+      post(urlEqualTo(ceasePsaFromSchemeUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("NO_RELATIONSHIP_EXISTS"))
+        )
+    )
+
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("NO_RELATIONSHIP_EXISTS")
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 NO_OTHER_ASSOCIATED_PSA response" in {
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFramework)))
+    server.stubFor(
+      post(urlEqualTo(ceasePsaFromSchemeUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("NO_OTHER_ASSOCIATED_PSA"))
+        )
+    )
+
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("NO_OTHER_ASSOCIATED_PSA")
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 FUTURE_CEASE_DATE response" in {
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFramework)))
+    server.stubFor(
+      post(urlEqualTo(ceasePsaFromSchemeUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("FUTURE_CEASE_DATE"))
+        )
+    )
+
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("FUTURE_CEASE_DATE")
+    }
+  }
+
+  it should "return a ForbiddenException for a 403 PSAID_NOT_ACTIVE response" in {
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFramework)))
+    server.stubFor(
+      post(urlEqualTo(ceasePsaFromSchemeUrl))
+        .willReturn(
+          forbidden
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("PSAID_NOT_ACTIVE"))
+        )
+    )
+
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[ForbiddenException]
+        response.left.value.message should include("PSAID_NOT_ACTIVE")
+    }
+  }
+
+  it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFramework)))
+    server.stubFor(
+      post(urlEqualTo(ceasePsaFromSchemeUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(CONFLICT)
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("DUPLICATE_SUBMISSION"))
+        )
+    )
+    connector.removePSA(removePsaDataModel).map {
+      response =>
+        response.left.value shouldBe a[ConflictException]
+        response.left.value.message should include("DUPLICATE_SUBMISSION")
+    }
+  }
+
+  it should "return not found exception and failure response details for a 404 response" in {
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFramework)))
+    server.stubFor(
+      post(urlEqualTo(ceasePsaFromSchemeUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(NOT_FOUND)
+            .withHeader("Content-Type", "application/json")
+            .withBody(errorResponse("NOT_FOUND"))
+        )
+    )
+
+    connector.removePSA(removePsaDataModel).collect {
+      case Left(_: NotFoundException) => succeed
+    }
+  }
 
   "DesConnector deregisterPSA" should "handle OK (200)" in {
     val successResponse = FakeDesConnector.deregisterPsaResponseJson
@@ -848,18 +1058,26 @@ object DesConnectorSpec extends JsonFileReader {
   private val psaSubscriptionData = readJsonFromFile("/data/validPSASubscriptionDetails.json")
   private val invalidPsaSubscriptionResponse = readJsonFromFile("/data/validPsaRequest.json")
 
-  val srn = SchemeReferenceNumber("S0987654321")
-  val psaId = PsaId("A7654321")
+  val srn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")
+  val psaId: PsaId = PsaId("A7654321")
   val pstr: String = PSTR("123456789AB")
   val removalDate: LocalDate = LocalDate.now()
 
   private val removePsaData: JsValue = Json.obj("ceaseDate" -> removalDate.toString)
+  private val ceasePsaData: JsValue = Json.obj(
+    "ceaseIDType" -> "PSAID",
+    "ceaseNumber" -> psaId.id,
+    "initiatedIDType" -> "PSAID",
+    "initiatedIDNumber" -> psaId.id,
+    "ceaseDate" -> removalDate.toString
+  )
   private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removalDate)
   private val deregisterPsaData: JsValue = Json.obj("deregistrationDate" -> LocalDate.now(), "reason" -> "1")
 
   val registerPsaUrl = "/pension-online/subscription"
   val psaSubscriptionDetailsUrl = s"/pension-online/psa-subscription-details/$psaId"
   val removePsaUrl = s"/pension-online/cease-psa/psaid/$psaId/pstr/$pstr"
+  val ceasePsaFromSchemeUrl = s"/pension-online/cease-scheme/pods/$pstr"
   val deregisterPsaUrl = s"/pension-online/deregistration/psaid/$psaId"
   val variationPsaUrl = s"/pension-online/psa-variation/psaid/$psaId"
 
