@@ -22,16 +22,16 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import config.AppConfig
-import config.FeatureSwitchManagementService
 import connectors.helper.HeaderUtils
+import models.FeatureToggleName.IntegrationFramework
 import models._
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.Logger
+import service.FeatureToggleService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import utils.Toggles
 import utils.ErrorHandler
 import utils.HttpResponseHelper
 import utils.InvalidPayloadHandler
@@ -58,8 +58,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
                                          invalidPayloadHandler: InvalidPayloadHandler,
                                          headerUtils: HeaderUtils,
                                          auditService: AuditService,
-                                         fs: FeatureSwitchManagementService
-)
+                                         featureToggleService: FeatureToggleService)
   extends AssociationConnector with HttpResponseHelper with ErrorHandler with AssociationAuditService {
 
   import AssociationConnectorImpl._
@@ -68,28 +67,27 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
-    if(fs.get(Toggles.ifEnabled)) {
-      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-        headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
+    featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
+        if(isEnabled) {
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
+          headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
+        val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(idType, idValue)
 
-      val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(idType, idValue)
+        httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
+          implicitly) map {
+          handleResponseIF(_, minimalDetailsUrl)
+        } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
 
-      httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
-        implicitly) map {
-        handleResponseIF(_, minimalDetailsUrl)
-      } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
+      } else { // Ignore idType for original API because always PSA
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
-    } else { // Ignore idType for original API because always PSA
-      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
-
-      val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(idValue)
-      httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
-        implicitly) map {
-        handleResponseDES(_, minimalDetailsUrl)
-      } andThen sendGetMinimalPSADetailsEvent(psaId = idValue)(auditService.sendEvent) andThen logWarning("PSA minimal details")
+        val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(idValue)
+        httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
+          implicitly) map {
+          handleResponseDES(_, minimalDetailsUrl)
+        } andThen sendGetMinimalPSADetailsEvent(psaId = idValue)(auditService.sendEvent) andThen logWarning("PSA minimal details")
+      }
     }
-
-
   }
 
   private def handleResponseDES(response: HttpResponse, url: String): Either[HttpException, MinimalDetails] = {
