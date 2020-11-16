@@ -27,14 +27,19 @@ lazy val plugins: Seq[Plugins] = Seq.empty
 lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
 lazy val microservice = Project(AppDependencies.appName, file("."))
+  .disablePlugins(JUnitXmlReportPlugin)
   .enablePlugins(Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory) ++ plugins: _*)
   .settings(playSettings: _*)
   .settings(majorVersion := 0)
   .settings(scalaSettings: _*)
+  .settings(scalaVersion := "2.12.11")
   .settings(publishingSettings: _*)
   .settings(defaultSettings(): _*)
   .settings(
-    RoutesKeys.routesImport ++= Seq("models.enumeration.JourneyType"),
+    RoutesKeys.routesImport ++= Seq(
+      "models.enumeration.JourneyType",
+      "models.FeatureToggleName"
+    ),
     libraryDependencies ++= appDependencies,
     dependencyOverrides ++= overrides,
     retrieveManaged := true,

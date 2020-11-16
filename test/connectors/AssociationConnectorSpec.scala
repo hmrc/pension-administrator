@@ -23,8 +23,10 @@ import audit.MinimalPSADetailsEvent
 import audit.StubSuccessfulAuditService
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
-import config.FeatureSwitchManagementService
 import connectors.helper.ConnectorBehaviours
+import models.FeatureToggle.Disabled
+import models.FeatureToggle.Enabled
+import models.FeatureToggleName.IntegrationFramework
 import models._
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
@@ -42,6 +44,9 @@ import utils.StubLogger
 import utils.WireMockHelper
 import org.mockito.{Matchers => MockitoMatchers}
 import org.mockito.Mockito._
+import service.FeatureToggleService
+
+import scala.concurrent.Future
 
 class AssociationConnectorSpec extends AsyncFlatSpec
   with Matchers
@@ -57,11 +62,11 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   private val logger = new StubLogger()
   private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/$psaId"
   private val acceptInvitationUrl = s"/pension-online/psa-association/pstr/$pstr"
-  private val mockFeatureSwitchManagementService = mock[FeatureSwitchManagementService]
+  private val mockFeatureToggleService = mock[FeatureToggleService]
 
   override def beforeEach(): Unit = {
     auditService.reset()
-    when(mockFeatureSwitchManagementService.get(MockitoMatchers.any())).thenReturn(false)
+    when(mockFeatureToggleService.get(MockitoMatchers.any())).thenReturn(Future.successful(Disabled(IntegrationFramework)))
     super.beforeEach()
   }
 
@@ -73,7 +78,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     Seq(
       bind[AuditService].toInstance(auditService),
       bind[LoggerLike].toInstance(logger),
-      bind[FeatureSwitchManagementService].toInstance(mockFeatureSwitchManagementService)
+      bind[FeatureToggleService].toInstance(mockFeatureToggleService)
     )
 
   private lazy val connector = injector.instanceOf[AssociationConnector]
@@ -526,11 +531,11 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private val logger = new StubLogger()
   private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/PODS/PSA/$psaId"
-  private val mockFeatureSwitchManagementService = mock[FeatureSwitchManagementService]
+  private val mockFeatureToggleService = mock[FeatureToggleService]
 
   override def beforeEach(): Unit = {
     auditService.reset()
-    when(mockFeatureSwitchManagementService.get(MockitoMatchers.any())).thenReturn(true)
+    when(mockFeatureToggleService.get(MockitoMatchers.any())).thenReturn(Future.successful(Enabled(IntegrationFramework)))
     super.beforeEach()
   }
 
@@ -542,7 +547,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
     Seq(
       bind[AuditService].toInstance(auditService),
       bind[LoggerLike].toInstance(logger),
-      bind[FeatureSwitchManagementService].toInstance(mockFeatureSwitchManagementService)
+      bind[FeatureToggleService].toInstance(mockFeatureToggleService)
     )
 
   private lazy val connector = injector.instanceOf[AssociationConnector]
