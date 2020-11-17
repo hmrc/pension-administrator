@@ -23,6 +23,7 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import config.AppConfig
 import connectors.helper.HeaderUtils
+import models.FeatureToggle.Enabled
 import models.FeatureToggleName.IntegrationFramework
 import models._
 import play.api.http.Status._
@@ -67,8 +68,8 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
-    featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
-        if(isEnabled) {
+    featureToggleService.get(IntegrationFramework).flatMap {
+      case Enabled(IntegrationFramework) =>
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
           headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
         val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(idType, idValue)
@@ -78,7 +79,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
           handleResponseIF(_, minimalDetailsUrl)
         } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
 
-      } else { // Ignore idType for original API because always PSA
+      case _ => // Ignore idType for original API because always PSA
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
         val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(idValue)
@@ -87,7 +88,6 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
           handleResponseDES(_, minimalDetailsUrl)
         } andThen sendGetMinimalPSADetailsEvent(psaId = idValue)(auditService.sendEvent) andThen logWarning("PSA minimal details")
       }
-    }
   }
 
   private def handleResponseDES(response: HttpResponse, url: String): Either[HttpException, MinimalDetails] = {
