@@ -20,12 +20,14 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
+import models.FeatureToggleName.IntegrationFramework
 import models.{PsaSubscription, PsaToBeRemovedFromScheme}
 import org.joda.time.LocalDate
 import play.Logger
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
+import service.FeatureToggleService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
@@ -72,7 +74,8 @@ class DesConnectorImpl @Inject()(
                                   invalidPayloadHandler: InvalidPayloadHandler,
                                   headerUtils: HeaderUtils,
                                   psaSubscriptionDetailsTransformer: PSASubscriptionDetailsTransformer,
-                                  schemeAuditService: SchemeAuditService
+                                  schemeAuditService: SchemeAuditService,
+                                  featureToggleService: FeatureToggleService
                                 ) extends DesConnector with HttpResponseHelper with ErrorHandler with PSADeEnrolAuditService {
 
   override def registerPSA(registerData: JsValue)(implicit
@@ -113,41 +116,74 @@ class DesConnectorImpl @Inject()(
   override def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
                                                                    headerCarrier: HeaderCarrier,
                                                                    ec: ExecutionContext,
-                                                                   request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                                                   request: RequestHeader): Future[Either[HttpException, JsValue]] =
+    featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
+      if (isEnabled) {
 
-    val removePsaSchema = "/resources/schemas/removePsa.json"
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
+          headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
+        val url: String = config.removePsaIFUrl.format(psaToBeRemoved.pstr)
+        val data: JsValue = Json.obj(
+          "ceaseIDType" -> "PSAID",
+          "ceaseNumber" -> psaToBeRemoved.psaId,
+          "initiatedIDType" -> "PSAID",
+          "initiatedIDNumber" -> psaToBeRemoved.psaId,
+          "ceaseDate" -> psaToBeRemoved.removalDate.toString
+        )
+        //TODO Add scheme once json scheme has been received from API team
+        removePSAFromScheme(url, data, "/resources/schemas/ceaseFromScheme1461.json", psaToBeRemoved)(hc, implicitly, implicitly)
+      } else {
 
-    val url = config.removePsaUrl.format(psaToBeRemoved.psaId, psaToBeRemoved.pstr)
+        val url: String = config.removePsaUrl.format(psaToBeRemoved.psaId, psaToBeRemoved.pstr)
+        val data: JsValue = Json.obj("ceaseDate" -> psaToBeRemoved.removalDate.toString)
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
-    val data: JsValue = Json.obj("ceaseDate" -> psaToBeRemoved.removalDate.toString)
+        removePSAFromScheme(url, data, "/resources/schemas/removePsa.json", psaToBeRemoved)(hc, implicitly, implicitly)
+      }
+    }
 
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
-
+  private def removePSAFromScheme(url: String, data: JsValue, schema: String, psaToBeRemoved: PsaToBeRemovedFromScheme)
+                                 (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
     http.POST[JsValue, HttpResponse](url, data)(implicitly, implicitly, hc, implicitly) map {
       handlePostResponse(_, url)
     } andThen schemeAuditService.sendPSARemovalAuditEvent(psaToBeRemoved)(auditService.sendEvent) andThen
-      logFailures("remove PSA", data, removePsaSchema, url)
+      logFailures("Remove PSA from scheme", data, schema, url)
   }
 
   override def deregisterPSA(psaId: String)(implicit
                                             headerCarrier: HeaderCarrier,
                                             ec: ExecutionContext,
-                                            request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                            request: RequestHeader): Future[Either[HttpException, JsValue]] =
+    featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
+      val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
+      if(isEnabled) {
 
-    val deregisterPsaSchema = "/resources/schemas/deregisterPsa.json"
+      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
+        headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
+      deregisterAdministrator(
+        config.deregisterPsaIFUrl.format(psaId),
+        data,
+        "/resources/schemas/deregister1469.json",
+        psaId)(hc, implicitly, implicitly)
+    } else {
 
-    val url = config.deregisterPsaUrl.format(psaId)
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
+        deregisterAdministrator(
+          config.deregisterPsaUrl.format(psaId),
+          data,
+          "/resources/schemas/deregisterPsa.json",
+          psaId)(hc, implicitly, implicitly)
+      }
+  }
 
-    val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
-
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
-
+  private def deregisterAdministrator(url: String, data: JsValue, schema: String, psaId: String)
+                                     (implicit hc: HeaderCarrier, ec: ExecutionContext,
+                                      request: RequestHeader): Future[Either[HttpException, JsValue]] =
     http.POST[JsValue, HttpResponse](url, data)(implicitly, implicitly, hc, implicitly) map {
       handlePostResponse(_, url)
-    } andThen sendPSADeEnrolEvent(
-      psaId
-    )(auditService.sendEvent) andThen logFailures("deregister PSA", data, deregisterPsaSchema, url)
-  }
+    } andThen
+      sendPSADeEnrolEvent(psaId)(auditService.sendEvent) andThen
+      logFailures("deregister PSA", data, schema, url)
 
   override def updatePSA(psaId: String, data: JsValue)(implicit
                                                        headerCarrier: HeaderCarrier,
