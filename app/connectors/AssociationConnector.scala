@@ -20,16 +20,23 @@ import audit.{AssociationAuditService, AuditService}
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
 import connectors.helper.HeaderUtils
+import models.FeatureToggle.Enabled
+import models.FeatureToggleName.IntegrationFramework
 import models.FeatureToggleName.IntegrationFramework
 import models._
 import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
+import play.api.Logger
+import service.FeatureToggleService
 import service.FeatureToggleService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+import utils.ErrorHandler
+import utils.HttpResponseHelper
+import utils.InvalidPayloadHandler
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,9 +44,9 @@ import scala.concurrent.{ExecutionContext, Future}
 trait AssociationConnector {
 
   def getMinimalDetails(idValue: String, idType: String)(implicit
-                                                         headerCarrier: HeaderCarrier,
-                                                         ec: ExecutionContext,
-                                                         request: RequestHeader): Future[Either[HttpException, MinimalDetails]]
+                                          headerCarrier: HeaderCarrier,
+                                          ec: ExecutionContext,
+                                          request: RequestHeader): Future[Either[HttpException, MinimalDetails]]
 
   def acceptInvitation(invitation: AcceptedInvitation)
                       (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]]
@@ -61,8 +68,8 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
-    featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
-        if(isEnabled) {
+    featureToggleService.get(IntegrationFramework).flatMap {
+      case Enabled(IntegrationFramework) =>
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
           headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
         val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(idType, idValue)
@@ -72,7 +79,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
           handleResponseIF(_, minimalDetailsUrl)
         } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
 
-      } else { // Ignore idType for original API because always PSA
+      case _ => // Ignore idType for original API because always PSA
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
         val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(idValue)
@@ -81,7 +88,6 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
           handleResponseDES(_, minimalDetailsUrl)
         } andThen sendGetMinimalPSADetailsEvent(psaId = idValue)(auditService.sendEvent) andThen logWarning("PSA minimal details")
       }
-    }
   }
 
   private def handleResponseDES(response: HttpResponse, url: String): Either[HttpException, MinimalDetails] = {
@@ -132,7 +138,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
   }
 
   private def processResponse(acceptedInvitation: AcceptedInvitation, response: HttpResponse, url: String)(
-    implicit request: RequestHeader, ec: ExecutionContext): Either[HttpException, Unit] = {
+    implicit request: RequestHeader, ec: ExecutionContext) : Either[HttpException, Unit] = {
 
     sendAcceptInvitationAuditEvent(acceptedInvitation, response.status,
       if (response.body.isEmpty) None else Some(response.json))(auditService.sendEvent)
@@ -146,7 +152,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
   }
 
   def acceptInvitation(acceptedInvitation: AcceptedInvitation)
-                      (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
+    (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
     featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
       if (isEnabled) {
 
