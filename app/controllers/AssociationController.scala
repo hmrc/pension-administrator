@@ -48,8 +48,8 @@ class AssociationController @Inject()(
 
   private def retrieveIdAndTypeFromHeaders(block: (String, String, String) => Future[Result])(implicit request: RequestHeader):Future[Result] = {
       (request.headers.get("psaId"), request.headers.get("pspId")) match {
-        case (Some(id), None) => block(id, "PSAID", "PODA")
-        case (None, Some(id)) => block(id, "PSPID", "PODP")
+        case (Some(id), None) => block(id, "psaid", "poda")
+        case (None, Some(id)) => block(id, "pspid", "podp")
         case _ => Future.failed(new BadRequestException("No PSA or PSP Id in the header for get minimal details"))
       }
   }
@@ -81,7 +81,7 @@ class AssociationController @Inject()(
   def getEmail: Action[AnyContent] = Action.async {
     implicit request =>
       retrievals.getPsaId flatMap {
-        case Some(psaId) => associationConnector.getMinimalDetails(psaId.id, "PSAID", "PODA") map {
+        case Some(psaId) => associationConnector.getMinimalDetails(psaId.id, "psaid", "poda") map {
           case Right(psaDetails) => Ok(psaDetails.email)
           case Left(e) => result(e)
         }
@@ -112,7 +112,7 @@ class AssociationController @Inject()(
     implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
     psaId map {
       id =>
-        associationConnector.getMinimalDetails(id.id, "PSAID", "PODA")
+        associationConnector.getMinimalDetails(id.id, "psaid", "poda")
     } getOrElse {
       Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
     }
