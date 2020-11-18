@@ -496,9 +496,9 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
   with EitherValues
   with ConnectorBehaviours with MockitoSugar {
 
-  private val psaRegime = "PODA"
+  private val psaRegime = "poda"
   private val psaId = PsaId("A2123456")
-  private val psaType = "PSAID"
+  private val psaType = "psaid"
   private val psaMinimunIndividualDetailPayload = Json.parse(
     """{
       |	"processingDate": "2001-12-17T09:30:47Z",
@@ -531,7 +531,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
   private implicit val rh: RequestHeader = FakeRequest("", "")
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private val logger = new StubLogger()
-  private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/PODA/PSAID/$psaId"
+  private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/poda/psaid/$psaId"
   private val mockFeatureToggleService = mock[FeatureToggleService]
 
   override def beforeEach(): Unit = {
@@ -723,7 +723,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
     connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { _ =>
       auditService.verifySent(
         MinimalDetailsEvent(
-          idType = "PSAID",
+          idType = "psaid",
           idValue = psaId.id,
           name = psaMinimalDetailsIndividualUser.name,
           isSuspended = Some(psaMinimalDetailsIndividualUser.isPsaSuspended),
@@ -747,7 +747,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
     connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { _ =>
       auditService.verifySent(
         MinimalDetailsEvent(
-          idType = "PSAID",
+          idType = "psaid",
           idValue = psaId.id,
           name = None,
           isSuspended = None,
@@ -785,8 +785,8 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
 object AssociationConnectorSpec extends OptionValues {
   private val psaIdInvitee = PsaId("A2123456")
   private val psaId = PsaId("A2123456")
-  private val psaRegime = "PODA"
-  private val psaType = "PSA"
+  private val psaRegime = "poda"
+  private val psaType = "psaid"
   private val email = "aaa@aaa.com"
   private val ukAddress = UkAddress(
     addressLine1 = "address line 1",
