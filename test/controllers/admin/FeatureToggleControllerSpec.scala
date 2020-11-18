@@ -17,11 +17,12 @@
 package controllers.admin
 
 import base.SpecBase
+import models.FeatureToggle
 import models.FeatureToggle.Enabled
 import models.FeatureToggleName.IntegrationFramework
 import models.OperationSucceeded
 import org.mockito.Matchers.any
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.Mockito.{times, reset, when, verify}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.{JsBoolean, Json}
@@ -49,14 +50,33 @@ class FeatureToggleControllerSpec
       .thenReturn(Future.successful(Seq(Enabled(IntegrationFramework))))
   }
 
-  "FeatureToggleController.get" must {
+  "FeatureToggleController.getAll" must {
     "return OK and the feature toggles when they exist" in {
 
       val controller = new FeatureToggleController(controllerComponents, mockFeatureToggleService)
 
-      val result = controller.get()(fakeRequest)
+      val result = controller.getAll()(fakeRequest)
 
       status(result) mustBe OK
+    }
+  }
+
+  "FeatureToggleController.get" must {
+    "get the feature toggle value and return OK" in {
+      when(mockAdminDataRepository.setFeatureToggles(any()))
+        .thenReturn(Future.successful(true))
+
+      when(mockFeatureToggleService.get(any()))
+        .thenReturn(Future.successful(Enabled(IntegrationFramework)))
+
+      val controller = new FeatureToggleController(controllerComponents, mockFeatureToggleService)
+
+      val result = controller.get(IntegrationFramework)(fakeRequest)
+
+      status(result) mustBe OK
+
+      verify(mockFeatureToggleService, times(1))
+        .get(name = IntegrationFramework)
     }
   }
 
