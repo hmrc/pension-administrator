@@ -29,7 +29,7 @@ import models.FeatureToggle.Enabled
 import models.FeatureToggleName.IntegrationFramework
 import models._
 import org.scalatest._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.slf4j.event.Level
 import play.api.LoggerLike
 import play.api.inject.bind
@@ -106,7 +106,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
       response.right.value shouldBe psaMinimalDetailsIndividualUser
     }
   }
@@ -123,7 +123,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
     logger.reset()
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
       logger.getLogEntries.size shouldBe 1
       logger.getLogEntries.head.level shouldBe Level.WARN
       response.left.value shouldBe a[BadRequestException]
@@ -145,7 +145,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
     }
@@ -165,7 +165,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
     }
@@ -173,7 +173,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   }
 
   it should behave like errorHandlerForGetApiFailures(
-    connector.getMinimalDetails(psaId.id, psaType),
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime),
     psaMinimalDetailsUrl
   )
 
@@ -191,7 +191,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType, psaRegime)) map {
       ex =>
         ex.statusCode shouldBe INTERNAL_SERVER_ERROR
         ex.getMessage should startWith("PSA minimal details")
@@ -209,7 +209,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Exception](connector.getMinimalDetails(psaId.id, psaType)) map {
+    recoverToExceptionIf[Exception](connector.getMinimalDetails(psaId.id, psaType, psaRegime)) map {
       ex =>
         ex.getMessage should startWith("PSA minimal details")
         ex.getMessage should include("failed with status")
@@ -226,7 +226,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { _ =>
       auditService.verifySent(
         MinimalPSADetailsEvent(
           psaId = psaId.id,
@@ -248,7 +248,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { _ =>
       auditService.verifySent(
         MinimalPSADetailsEvent(
           psaId = psaId.id,
@@ -276,7 +276,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType, psaRegime)) map {
       _ =>
         auditService.verifyNothingSent shouldBe true
     }
@@ -401,7 +401,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
           aResponse()
             .withStatus(NOT_FOUND)
             .withHeader("Content-Type", "application/json")
-            .withBody(failureResponseJson.toString)
+            .withBody(failureResponseJson)
         )
     )
     val acceptedInvitation = AcceptedInvitation(pstr = pstr, inviteePsaId = psaIdInvitee, declaration = true, declarationDuties = true, inviterPsaId = psaId,
@@ -496,8 +496,9 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
   with EitherValues
   with ConnectorBehaviours with MockitoSugar {
 
+  private val psaRegime = "PODA"
   private val psaId = PsaId("A2123456")
-  private val psaType = "PSA"
+  private val psaType = "PSAID"
   private val psaMinimunIndividualDetailPayload = Json.parse(
     """{
       |	"processingDate": "2001-12-17T09:30:47Z",
@@ -514,7 +515,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
       |	"deceasedFlag": true
       |}""".stripMargin)
 
-  val psaMinimalDetailsIndividualUser = MinimalDetails(
+  val psaMinimalDetailsIndividualUser: MinimalDetails = MinimalDetails(
     "test@email.com",
     isPsaSuspended = true,
     None,
@@ -530,7 +531,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
   private implicit val rh: RequestHeader = FakeRequest("", "")
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private val logger = new StubLogger()
-  private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/PODS/PSA/$psaId"
+  private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/PODA/PSAID/$psaId"
   private val mockFeatureToggleService = mock[FeatureToggleService]
 
   override def beforeEach(): Unit = {
@@ -562,7 +563,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
       response.right.value shouldBe psaMinimalDetailsIndividualUser
     }
   }
@@ -579,7 +580,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
 
     logger.reset()
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
       logger.getLogEntries.size shouldBe 1
       logger.getLogEntries.head.level shouldBe Level.WARN
       response.left.value shouldBe a[BadRequestException]
@@ -601,7 +602,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
     }
@@ -621,7 +622,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
     }
@@ -641,7 +642,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
     }
@@ -661,7 +662,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe Json.parse(errorResponse).toString()
     }
@@ -669,7 +670,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
   }
 
   it should behave like errorHandlerForGetApiFailures(
-    connector.getMinimalDetails(psaId.id, psaType),
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime),
     psaMinimalDetailsUrl
   )
 
@@ -686,7 +687,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType, psaRegime)) map {
       ex =>
         ex.statusCode shouldBe INTERNAL_SERVER_ERROR
         ex.getMessage should startWith("Minimal details")
@@ -703,7 +704,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[Exception](connector.getMinimalDetails(psaId.id, psaType)) map {
+    recoverToExceptionIf[Exception](connector.getMinimalDetails(psaId.id, psaType, psaRegime)) map {
       ex =>
         ex.getMessage should startWith("Minimal details")
         ex.getMessage should include("failed with status")
@@ -719,10 +720,10 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { _ =>
       auditService.verifySent(
         MinimalDetailsEvent(
-          idType = "PSA",
+          idType = "PSAID",
           idValue = psaId.id,
           name = psaMinimalDetailsIndividualUser.name,
           isSuspended = Some(psaMinimalDetailsIndividualUser.isPsaSuspended),
@@ -743,10 +744,10 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    connector.getMinimalDetails(psaId.id, psaType).map { response =>
+    connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { _ =>
       auditService.verifySent(
         MinimalDetailsEvent(
-          idType = "PSA",
+          idType = "PSAID",
           idValue = psaId.id,
           name = None,
           isSuspended = None,
@@ -773,7 +774,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType, psaRegime)) map {
       _ =>
         auditService.verifyNothingSent shouldBe true
     }
@@ -784,6 +785,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
 object AssociationConnectorSpec extends OptionValues {
   private val psaIdInvitee = PsaId("A2123456")
   private val psaId = PsaId("A2123456")
+  private val psaRegime = "PODA"
   private val psaType = "PSA"
   private val email = "aaa@aaa.com"
   private val ukAddress = UkAddress(
@@ -829,7 +831,7 @@ object AssociationConnectorSpec extends OptionValues {
        |               "countryCode":"${ukAddress.countryCode}"
        |            },
        |            "contactDetails":{
-       |               "email":"${email}"
+       |               "email":"$email"
        |            }
        |         }
        |      }
@@ -861,7 +863,7 @@ object AssociationConnectorSpec extends OptionValues {
        |               "countryCode":"${internationalAddress.countryCode}"
        |            },
        |            "contactDetails":{
-       |               "email":"${email}"
+       |               "email":"$email"
        |            }
        |         }
        |      }
@@ -911,7 +913,7 @@ object AssociationConnectorSpec extends OptionValues {
       |	"psaSuspensionFlag": true
       |}""".stripMargin)
 
-  val psaMinimalDetailsIndividualUser = MinimalDetails(
+  val psaMinimalDetailsIndividualUser: MinimalDetails = MinimalDetails(
     "test@email.com",
     isPsaSuspended = true,
     None,
