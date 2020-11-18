@@ -22,28 +22,22 @@ import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.FeatureToggle.Enabled
 import models.FeatureToggleName.IntegrationFramework
-import models.FeatureToggleName.IntegrationFramework
 import models._
 import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import play.api.Logger
-import service.FeatureToggleService
 import service.FeatureToggleService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
-import utils.ErrorHandler
-import utils.HttpResponseHelper
-import utils.InvalidPayloadHandler
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
 
-  def getMinimalDetails(idValue: String, idType: String)(implicit
+  def getMinimalDetails(idValue: String, idType: String, regime: String)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]]
@@ -64,7 +58,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   import AssociationConnectorImpl._
 
-  def getMinimalDetails(idValue: String, idType: String)(implicit
+  override def getMinimalDetails(idValue: String, idType: String, regime: String)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
@@ -72,7 +66,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
       case Enabled(IntegrationFramework) =>
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
           headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
-        val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(idType, idValue)
+        val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(regime, idType, idValue)
 
         httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
           implicitly) map {

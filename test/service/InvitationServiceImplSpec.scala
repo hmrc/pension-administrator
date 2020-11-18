@@ -25,9 +25,10 @@ import models.{AcceptedInvitation, IndividualDetails, Invitation, MinimalDetails
 import org.joda.time.DateTime
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{never, times, verify, when}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
 import play.api.Application
+import play.api.inject.Injector
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsBoolean, JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
@@ -259,7 +260,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
             "schemeName" -> testSchemeName,
             "expiryDate" -> DateHelper.formatDate(expiryDate.toLocalDate)
           ),
-          false,
+          force = false,
           Some(fixture.config.invitationCallbackUrl.format(JourneyType.INVITE, encryptedPsaId))
         )
 
@@ -278,7 +279,7 @@ object InvitationServiceImplSpec extends MockitoSugar {
 
     def runningApp: Application = new GuiceApplicationBuilder().build()
 
-    val injector = runningApp.injector
+    val injector: Injector = runningApp.injector
 
     val config: AppConfig = injector.instanceOf[AppConfig]
     val associationConnector: FakeAssociationConnector = new FakeAssociationConnector()
@@ -307,7 +308,7 @@ object InvitationServiceImplSpec extends MockitoSugar {
   }
 
   val testSchemeName = "test-scheme"
-  val inviterPsaId = PsaId("A7654321")
+  val inviterPsaId: PsaId = PsaId("A7654321")
 
   def invitation(inviteePsaId: PsaId, inviteeName: String): Invitation =
     Invitation(testSrn, "test-pstr", testSchemeName, inviterPsaId, inviteePsaId, inviteeName, expiryDate)
@@ -315,34 +316,32 @@ object InvitationServiceImplSpec extends MockitoSugar {
   def invitationJson(inviteePsaId: PsaId, inviteeName: String): JsValue =
     Json.toJson(Invitation(testSrn, "test-pstr", testSchemeName, inviterPsaId, inviteePsaId, inviteeName, expiryDate))
 
-  val testSrn = SchemeReferenceNumber("S0987654321")
+  val testSrn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")
 
-  val johnDoePsaId = PsaId("A2000001")
-  val johnDoeEmail = "john.doe@email.com"
-  val johnDoe = MinimalDetails(johnDoeEmail, false, None, Some(IndividualDetails("John", None, "Doe")),
+  val johnDoePsaId: PsaId = PsaId("A2000001")
+  val johnDoeEmail: String = "john.doe@email.com"
+  val johnDoe: MinimalDetails = MinimalDetails(johnDoeEmail, isPsaSuspended = false, organisationName = None,
+    individualDetails = Some(IndividualDetails("John", None, "Doe")), rlsFlag = true, deceasedFlag = true)
+
+  val expiryDate: DateTime = new DateTime("2018-10-10")
+
+  val joeBloggsPsaId: PsaId = PsaId("A2000002")
+  val joeBloggs: MinimalDetails = MinimalDetails("joe.bloggs@email.com", isPsaSuspended = false, None,
+    Some(IndividualDetails("Joe", Some("Herbert"), "Bloggs")), rlsFlag = true, deceasedFlag = true)
+
+  val acmeLtdPsaId: PsaId = PsaId("A2000003")
+  val blankPsaId: PsaId = PsaId("A2222222")
+  val acmeLtd: MinimalDetails = MinimalDetails("info@acme.com", isPsaSuspended = false, Some("Acme Ltd"), None,
+    rlsFlag = true,
+    deceasedFlag = true)
+  val blank: MinimalDetails = MinimalDetails("info@acme.com", isPsaSuspended = false, None, None,
     rlsFlag = true,
     deceasedFlag = true)
 
-  val expiryDate = new DateTime("2018-10-10")
-
-  val joeBloggsPsaId = PsaId("A2000002")
-  val joeBloggs = MinimalDetails("joe.bloggs@email.com", false, None, Some(IndividualDetails("Joe", Some("Herbert"), "Bloggs")),
-    rlsFlag = true,
-    deceasedFlag = true)
-
-  val acmeLtdPsaId = PsaId("A2000003")
-  val blankPsaId = PsaId("A2222222")
-  val acmeLtd = MinimalDetails("info@acme.com", false, Some("Acme Ltd"), None,
-    rlsFlag = true,
-    deceasedFlag = true)
-  val blank = MinimalDetails("info@acme.com", false, None, None,
-    rlsFlag = true,
-    deceasedFlag = true)
-
-  val notFoundPsaId = PsaId("A2000004")
-  val associatedPsaId = PsaId("A2000005")
-  val invalidResponsePsaId = PsaId("A2000006")
-  val exceptionResponsePsaId = PsaId("A2000007")
+  val notFoundPsaId: PsaId = PsaId("A2000004")
+  val associatedPsaId: PsaId = PsaId("A2000005")
+  val invalidResponsePsaId: PsaId = PsaId("A2000006")
+  val exceptionResponsePsaId: PsaId = PsaId("A2000007")
 
   object FakeConfig {
     val invitationExpiryDays: Int = 30
@@ -354,7 +353,7 @@ class FakeAssociationConnector extends AssociationConnector {
 
   import InvitationServiceImplSpec._
 
-  def getMinimalDetails(idValue: String, idType: String)
+  def getMinimalDetails(idValue: String, idType: String, regime: String)
                           (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext,
                            request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
 

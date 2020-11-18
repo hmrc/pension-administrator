@@ -65,7 +65,7 @@ class InvitationServiceImpl @Inject()(
       },
       {
         invitation =>
-          handle(associationConnector.getMinimalDetails(invitation.inviteePsaId.id, "PSA")){ psaDetails =>
+          handle(associationConnector.getMinimalDetails(invitation.inviteePsaId.id, "PSAID", "PODA")){ psaDetails =>
             handle(isAssociated(invitation.inviteePsaId, SchemeReferenceNumber(invitation.srn))){
               case false if doNamesMatch(invitation.inviteeName, psaDetails) =>
                 handle(insertInvitation(invitation)){ _ =>
@@ -94,7 +94,7 @@ class InvitationServiceImpl @Inject()(
 
     val matches = (psaDetails.organisationName, psaDetails.individualDetails) match {
       case (Some(organisationName), _) => doOrganisationNamesMatch(inviteeName, organisationName)
-      case (_, Some(individual)) => doIndividualNamesMatch(inviteeName, individual, true)
+      case (_, Some(individual)) => doIndividualNamesMatch(inviteeName, individual, matchFullName = true)
       case _ => throw new IllegalArgumentException("InvitationService cannot match a PSA without organisation or individual detail")
     }
 
@@ -107,7 +107,7 @@ class InvitationServiceImpl @Inject()(
 
   private def insertInvitation(invitation: Invitation)(implicit ec: ExecutionContext): Future[Either[HttpException, Unit]] =
     repository.insert(invitation).map(_ => Right(())) recover {
-      case exception: Exception => Left(new MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
+      case exception: Exception => Left(MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
     }
 
   private def doOrganisationNamesMatch(inviteeName: String, organisationName: String): Boolean =
@@ -121,7 +121,7 @@ class InvitationServiceImpl @Inject()(
     if (FuzzyNameMatcher.matches(inviteeName, psaName)) {
       true
     } else if (matchFullName) {
-      doIndividualNamesMatch(inviteeName, individualDetails, false)
+      doIndividualNamesMatch(inviteeName, individualDetails, matchFullName = false)
     } else {
       false
     }
@@ -193,7 +193,7 @@ class InvitationServiceImpl @Inject()(
         "schemeName" -> invitation.schemeName,
         "expiryDate" -> expiryDate
       ),
-      false,
+      force = false,
       Some(callBackUrl(inviteePsaId))
     )
 

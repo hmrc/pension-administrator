@@ -21,7 +21,7 @@ import connectors.AssociationConnector
 import models._
 import org.mockito.Matchers._
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
@@ -254,7 +254,7 @@ object AssociationControllerSpec extends MockitoSugar {
 
     def setAcceptInvitationResponse(response: Future[Either[HttpException, Unit]]): Unit = this.acceptInvitationResponse = response
 
-    def getMinimalDetails(idValue: String, idType: String)(implicit
+    def getMinimalDetails(idValue: String, idType: String, regime: String)(implicit
                                            headerCarrier: HeaderCarrier,
                                            ec: ExecutionContext,
                                            request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = minimalPsaDetailsResponse
