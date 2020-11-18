@@ -19,7 +19,7 @@ package service
 import akka.Done
 import base.SpecBase
 import models.FeatureToggle.{Disabled, Enabled}
-import models.FeatureToggleName.{IntegrationFramework, SomeOtherToggle}
+import models.FeatureToggleName.{IntegrationFramework, PSPAuthorisation}
 import models.{FeatureToggle, FeatureToggleName, OperationFailed, OperationSucceeded}
 import org.mockito.ArgumentCaptor
 import org.mockito.Matchers.any
@@ -109,7 +109,7 @@ class FeatureToggleServiceSpec
 
     OUT.getAll.futureValue mustBe Seq(
       Disabled(IntegrationFramework),
-      Disabled(SomeOtherToggle)
+      Disabled(PSPAuthorisation)
     )
   }
 

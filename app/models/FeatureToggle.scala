@@ -39,15 +39,15 @@ object FeatureToggleName {
     val asString = "integration-framework"
   }
 
-  case object SomeOtherToggle extends FeatureToggleName {
-    val asString = "some-other-toggle"
+  case object PSPAuthorisation extends FeatureToggleName {
+    val asString = "psp-authorisation"
   }
 
-  val toggles = Seq(IntegrationFramework, SomeOtherToggle)
+  val toggles = Seq(IntegrationFramework, PSPAuthorisation)
 
   implicit val reads: Reads[FeatureToggleName] = Reads {
     case JsString(IntegrationFramework.asString) => JsSuccess(IntegrationFramework)
-    case JsString(SomeOtherToggle.asString) => JsSuccess(SomeOtherToggle)
+    case JsString(PSPAuthorisation.asString) => JsSuccess(PSPAuthorisation)
     case _ => JsError("Unrecognised feature toggle name")
   }
 
