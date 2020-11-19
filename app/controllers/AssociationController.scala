@@ -38,18 +38,18 @@ class AssociationController @Inject()(
                                      ) extends BackendController(cc) with ErrorHandler {
   def getMinimalDetails: Action[AnyContent] = Action.async {
     implicit request =>
-      retrieveIdAndTypeFromHeaders{ (idValue, idType) =>
-          associationConnector.getMinimalDetails(idValue, idType).map {
+      retrieveIdAndTypeFromHeaders{ (idValue, idType, regime) =>
+          associationConnector.getMinimalDetails(idValue, idType, regime).map {
             case Right(psaDetails) => Ok(Json.toJson(psaDetails))
             case Left(e) => result(e)
           }
       }
   }
 
-  private def retrieveIdAndTypeFromHeaders(block: (String, String) => Future[Result])(implicit request: RequestHeader):Future[Result] = {
+  private def retrieveIdAndTypeFromHeaders(block: (String, String, String) => Future[Result])(implicit request: RequestHeader):Future[Result] = {
       (request.headers.get("psaId"), request.headers.get("pspId")) match {
-        case (Some(id), None) => block(id, "PSA")
-        case (None, Some(id)) => block(id, "PSP")
+        case (Some(id), None) => block(id, "psaid", "poda")
+        case (None, Some(id)) => block(id, "pspid", "podp")
         case _ => Future.failed(new BadRequestException("No PSA or PSP Id in the header for get minimal details"))
       }
   }
@@ -81,7 +81,7 @@ class AssociationController @Inject()(
   def getEmail: Action[AnyContent] = Action.async {
     implicit request =>
       retrievals.getPsaId flatMap {
-        case Some(psaId) => associationConnector.getMinimalDetails(psaId.id, "PSA") map {
+        case Some(psaId) => associationConnector.getMinimalDetails(psaId.id, "psaid", "poda") map {
           case Right(psaDetails) => Ok(psaDetails.email)
           case Left(e) => result(e)
         }
@@ -112,7 +112,7 @@ class AssociationController @Inject()(
     implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
     psaId map {
       id =>
-        associationConnector.getMinimalDetails(id.id, "PSA")
+        associationConnector.getMinimalDetails(id.id, "psaid", "poda")
     } getOrElse {
       Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
     }

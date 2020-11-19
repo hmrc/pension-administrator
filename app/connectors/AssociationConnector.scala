@@ -16,12 +16,14 @@
 
 package connectors
 
-import audit.{AssociationAuditService, AuditService}
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import audit.AssociationAuditService
+import audit.AuditService
+import com.google.inject.ImplementedBy
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.FeatureToggle.Enabled
-import models.FeatureToggleName.IntegrationFrameworkListSchemes
 import models.FeatureToggleName.IntegrationFrameworkListSchemes
 import models.FeatureToggleName.IntegrationFrameworkMinimalDetails
 import models._
@@ -29,22 +31,20 @@ import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import play.api.Logger
-import service.FeatureToggleService
 import service.FeatureToggleService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import utils.{InvalidPayloadHandler, HttpResponseHelper, ErrorHandler}
 import utils.ErrorHandler
 import utils.HttpResponseHelper
 import utils.InvalidPayloadHandler
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
 
-  def getMinimalDetails(idValue: String, idType: String)(implicit
+  def getMinimalDetails(idValue: String, idType: String, regime: String)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]]
@@ -65,15 +65,15 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   import AssociationConnectorImpl._
 
-  def getMinimalDetails(idValue: String, idType: String)(implicit
+  override def getMinimalDetails(idValue: String, idType: String, regime: String)(implicit
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
-    featureToggleService.get(IntegrationFrameworkListSchemes).flatMap {
+    featureToggleService.get(IntegrationFrameworkMinimalDetails).flatMap {
       case Enabled(IntegrationFrameworkMinimalDetails) =>
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
           headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
-        val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(idType, idValue)
+        val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(regime, idType, idValue)
 
         httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
           implicitly) map {
