@@ -16,17 +16,24 @@
 
 package service
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
+import javax.inject.Singleton
 import models.FeatureToggle._
+import models.FeatureToggleName.IntegrationFrameworkCreatePSAAssociation
+import models.FeatureToggleName.IntegrationFrameworkListSchemes
 import models.FeatureToggleName.IntegrationFrameworkMinimalDetails
 import models.FeatureToggleName.IntegrationFrameworkRemovePSA
-import models.FeatureToggleName.{PSPAuthorisation, IntegrationFrameworkListSchemes}
+import models.FeatureToggleName.IntegrationFrameworkDeregisterPSA
+import models.FeatureToggleName.PSPAuthorisation
 import models._
 import play.api.cache.AsyncCacheApi
 import repositories.AdminDataRepository
 
-import scala.concurrent.duration.{FiniteDuration, Duration, SECONDS => Seconds}
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{SECONDS => Seconds}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton
 class FeatureToggleService @Inject()(
@@ -36,10 +43,12 @@ class FeatureToggleService @Inject()(
   private val cacheValidFor: FiniteDuration = Duration(2, Seconds)
 
   private val defaults: Seq[FeatureToggle] = Seq(
-    Disabled(IntegrationFrameworkListSchemes),
+    Disabled(IntegrationFrameworkDeregisterPSA),
     Disabled(PSPAuthorisation),
     Disabled(IntegrationFrameworkMinimalDetails),
-    Disabled(IntegrationFrameworkRemovePSA)
+    Disabled(IntegrationFrameworkRemovePSA),
+    Disabled(IntegrationFrameworkCreatePSAAssociation),
+    Disabled(IntegrationFrameworkListSchemes)
   )
 
   private def addDefaults(fromDb: Seq[FeatureToggle]): Seq[FeatureToggle] = {

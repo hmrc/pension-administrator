@@ -20,7 +20,7 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.FeatureToggleName.IntegrationFrameworkListSchemes
+import models.FeatureToggleName.IntegrationFrameworkDeregisterPSA
 import models.FeatureToggleName.IntegrationFrameworkRemovePSA
 import models.{PsaToBeRemovedFromScheme, PsaSubscription}
 import org.joda.time.LocalDate
@@ -155,7 +155,7 @@ class DesConnectorImpl @Inject()(
                                             headerCarrier: HeaderCarrier,
                                             ec: ExecutionContext,
                                             request: RequestHeader): Future[Either[HttpException, JsValue]] =
-    featureToggleService.get(IntegrationFrameworkListSchemes).map(_.isEnabled).flatMap { isEnabled =>
+    featureToggleService.get(IntegrationFrameworkDeregisterPSA).map(_.isEnabled).flatMap { isEnabled =>
       val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
       if(isEnabled) {
 

@@ -39,6 +39,14 @@ object FeatureToggleName {
     val asString = "integration-framework-list-schemes"
   }
 
+  case object IntegrationFrameworkDeregisterPSA extends FeatureToggleName {
+    val asString = "integration-framework-deregister-psa"
+  }
+
+  case object IntegrationFrameworkCreatePSAAssociation extends FeatureToggleName {
+    val asString = "integration-framework-create-psa-association"
+  }
+
   case object IntegrationFrameworkMinimalDetails extends FeatureToggleName {
     val asString = "integration-framework-minimal-details"
   }
@@ -51,13 +59,19 @@ object FeatureToggleName {
     val asString = "psp-authorisation"
   }
 
-  val toggles = Seq(IntegrationFrameworkListSchemes, PSPAuthorisation, IntegrationFrameworkMinimalDetails, IntegrationFrameworkRemovePSA)
+  val toggles = Seq(IntegrationFrameworkDeregisterPSA, PSPAuthorisation,
+    IntegrationFrameworkMinimalDetails, IntegrationFrameworkRemovePSA,
+    IntegrationFrameworkCreatePSAAssociation,
+    IntegrationFrameworkListSchemes
+  )
 
   implicit val reads: Reads[FeatureToggleName] = Reads {
-    case JsString(IntegrationFrameworkListSchemes.asString) => JsSuccess(IntegrationFrameworkListSchemes)
+    case JsString(IntegrationFrameworkDeregisterPSA.asString) => JsSuccess(IntegrationFrameworkDeregisterPSA)
     case JsString(PSPAuthorisation.asString) => JsSuccess(PSPAuthorisation)
     case JsString(IntegrationFrameworkMinimalDetails.asString) => JsSuccess(IntegrationFrameworkMinimalDetails)
     case JsString(IntegrationFrameworkRemovePSA.asString) => JsSuccess(IntegrationFrameworkRemovePSA)
+    case JsString(IntegrationFrameworkCreatePSAAssociation.asString) => JsSuccess(IntegrationFrameworkCreatePSAAssociation)
+    case JsString(IntegrationFrameworkListSchemes.asString) => JsSuccess(IntegrationFrameworkListSchemes)
     case _ => JsError("Unrecognised feature toggle name")
   }
 

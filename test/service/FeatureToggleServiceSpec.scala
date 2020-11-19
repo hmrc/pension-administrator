@@ -18,15 +18,25 @@ package service
 
 import akka.Done
 import base.SpecBase
-import models.FeatureToggle.{Disabled, Enabled}
+import models.FeatureToggle.Disabled
+import models.FeatureToggle.Enabled
 import models.FeatureToggleName.IntegrationFrameworkMinimalDetails
 import models.FeatureToggleName.IntegrationFrameworkRemovePSA
-import models.FeatureToggleName.{PSPAuthorisation, IntegrationFrameworkListSchemes}
-import models.{FeatureToggle, OperationFailed, OperationSucceeded, FeatureToggleName}
+import models.FeatureToggleName.IntegrationFrameworkDeregisterPSA
+import models.FeatureToggleName.PSPAuthorisation
+import models.FeatureToggle
+import models.FeatureToggleName
+import models.FeatureToggleName.IntegrationFrameworkCreatePSAAssociation
+import models.FeatureToggleName.IntegrationFrameworkListSchemes
+import models.OperationFailed
+import models.OperationSucceeded
 import org.mockito.ArgumentCaptor
 import org.mockito.Matchers.any
-import org.mockito.Mockito.{times, when, verify}
-import org.scalacheck.{Arbitrary, Gen}
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.when
+import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.MustMatchers
 import org.scalatest.concurrent.ScalaFutures
@@ -110,10 +120,12 @@ class FeatureToggleServiceSpec
     when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
 
     OUT.getAll.futureValue mustBe Seq(
-      Disabled(IntegrationFrameworkListSchemes),
+      Disabled(IntegrationFrameworkDeregisterPSA),
       Disabled(PSPAuthorisation),
       Disabled(IntegrationFrameworkMinimalDetails),
-      Disabled(IntegrationFrameworkRemovePSA)
+      Disabled(IntegrationFrameworkRemovePSA),
+      Disabled(IntegrationFrameworkCreatePSAAssociation),
+      Disabled(IntegrationFrameworkListSchemes)
     )
   }
 
@@ -121,13 +133,13 @@ class FeatureToggleServiceSpec
     val adminDataRepository = mock[AdminDataRepository]
     when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
     val OUT = new FeatureToggleService(adminDataRepository, new FakeCache())
-    OUT.get(IntegrationFrameworkListSchemes).futureValue mustBe Disabled(IntegrationFrameworkListSchemes)
+    OUT.get(IntegrationFrameworkDeregisterPSA).futureValue mustBe Disabled(IntegrationFrameworkDeregisterPSA)
   }
 
   "When a toggle exists in the repo, override default" in {
     val adminDataRepository = mock[AdminDataRepository]
-    when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq(Enabled(IntegrationFrameworkListSchemes))))
+    when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq(Enabled(IntegrationFrameworkDeregisterPSA))))
     val OUT = new FeatureToggleService(adminDataRepository, new FakeCache())
-    OUT.get(IntegrationFrameworkListSchemes).futureValue mustBe Enabled(IntegrationFrameworkListSchemes)
+    OUT.get(IntegrationFrameworkDeregisterPSA).futureValue mustBe Enabled(IntegrationFrameworkDeregisterPSA)
   }
 }
