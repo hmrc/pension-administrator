@@ -23,6 +23,7 @@ import connectors.helper.HeaderUtils
 import models.FeatureToggle.Enabled
 import models.FeatureToggleName.IntegrationFrameworkListSchemes
 import models.FeatureToggleName.IntegrationFrameworkListSchemes
+import models.FeatureToggleName.IntegrationFrameworkMinimalDetails
 import models._
 import play.api.Logger
 import play.api.http.Status._
@@ -33,12 +34,12 @@ import service.FeatureToggleService
 import service.FeatureToggleService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+import utils.{InvalidPayloadHandler, HttpResponseHelper, ErrorHandler}
 import utils.ErrorHandler
 import utils.HttpResponseHelper
 import utils.InvalidPayloadHandler
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Future, ExecutionContext}
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
@@ -69,7 +70,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
     featureToggleService.get(IntegrationFrameworkListSchemes).flatMap {
-      case Enabled(IntegrationFrameworkListSchemes) =>
+      case Enabled(IntegrationFrameworkMinimalDetails) =>
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
           headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
         val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(idType, idValue)

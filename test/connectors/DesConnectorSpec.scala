@@ -22,7 +22,8 @@ import com.github.tomakehurst.wiremock.client.WireMock.{serverError, _}
 import connectors.helper.ConnectorBehaviours
 import models.FeatureToggle.{Disabled, Enabled}
 import models.FeatureToggleName.IntegrationFrameworkListSchemes
-import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
+import models.FeatureToggleName.IntegrationFrameworkRemovePSA
+import models.{PSTR, SchemeReferenceNumber, PsaToBeRemovedFromScheme}
 import org.joda.time.LocalDate
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
@@ -43,7 +44,7 @@ import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.testhelpers.PsaSubscriptionBuilder._
-import utils.{FakeDesConnector, StubLogger, WireMockHelper}
+import utils.{StubLogger, FakeDesConnector, WireMockHelper}
 
 import scala.concurrent.Future
 
@@ -60,7 +61,7 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   override def beforeEach(): Unit = {
     auditService.reset()
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Disabled(IntegrationFrameworkListSchemes)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Disabled(IntegrationFrameworkRemovePSA)))
     super.beforeEach()
   }
 

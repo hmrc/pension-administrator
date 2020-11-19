@@ -18,13 +18,15 @@ package service
 
 import javax.inject.{Inject, Singleton}
 import models.FeatureToggle._
-import models.FeatureToggleName.{IntegrationFrameworkListSchemes, PSPAuthorisation}
+import models.FeatureToggleName.IntegrationFrameworkMinimalDetails
+import models.FeatureToggleName.IntegrationFrameworkRemovePSA
+import models.FeatureToggleName.{PSPAuthorisation, IntegrationFrameworkListSchemes}
 import models._
 import play.api.cache.AsyncCacheApi
 import repositories.AdminDataRepository
 
-import scala.concurrent.duration.{Duration, FiniteDuration, SECONDS => Seconds}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.{FiniteDuration, Duration, SECONDS => Seconds}
+import scala.concurrent.{Future, ExecutionContext}
 
 @Singleton
 class FeatureToggleService @Inject()(
@@ -35,7 +37,9 @@ class FeatureToggleService @Inject()(
 
   private val defaults: Seq[FeatureToggle] = Seq(
     Disabled(IntegrationFrameworkListSchemes),
-    Disabled(PSPAuthorisation)
+    Disabled(PSPAuthorisation),
+    Disabled(IntegrationFrameworkMinimalDetails),
+    Disabled(IntegrationFrameworkRemovePSA)
   )
 
   private def addDefaults(fromDb: Seq[FeatureToggle]): Seq[FeatureToggle] = {

@@ -19,11 +19,13 @@ package service
 import akka.Done
 import base.SpecBase
 import models.FeatureToggle.{Disabled, Enabled}
-import models.FeatureToggleName.{IntegrationFrameworkListSchemes, PSPAuthorisation}
-import models.{FeatureToggle, FeatureToggleName, OperationFailed, OperationSucceeded}
+import models.FeatureToggleName.IntegrationFrameworkMinimalDetails
+import models.FeatureToggleName.IntegrationFrameworkRemovePSA
+import models.FeatureToggleName.{PSPAuthorisation, IntegrationFrameworkListSchemes}
+import models.{FeatureToggle, OperationFailed, OperationSucceeded, FeatureToggleName}
 import org.mockito.ArgumentCaptor
 import org.mockito.Matchers.any
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.{times, when, verify}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.MustMatchers
@@ -109,7 +111,9 @@ class FeatureToggleServiceSpec
 
     OUT.getAll.futureValue mustBe Seq(
       Disabled(IntegrationFrameworkListSchemes),
-      Disabled(PSPAuthorisation)
+      Disabled(PSPAuthorisation),
+      Disabled(IntegrationFrameworkMinimalDetails),
+      Disabled(IntegrationFrameworkRemovePSA)
     )
   }
 

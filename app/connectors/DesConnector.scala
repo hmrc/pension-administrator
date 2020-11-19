@@ -21,7 +21,8 @@ import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.FeatureToggleName.IntegrationFrameworkListSchemes
-import models.{PsaSubscription, PsaToBeRemovedFromScheme}
+import models.FeatureToggleName.IntegrationFrameworkRemovePSA
+import models.{PsaToBeRemovedFromScheme, PsaSubscription}
 import org.joda.time.LocalDate
 import play.Logger
 import play.api.http.Status._
@@ -31,9 +32,9 @@ import service.FeatureToggleService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
-import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+import utils.{InvalidPayloadHandler, HttpResponseHelper, ErrorHandler}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Future, ExecutionContext}
 import scala.util.{Success, Try}
 
 @ImplementedBy(classOf[DesConnectorImpl])
@@ -117,7 +118,7 @@ class DesConnectorImpl @Inject()(
                                                                    headerCarrier: HeaderCarrier,
                                                                    ec: ExecutionContext,
                                                                    request: RequestHeader): Future[Either[HttpException, JsValue]] =
-    featureToggleService.get(IntegrationFrameworkListSchemes).map(_.isEnabled).flatMap { isEnabled =>
+    featureToggleService.get(IntegrationFrameworkRemovePSA).map(_.isEnabled).flatMap { isEnabled =>
       if (isEnabled) {
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
