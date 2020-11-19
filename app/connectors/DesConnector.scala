@@ -20,7 +20,7 @@ import audit._
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.FeatureToggleName.IntegrationFramework
+import models.FeatureToggleName.IntegrationFrameworkListSchemes
 import models.{PsaSubscription, PsaToBeRemovedFromScheme}
 import org.joda.time.LocalDate
 import play.Logger
@@ -117,7 +117,7 @@ class DesConnectorImpl @Inject()(
                                                                    headerCarrier: HeaderCarrier,
                                                                    ec: ExecutionContext,
                                                                    request: RequestHeader): Future[Either[HttpException, JsValue]] =
-    featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
+    featureToggleService.get(IntegrationFrameworkListSchemes).map(_.isEnabled).flatMap { isEnabled =>
       if (isEnabled) {
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
@@ -154,7 +154,7 @@ class DesConnectorImpl @Inject()(
                                             headerCarrier: HeaderCarrier,
                                             ec: ExecutionContext,
                                             request: RequestHeader): Future[Either[HttpException, JsValue]] =
-    featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
+    featureToggleService.get(IntegrationFrameworkListSchemes).map(_.isEnabled).flatMap { isEnabled =>
       val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
       if(isEnabled) {
 

@@ -31,7 +31,7 @@ class FeatureToggleController @Inject()(
                                         )(implicit ec: ExecutionContext)
   extends AbstractController(cc) with ErrorHandler {
 
-  def getAll(): Action[AnyContent] = Action.async {
+  def getAll: Action[AnyContent] = Action.async {
     _ =>
       featureToggleService.getAll.map(
         toggles =>

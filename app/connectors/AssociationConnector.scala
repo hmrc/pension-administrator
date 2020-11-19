@@ -21,8 +21,8 @@ import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.FeatureToggle.Enabled
-import models.FeatureToggleName.IntegrationFramework
-import models.FeatureToggleName.IntegrationFramework
+import models.FeatureToggleName.IntegrationFrameworkListSchemes
+import models.FeatureToggleName.IntegrationFrameworkListSchemes
 import models._
 import play.api.Logger
 import play.api.http.Status._
@@ -68,8 +68,8 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
-    featureToggleService.get(IntegrationFramework).flatMap {
-      case Enabled(IntegrationFramework) =>
+    featureToggleService.get(IntegrationFrameworkListSchemes).flatMap {
+      case Enabled(IntegrationFrameworkListSchemes) =>
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
           headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
         val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(idType, idValue)
@@ -153,7 +153,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   def acceptInvitation(acceptedInvitation: AcceptedInvitation)
     (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
-    featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
+    featureToggleService.get(IntegrationFrameworkListSchemes).map(_.isEnabled).flatMap { isEnabled =>
       if (isEnabled) {
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =

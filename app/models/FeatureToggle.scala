@@ -35,18 +35,18 @@ sealed trait FeatureToggleName {
 
 object FeatureToggleName {
 
-  case object IntegrationFramework extends FeatureToggleName {
-    val asString = "integration-framework"
+  case object IntegrationFrameworkListSchemes extends FeatureToggleName {
+    val asString = "integration-framework-list-schemes"
   }
 
   case object PSPAuthorisation extends FeatureToggleName {
     val asString = "psp-authorisation"
   }
 
-  val toggles = Seq(IntegrationFramework, PSPAuthorisation)
+  val toggles = Seq(IntegrationFrameworkListSchemes, PSPAuthorisation)
 
   implicit val reads: Reads[FeatureToggleName] = Reads {
-    case JsString(IntegrationFramework.asString) => JsSuccess(IntegrationFramework)
+    case JsString(IntegrationFrameworkListSchemes.asString) => JsSuccess(IntegrationFrameworkListSchemes)
     case JsString(PSPAuthorisation.asString) => JsSuccess(PSPAuthorisation)
     case _ => JsError("Unrecognised feature toggle name")
   }

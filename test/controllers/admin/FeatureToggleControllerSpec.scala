@@ -19,7 +19,7 @@ package controllers.admin
 import base.SpecBase
 import models.FeatureToggle
 import models.FeatureToggle.Enabled
-import models.FeatureToggleName.IntegrationFramework
+import models.FeatureToggleName.IntegrationFrameworkListSchemes
 import models.OperationSucceeded
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{times, reset, when, verify}
@@ -45,9 +45,9 @@ class FeatureToggleControllerSpec
   override def beforeEach(): Unit = {
     reset(mockAdminDataRepository, mockFeatureToggleService)
     when(mockAdminDataRepository.getFeatureToggles)
-      .thenReturn(Future.successful(Seq(Enabled(IntegrationFramework))))
+      .thenReturn(Future.successful(Seq(Enabled(IntegrationFrameworkListSchemes))))
     when(mockFeatureToggleService.getAll)
-      .thenReturn(Future.successful(Seq(Enabled(IntegrationFramework))))
+      .thenReturn(Future.successful(Seq(Enabled(IntegrationFrameworkListSchemes))))
   }
 
   "FeatureToggleController.getAll" must {
@@ -67,16 +67,16 @@ class FeatureToggleControllerSpec
         .thenReturn(Future.successful(true))
 
       when(mockFeatureToggleService.get(any()))
-        .thenReturn(Future.successful(Enabled(IntegrationFramework)))
+        .thenReturn(Future.successful(Enabled(IntegrationFrameworkListSchemes)))
 
       val controller = new FeatureToggleController(controllerComponents, mockFeatureToggleService)
 
-      val result = controller.get(IntegrationFramework)(fakeRequest)
+      val result = controller.get(IntegrationFrameworkListSchemes)(fakeRequest)
 
       status(result) mustBe OK
 
       verify(mockFeatureToggleService, times(1))
-        .get(name = IntegrationFramework)
+        .get(name = IntegrationFrameworkListSchemes)
     }
   }
 
@@ -90,23 +90,23 @@ class FeatureToggleControllerSpec
 
       val controller = new FeatureToggleController(controllerComponents, mockFeatureToggleService)
 
-      val result = controller.put(IntegrationFramework)(fakeRequest.withJsonBody(JsBoolean(true)))
+      val result = controller.put(IntegrationFrameworkListSchemes)(fakeRequest.withJsonBody(JsBoolean(true)))
 
       status(result) mustBe NO_CONTENT
 
       verify(mockFeatureToggleService, times(1))
-        .set(toggleName = IntegrationFramework, enabled = true)
+        .set(toggleName = IntegrationFrameworkListSchemes, enabled = true)
     }
 
     "not set the feature toggles and return BAD_REQUEST" in {
       val controller = new FeatureToggleController(controllerComponents, mockFeatureToggleService)
 
-      val result = controller.put(IntegrationFramework)(fakeRequest.withJsonBody(Json.obj("blah" -> "blah")))
+      val result = controller.put(IntegrationFrameworkListSchemes)(fakeRequest.withJsonBody(Json.obj("blah" -> "blah")))
 
       status(result) mustBe BAD_REQUEST
 
       verify(mockFeatureToggleService, times(0))
-        .set(toggleName = IntegrationFramework, enabled = true)
+        .set(toggleName = IntegrationFrameworkListSchemes, enabled = true)
     }
   }
 }

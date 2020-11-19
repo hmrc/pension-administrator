@@ -18,7 +18,7 @@ package service
 
 import javax.inject.{Inject, Singleton}
 import models.FeatureToggle._
-import models.FeatureToggleName.{IntegrationFramework, PSPAuthorisation}
+import models.FeatureToggleName.{IntegrationFrameworkListSchemes, PSPAuthorisation}
 import models._
 import play.api.cache.AsyncCacheApi
 import repositories.AdminDataRepository
@@ -34,7 +34,7 @@ class FeatureToggleService @Inject()(
   private val cacheValidFor: FiniteDuration = Duration(2, Seconds)
 
   private val defaults: Seq[FeatureToggle] = Seq(
-    Disabled(IntegrationFramework),
+    Disabled(IntegrationFrameworkListSchemes),
     Disabled(PSPAuthorisation)
   )
 
