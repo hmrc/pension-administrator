@@ -48,17 +48,12 @@ object FeatureToggleName {
   }
 
   val toggles = Seq(IntegrationFrameworkMisc, PSPAuthorisation,
-    IntegrationFrameworkMisc, IntegrationFrameworkMisc,
-    IntegrationFrameworkMisc,
     IntegrationFrameworkListSchemes
   )
 
   implicit val reads: Reads[FeatureToggleName] = Reads {
     case JsString(IntegrationFrameworkMisc.asString) => JsSuccess(IntegrationFrameworkMisc)
     case JsString(PSPAuthorisation.asString) => JsSuccess(PSPAuthorisation)
-    case JsString(IntegrationFrameworkMisc.asString) => JsSuccess(IntegrationFrameworkMisc)
-    case JsString(IntegrationFrameworkMisc.asString) => JsSuccess(IntegrationFrameworkMisc)
-    case JsString(IntegrationFrameworkMisc.asString) => JsSuccess(IntegrationFrameworkMisc)
     case JsString(IntegrationFrameworkListSchemes.asString) => JsSuccess(IntegrationFrameworkListSchemes)
     case _ => JsError("Unrecognised feature toggle name")
   }

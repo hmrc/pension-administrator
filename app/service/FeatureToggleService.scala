@@ -45,9 +45,6 @@ class FeatureToggleService @Inject()(
   private val defaults: Seq[FeatureToggle] = Seq(
     Disabled(IntegrationFrameworkMisc),
     Disabled(PSPAuthorisation),
-    Disabled(IntegrationFrameworkMisc),
-    Disabled(IntegrationFrameworkMisc),
-    Disabled(IntegrationFrameworkMisc),
     Disabled(IntegrationFrameworkListSchemes)
   )
 
