@@ -47,11 +47,9 @@ class HeaderUtils @Inject()(config: AppConfig) {
   }
 
   def integrationFrameworkHeader(implicit hc: HeaderCarrier): Seq[(String, String)] = {
-    val requestId = getCorrelationId(hc.requestId.map(_.value))
 
     Seq("Environment" -> config.integrationframeworkEnvironment,
       "Authorization" -> config.integrationframeworkAuthorization,
-      "Content-Type" -> "application/json",
-      "CorrelationId" -> requestId)
+      "Content-Type" -> "application/json")
   }
 }
