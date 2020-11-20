@@ -19,11 +19,11 @@ package service
 import javax.inject.Inject
 import javax.inject.Singleton
 import models.FeatureToggle._
-import models.FeatureToggleName.IntegrationFrameworkCreatePSAAssociation
+import models.FeatureToggleName.IntegrationFrameworkMisc
 import models.FeatureToggleName.IntegrationFrameworkListSchemes
-import models.FeatureToggleName.IntegrationFrameworkMinimalDetails
-import models.FeatureToggleName.IntegrationFrameworkRemovePSA
-import models.FeatureToggleName.IntegrationFrameworkDeregisterPSA
+import models.FeatureToggleName.IntegrationFrameworkMisc
+import models.FeatureToggleName.IntegrationFrameworkMisc
+import models.FeatureToggleName.IntegrationFrameworkMisc
 import models.FeatureToggleName.PSPAuthorisation
 import models._
 import play.api.cache.AsyncCacheApi
@@ -43,11 +43,11 @@ class FeatureToggleService @Inject()(
   private val cacheValidFor: FiniteDuration = Duration(2, Seconds)
 
   private val defaults: Seq[FeatureToggle] = Seq(
-    Disabled(IntegrationFrameworkDeregisterPSA),
+    Disabled(IntegrationFrameworkMisc),
     Disabled(PSPAuthorisation),
-    Disabled(IntegrationFrameworkMinimalDetails),
-    Disabled(IntegrationFrameworkRemovePSA),
-    Disabled(IntegrationFrameworkCreatePSAAssociation),
+    Disabled(IntegrationFrameworkMisc),
+    Disabled(IntegrationFrameworkMisc),
+    Disabled(IntegrationFrameworkMisc),
     Disabled(IntegrationFrameworkListSchemes)
   )
 

@@ -21,8 +21,8 @@ import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock.{serverError, _}
 import connectors.helper.ConnectorBehaviours
 import models.FeatureToggle.{Disabled, Enabled}
-import models.FeatureToggleName.IntegrationFrameworkDeregisterPSA
-import models.FeatureToggleName.IntegrationFrameworkRemovePSA
+import models.FeatureToggleName.IntegrationFrameworkMisc
+import models.FeatureToggleName.IntegrationFrameworkMisc
 import models.{PSTR, SchemeReferenceNumber, PsaToBeRemovedFromScheme}
 import org.joda.time.LocalDate
 import org.mockito.Matchers.any
@@ -61,7 +61,7 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   override def beforeEach(): Unit = {
     auditService.reset()
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Disabled(IntegrationFrameworkDeregisterPSA)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Disabled(IntegrationFrameworkMisc)))
     super.beforeEach()
   }
 
@@ -502,7 +502,7 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   "Cease PSA with toggle on" should "handle OK (200)" in {
     val successResponse = FakeDesConnector.removePsaResponseJson
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkDeregisterPSA)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
     server.stubFor(
       post(urlEqualTo(ceasePsaFromSchemeUrl))
         .withHeader("Content-Type", equalTo("application/json"))
@@ -523,7 +523,7 @@ class DesConnectorSpec extends AsyncFlatSpec
   }
 
   it should "return a BadRequestException for a 400 INVALID_CORRELATION_ID response" in {
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkDeregisterPSA)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
     server.stubFor(
       post(urlEqualTo(ceasePsaFromSchemeUrl))
         .willReturn(
@@ -540,7 +540,7 @@ class DesConnectorSpec extends AsyncFlatSpec
   }
 
   it should "return a BadRequestException for a 400 INVALID_PSTR response" in {
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkDeregisterPSA)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
     server.stubFor(
       post(urlEqualTo(ceasePsaFromSchemeUrl))
         .willReturn(
@@ -557,7 +557,7 @@ class DesConnectorSpec extends AsyncFlatSpec
   }
 
   it should "return a BadRequestException for a 400 INVALID_PSAID response" in {
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkDeregisterPSA)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
     server.stubFor(
       post(urlEqualTo(ceasePsaFromSchemeUrl))
         .willReturn(
@@ -574,7 +574,7 @@ class DesConnectorSpec extends AsyncFlatSpec
   }
 
   it should "log details of an INVALID_PAYLOAD for a 400 BAD request" in {
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkDeregisterPSA)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
     server.stubFor(
       post(urlEqualTo(ceasePsaFromSchemeUrl))
         .willReturn(
@@ -593,7 +593,7 @@ class DesConnectorSpec extends AsyncFlatSpec
   }
 
   it should "return a ForbiddenException for a 403 NO_RELATIONSHIP_EXISTS response" in {
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkDeregisterPSA)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
     server.stubFor(
       post(urlEqualTo(ceasePsaFromSchemeUrl))
         .willReturn(
@@ -611,7 +611,7 @@ class DesConnectorSpec extends AsyncFlatSpec
   }
 
   it should "return a ForbiddenException for a 403 NO_OTHER_ASSOCIATED_PSA response" in {
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkDeregisterPSA)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
     server.stubFor(
       post(urlEqualTo(ceasePsaFromSchemeUrl))
         .willReturn(
@@ -629,7 +629,7 @@ class DesConnectorSpec extends AsyncFlatSpec
   }
 
   it should "return a ForbiddenException for a 403 FUTURE_CEASE_DATE response" in {
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkDeregisterPSA)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
     server.stubFor(
       post(urlEqualTo(ceasePsaFromSchemeUrl))
         .willReturn(
@@ -647,7 +647,7 @@ class DesConnectorSpec extends AsyncFlatSpec
   }
 
   it should "return a ForbiddenException for a 403 PSAID_NOT_ACTIVE response" in {
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkDeregisterPSA)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
     server.stubFor(
       post(urlEqualTo(ceasePsaFromSchemeUrl))
         .willReturn(
@@ -665,7 +665,7 @@ class DesConnectorSpec extends AsyncFlatSpec
   }
 
   it should "return a ConflictException for a 409 DUPLICATE_SUBMISSION response" in {
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkDeregisterPSA)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
     server.stubFor(
       post(urlEqualTo(ceasePsaFromSchemeUrl))
         .willReturn(
@@ -683,7 +683,7 @@ class DesConnectorSpec extends AsyncFlatSpec
   }
 
   it should "return not found exception and failure response details for a 404 response" in {
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkDeregisterPSA)))
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
     server.stubFor(
       post(urlEqualTo(ceasePsaFromSchemeUrl))
         .willReturn(

@@ -18,7 +18,7 @@ package controllers.admin
 
 import base.SpecBase
 import models.FeatureToggle.Enabled
-import models.FeatureToggleName.IntegrationFrameworkDeregisterPSA
+import models.FeatureToggleName.IntegrationFrameworkMisc
 import models.OperationSucceeded
 import org.mockito.Matchers.any
 import org.mockito.Mockito.reset
@@ -48,9 +48,9 @@ class FeatureToggleControllerSpec
   override def beforeEach(): Unit = {
     reset(mockAdminDataRepository, mockFeatureToggleService)
     when(mockAdminDataRepository.getFeatureToggles)
-      .thenReturn(Future.successful(Seq(Enabled(IntegrationFrameworkDeregisterPSA))))
+      .thenReturn(Future.successful(Seq(Enabled(IntegrationFrameworkMisc))))
     when(mockFeatureToggleService.getAll)
-      .thenReturn(Future.successful(Seq(Enabled(IntegrationFrameworkDeregisterPSA))))
+      .thenReturn(Future.successful(Seq(Enabled(IntegrationFrameworkMisc))))
   }
 
   "FeatureToggleController.getAll" must {
@@ -70,16 +70,16 @@ class FeatureToggleControllerSpec
         .thenReturn(Future.successful(true))
 
       when(mockFeatureToggleService.get(any()))
-        .thenReturn(Future.successful(Enabled(IntegrationFrameworkDeregisterPSA)))
+        .thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
 
       val controller = new FeatureToggleController(controllerComponents, mockFeatureToggleService)
 
-      val result = controller.get(IntegrationFrameworkDeregisterPSA)(fakeRequest)
+      val result = controller.get(IntegrationFrameworkMisc)(fakeRequest)
 
       status(result) mustBe OK
 
       verify(mockFeatureToggleService, times(1))
-        .get(name = IntegrationFrameworkDeregisterPSA)
+        .get(name = IntegrationFrameworkMisc)
     }
   }
 
@@ -93,23 +93,23 @@ class FeatureToggleControllerSpec
 
       val controller = new FeatureToggleController(controllerComponents, mockFeatureToggleService)
 
-      val result = controller.put(IntegrationFrameworkDeregisterPSA)(fakeRequest.withJsonBody(JsBoolean(true)))
+      val result = controller.put(IntegrationFrameworkMisc)(fakeRequest.withJsonBody(JsBoolean(true)))
 
       status(result) mustBe NO_CONTENT
 
       verify(mockFeatureToggleService, times(1))
-        .set(toggleName = IntegrationFrameworkDeregisterPSA, enabled = true)
+        .set(toggleName = IntegrationFrameworkMisc, enabled = true)
     }
 
     "not set the feature toggles and return BAD_REQUEST" in {
       val controller = new FeatureToggleController(controllerComponents, mockFeatureToggleService)
 
-      val result = controller.put(IntegrationFrameworkDeregisterPSA)(fakeRequest.withJsonBody(Json.obj("blah" -> "blah")))
+      val result = controller.put(IntegrationFrameworkMisc)(fakeRequest.withJsonBody(Json.obj("blah" -> "blah")))
 
       status(result) mustBe BAD_REQUEST
 
       verify(mockFeatureToggleService, times(0))
-        .set(toggleName = IntegrationFrameworkDeregisterPSA, enabled = true)
+        .set(toggleName = IntegrationFrameworkMisc, enabled = true)
     }
   }
 }

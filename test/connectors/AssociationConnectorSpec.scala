@@ -26,8 +26,8 @@ import config.AppConfig
 import connectors.helper.ConnectorBehaviours
 import models.FeatureToggle.Disabled
 import models.FeatureToggle.Enabled
-import models.FeatureToggleName.IntegrationFrameworkCreatePSAAssociation
-import models.FeatureToggleName.IntegrationFrameworkMinimalDetails
+import models.FeatureToggleName.IntegrationFrameworkMisc
+import models.FeatureToggleName.IntegrationFrameworkMisc
 import models._
 import org.scalatest._
 import org.scalatestplus.mockito.MockitoSugar
@@ -67,7 +67,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   override def beforeEach(): Unit = {
     auditService.reset()
-    when(mockFeatureToggleService.get(MockitoMatchers.any())).thenReturn(Future.successful(Disabled(IntegrationFrameworkCreatePSAAssociation)))
+    when(mockFeatureToggleService.get(MockitoMatchers.any())).thenReturn(Future.successful(Disabled(IntegrationFrameworkMisc)))
     super.beforeEach()
   }
 
@@ -537,7 +537,7 @@ class AssociationConnectorIFSpec extends AsyncFlatSpec
 
   override def beforeEach(): Unit = {
     auditService.reset()
-    when(mockFeatureToggleService.get(MockitoMatchers.any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMinimalDetails)))
+    when(mockFeatureToggleService.get(MockitoMatchers.any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
     super.beforeEach()
   }
 
