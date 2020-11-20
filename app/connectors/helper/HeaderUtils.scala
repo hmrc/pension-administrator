@@ -25,7 +25,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 class HeaderUtils @Inject()(config: AppConfig) {
 
-  val maxLengthCorrelationId = 32
+  val maxLengthCorrelationId = 36
 
   def desHeaderWithoutCorrelationId: Seq[(String, String)] = {
     Seq("Environment" -> config.desEnvironment,
