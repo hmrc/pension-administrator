@@ -122,9 +122,6 @@ class FeatureToggleServiceSpec
     OUT.getAll.futureValue mustBe Seq(
       Disabled(IntegrationFrameworkMisc),
       Disabled(PSPAuthorisation),
-      Disabled(IntegrationFrameworkMisc),
-      Disabled(IntegrationFrameworkMisc),
-      Disabled(IntegrationFrameworkMisc),
       Disabled(IntegrationFrameworkListSchemes)
     )
   }
