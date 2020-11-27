@@ -16,12 +16,15 @@
 
 package connectors
 
-import audit.{AssociationAuditService, AuditService}
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import audit.AssociationAuditService
+import audit.AuditService
+import com.google.inject.ImplementedBy
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.FeatureToggle.Enabled
-import models.FeatureToggleName.IntegrationFramework
+import models.FeatureToggleName.IntegrationFrameworkMisc
 import models._
 import play.api.Logger
 import play.api.http.Status._
@@ -30,9 +33,12 @@ import play.api.mvc.RequestHeader
 import service.FeatureToggleService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+import utils.ErrorHandler
+import utils.HttpResponseHelper
+import utils.InvalidPayloadHandler
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
@@ -62,8 +68,8 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
                                           headerCarrier: HeaderCarrier,
                                           ec: ExecutionContext,
                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
-    featureToggleService.get(IntegrationFramework).flatMap {
-      case Enabled(IntegrationFramework) =>
+    featureToggleService.get(IntegrationFrameworkMisc).flatMap {
+      case Enabled(IntegrationFrameworkMisc) =>
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
           headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
         val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(regime, idType, idValue)
@@ -147,7 +153,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   def acceptInvitation(acceptedInvitation: AcceptedInvitation)
     (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
-    featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
+    featureToggleService.get(IntegrationFrameworkMisc).map(_.isEnabled).flatMap { isEnabled =>
       if (isEnabled) {
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =

@@ -17,11 +17,13 @@
 package connectors
 
 import audit._
-import com.google.inject.{ImplementedBy, Inject}
+import com.google.inject.ImplementedBy
+import com.google.inject.Inject
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.FeatureToggleName.IntegrationFramework
-import models.{PsaSubscription, PsaToBeRemovedFromScheme}
+import models.FeatureToggleName.IntegrationFrameworkMisc
+import models.PsaSubscription
+import models.PsaToBeRemovedFromScheme
 import org.joda.time.LocalDate
 import play.Logger
 import play.api.http.Status._
@@ -31,10 +33,14 @@ import service.FeatureToggleService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
-import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+import utils.ErrorHandler
+import utils.HttpResponseHelper
+import utils.InvalidPayloadHandler
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Success, Try}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.Success
+import scala.util.Try
 
 @ImplementedBy(classOf[DesConnectorImpl])
 trait DesConnector {
@@ -117,7 +123,7 @@ class DesConnectorImpl @Inject()(
                                                                    headerCarrier: HeaderCarrier,
                                                                    ec: ExecutionContext,
                                                                    request: RequestHeader): Future[Either[HttpException, JsValue]] =
-    featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
+    featureToggleService.get(IntegrationFrameworkMisc).map(_.isEnabled).flatMap { isEnabled =>
       if (isEnabled) {
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
@@ -154,7 +160,7 @@ class DesConnectorImpl @Inject()(
                                             headerCarrier: HeaderCarrier,
                                             ec: ExecutionContext,
                                             request: RequestHeader): Future[Either[HttpException, JsValue]] =
-    featureToggleService.get(IntegrationFramework).map(_.isEnabled).flatMap { isEnabled =>
+    featureToggleService.get(IntegrationFrameworkMisc).map(_.isEnabled).flatMap { isEnabled =>
       val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
       if(isEnabled) {
 
