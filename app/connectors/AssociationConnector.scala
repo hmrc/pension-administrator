@@ -122,7 +122,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
     }
   }
 
-  private def processFailureResponse(response: HttpResponse, url: String): Either[HttpException, Unit] = {
+  private def processFailureResponse(response: HttpResponse, url: String, schemaFile: String): Either[HttpException, Unit] = {
     Logger.warn(s"POST or $url returned ${response.status} with body ${response.body}")
 
     response.status match {
@@ -130,15 +130,16 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
       case FORBIDDEN if response.body.contains("INVALID_INVITER_PSAID") => Left(new BadRequestException("INVALID_INVITER_PSAID"))
       case FORBIDDEN if response.body.contains("INVALID_INVITEE_PSAID") => Left(new BadRequestException("INVALID_INVITEE_PSAID"))
       case BAD_REQUEST if response.body.contains("INVALID_PAYLOAD") =>
-        invalidPayloadHandler.logFailures("/resources/schemas/createPsaAssociationRequest.json", url)(response.json)
+        invalidPayloadHandler.logFailures(s"/resources/schemas/$schemaFile", url)(response.json)
         Left(new BadRequestException("INVALID PAYLOAD"))
       case _ => Left(handleErrorResponse("POST", url, response, Seq("INVALID_PSTR", "INVALID_CORRELATION_ID")))
     }
 
   }
 
-  private def processResponse(acceptedInvitation: AcceptedInvitation, response: HttpResponse, url: String)(
-    implicit request: RequestHeader, ec: ExecutionContext) : Either[HttpException, Unit] = {
+  private def processResponse(acceptedInvitation: AcceptedInvitation,
+                              response: HttpResponse, url: String, schemaFile: String)
+                             (implicit request: RequestHeader, ec: ExecutionContext) : Either[HttpException, Unit] = {
 
     sendAcceptInvitationAuditEvent(acceptedInvitation, response.status,
       if (response.body.isEmpty) None else Some(response.json))(auditService.sendEvent)
@@ -147,7 +148,7 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
       Logger.info(s"POST of $url returned successfully")
       Right(())
     } else {
-      processFailureResponse(response, url)
+      processFailureResponse(response, url, schemaFile)
     }
   }
 
@@ -160,24 +161,24 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
           headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
         val url = appConfig.createPsaAssociationIFUrl.format(acceptedInvitation.pstr)
         val data = Json.toJson(acceptedInvitation)(writesIFAcceptedInvitation)
-        association(url, data, acceptedInvitation)(hc, implicitly, implicitly)
+        association(url, data, acceptedInvitation, "createAssociationRequest1445.json")(hc, implicitly, implicitly)
 
       } else {
 
         val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
         val url = appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)
         val data = Json.toJson(acceptedInvitation)(writesAcceptedInvitation)
-        association(url, data, acceptedInvitation)(hc, implicitly, implicitly)
+        association(url, data, acceptedInvitation, "createPsaAssociationRequest.json")(hc, implicitly, implicitly)
       }
     }
 
-  private def association(url: String, data: JsValue, acceptedInvitation: AcceptedInvitation)
+  private def association(url: String, data: JsValue, acceptedInvitation: AcceptedInvitation, schemaFile: String)
                          (implicit hc: HeaderCarrier, ec: ExecutionContext,
                           request: RequestHeader): Future[Either[HttpException, Unit]] = {
     Logger.debug(s"[Accept-Invitation-Outgoing-Payload] - ${data.toString()}")
     httpClient.POST[JsValue, HttpResponse](url, data)(
       implicitly, implicitly, hc, implicitly
-    ) map (processResponse(acceptedInvitation, _, url))
+    ) map (processResponse(acceptedInvitation, _, url, schemaFile))
   }
 }
 
@@ -297,11 +298,12 @@ object AssociationConnectorImpl {
         case _ => Json.obj()
       }
 
-      val declarationDuties: (String, JsValue) =
+      val declarationDuties: JsObject =
         if (invite.declarationDuties) {
-          "box5" -> JsBoolean(true)
+          Json.obj("box5" -> JsBoolean(true))
         } else {
-          "box6" -> JsString("true")
+          Json.obj(
+            "box6" -> JsBoolean(true)) ++ pensionAdviserDetails
         }
 
       val declarationDetails = Json.obj(
@@ -309,7 +311,7 @@ object AssociationConnectorImpl {
         "box2" -> invite.declaration,
         "box3" -> invite.declaration,
         "box4" -> invite.declaration
-      ) + declarationDuties ++ pensionAdviserDetails
+      ) ++ declarationDuties
 
       Json.obj(
         "psaAssociationIDsDetails" -> Json.obj(
