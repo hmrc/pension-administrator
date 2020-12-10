@@ -58,6 +58,7 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
   lazy val emailUrl: String = s"$baseUrlEmail${runModeConfiguration.underlying.getString("serviceUrls.email")}"
   lazy val checkAssociationUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.checkPsaAssociation")}"
   lazy val listOfSchemesUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.listOfSchemes")}"
+  lazy val getSchemeDetailsUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.getSchemeDetails")}"
 
   lazy val invitationExpiryDays: Int = runModeConfiguration.underlying.getInt("invitationExpiryDays")
   lazy val invitationCallbackUrl: String = s"$baseUrlPensionAdministrator${runModeConfiguration.underlying.getString("serviceUrls.invitation.callback")}"
