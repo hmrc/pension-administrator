@@ -123,8 +123,8 @@ class DesConnectorImpl @Inject()(
                                                                    headerCarrier: HeaderCarrier,
                                                                    ec: ExecutionContext,
                                                                    request: RequestHeader): Future[Either[HttpException, JsValue]] =
-    featureToggleService.get(IntegrationFrameworkMisc).map(_.isEnabled).flatMap { isEnabled =>
-      if (isEnabled) {
+    featureToggleService.get(IntegrationFrameworkMisc).flatMap { toggle =>
+      if (toggle.isEnabled) {
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
           headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
@@ -136,7 +136,6 @@ class DesConnectorImpl @Inject()(
           "initiatedIDNumber" -> psaToBeRemoved.psaId,
           "ceaseDate" -> psaToBeRemoved.removalDate.toString
         )
-        //TODO Add scheme once json scheme has been received from API team
         removePSAFromScheme(url, data, "/resources/schemas/ceaseFromScheme1461.json", psaToBeRemoved)(hc, implicitly, implicitly)
       } else {
 
@@ -160,9 +159,9 @@ class DesConnectorImpl @Inject()(
                                             headerCarrier: HeaderCarrier,
                                             ec: ExecutionContext,
                                             request: RequestHeader): Future[Either[HttpException, JsValue]] =
-    featureToggleService.get(IntegrationFrameworkMisc).map(_.isEnabled).flatMap { isEnabled =>
+    featureToggleService.get(IntegrationFrameworkMisc).flatMap { toggle =>
       val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
-      if(isEnabled) {
+      if(toggle.isEnabled) {
 
       implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
         headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))

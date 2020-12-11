@@ -154,8 +154,8 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
 
   def acceptInvitation(acceptedInvitation: AcceptedInvitation)
     (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
-    featureToggleService.get(IntegrationFrameworkMisc).map(_.isEnabled).flatMap { isEnabled =>
-      if (isEnabled) {
+    featureToggleService.get(IntegrationFrameworkMisc).flatMap { toggle =>
+      if (toggle.isEnabled) {
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
           headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
