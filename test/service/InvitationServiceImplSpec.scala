@@ -394,4 +394,7 @@ class FakeSchemeConnector extends SchemeConnector {
 
   override def listOfSchemes(psaId: String)(implicit headerCarrier: HeaderCarrier,
                                             ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = ???
+
+  override def getSchemeDetails(psaId: String, schemeIdType: String, idNumber: String)
+                               (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, JsValue]] = ???
 }

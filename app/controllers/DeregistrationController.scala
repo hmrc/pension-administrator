@@ -18,12 +18,14 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.SchemeConnector
+import models.{ListOfSchemes, SchemeDetails}
 import play.api.libs.json._
 import play.api.mvc._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.ErrorHandler
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class DeregistrationController @Inject()(
                                           schemeConnector: SchemeConnector,
@@ -32,15 +34,43 @@ class DeregistrationController @Inject()(
 
   def canDeregister(psaId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      schemeConnector.listOfSchemes(psaId).map {
+      schemeConnector.listOfSchemes(psaId).flatMap {
         case Right(jsValue) =>
 
-          val listOfSchemes  = (JsPath \ "schemeDetails") (jsValue)
-          val canDeregister = listOfSchemes.isEmpty || listOfSchemes.equals(List(JsArray.empty))
-
-          Ok(Json.toJson(canDeregister))
+          jsValue.validate[ListOfSchemes] match {
+            case JsSuccess(listOfSchemes, _) =>
+              val schemes: Seq[SchemeDetails] = listOfSchemes.schemeDetails.getOrElse(List.empty)
+              val canDeregister: Boolean =
+                schemes == List.empty || schemes.forall(s => s.schemeStatus == "Rejected" || s.schemeStatus == "Wound-up")
+              otherPsaAttached(canDeregister, schemes, psaId).map { list =>
+                val isOtherPsaAttached: Boolean = list.contains(true)
+                Ok(Json.obj("canDeregister" -> JsBoolean(canDeregister),
+                  "isOtherPsaAttached" -> JsBoolean(isOtherPsaAttached)))
+              }
+            case JsError(errors) => throw JsResultException(errors)
+          }
         case Left(e) =>
-          result(e)
+          Future.successful(result(e))
       }
   }
+
+  private def otherPsaAttached(canDeregister: Boolean, schemes: Seq[SchemeDetails], psaId: String)
+                              (implicit hc: HeaderCarrier): Future[Seq[Boolean]] =
+    if (!canDeregister && schemes.exists(_.schemeStatus == "Open")) {
+      Future.sequence(schemes.filter(_.schemeStatus == "Open").map { scheme =>
+        schemeConnector.getSchemeDetails(psaId, "srn", scheme.referenceNumber).map {
+          case Right(jsValue) =>
+            (jsValue \ "psaDetails").as[Seq[PsaDetails]](Reads.seq[PsaDetails]).exists(_.id != psaId)
+          case Left(_) => false
+        }
+      })
+    } else {
+      Future(List.empty[Boolean])
+    }
+}
+
+case class PsaDetails(id: String)
+
+object PsaDetails {
+  implicit val format: Format[PsaDetails] = Json.format[PsaDetails]
 }

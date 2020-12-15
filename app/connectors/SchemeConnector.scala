@@ -19,8 +19,9 @@ package connectors
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import models.SchemeReferenceNumber
+import play.api.Logger
 import play.api.http.Status._
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
@@ -28,6 +29,7 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Failure
 
 @ImplementedBy(classOf[SchemeConnectorImpl])
 trait SchemeConnector {
@@ -40,6 +42,11 @@ trait SchemeConnector {
                                    headerCarrier: HeaderCarrier,
                                    ec: ExecutionContext,
                                    request: RequestHeader): Future[Either[HttpException, JsValue]]
+
+  def getSchemeDetails(psaId: String,
+                       schemeIdType: String,
+                       idNumber: String)
+                      (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, JsValue]]
 }
 
 class SchemeConnectorImpl @Inject()(
@@ -82,6 +89,24 @@ class SchemeConnectorImpl @Inject()(
         case OK => Right(response.json)
         case _ => Left(handleErrorResponse(s"List schemes with headers: ${hc.headers}", config.listOfSchemesUrl, response, badResponse))
       }
+    }
+  }
+
+  override def getSchemeDetails(psaId: String,
+                                schemeIdType: String,
+                                idNumber: String)(implicit hc: HeaderCarrier, ec: ExecutionContext)
+  : Future[Either[HttpException, JsValue]] = {
+
+    val url = config.getSchemeDetailsUrl
+    val schemeHc = hc.withExtraHeaders("schemeIdType" -> schemeIdType, "idNumber" -> idNumber, "PSAId" -> psaId)
+
+    http.GET[HttpResponse](url)(implicitly, schemeHc, implicitly).map { response =>
+      response.status match {
+        case OK => Right(Json.parse(response.body))
+        case _ => Left(handleErrorResponse("GET", url, response, Seq.empty))
+      }
+    } andThen {
+      case Failure(t: Throwable) => Logger.warn("Unable to get scheme details in canPsaRegister call", t)
     }
   }
 }
