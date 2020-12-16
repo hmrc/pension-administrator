@@ -110,13 +110,16 @@ class AssociationConnectorImpl @Inject()(httpClient: HttpClient,
     val badResponseSeq = Seq("INVALID_IDTYPE", "INVALID_PAYLOAD", "INVALID_CORRELATIONID", "INVALID_REGIME")
     response.status match {
       case OK =>
+        Logger.debug(s"Get minimal details from IF returned OK with response ${response.json}")
         response.json.validate[MinimalDetails](MinimalDetails.minimalDetailsIFReads).fold(
           _ => {
-            invalidPayloadHandler.logFailures("/resources/schemas/getPSAMinimalDetails.json")(response.json)
+            invalidPayloadHandler.logFailures("/resources/schemas/getMinDetails1442.json")(response.json)
             Left(new BadRequestException("INVALID PAYLOAD"))
           },
-          value =>
+          value => {
+            Logger.debug(s"Get minimal details from IF transformed model: $value")
             Right(value)
+          }
         )
       case _ => Left(handleErrorResponse("Minimal details", url, response, badResponseSeq))
     }
