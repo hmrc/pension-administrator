@@ -48,13 +48,13 @@ object MinimalDetails {
 
   implicit val minimalDetailsIFReads: Reads[MinimalDetails] = (
     (JsPath \ "email").read[String] and
-      (JsPath \ "psaSuspensionFlag").read[Boolean] and
+      (JsPath \ "psaSuspensionFlag").readNullable[Boolean] and
       (JsPath \ "minimalDetails" \ "individualDetails").readNullable[IndividualDetails](IndividualDetails.individualDetailReads) and
       (JsPath \ "minimalDetails" \ "organisationOrPartnershipName").readNullable[String] and
       (JsPath \ "rlsFlag").read[Boolean] and
       (JsPath \ "deceasedFlag").read[Boolean]
     ) ((email, isPsaSuspended, indvDetails, orgName, rlsFlag, deceasedFlag) =>
-    MinimalDetails(email, isPsaSuspended, orgName, indvDetails, rlsFlag, deceasedFlag)
+    MinimalDetails(email, isPsaSuspended.getOrElse(false), orgName, indvDetails, rlsFlag, deceasedFlag)
   )
 
   implicit val defaultWrites : Writes[MinimalDetails] = Json.writes[MinimalDetails]
