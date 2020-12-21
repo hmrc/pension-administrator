@@ -18,11 +18,13 @@ package connectors
 
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
+import models.FeatureToggleName.IntegrationFrameworkMisc
 import models.SchemeReferenceNumber
 import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
+import service.FeatureToggleService
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -51,7 +53,8 @@ trait SchemeConnector {
 
 class SchemeConnectorImpl @Inject()(
                                   http: HttpClient,
-                                  config: AppConfig
+                                  config: AppConfig,
+                                  featureToggleService: FeatureToggleService
                                 ) extends SchemeConnector with HttpResponseHelper with ErrorHandler {
 
 
@@ -78,16 +81,28 @@ class SchemeConnectorImpl @Inject()(
                                    headerCarrier: HeaderCarrier,
                                    ec: ExecutionContext,
                                    request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+      featureToggleService.get(IntegrationFrameworkMisc).flatMap { toggle =>
+        if (toggle.isEnabled) {
+          val headers = Seq(("idType", "psaid"), ("idValue", psaId), ("Content-Type", "application/json"))
+          callListOfSchemes(config.listOfSchemesIFUrl, headers)
+        } else {
+          val headers = Seq(("psaId", psaId), ("Content-Type", "application/json"))
+          callListOfSchemes(config.listOfSchemesUrl, headers)
+        }
+      }
+  }
 
-    val headers: Seq[(String, String)] = Seq(("psaId", psaId), ("Content-Type", "application/json"))
-
+    private def callListOfSchemes(url: String, headers: Seq[(String, String)])
+                                 (implicit headerCarrier: HeaderCarrier,
+                                  ec: ExecutionContext,
+                                  request: RequestHeader): Future[Either[HttpException, JsValue]] = {
     implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headers: _*)
 
-    http.GET[HttpResponse](config.listOfSchemesUrl)(implicitly, hc, implicitly) map { response =>
+    http.GET[HttpResponse](url)(implicitly, hc, implicitly) map { response =>
       val badResponse = Seq("Bad Request with missing parameter PSA Id")
       response.status match {
         case OK => Right(response.json)
-        case _ => Left(handleErrorResponse(s"List schemes with headers: ${hc.headers}", config.listOfSchemesUrl, response, badResponse))
+        case _ => Left(handleErrorResponse(s"List schemes with headers: ${hc.headers}", url, response, badResponse))
       }
     }
   }

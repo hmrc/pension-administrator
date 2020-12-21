@@ -21,21 +21,30 @@ import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import connectors.helper.ConnectorBehaviours
+import models.FeatureToggle.Enabled
+import models.FeatureToggleName.IntegrationFrameworkMisc
 import models.SchemeReferenceNumber
+import org.mockito.Matchers.any
+import org.mockito.Mockito.when
 import org.scalatest._
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.LoggerLike
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
+import service.FeatureToggleService
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, UpstreamErrorResponse}
 import utils.{StubLogger, WireMockHelper}
 
+import scala.concurrent.Future
+
 class SchemeConnectorSpec extends AsyncFlatSpec
   with Matchers
   with WireMockHelper
+  with MockitoSugar
   with OptionValues
   with RecoverMethods
   with EitherValues
@@ -44,11 +53,13 @@ class SchemeConnectorSpec extends AsyncFlatSpec
   import SchemeConnectorSpec._
 
   override protected def portConfigKey: String = "microservice.services.pensions-scheme.port"
+  val mockFeatureToggleService: FeatureToggleService = mock[FeatureToggleService]
 
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
       bind[AuditService].toInstance(auditService),
-      bind[LoggerLike].toInstance(logger)
+      bind[LoggerLike].toInstance(logger),
+      bind[FeatureToggleService].toInstance(mockFeatureToggleService)
     )
 
   lazy val connector: SchemeConnector = injector.instanceOf[SchemeConnector]
@@ -91,10 +102,13 @@ class SchemeConnectorSpec extends AsyncFlatSpec
   }
 
   "SchemeConnector listSchemes" should "handle OK (200)" in {
+    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
+
     server.stubFor(
       get(urlEqualTo(listSchemesUrl))
         .withHeader("Content-Type", equalTo("application/json"))
-        .withHeader("psaId", equalTo(psaId.value))
+        .withHeader("idType", equalTo("psaid"))
+        .withHeader("idValue", equalTo(psaId.value))
         .willReturn(
           ok(Json.stringify(validListOfSchemeResponse))
             .withHeader("Content-Type", "application/json")
@@ -141,7 +155,7 @@ object SchemeConnectorSpec extends JsonFileReader {
   val auditService = new StubSuccessfulAuditService()
   val logger = new StubLogger()
   val checkForAssociationUrl = "/pensions-scheme/is-psa-associated"
-  val listSchemesUrl = "/pensions-scheme/list-of-schemes"
+  val listSchemesUrl = "/pensions-scheme/if-list-of-schemes"
   val srn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")
   val psaId: PsaId = PsaId("A7654321")
 
