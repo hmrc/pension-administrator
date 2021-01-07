@@ -19,7 +19,7 @@ object AppDependencies {
 
   def test(scope: String = "test,it"): Seq[ModuleID] = Seq(
     "uk.gov.hmrc"             %% "reactivemongo-test"     % "4.22.0-play-26"    % Test,
-    "uk.gov.hmrc"             %% "hmrctest"               % "3.9.0-play-26"     % scope,
+    "uk.gov.hmrc"             %% "hmrctest"               % "3.10.0-play-26"     % scope,
     "org.scalatest"           %% "scalatest"              % "3.0.8"             % scope,
     "org.pegdown"             %  "pegdown"                % "1.6.0"             % scope,
     "org.scalacheck"          %% "scalacheck"             % "1.14.0"            % scope,
