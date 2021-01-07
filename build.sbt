@@ -1,42 +1,40 @@
-import AppDependencies.{compile, overrides, test}
+import AppDependencies.{compile, test}
 import play.sbt.routes.RoutesKeys
 import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
-import scala.util.matching.{Regex, UnanchoredRegex}
+import scala.util.matching.Regex
 
 val appName: String = ""
 
 lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 lazy val plugins: Seq[Plugins] = Seq.empty
-lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
 lazy val microservice = Project(AppDependencies.appName, file("."))
   .disablePlugins(JUnitXmlReportPlugin)
   .enablePlugins(Seq(PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory) ++ plugins: _*)
-  .settings(playSettings: _*)
   .settings(majorVersion := 0)
   .settings(scalaSettings: _*)
   .settings(scalaVersion := "2.12.11")
   .settings(publishingSettings: _*)
   .settings(defaultSettings(): _*)
   .settings(silencerSettings)
+  .settings(libraryDependencies ++= appDependencies)
+  .settings(dependencyOverrides ++= AppDependencies.overrides)
+  .settings(retrieveManaged := true)
+  .settings(PlayKeys.devSettings += "play.server.http.port" -> "8205")
+  .settings(evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false))
   .settings(
     RoutesKeys.routesImport ++= Seq(
       "models.enumeration.JourneyType",
       "models.FeatureToggleName"
-    ),
-    libraryDependencies ++= appDependencies,
-    dependencyOverrides ++= overrides,
-    retrieveManaged := true,
-    evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
-    PlayKeys.devSettings += "play.server.http.port" -> "8205"
+    )
   )
   .settings(
     ScoverageKeys.coverageExcludedFiles :=
       "<empty>;Reverse.*;.*filters.*;.*handlers.*;.*components.*;.*models.*;.*repositories.*;.*AuthRetrievals;.*MongoDiagnosticsController;" +
-      ".*BuildInfo.*;.*javascript.*;.*Routes.*;.*GuiceInjector;",
+        ".*BuildInfo.*;.*javascript.*;.*Routes.*;.*GuiceInjector;",
     ScoverageKeys.coverageMinimum := 80,
     ScoverageKeys.coverageFailOnMinimum := true,
     ScoverageKeys.coverageHighlighting := true,
