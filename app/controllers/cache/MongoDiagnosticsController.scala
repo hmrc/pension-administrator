@@ -25,7 +25,7 @@ import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.{Cursor, ReadConcern}
 import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.bson.{BSONDocument, BSONString}
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

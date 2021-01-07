@@ -16,9 +16,8 @@
 
 package models.registrationnoid
 
-import connectors.RegistrationConnectorImpl
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 case class OrganisationName(organisationName: String)
 

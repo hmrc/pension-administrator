@@ -20,7 +20,7 @@ import models.Reads.getPsaDetails.CustomerIdentificationDetailsTypeTransformatio
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.Reads._
 import play.api.libs.json._
-import utils.JsonTransformations.{AddressTransformer, LegalStatusTransformer, PSASubscriptionDetailsTransformer}
+import utils.JsonTransformations.{AddressTransformer, LegalStatusTransformer}
 
 
 class AddressTransformationSpec extends WordSpec with MustMatchers with OptionValues {

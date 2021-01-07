@@ -23,8 +23,8 @@ import org.mockito.Matchers
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json._
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.BadRequestException
@@ -32,7 +32,11 @@ import uk.gov.hmrc.http.BadRequestException
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class DeregistrationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfter with GeneratorDrivenPropertyChecks {
+class DeregistrationControllerSpec
+  extends SpecBase
+    with MockitoSugar
+    with BeforeAndAfter
+    with ScalaCheckDrivenPropertyChecks {
 
   import DeregistrationControllerSpec._
 

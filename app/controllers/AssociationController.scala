@@ -25,7 +25,7 @@ import play.api.mvc.Result
 import play.api.mvc.{ControllerComponents, RequestHeader, AnyContent, Action}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.{AuthRetrievals, ErrorHandler}
 
 import scala.concurrent.ExecutionContext.Implicits.global

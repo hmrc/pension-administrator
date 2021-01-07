@@ -19,7 +19,7 @@ package models.Reads.getPsaDetails
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.Reads._
 import play.api.libs.json._
-import utils.JsonTransformations.{AddressTransformer, DirectorOrPartnerTransformer, LegalStatusTransformer, PSASubscriptionDetailsTransformer}
+import utils.JsonTransformations.{AddressTransformer, DirectorOrPartnerTransformer, LegalStatusTransformer}
 
 class PartnersTransformationSpec extends WordSpec with MustMatchers with OptionValues {
 

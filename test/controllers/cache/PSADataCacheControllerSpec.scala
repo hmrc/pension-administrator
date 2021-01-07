@@ -21,7 +21,7 @@ import akka.util.ByteString
 import org.apache.commons.lang3.RandomUtils
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{AsyncWordSpec, MustMatchers}
 import play.api.Configuration
 import play.api.inject.guice.GuiceApplicationBuilder

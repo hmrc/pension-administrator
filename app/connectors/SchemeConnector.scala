@@ -27,7 +27,7 @@ import play.api.mvc.RequestHeader
 import service.FeatureToggleService
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpClient
 import utils.{ErrorHandler, HttpResponseHelper}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,32 +36,32 @@ import scala.util.Failure
 @ImplementedBy(classOf[SchemeConnectorImpl])
 trait SchemeConnector {
 
-    def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit
-                                                                      headerCarrier: HeaderCarrier,
-                                                                      ec: ExecutionContext,
-                                                                      request: RequestHeader): Future[Either[HttpException, JsValue]]
-  def listOfSchemes(psaId: String)(implicit
-                                   headerCarrier: HeaderCarrier,
-                                   ec: ExecutionContext,
-                                   request: RequestHeader): Future[Either[HttpException, JsValue]]
+  def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)
+                         (implicit headerCarrier: HeaderCarrier,
+                          ec: ExecutionContext,
+                          request: RequestHeader): Future[Either[HttpException, JsValue]]
 
-  def getSchemeDetails(psaId: String,
-                       schemeIdType: String,
-                       idNumber: String)
-                      (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, JsValue]]
+  def listOfSchemes(psaId: String)
+                   (implicit headerCarrier: HeaderCarrier,
+                    ec: ExecutionContext,
+                    request: RequestHeader): Future[Either[HttpException, JsValue]]
+
+  def getSchemeDetails(psaId: String, schemeIdType: String, idNumber: String)
+                      (implicit hc: HeaderCarrier,
+                       ec: ExecutionContext): Future[Either[HttpException, JsValue]]
 }
 
 class SchemeConnectorImpl @Inject()(
-                                  http: HttpClient,
-                                  config: AppConfig,
-                                  featureToggleService: FeatureToggleService
-                                ) extends SchemeConnector with HttpResponseHelper with ErrorHandler {
+                                     http: HttpClient,
+                                     config: AppConfig,
+                                     featureToggleService: FeatureToggleService
+                                   ) extends SchemeConnector with HttpResponseHelper with ErrorHandler {
 
 
-  override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)(implicit
-                                                                             headerCarrier: HeaderCarrier,
-                                                                             ec: ExecutionContext,
-                                                                             request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)
+                                  (implicit headerCarrier: HeaderCarrier,
+                                   ec: ExecutionContext,
+                                   request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     val headers: Seq[(String, String)] = Seq(("psaId", psaId.value), ("schemeReferenceNumber", srn), ("Content-Type", "application/json"))
 
@@ -77,25 +77,25 @@ class SchemeConnectorImpl @Inject()(
 
   }
 
-  def listOfSchemes(psaId: String)(implicit
-                                   headerCarrier: HeaderCarrier,
-                                   ec: ExecutionContext,
-                                   request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-      featureToggleService.get(IntegrationFrameworkMisc).flatMap { toggle =>
-        if (toggle.isEnabled) {
-          val headers = Seq(("idType", "psaid"), ("idValue", psaId), ("Content-Type", "application/json"))
-          callListOfSchemes(config.listOfSchemesIFUrl, headers)
-        } else {
-          val headers = Seq(("psaId", psaId), ("Content-Type", "application/json"))
-          callListOfSchemes(config.listOfSchemesUrl, headers)
-        }
+  def listOfSchemes(psaId: String)
+                   (implicit headerCarrier: HeaderCarrier,
+                    ec: ExecutionContext,
+                    request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+    featureToggleService.get(IntegrationFrameworkMisc).flatMap { toggle =>
+      if (toggle.isEnabled) {
+        val headers = Seq(("idType", "psaid"), ("idValue", psaId), ("Content-Type", "application/json"))
+        callListOfSchemes(config.listOfSchemesIFUrl, headers)
+      } else {
+        val headers = Seq(("psaId", psaId), ("Content-Type", "application/json"))
+        callListOfSchemes(config.listOfSchemesUrl, headers)
       }
+    }
   }
 
-    private def callListOfSchemes(url: String, headers: Seq[(String, String)])
-                                 (implicit headerCarrier: HeaderCarrier,
-                                  ec: ExecutionContext,
-                                  request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  private def callListOfSchemes(url: String, headers: Seq[(String, String)])
+                               (implicit headerCarrier: HeaderCarrier,
+                                ec: ExecutionContext,
+                                request: RequestHeader): Future[Either[HttpException, JsValue]] = {
     implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headers: _*)
 
     http.GET[HttpResponse](url)(implicitly, hc, implicitly) map { response =>
@@ -107,9 +107,8 @@ class SchemeConnectorImpl @Inject()(
     }
   }
 
-  override def getSchemeDetails(psaId: String,
-                                schemeIdType: String,
-                                idNumber: String)(implicit hc: HeaderCarrier, ec: ExecutionContext)
+  override def getSchemeDetails(psaId: String, schemeIdType: String, idNumber: String)
+                               (implicit hc: HeaderCarrier, ec: ExecutionContext)
   : Future[Either[HttpException, JsValue]] = {
 
     val url = config.getSchemeDetailsUrl

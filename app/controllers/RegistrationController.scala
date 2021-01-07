@@ -26,7 +26,7 @@ import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, UpstreamErrorResponse}
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
 import utils.validationUtils._
 

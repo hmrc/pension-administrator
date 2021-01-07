@@ -18,7 +18,6 @@ package service
 
 import audit.{AuditService, SchemeAuditService}
 import com.google.inject.Inject
-import config.AppConfig
 import connectors.DesConnector
 import models.PensionSchemeAdministrator
 import play.api.Logger

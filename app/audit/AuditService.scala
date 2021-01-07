@@ -27,6 +27,7 @@ import uk.gov.hmrc.play.audit.model.DataEvent
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
+import scala.util.{Failure, Success}
 
 @ImplementedBy(classOf[AuditServiceImpl])
 trait AuditService {
@@ -63,13 +64,10 @@ class AuditServiceImpl @Inject()(
       )
     )
 
-    result.onSuccess {
-      case _ =>
+    result.onComplete {
+      case Success(_) =>
         Logger.debug(s"[AuditService][sendEvent] successfully sent ${event.auditType}")
-    }
-
-    result.onFailure {
-      case e =>
+      case Failure(e) =>
         Logger.error(s"[AuditService][sendEvent] failed to send event ${event.auditType}", e)
     }
 

@@ -17,23 +17,27 @@
 package models.Reads.PsaSubscriptionDetails
 
 import models.{CorrespondenceAddress, CorrespondenceDetails, PsaContactDetails}
-import org.scalatest.prop.PropertyChecks._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 
 
 class CorrespondenceDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
 
   "A payload containing correspondence details" should {
-    "map correclty to a CorrespondenceDetails object" when {
+    "map correctly to a CorrespondenceDetails object" when {
       "we have an address" in {
         forAll(correspondenceDetailsGenerator) {
-          correspondence => correspondence.as[CorrespondenceDetails].address mustBe (correspondence \ "addressDetails").as[CorrespondenceAddress]
+          correspondence =>
+            correspondence.as[CorrespondenceDetails].address mustBe
+              (correspondence \ "addressDetails").as[CorrespondenceAddress]
         }
       }
 
       "we have an optional contact details" in {
         forAll(correspondenceDetailsGenerator) {
-          correspondence => correspondence.as[CorrespondenceDetails].contactDetails mustBe (correspondence \ "contactDetails").asOpt[PsaContactDetails]
+          correspondence =>
+            correspondence.as[CorrespondenceDetails].contactDetails mustBe
+              (correspondence \ "contactDetails").asOpt[PsaContactDetails]
         }
       }
     }

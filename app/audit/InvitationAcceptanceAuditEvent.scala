@@ -17,7 +17,7 @@
 package audit
 
 import models.AcceptedInvitation
-import play.api.libs.json.{Format, JsValue, Json}
+import play.api.libs.json.{JsValue, Json}
 
 case class InvitationAcceptanceAuditEvent(acceptedInvitation: AcceptedInvitation,
                                           status: Int,

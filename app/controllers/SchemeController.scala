@@ -24,7 +24,7 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import service.SchemeService
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
 
 import scala.concurrent.ExecutionContext.Implicits.global

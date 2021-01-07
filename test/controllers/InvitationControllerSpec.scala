@@ -18,7 +18,7 @@ package controllers
 
 import base.JsonFileReader
 import models.{IndividualDetails, MinimalDetails}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import play.api.libs.json._
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}

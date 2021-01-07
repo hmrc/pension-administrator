@@ -19,8 +19,8 @@ package utils
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalacheck.Gen
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.{FlatSpec, Matchers}
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json, OFormat}
@@ -28,7 +28,7 @@ import uk.gov.hmrc.http._
 
 // scalastyle:off magic.number
 
-class HttpResponseHelperSpec extends FlatSpec with Matchers with GeneratorDrivenPropertyChecks with MockitoSugar {
+class HttpResponseHelperSpec extends FlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockitoSugar {
 
   import HttpResponseHelperSpec._
 

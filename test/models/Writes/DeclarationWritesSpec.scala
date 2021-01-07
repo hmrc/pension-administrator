@@ -16,7 +16,7 @@
 
 package models.Writes
 
-import models.{PensionAdvisorDetail, PensionSchemeAdministratorDeclarationType, Samples}
+import models.{PensionSchemeAdministratorDeclarationType, Samples}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.Json
 

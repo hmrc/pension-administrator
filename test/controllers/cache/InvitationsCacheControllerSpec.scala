@@ -21,9 +21,8 @@ import akka.util.ByteString
 import org.apache.commons.lang3.RandomUtils
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
-import play.api.Configuration
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -43,8 +42,6 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers wit
   val app = new GuiceApplicationBuilder().configure("run.mode" -> "Test").build()
   implicit lazy val mat: Materializer = app.materializer
   private val cc = app.injector.instanceOf[ControllerComponents]
-
-  private def configuration = Configuration("mongodb.pension-administrator-cache.maxSize" -> 512000)
 
   private val repo = mock[InvitationsCacheRepository]
   private val authConnector: AuthConnector = mock[AuthConnector]

@@ -1112,13 +1112,7 @@ object DesConnectorSpec extends JsonFileReader {
   val removalDate: LocalDate = LocalDate.now()
 
   private val removePsaData: JsValue = Json.obj("ceaseDate" -> removalDate.toString)
-  private val ceasePsaData: JsValue = Json.obj(
-    "ceaseIDType" -> "PSAID",
-    "ceaseNumber" -> psaId.id,
-    "initiatedIDType" -> "PSAID",
-    "initiatedIDNumber" -> psaId.id,
-    "ceaseDate" -> removalDate.toString
-  )
+
   private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removalDate)
   private val deregisterPsaData: JsValue = Json.obj("deregistrationDate" -> LocalDate.now(), "reason" -> "1")
 
