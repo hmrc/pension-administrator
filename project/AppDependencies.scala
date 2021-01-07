@@ -17,23 +17,23 @@ object AppDependencies {
     ehcache
   )
 
-  def test(scope: String = "test,it"): Seq[ModuleID] = Seq(
+  def test(scope: String = "test, it"): Seq[ModuleID] = Seq(
     "uk.gov.hmrc"             %% "reactivemongo-test"     % "4.22.0-play-26"    % Test,
-    "uk.gov.hmrc"             %% "hmrctest"               % "3.9.0-play-26"     % scope,
+    "uk.gov.hmrc"             %% "hmrctest"               % "3.10.0-play-26"     % scope,
     "org.scalatest"           %% "scalatest"              % "3.0.8"             % scope,
     "org.pegdown"             %  "pegdown"                % "1.6.0"             % scope,
     "org.scalacheck"          %% "scalacheck"             % "1.14.0"            % scope,
     "com.typesafe.play"       %% "play-test"              % PlayVersion.current % scope,
     "org.scalatestplus.play"  %% "scalatestplus-play"     % "3.1.2"             % scope,
     "org.mockito"             %  "mockito-all"            % "1.10.19"           % scope,
-    "com.github.tomakehurst"  %  "wiremock"               % "2.21.0"            % scope,
+    "com.github.tomakehurst"  %  "wiremock"               % "2.27.2"            % scope,
     "wolfendale"              %% "scalacheck-gen-regexp"  % "0.1.1"             % scope
   )
 
   // Fixes a transitive dependency clash between wiremock and scalatestplus-play
-  val overrides: Set[ModuleID] = {
+  val overrides: Seq[ModuleID] = {
     val jettyFromWiremockVersion = "9.2.24.v20180105"
-    Set(
+    Seq(
       "org.eclipse.jetty"           % "jetty-client"       % jettyFromWiremockVersion,
       "org.eclipse.jetty"           % "jetty-continuation" % jettyFromWiremockVersion,
       "org.eclipse.jetty"           % "jetty-http"         % jettyFromWiremockVersion,
