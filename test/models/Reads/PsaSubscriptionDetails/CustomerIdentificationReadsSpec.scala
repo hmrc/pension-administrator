@@ -18,7 +18,7 @@ package models.Reads.PsaSubscriptionDetails
 
 import models.CustomerIdentification
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import org.scalatest.prop.PropertyChecks._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
 
 
 class CustomerIdentificationReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {

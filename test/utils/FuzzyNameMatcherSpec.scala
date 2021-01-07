@@ -17,11 +17,11 @@
 package utils
 
 import org.scalacheck.{Gen, Shrink}
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.{Assertion, FlatSpec, Matchers}
 import wolfendale.scalacheck.regexp.RegexpGen
 
-class FuzzyNameMatcherSpec extends FlatSpec with Matchers with GeneratorDrivenPropertyChecks {
+class FuzzyNameMatcherSpec extends FlatSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   import FuzzyNameMatcherSpec._
 

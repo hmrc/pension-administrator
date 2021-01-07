@@ -24,7 +24,6 @@ class PSADetailsSpec extends FlatSpec with Matchers {
   "PSADetailsSpec.details" should "output the correct map of data" in {
 
     val status = 200
-    val request = Json.obj("name" -> "request")
     val response = Json.obj("name" -> "response")
 
     val event = PSADetails(

@@ -17,14 +17,9 @@
 package audit
 
 import org.scalatest.{FlatSpec, Matchers}
-import play.api.libs.json.{JsValue, Json}
-import play.api.test.Helpers._
+import play.api.libs.json.Json
 
 class PSAChangesSpec extends FlatSpec with Matchers {
-
-  private val psaId: String = "psa-id"
-  private val status: Int = OK
-  private val response = Some(Json.obj("name" -> "response"))
 
   private val legalStatus = "aa"
   private val requestJson = Json.obj("abc" -> "def")

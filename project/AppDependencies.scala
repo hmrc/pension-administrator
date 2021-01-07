@@ -24,27 +24,27 @@ object AppDependencies {
 
   val compile: Seq[ModuleID] = Seq(
     ws,
-    "uk.gov.hmrc"             %% "simple-reactivemongo"   % "7.30.0-play-26",
-    "com.typesafe.play"       %% "play-json"              % "2.6.10",
-    "com.typesafe.play"       %% "play-json-joda"         % "2.6.10",
-    "uk.gov.hmrc"             %% "bootstrap-play-26"      % "1.16.0",
-    "com.networknt"           %  "json-schema-validator"  % "1.0.3",
-    "uk.gov.hmrc"             %% "domain"                 % "5.10.0-play-26",
+    "uk.gov.hmrc"       %% "simple-reactivemongo"       % "7.30.0-play-26",
+    "com.typesafe.play" %% "play-json"                  % "2.6.10",
+    "com.typesafe.play" %% "play-json-joda"             % "2.6.10",
+    "uk.gov.hmrc"       %% "bootstrap-backend-play-26"  % "3.2.0",
+    "com.networknt"     %  "json-schema-validator"      % "1.0.3",
+    "uk.gov.hmrc"       %% "domain"                     % "5.10.0-play-26",
     ehcache
   )
 
   def test(scope: String = "test,it"): Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"                 %% "bootstrap-play-26"            % "1.16.0"            % Test classifier "tests",
-    "uk.gov.hmrc"                 %% "reactivemongo-test"           % "4.21.0-play-26"    % Test,
-    "uk.gov.hmrc"                 %% "hmrctest"                     % "3.9.0-play-26"     % scope,
-    "org.scalatest"               %% "scalatest"                    % "3.0.8"             % scope,
-    "org.pegdown"                  % "pegdown"                      % "1.6.0"             % scope,
-    "org.scalacheck"              %% "scalacheck"                   % "1.14.0"            % scope,
-    "com.typesafe.play"           %% "play-test"                    % PlayVersion.current % scope,
-    "org.scalatestplus.play"      %% "scalatestplus-play"           % "3.1.2"             % scope,
-    "org.mockito"                  % "mockito-all"                  % "1.10.19"           % scope,
-    "com.github.tomakehurst"       % "wiremock"                     % "2.21.0"            % scope,
-    "wolfendale"                  %% "scalacheck-gen-regexp"        % "0.1.1"             % scope
+//    "uk.gov.hmrc"             %% "bootstrap-backend-play-26"  % "3.2.0"             % Test classifier "tests",
+    "uk.gov.hmrc"             %% "reactivemongo-test"         % "4.21.0-play-26"    % Test,
+    "uk.gov.hmrc"             %% "hmrctest"                   % "3.9.0-play-26"     % scope,
+    "org.scalatest"           %% "scalatest"                  % "3.0.8"             % scope,
+    "org.pegdown"             %  "pegdown"                    % "1.6.0"             % scope,
+    "org.scalacheck"          %% "scalacheck"                 % "1.14.0"            % scope,
+    "com.typesafe.play"       %% "play-test"                  % PlayVersion.current % scope,
+    "org.scalatestplus.play"  %% "scalatestplus-play"         % "3.1.2"             % scope,
+    "org.mockito"             %  "mockito-all"                % "1.10.19"           % scope,
+    "com.github.tomakehurst"  %  "wiremock"                   % "2.21.0"            % scope,
+    "wolfendale"              %% "scalacheck-gen-regexp"      % "0.1.1"             % scope
   )
 
   // Fixes a transitive dependency clash between wiremock and scalatestplus-play

@@ -19,7 +19,7 @@ package models.Writes
 import base.CommonHelper
 import models.{Samples, Reads => _, _}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
-import play.api.libs.json.{Json, _}
+import play.api.libs.json.Json
 
 class PensionAdvisorDetailsWritesSpec extends WordSpec with MustMatchers with OptionValues with Samples with CommonHelper {
 
@@ -27,7 +27,10 @@ class PensionAdvisorDetailsWritesSpec extends WordSpec with MustMatchers with Op
     "Map pension advisor" when {
       val result = Json.toJson(pensionAdvisorDetail)(PensionAdvisorDetail.psaUpdateWrites)
 
-      Seq(("addressDetails", Json.toJson(nonUkAddressSample)(Address.updateWrites)), ("contactDetails", Json.toJson(contactDetailsSample))).foreach { testElement =>
+      Seq(
+        ("addressDetails", Json.toJson(nonUkAddressSample)(Address.updateWrites)),
+        ("contactDetails", Json.toJson(contactDetailsSample))
+      ).foreach { testElement =>
 
         s"testing for element ${testElement._1} having value ${testElement._2}" in {
 

@@ -16,10 +16,9 @@
 
 package models
 
-import java.time.LocalDate
-
-import models._
 import play.api.libs.json.{JsBoolean, JsObject, JsString, Json}
+
+import java.time.LocalDate
 
 trait Samples {
 

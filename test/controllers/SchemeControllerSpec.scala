@@ -415,11 +415,6 @@ object SchemeControllerSpec extends SpecBase {
       "psaId" -> "A21999999"
     )
 
-  private val updatePsaResponseJson = Json.obj(
-    "processingDate" -> "2001-12-17T09:30:47Z",
-    "formBundleNumber" -> "12345678912"
-  )
-
   private val psaVariationData : JsValue = readJsonFromFile("/data/validPsaVariationRequest.json")
 
   private val fakeSchemeService = new FakeSchemeService
@@ -428,7 +423,6 @@ object SchemeControllerSpec extends SpecBase {
 
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"
-  private val removalDate = new LocalDate(2018,2,1)
   private val removeDate: LocalDate = LocalDate.parse("2018-02-01")
   private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removeDate)
   private val removePsaJson: JsValue = Json.toJson(removePsaDataModel)

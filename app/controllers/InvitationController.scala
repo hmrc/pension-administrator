@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import service.InvitationService
 import uk.gov.hmrc.http.BadRequestException
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
 
 import scala.concurrent.ExecutionContext.Implicits.global

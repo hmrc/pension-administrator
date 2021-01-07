@@ -18,36 +18,24 @@ package service
 
 import akka.Done
 import base.SpecBase
-import models.FeatureToggle.Disabled
-import models.FeatureToggle.Enabled
-import models.FeatureToggleName.IntegrationFrameworkMisc
-import models.FeatureToggleName.IntegrationFrameworkMisc
-import models.FeatureToggleName.IntegrationFrameworkMisc
-import models.FeatureToggleName.PSPAuthorisation
-import models.FeatureToggle
-import models.FeatureToggleName
-import models.FeatureToggleName.IntegrationFrameworkMisc
-import models.FeatureToggleName.IntegrationFrameworkListSchemes
-import models.OperationFailed
-import models.OperationSucceeded
+import models.FeatureToggle.{Disabled, Enabled}
+import models.FeatureToggleName.{IntegrationFrameworkListSchemes, IntegrationFrameworkMisc, PSPAuthorisation}
+import models.{FeatureToggle, FeatureToggleName, OperationFailed, OperationSucceeded}
 import org.mockito.ArgumentCaptor
 import org.mockito.Matchers.any
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.when
-import org.scalacheck.Arbitrary
-import org.scalacheck.Gen
+import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.MustMatchers
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.cache.AsyncCacheApi
 import repositories.AdminDataRepository
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class FeatureToggleServiceSpec
   extends SpecBase

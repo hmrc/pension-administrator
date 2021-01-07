@@ -22,7 +22,7 @@ import org.apache.commons.lang3.RandomUtils
 import org.joda.time.DateTime
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{MustMatchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Configuration
@@ -37,7 +37,12 @@ import uk.gov.hmrc.http.UnauthorizedException
 
 import scala.concurrent.Future
 
-class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers with MockitoSugar with Injecting with GuiceOneAppPerSuite {
+class PensionAdministratorCacheControllerSpec
+  extends WordSpec
+    with MustMatchers
+    with MockitoSugar
+    with Injecting
+    with GuiceOneAppPerSuite {
 
   implicit lazy val mat: Materializer = app.materializer
 
@@ -53,8 +58,13 @@ class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers
                                                          repo: ManageCacheRepository,
                                                          authConnector: AuthConnector,
                                                          encrypted: Boolean
-                                                 ) extends PensionAdministratorCacheController(configuration(encrypted), repo,
-                                                            authConnector, inject[ControllerComponents])
+                                                       )
+    extends PensionAdministratorCacheController(
+      config = configuration(encrypted),
+      repository = repo,
+      authConnector = authConnector,
+      cc = inject[ControllerComponents]
+    )
 
   def controller(repo: ManageCacheRepository, authConnector: AuthConnector, encrypted: Boolean): PensionAdministratorCacheController = {
     new PensionAdministratorCacheControllerImpl(repo, authConnector, encrypted)
@@ -223,6 +233,7 @@ class PensionAdministratorCacheControllerSpec extends WordSpec with MustMatchers
       }
     }
   }
+
   // scalastyle:on method.length
 
   "PensionAdministratorCacheController" must {

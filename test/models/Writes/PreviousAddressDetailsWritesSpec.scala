@@ -16,7 +16,7 @@
 
 package models.Writes
 
-import models.{Address, PreviousAddressDetails, Samples, UkAddress}
+import models.{PreviousAddressDetails, Samples, UkAddress}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.Json
 

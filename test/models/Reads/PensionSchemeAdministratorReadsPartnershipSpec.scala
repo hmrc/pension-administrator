@@ -16,11 +16,9 @@
 
 package models.Reads
 
-import models.{PensionSchemeAdministrator, Samples, UkAddress}
-import models.{Reads => _}
+import models.{PensionSchemeAdministrator, Samples, Reads => _}
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 import play.api.libs.json.{Json, _}
-import utils.JsonUtils._
 
 class PensionSchemeAdministratorReadsPartnershipSpec extends WordSpec with MustMatchers with OptionValues with Samples {
 

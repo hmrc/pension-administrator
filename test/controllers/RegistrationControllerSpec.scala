@@ -28,8 +28,8 @@ import org.mockito.Mockito._
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json._
 import play.api.test.FakeRequest
@@ -41,7 +41,7 @@ import utils.FakeAuthConnector
 
 import scala.concurrent.Future
 
-class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfter with GeneratorDrivenPropertyChecks {
+class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfter with ScalaCheckDrivenPropertyChecks {
 
   import RegistrationControllerSpec._
 
@@ -544,17 +544,6 @@ object RegistrationControllerSpec {
 
   private val nino = "test-nino"
   private val externalId = "test-external-id"
-
-  private val individualRetrievalsWithNino =
-    Future.successful(
-      new ~(
-        new ~(
-          Some(nino),
-          Some(externalId)
-        ),
-        Some(AffinityGroup.Individual)
-      )
-    )
 
   private val organisationRetrievals =
     Future.successful(

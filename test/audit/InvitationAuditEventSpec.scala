@@ -25,15 +25,6 @@ class InvitationAuditEventSpec extends FlatSpec with Matchers {
 
   "InvitationAuditEvent" should "output the correct map of data" in {
 
-    val email = "aaa@aaa.com"
-    val ukAddress = UkAddress(
-      addressLine1 = "address line 1",
-      addressLine2 = Some("address line 2"),
-      addressLine3 = Some("address line 3"),
-      addressLine4 = Some("address line 4"), countryCode = "GB", postalCode = "ZZ11ZZ"
-    )
-    val pensionAdvisorName = "pension advisor 1"
-    val pensionAdviserDetailUK = PensionAdviserDetails(name = pensionAdvisorName, addressDetail = ukAddress, email = email)
     val psaId = PsaId("A2123456")
     val psaIdInvitee = PsaId("A2123456")
     val pstr = "scheme"

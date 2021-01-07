@@ -16,11 +16,11 @@
 
 package utils
 
-import java.text.MessageFormat
-
 import base.SpecBase
 import com.networknt.schema.{ErrorMessageType, ValidationMessage}
-import play.api.libs.json.{JsNull, JsNumber, JsValue, Json}
+import play.api.libs.json.{JsNull, JsNumber, Json}
+
+import java.text.MessageFormat
 
 class InvalidPayloadHandlerSpec extends SpecBase {
   private val emt = new ErrorMessageType {

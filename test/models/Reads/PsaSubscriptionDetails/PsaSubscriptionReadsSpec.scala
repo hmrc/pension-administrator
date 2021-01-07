@@ -19,11 +19,11 @@ package models.Reads.PsaSubscriptionDetails
 import models._
 import utils.testhelpers.PsaSubscriptionBuilder._
 import models.PsaSubscription._
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 
 
-class PsaSubscriptionReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators with PropertyChecks {
+class PsaSubscriptionReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators with ScalaCheckPropertyChecks {
   "A payload containing details for a PSA subscription" should {
     "map correctly to a PsaSubscription object" when {
       "we have a isSuspended flag " in {

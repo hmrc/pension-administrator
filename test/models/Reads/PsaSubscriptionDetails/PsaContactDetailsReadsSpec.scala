@@ -17,7 +17,7 @@
 package models.Reads.PsaSubscriptionDetails
 
 import models.PsaContactDetails
-import org.scalatest.prop.PropertyChecks._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
 import org.scalatest.{MustMatchers, OptionValues, WordSpec}
 
 class PsaContactDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
