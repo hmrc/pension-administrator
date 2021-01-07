@@ -36,8 +36,6 @@ class AuthRetrievals @Inject()(
         .map(psaId => PsaId(psaId.value))
 
       Future.successful(psaId)
-        
     }
   }
-
 }
