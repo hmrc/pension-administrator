@@ -16,14 +16,16 @@
 
 package connectors.helper
 
-import java.util.UUID.randomUUID
-
 import com.google.inject.Inject
 import config.AppConfig
-import play.Logger
+import play.api.Logger
 import uk.gov.hmrc.http.HeaderCarrier
 
+import java.util.UUID.randomUUID
+
 class HeaderUtils @Inject()(config: AppConfig) {
+
+  private val logger = Logger(classOf[HeaderUtils])
 
   val maxLengthCorrelationId = 32
   val maxLengthCorrelationIdIF = 36
@@ -42,7 +44,7 @@ class HeaderUtils @Inject()(config: AppConfig) {
 
   def getCorrelationId(requestId: Option[String]): String = {
     requestId.getOrElse {
-      Logger.error("No Request Id found to generate Correlation Id")
+      logger.error("No Request Id found to generate Correlation Id")
       randomUUID.toString
     }.replaceAll("(govuk-tax-|-)", "").slice(0, maxLengthCorrelationId)
   }
@@ -58,7 +60,7 @@ class HeaderUtils @Inject()(config: AppConfig) {
 
   def getCorrelationIdIF(requestId: Option[String]): String = {
     requestId.getOrElse {
-      Logger.error("No Request Id found to generate Correlation Id")
+      logger.error("No Request Id found to generate Correlation Id")
       randomUUID.toString
     }.replaceAll("(govuk-tax-)", "").slice(0, maxLengthCorrelationIdIF)
   }

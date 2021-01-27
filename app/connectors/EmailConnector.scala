@@ -22,8 +22,7 @@ import models.SendEmailRequest
 import play.api.Logger
 import play.api.http.Status._
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -46,21 +45,23 @@ class EmailConnectorImpl @Inject()(
                                     http: HttpClient
                                   ) extends EmailConnector {
 
+  private val logger = Logger(classOf[EmailConnectorImpl])
+
   override def sendEmail(email: SendEmailRequest)
                         (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EmailStatus] = {
 
     http.POST[SendEmailRequest, HttpResponse](appConfig.emailUrl, email).map { response =>
       response.status match {
         case ACCEPTED =>
-          Logger.debug("Email sent successfully")
+          logger.debug("Email sent successfully")
           EmailSent
         case status =>
-          Logger.warn(s"Email API returned non-expected response:$status")
+          logger.warn(s"Email API returned non-expected response:$status")
           EmailNotSent
       }
     } recoverWith {
       case t: Throwable =>
-        Logger.warn("Email API call failed", t)
+        logger.warn("Email API call failed", t)
         Future.successful(EmailNotSent)
     }
 

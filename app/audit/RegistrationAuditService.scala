@@ -29,6 +29,8 @@ import scala.util.{Failure, Success, Try}
 
 trait RegistrationAuditService {
 
+  private val logger = Logger(classOf[RegistrationAuditService])
+
   def organisationPsaType(registerData: JsValue): String = {
     (registerData \ "organisation" \ "organisationType").validate[String].fold(
       _ => "Unknown",
@@ -44,42 +46,102 @@ trait RegistrationAuditService {
     }
   }
 
-  def sendPSARegistrationEvent(withId: Boolean, user: User, psaType: String, registerData: JsValue, isUk: SuccessResponse => Option[Boolean])
-                              (sendEvent: PSARegistration => Unit)
-                              (implicit request: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, SuccessResponse]], Unit] = {
+  def sendPSARegistrationEvent(
+                                withId: Boolean,
+                                user: User,
+                                psaType: String,
+                                registerData: JsValue,
+                                isUk: SuccessResponse => Option[Boolean]
+                              )(
+                                sendEvent: PSARegistration => Unit
+                              )(
+                                implicit request: RequestHeader,
+                                ec: ExecutionContext
+                              ): PartialFunction[Try[Either[HttpException, SuccessResponse]], Unit] = {
 
     case Success(Right(successResponse)) =>
-      sendAuditEvent(withId, user.externalId, psaType, true, isUk(successResponse), Status.OK, registerData, Some(Json.toJson(successResponse)))(sendEvent)
+      sendAuditEvent(
+        withId = withId,
+        externalId = user.externalId,
+        psaType = psaType,
+        found = true,
+        isUk = isUk(successResponse),
+        status = Status.OK,
+        request = registerData,
+        response = Some(Json.toJson(successResponse))
+      )(sendEvent)
 
     case Success(Left(e)) =>
-      sendAuditEvent(withId, user.externalId, psaType, false, None, e.responseCode, registerData, None)(sendEvent)
+      sendAuditEvent(
+        withId = withId,
+        externalId = user.externalId,
+        psaType = psaType,
+        found = false,
+        isUk = None,
+        status = e.responseCode,
+        request = registerData,
+        response = None
+      )(sendEvent)
 
     case Failure(t) =>
-      Logger.error("Error in registration connector", t)
+      logger.error("Error in registration connector", t)
 
   }
 
 
-  def sendPSARegWithoutIdEvent(withId: Boolean, user: User, psaType: String, registerData: JsValue, isUk: JsValue => Option[Boolean])
-                              (sendEvent: PSARegistration => Unit)
-                              (implicit request: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, RegisterWithoutIdResponse]], Unit] = {
+  def sendPSARegWithoutIdEvent(
+                                withId: Boolean,
+                                user: User,
+                                psaType: String,
+                                registerData: JsValue,
+                                isUk: JsValue => Option[Boolean]
+                              )(
+                                sendEvent: PSARegistration => Unit
+                              )(
+                                implicit request: RequestHeader, ec: ExecutionContext
+                              ): PartialFunction[Try[Either[HttpException, RegisterWithoutIdResponse]], Unit] = {
 
     case Success(Right(registerWithoutIdResponse)) =>
-      sendAuditEvent(withId, user.externalId, psaType, true, isUk(Json.toJson(registerWithoutIdResponse)),
-        Status.OK, registerData, Some(Json.toJson(registerWithoutIdResponse)))(sendEvent)
+      sendAuditEvent(
+        withId = withId,
+        externalId = user.externalId,
+        psaType = psaType,
+        found = true,
+        isUk = isUk(Json.toJson(registerWithoutIdResponse)),
+        status = Status.OK,
+        request = registerData,
+        response = Some(Json.toJson(registerWithoutIdResponse))
+      )(sendEvent)
 
     case Success(Left(e)) =>
-      sendAuditEvent(withId, user.externalId, psaType, false, None, e.responseCode, registerData, None)(sendEvent)
+      sendAuditEvent(
+        withId = withId,
+        externalId = user.externalId,
+        psaType = psaType,
+        found = false,
+        isUk = None,
+        status = e.responseCode,
+        request = registerData,
+        response = None
+      )(sendEvent)
 
     case Failure(t) =>
-      Logger.error("Error in registration connector", t)
+      logger.error("Error in registration connector", t)
 
   }
 
-  private def sendAuditEvent(withId: Boolean, externalId: String, psaType: String, found: Boolean, isUk: Option[Boolean],
-                             status: Int, request: JsValue, response: Option[JsValue])(sendEvent: PSARegistration => Unit): Unit
-
-  = {
+  private def sendAuditEvent(
+                              withId: Boolean,
+                              externalId: String,
+                              psaType: String,
+                              found: Boolean,
+                              isUk: Option[Boolean],
+                              status: Int,
+                              request: JsValue,
+                              response: Option[JsValue]
+                            )(
+                              sendEvent: PSARegistration => Unit
+                            ): Unit =
     sendEvent(
       PSARegistration(
         withId = withId,
@@ -92,6 +154,5 @@ trait RegistrationAuditService {
         response = response
       )
     )
-  }
 
 }

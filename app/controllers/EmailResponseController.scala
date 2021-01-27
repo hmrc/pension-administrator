@@ -35,6 +35,8 @@ class EmailResponseController @Inject()(
                                          parser: PlayBodyParsers
                                        ) extends BackendController(cc) {
 
+  private val logger = Logger(classOf[EmailResponseController])
+
   def retrieveStatus(journeyType: JourneyType.Name, id: String): Action[JsValue] = Action(parser.tolerantJson) {
     implicit request =>
       validatePsaId(id) match {
@@ -45,7 +47,7 @@ class EmailResponseController @Inject()(
               valid.events.filterNot(
                 _.event == Opened
               ).foreach { event =>
-                Logger.debug(s"Email Audit event coming from $journeyType is $event")
+                logger.debug(s"Email Audit event coming from $journeyType is $event")
                 auditService.sendEvent(EmailAuditEvent(psaId, event.event, journeyType))
               }
               Ok

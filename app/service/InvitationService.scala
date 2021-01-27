@@ -55,12 +55,14 @@ class InvitationServiceImpl @Inject()(
                                        crypto: ApplicationCrypto
                                      ) extends InvitationService {
 
+  private val logger = Logger(classOf[InvitationServiceImpl])
+
   override def invitePSA(jsValue: JsValue)
                         (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
     jsValue.validate[Invitation].fold(
       {
         errors =>
-          Logger.warn(s"Json contains bad data $errors")
+          logger.warn(s"Json contains bad data $errors")
           Future.failed(new BadRequestException(s"Bad invitation format sent $errors"))
       },
       {
@@ -163,7 +165,7 @@ class InvitationServiceImpl @Inject()(
             .getOrElse("Unknown")
         )
 
-    Logger.warn(
+    logger.warn(
       s"Cannot match invitee and PSA names. Logging depersonalised names.\n" +
         s"Entity Type: $entityType\n" +
         s"Invitee: ${depersonalise(inviteeName)}\n" +
@@ -200,7 +202,7 @@ class InvitationServiceImpl @Inject()(
     emailConnector.sendEmail(email).map {
       case EmailSent => ()
       case _ =>
-        Logger.error("Unable to send email to invited PSA. Support intervention possibly required.")
+        logger.error("Unable to send email to invited PSA. Support intervention possibly required.")
         ()
     }
 

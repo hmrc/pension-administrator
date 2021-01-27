@@ -29,6 +29,8 @@ import scala.util.{Failure, Success, Try}
 
 trait ErrorHandler {
 
+  private val logger = Logger(classOf[ErrorHandler])
+
   def recoverFromError: PartialFunction[Throwable, Future[Result]] = {
     case e: JsResultException =>
       Future.failed(new BadRequestException(e.getMessage))
@@ -60,9 +62,9 @@ trait ErrorHandler {
 
   protected def logWarning[A](endpoint: String): PartialFunction[Try[Either[HttpException, A]], Unit] = {
     case Success(Left(e: HttpException)) =>
-      Logger.warn(s"$endpoint received error response from DES", e)
+      logger.warn(s"$endpoint received error response from DES", e)
     case Failure(e) =>
-      Logger.error(s"$endpoint received error response from DES", e)
+      logger.error(s"$endpoint received error response from DES", e)
   }
 }
 

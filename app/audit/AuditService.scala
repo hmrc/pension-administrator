@@ -32,9 +32,8 @@ import scala.util.{Failure, Success}
 @ImplementedBy(classOf[AuditServiceImpl])
 trait AuditService {
 
-  def sendEvent[T <: AuditEvent](event: T)(implicit
-                                           rh: RequestHeader,
-                                           ec: ExecutionContext): Unit
+  def sendEvent[T <: AuditEvent](event: T)
+                                (implicit rh: RequestHeader, ec: ExecutionContext): Unit
 
 }
 
@@ -43,14 +42,15 @@ class AuditServiceImpl @Inject()(
                                   connector: AuditConnector
                                 ) extends AuditService {
 
+  private val logger = Logger(classOf[AuditServiceImpl])
+
   private implicit def toHc(request: RequestHeader): AuditHeaderCarrier =
     auditHeaderCarrier(HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session)))
 
-  def sendEvent[T <: AuditEvent](event: T)(implicit
-                                           rh: RequestHeader,
-                                           ec: ExecutionContext): Unit = {
+  def sendEvent[T <: AuditEvent](event: T)
+                                (implicit rh: RequestHeader, ec: ExecutionContext): Unit = {
     val details = rh.toAuditDetails() ++ event.details
-    Logger.debug(s"[AuditService][sendEvent] sending ${event.auditType}")
+    logger.debug(s"[AuditService][sendEvent] sending ${event.auditType}")
 
     val result: Future[AuditResult] = connector.sendEvent(
       DataEvent(
@@ -66,9 +66,9 @@ class AuditServiceImpl @Inject()(
 
     result.onComplete {
       case Success(_) =>
-        Logger.debug(s"[AuditService][sendEvent] successfully sent ${event.auditType}")
+        logger.debug(s"[AuditService][sendEvent] successfully sent ${event.auditType}")
       case Failure(e) =>
-        Logger.error(s"[AuditService][sendEvent] failed to send event ${event.auditType}", e)
+        logger.error(s"[AuditService][sendEvent] failed to send event ${event.auditType}", e)
     }
 
   }

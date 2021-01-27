@@ -16,20 +16,18 @@
 
 package controllers.cache
 
-import java.text.SimpleDateFormat
-import java.util.Date
-
-import javax.inject.Inject
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.{Cursor, ReadConcern}
 import reactivemongo.api.collections.bson.BSONCollection
+import reactivemongo.api.{Cursor, ReadConcern}
 import reactivemongo.bson.{BSONDocument, BSONString}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.text.SimpleDateFormat
+import java.util.Date
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.language.postfixOps
 
 class MongoDiagnosticsController @Inject()(component: ReactiveMongoComponent,
                                            cc: ControllerComponents) extends BackendController(cc) {

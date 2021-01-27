@@ -17,8 +17,8 @@
 package controllers.cache
 
 import com.google.inject.Inject
+import play.api.Logger
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import play.api.{Configuration, Logger}
 import repositories.PSADataCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -27,11 +27,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class PSADataCacheController @Inject()(
-                                        config: Configuration,
                                         repository: PSADataCacheRepository,
                                         val authConnector: AuthConnector,
                                         cc: ControllerComponents
                                       ) extends BackendController(cc) with AuthorisedFunctions {
+
+  private val logger = Logger(classOf[PSADataCacheController])
+
   def save(id: String): Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
@@ -46,9 +48,9 @@ class PSADataCacheController @Inject()(
   def get(id: String): Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
-        Logger.debug(message = "controllers.cache.PSADataCacheController.get: Authorised Request " + id)
+        logger.debug(message = "controllers.cache.PSADataCacheController.get: Authorised Request " + id)
         repository.get(id).map { response =>
-          Logger.debug(message = s"controllers.cache.PSADataCacheController.get: Response for request Id $id is $response")
+          logger.debug(message = s"controllers.cache.PSADataCacheController.get: Response for request Id $id is $response")
           response.map {
             Ok(_)
           }

@@ -28,7 +28,7 @@ import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
-import utils.validationUtils._
+import utils.ValidationUtils._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -40,6 +40,8 @@ class RegistrationController @Inject()(
                                         cc: ControllerComponents
                                       ) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 
+  private val logger = Logger(classOf[RegistrationController])
+
   def registerWithIdIndividual: Action[AnyContent] = Action.async {
     implicit request => {
       retrieveUser { user =>
@@ -49,7 +51,7 @@ class RegistrationController @Inject()(
               case Success(nino) =>
                 registerConnector.registerWithIdIndividual(nino, user, mandatoryPODSData()) map handleResponse
               case Failure(e) =>
-                Logger.warn(s"Bad Request returned from frontend for Register With Id Individual $e")
+                logger.warn(s"Bad Request returned from frontend for Register With Id Individual $e")
                 Future.failed(new BadRequestException(s"Bad Request returned from frontend for Register With Id Individual $e"))
             }
           case _ =>
@@ -72,7 +74,7 @@ class RegistrationController @Inject()(
                   Json.obj("organisation" -> Json.toJson(orgWithInvalidCharactersRemoved))
                 registerConnector.registerWithIdOrganisation(utr, user, registerWithIdData) map handleResponse
               case Failure(e) =>
-                Logger.warn(s"Bad Request returned from frontend for Register With Id Organisation $e")
+                logger.warn(s"Bad Request returned from frontend for Register With Id Organisation $e")
                 Future.failed(new BadRequestException(s"Bad Request returned from frontend for Register With Id Organisation $e"))
             }
           case _ =>

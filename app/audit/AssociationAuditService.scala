@@ -28,6 +28,8 @@ import scala.util.{Failure, Success, Try}
 
 trait AssociationAuditService {
 
+  private val logger = Logger(classOf[AssociationAuditService])
+
   def sendGetMinimalPSADetailsEvent(psaId: String)(sendEvent: MinimalPSADetailsEvent => Unit)
                                    (implicit rh: RequestHeader, ec: ExecutionContext):
   PartialFunction[Try[Either[HttpException, MinimalDetails]], Unit] = {
@@ -53,7 +55,7 @@ trait AssociationAuditService {
         )
       )
     case Failure(t) =>
-      Logger.error("Error in AssociationConnector connector", t)
+      logger.error("Error in AssociationConnector connector", t)
   }
 
   def sendGetMinimalDetailsEvent(idType: String, idValue: String)(sendEvent: MinimalDetailsEvent => Unit)
@@ -87,7 +89,7 @@ trait AssociationAuditService {
         )
       )
     case Failure(t) =>
-      Logger.error("Error in AssociationConnector connector", t)
+      logger.error("Error in AssociationConnector connector", t)
   }
 
   def sendAcceptInvitationAuditEvent(acceptedInvitation: AcceptedInvitation, status: Int,

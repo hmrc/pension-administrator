@@ -35,10 +35,12 @@ class SchemeController @Inject()(schemeService: SchemeService,
                                  cc: ControllerComponents
                                 ) extends BackendController(cc) with ErrorHandler {
 
+  private val logger = Logger(classOf[SchemeController])
+
   def registerPSA: Action[AnyContent] = Action.async {
     implicit request => {
       val feJson = request.body.asJson
-      Logger.debug(s"[PSA-Registration-Incoming-Payload]$feJson")
+      logger.debug(s"[PSA-Registration-Incoming-Payload]$feJson")
 
       feJson match {
         case Some(jsValue) =>

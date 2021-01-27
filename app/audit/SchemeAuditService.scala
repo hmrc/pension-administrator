@@ -27,10 +27,14 @@ import uk.gov.hmrc.http.HttpException
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
-class SchemeAuditService@Inject()() {
+class SchemeAuditService @Inject()() {
 
-  def sendPSASubscriptionEvent(psa: PensionSchemeAdministrator, request: JsValue)(sendEvent: PSASubscription => Unit)
-                                      (implicit rh: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+  private val logger = Logger(classOf[SchemeAuditService])
+
+  def sendPSASubscriptionEvent(psa: PensionSchemeAdministrator, request: JsValue)
+                              (sendEvent: PSASubscription => Unit)
+                              (implicit rh: RequestHeader,
+                               ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
     case Success(Right(json)) =>
       sendEvent(
         PSASubscription(
@@ -52,11 +56,13 @@ class SchemeAuditService@Inject()() {
         )
       )
     case Failure(t) =>
-      Logger.error("Error in sending audit event for PSA Subscription", t)
+      logger.error("Error in sending audit event for PSA Subscription", t)
   }
 
-  def sendPSAChangeEvent(psa: PensionSchemeAdministrator, request: JsValue)(sendEvent: PSAChanges => Unit)
-                              (implicit rh: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+  def sendPSAChangeEvent(psa: PensionSchemeAdministrator, request: JsValue)
+                        (sendEvent: PSAChanges => Unit)
+                        (implicit rh: RequestHeader,
+                         ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
     case Success(Right(json)) =>
       sendEvent(
         PSAChanges(
@@ -76,12 +82,13 @@ class SchemeAuditService@Inject()() {
         )
       )
     case Failure(t) =>
-      Logger.error("Error in sending audit event for PSA Changes", t)
+      logger.error("Error in sending audit event for PSA Changes", t)
   }
 
-  def sendPSADetailsEvent(psaId: String)(sendEvent: PSADetails => Unit)
-                         (implicit rh: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
-
+  def sendPSADetailsEvent(psaId: String)
+                         (sendEvent: PSADetails => Unit)
+                         (implicit rh: RequestHeader,
+                          ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
 
 
     case Success(Right(psaSubscription)) =>
@@ -103,22 +110,24 @@ class SchemeAuditService@Inject()() {
         )
       )
     case Failure(t) =>
-      Logger.error("Error in sending audit event for get PSA details", t)
+      logger.error("Error in sending audit event for get PSA details", t)
 
   }
 
-  def sendPSARemovalAuditEvent(psaToBeRemovedFromScheme: PsaToBeRemovedFromScheme)(sendEvent: PSARemovalFromSchemeAuditEvent => Unit)
-                         (implicit rh: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+  def sendPSARemovalAuditEvent(psaToBeRemovedFromScheme: PsaToBeRemovedFromScheme)
+                              (sendEvent: PSARemovalFromSchemeAuditEvent => Unit)
+                              (implicit rh: RequestHeader,
+                               ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
     case Success(Right(_)) =>
       sendEvent(PSARemovalFromSchemeAuditEvent(psaToBeRemovedFromScheme))
     case Failure(t) =>
-      Logger.error("Error in sending audit event for get PSA details", t)
+      logger.error("Error in sending audit event for get PSA details", t)
 
   }
 }
 
 object SchemeAuditService {
-  private[audit] def getName(psaSubscription: JsValue): Option[String] = {
+  private[audit] def getName(psaSubscription: JsValue): Option[String] =
     (psaSubscription \ "registrationInfo" \ "legalStatus").as[String] match {
       case "Individual" =>
         Some(Seq((psaSubscription \ "individualDetails" \ "firstName").asOpt[String],
@@ -128,5 +137,4 @@ object SchemeAuditService {
       case "Limited Company" => (psaSubscription \ "businessDetails" \ "companyName").asOpt[String]
       case _ => None
     }
-  }
 }

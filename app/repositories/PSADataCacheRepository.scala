@@ -17,11 +17,11 @@
 package repositories
 
 import java.nio.charset.StandardCharsets
-
 import com.google.inject.Inject
 import org.joda.time.{DateTime, DateTimeZone}
+import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.json._
-import play.api.{Configuration, Logger}
+import play.api.Configuration
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.Subtype.GenericBinarySubtype
@@ -36,11 +36,14 @@ import scala.concurrent.{ExecutionContext, Future}
 class PSADataCacheRepository @Inject()(
                                         mongoComponent: ReactiveMongoComponent,
                                         configuration: Configuration
-                                      )(implicit val ec: ExecutionContext) extends ReactiveRepository[JsValue, BSONObjectID](
-  configuration.get[String](path = "mongodb.pension-administrator-cache.psa-data.name"),
-  mongoComponent.mongoConnector.db,
-  implicitly
-) {
+                                      )(implicit val ec: ExecutionContext)
+  extends ReactiveRepository[JsValue, BSONObjectID](
+    collectionName = configuration.get[String](path = "mongodb.pension-administrator-cache.psa-data.name"),
+    mongo = mongoComponent.mongoConnector.db,
+    domainFormat = implicitly
+  ) {
+
+  override val logger: Logger = LoggerFactory.getLogger("PSADataCacheRepository")
   private val encryptionKey = "psa.json.encryption"
   private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, configuration.underlying)
   private val encrypted: Boolean = configuration.get[Boolean](path = "encrypted")
@@ -56,7 +59,7 @@ class PSADataCacheRepository @Inject()(
   } yield {
     ()
   }) recoverWith {
-    case t: Throwable => Future.successful(Logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
+    case t: Throwable => Future.successful(logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
   } andThen {
     case _ => CollectionDiagnostics.logCollectionInfo(collection)
   }
@@ -75,10 +78,10 @@ class PSADataCacheRepository @Inject()(
     }
 
     collection.indexesManager.ensure(index) map { result =>
-      Logger.debug(indexCreationDescription + s" was successful and result is: $result")
+      logger.debug(indexCreationDescription + s" was successful and result is: $result")
       result
     } recover {
-      case e => Logger.error(indexCreationDescription + s" was unsuccessful", e)
+      case e => logger.error(indexCreationDescription + s" was unsuccessful", e)
         false
     }
   }
@@ -119,7 +122,7 @@ class PSADataCacheRepository @Inject()(
   }
 
   def remove(credId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    Logger.warn(message = s"Removing row from collection ${collection.name} credId:$credId")
+    logger.warn(s"Removing row from collection ${collection.name} credId:$credId")
     val selector = BSONDocument("id" -> credId)
     collection.delete().one(selector).map(_.ok)
   }
