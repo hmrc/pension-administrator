@@ -22,10 +22,9 @@ import org.apache.commons.lang3.RandomUtils
 import org.joda.time.DateTime
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Configuration
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json.Json
 import play.api.mvc.ControllerComponents
@@ -46,42 +45,33 @@ class PensionAdministratorCacheControllerSpec
 
   implicit lazy val mat: Materializer = app.materializer
 
-  private def configuration(encrypted: Boolean = true) = Configuration(
-    "mongodb.pension-administrator-cache.maxSize" -> 512000,
-    "encrypted" -> encrypted
-  )
-
   private val repo = mock[ManageCacheRepository]
   private val authConnector: AuthConnector = mock[AuthConnector]
 
   private class PensionAdministratorCacheControllerImpl(
                                                          repo: ManageCacheRepository,
-                                                         authConnector: AuthConnector,
-                                                         encrypted: Boolean
+                                                         authConnector: AuthConnector
                                                        )
     extends PensionAdministratorCacheController(
-      config = configuration(encrypted),
       repository = repo,
       authConnector = authConnector,
       cc = inject[ControllerComponents]
     )
 
-  def controller(repo: ManageCacheRepository, authConnector: AuthConnector, encrypted: Boolean): PensionAdministratorCacheController = {
-    new PensionAdministratorCacheControllerImpl(repo, authConnector, encrypted)
+  def controller(repo: ManageCacheRepository, authConnector: AuthConnector): PensionAdministratorCacheController = {
+    new PensionAdministratorCacheControllerImpl(repo, authConnector)
   }
 
   // scalastyle:off method.length
-  def validCacheController(encrypted: Boolean): Unit = {
-    val msg = if (encrypted) "where encrypted" else "where not encrypted"
-    s".get $msg" must {
-
+  "PensionAdministratorCacheController" must {
+    s".get" must {
       "return 200 and the relevant data when it exists" in {
         when(repo.get(eqTo("foo"))(any())) thenReturn Future.successful {
           Some(Json.obj())
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).get("foo")(FakeRequest())
+        val result = controller(repo, authConnector).get("foo")(FakeRequest())
 
         status(result) mustEqual OK
         contentAsString(result) mustEqual "{}"
@@ -93,7 +83,7 @@ class PensionAdministratorCacheControllerSpec
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).get("foo")(FakeRequest())
+        val result = controller(repo, authConnector).get("foo")(FakeRequest())
 
         status(result) mustEqual NOT_FOUND
       }
@@ -104,7 +94,7 @@ class PensionAdministratorCacheControllerSpec
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).get("foo")(FakeRequest())
+        val result = controller(repo, authConnector).get("foo")(FakeRequest())
 
         an[Exception] must be thrownBy {
           status(result)
@@ -116,7 +106,7 @@ class PensionAdministratorCacheControllerSpec
           new UnauthorizedException("")
         }
 
-        val result = controller(repo, authConnector, encrypted).get("foo")(FakeRequest())
+        val result = controller(repo, authConnector).get("foo")(FakeRequest())
 
         an[UnauthorizedException] must be thrownBy {
           status(result)
@@ -124,14 +114,14 @@ class PensionAdministratorCacheControllerSpec
       }
     }
 
-    s".save $msg" must {
+    s".save" must {
 
       "return 200 when the request body can be parsed and passed to the repository successfully" in {
 
         when(repo.upsert(any(), any())(any())) thenReturn Future.successful(true)
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = call(controller(repo, authConnector, encrypted).save("foo"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
+        val result = call(controller(repo, authConnector).save("foo"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
 
         status(result) mustEqual OK
       }
@@ -140,7 +130,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.upsert(any(), any())(any())) thenReturn Future.successful(true)
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = call(controller(repo, authConnector, encrypted).save("foo"), FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
+        val result = call(controller(repo, authConnector).save("foo"), FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
         status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
       }
@@ -150,7 +140,7 @@ class PensionAdministratorCacheControllerSpec
           new UnauthorizedException("")
         }
 
-        val result = call(controller(repo, authConnector, encrypted).save("foo"), FakeRequest().withRawBody(ByteString("foo")))
+        val result = call(controller(repo, authConnector).save("foo"), FakeRequest().withRawBody(ByteString("foo")))
 
         an[UnauthorizedException] must be thrownBy {
           status(result)
@@ -158,12 +148,12 @@ class PensionAdministratorCacheControllerSpec
       }
     }
 
-    s".remove $msg" must {
+    s".remove" must {
       "return 200 when the data is removed successfully" in {
         when(repo.remove(eqTo("foo"))(any())) thenReturn Future.successful(true)
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).remove("foo")(FakeRequest())
+        val result = controller(repo, authConnector).remove("foo")(FakeRequest())
 
         status(result) mustEqual OK
       }
@@ -173,7 +163,7 @@ class PensionAdministratorCacheControllerSpec
           new UnauthorizedException("")
         }
 
-        val result = controller(repo, authConnector, encrypted).remove("foo")(FakeRequest())
+        val result = controller(repo, authConnector).remove("foo")(FakeRequest())
 
         an[UnauthorizedException] must be thrownBy {
           status(result)
@@ -181,7 +171,7 @@ class PensionAdministratorCacheControllerSpec
       }
     }
 
-    s".lastUpdated $msg" must {
+    s".lastUpdated" must {
 
       "return 200 and the relevant data when it exists" in {
         val date = DateTime.now
@@ -190,7 +180,7 @@ class PensionAdministratorCacheControllerSpec
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).lastUpdated("foo")(FakeRequest())
+        val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
 
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(date)
@@ -202,7 +192,7 @@ class PensionAdministratorCacheControllerSpec
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).lastUpdated("foo")(FakeRequest())
+        val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
 
         status(result) mustEqual NOT_FOUND
       }
@@ -213,7 +203,7 @@ class PensionAdministratorCacheControllerSpec
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector, encrypted).lastUpdated("foo")(FakeRequest())
+        val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
 
         an[Exception] must be thrownBy {
           status(result)
@@ -225,20 +215,12 @@ class PensionAdministratorCacheControllerSpec
           new UnauthorizedException("")
         }
 
-        val result = controller(repo, authConnector, encrypted).lastUpdated("foo")(FakeRequest())
+        val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
 
         an[UnauthorizedException] must be thrownBy {
           status(result)
         }
       }
     }
-  }
-
-  // scalastyle:on method.length
-
-  "PensionAdministratorCacheController" must {
-    behave like validCacheController(encrypted = false)
-    behave like validCacheController(encrypted = true)
-
   }
 }

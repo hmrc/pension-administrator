@@ -21,9 +21,8 @@ import akka.util.ByteString
 import org.apache.commons.lang3.RandomUtils
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{AsyncWordSpec, MustMatchers}
-import play.api.Configuration
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.ControllerComponents
@@ -39,11 +38,10 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with MustMatchers with Mo
   private val app = new GuiceApplicationBuilder().configure("run.mode" -> "Test").build()
   implicit lazy val mat: Materializer = app.materializer
   private val cc = app.injector.instanceOf[ControllerComponents]
-  private val config = app.injector.instanceOf[Configuration]
   private val repo = mock[PSADataCacheRepository]
   private val authConnector: AuthConnector = mock[AuthConnector]
 
-  def controller: PSADataCacheController = new PSADataCacheController(config, repo, authConnector, cc)
+  def controller: PSADataCacheController = new PSADataCacheController(repo, authConnector, cc)
 
   "PSADataCacheController" when {
     s"on .get " must {

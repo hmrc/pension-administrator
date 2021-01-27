@@ -48,13 +48,13 @@ class FeatureToggleServiceSpec
       Gen.oneOf(FeatureToggleName.toggles)
     }
 
-  implicit private val arbitraryFeatureToggle: Arbitrary[FeatureToggle] =
-    Arbitrary {
-      for {
-        name <- arbitrary[FeatureToggleName]
-        enabled <- arbitrary[Boolean]
-      } yield FeatureToggle(name, enabled)
-    }
+//  implicit private val arbitraryFeatureToggle: Arbitrary[FeatureToggle] =
+//    Arbitrary {
+//      for {
+//        name <- arbitrary[FeatureToggleName]
+//        enabled <- arbitrary[Boolean]
+//      } yield FeatureToggle(name, enabled)
+//    }
 
   // A cache that doesn't cache
   class FakeCache extends AsyncCacheApi {

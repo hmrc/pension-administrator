@@ -18,8 +18,9 @@ package repositories
 
 import com.google.inject.Inject
 import models.FeatureToggle
+import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.json._
-import play.api.{Configuration, Logger}
+import play.api.Configuration
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.commands.WriteResult
 import reactivemongo.api.indexes.{Index, IndexType}
@@ -32,11 +33,14 @@ import scala.concurrent.{ExecutionContext, Future}
 class AdminDataRepository @Inject()(
                                      mongoComponent: ReactiveMongoComponent,
                                      configuration: Configuration
-                                   )(implicit val ec: ExecutionContext) extends ReactiveRepository[JsValue, BSONObjectID](
-  configuration.get[String](path = "mongodb.pension-administrator-cache.admin-data.name"),
-  mongoComponent.mongoConnector.db,
-  implicitly
-) {
+                                   )(implicit val ec: ExecutionContext)
+  extends ReactiveRepository[JsValue, BSONObjectID](
+    collectionName = configuration.get[String](path = "mongodb.pension-administrator-cache.admin-data.name"),
+    mongo = mongoComponent.mongoConnector.db,
+    domainFormat = implicitly
+  ) {
+
+  override val logger: Logger = LoggerFactory.getLogger("AdminDataRepository")
 
   private val featureToggleDocumentId = "toggles"
 
@@ -55,7 +59,7 @@ class AdminDataRepository @Inject()(
     ()
   }) recoverWith {
     case t: Throwable =>
-      Future.successful(Logger.error(s"Error creating indexes on collection ${collection.name}", t))
+      Future.successful(logger.error(s"Error creating indexes on collection ${collection.name}", t))
   } andThen {
     case _ => CollectionDiagnostics.logCollectionInfo(collection)
   }
@@ -64,10 +68,10 @@ class AdminDataRepository @Inject()(
     Future.sequence(
       indexes.map { index =>
         collection.indexesManager.ensure(index) map { result =>
-          Logger.debug(message = s"Index $index was created successfully and result is: $result")
+          logger.debug(s"Index $index was created successfully and result is: $result")
           result
         } recover {
-          case e: Exception => Logger.error(message = s"Failed to create index $index", e)
+          case e: Exception => logger.error(s"Failed to create index $index", e)
             false
         }
       }

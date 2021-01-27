@@ -36,6 +36,9 @@ class AssociationController @Inject()(
                                        retrievals: AuthRetrievals,
                                        cc: ControllerComponents
                                      ) extends BackendController(cc) with ErrorHandler {
+
+  private val logger = Logger(classOf[AssociationController])
+
   def getMinimalDetails: Action[AnyContent] = Action.async {
     implicit request =>
       retrieveIdAndTypeFromHeaders{ (idValue, idType, regime) =>
@@ -57,7 +60,7 @@ class AssociationController @Inject()(
   def acceptInvitation: Action[AnyContent] = Action.async {
     implicit request =>
       val feJson = request.body.asJson
-      Logger.debug(s"[Accept-Invitation-Incoming-Payload]$feJson")
+      logger.debug(s"[Accept-Invitation-Incoming-Payload]$feJson")
 
       feJson match {
         case Some(acceptedInvitationJsValue) =>

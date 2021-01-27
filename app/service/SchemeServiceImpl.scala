@@ -24,21 +24,23 @@ import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
-import utils.validationUtils._
+import utils.ValidationUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 class SchemeServiceImpl @Inject()(desConnector: DesConnector,
                                   auditService: AuditService,
-                                  schemeAuditService: SchemeAuditService) extends SchemeService{
+                                  schemeAuditService: SchemeAuditService) extends SchemeService {
+
+  private val logger = Logger(classOf[SchemeServiceImpl])
 
   override def registerPSA(json: JsValue)(
     implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
       val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaSubmissionWrites)
-      Logger.debug(s"[PSA-Registration-Outgoing-Payload]$psaJsValue")
+      logger.debug(s"[PSA-Registration-Outgoing-Payload]$psaJsValue")
       desConnector.registerPSA(psaJsValue) andThen
         schemeAuditService.sendPSASubscriptionEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
     }
@@ -47,11 +49,11 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
 
   override def updatePSA(psaId: String, json: JsValue)(
     implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-    Logger.debug(s"[PSA-Variation-Incoming-Payload]$json")
+    logger.debug(s"[PSA-Variation-Incoming-Payload]$json")
 
     convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
       val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaUpdateWrites)
-      Logger.debug(s"[PSA-Variation-Outgoing-Payload]$psaJsValue")
+      logger.debug(s"[PSA-Variation-Outgoing-Payload]$psaJsValue")
       desConnector.updatePSA(psaId, psaJsValue) andThen
         schemeAuditService.sendPSAChangeEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
     }
@@ -66,7 +68,7 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
         block(pensionSchemeAdministrator)
 
       case Failure(e) =>
-        Logger.warn(s"Bad Request returned from frontend for PSA $e")
+        logger.warn(s"Bad Request returned from frontend for PSA $e")
         Future.failed(new BadRequestException(s"Bad Request returned from frontend for PSA $e"))
     }
   }

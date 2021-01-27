@@ -57,6 +57,7 @@ class SchemeConnectorImpl @Inject()(
                                      featureToggleService: FeatureToggleService
                                    ) extends SchemeConnector with HttpResponseHelper with ErrorHandler {
 
+  private val logger = Logger(classOf[SchemeConnectorImpl])
 
   override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)
                                   (implicit headerCarrier: HeaderCarrier,
@@ -120,7 +121,7 @@ class SchemeConnectorImpl @Inject()(
         case _ => Left(handleErrorResponse("GET", url, response, Seq.empty))
       }
     } andThen {
-      case Failure(t: Throwable) => Logger.warn("Unable to get scheme details in canPsaRegister call", t)
+      case Failure(t: Throwable) => logger.warn("Unable to get scheme details in canPsaRegister call", t)
     }
   }
 }

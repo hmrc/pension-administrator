@@ -16,7 +16,7 @@
 
 package repositories
 
-import play.api.Logger
+import org.slf4j.{Logger, LoggerFactory}
 import reactivemongo.api.ReadConcern
 import reactivemongo.play.json.collection.JSONCollection
 
@@ -27,19 +27,21 @@ case class IndexDef(name: String, fields: Seq[String], unique: Boolean, ttl: Opt
 
 object CollectionDiagnostics {
 
+  val logger: Logger = LoggerFactory.getLogger("CollectionDiagnostics")
+
   def logCollectionInfo(collection: JSONCollection): Unit = {
 
     indexInfo(collection) map {
       indexes =>
-        Logger.warn(
+        logger.warn(
           s"Diagnostic information for collection ${collection.name}\n\n" +
-          s"Index definitions\n\n" +
+            s"Index definitions\n\n" +
             (indexes.map {
               index =>
                 s"Name:   ${index.name}\n" +
-                s"Fields: ${index.fields.mkString(", ")}\n" +
-                s"Unique: ${index.unique}\n" +
-                s"TTL:    ${index.ttl.getOrElse("<none>")}\n"
+                  s"Fields: ${index.fields.mkString(", ")}\n" +
+                  s"Unique: ${index.unique}\n" +
+                  s"TTL:    ${index.ttl.getOrElse("<none>")}\n"
             } mkString "\n")
         )
     }
@@ -51,7 +53,7 @@ object CollectionDiagnostics {
       hint = None,
       readConcern = ReadConcern.Available
     ).foreach { count =>
-      Logger.warn(
+      logger.warn(
         s"\nRow count for collection ${collection.name} : $count\n\n"
       )
     }
@@ -78,17 +80,17 @@ object CollectionDiagnostics {
   def checkIndexTtl(collection: JSONCollection, indexName: String, ttl: Option[Int]): Future[Unit] = {
 
     indexInfo(collection)
-      .flatMap {seqIndexes =>
+      .flatMap { seqIndexes =>
         seqIndexes
           .find(index => index.name == indexName && index.ttl != ttl)
           .map {
             index =>
-              Logger.warn(s"Index $indexName on collection ${collection.name} with TTL ${index.ttl} does not match configuration value $ttl")
+              logger.warn(s"Index $indexName on collection ${collection.name} with TTL ${index.ttl} does not match configuration value $ttl")
               collection.indexesManager.drop(index.name) map {
-                case n if n > 0 => Logger.warn(s"Dropped index $indexName on collection ${collection.name} as TTL value incorrect")
-                case _ => Logger.warn(s"Index index $indexName on collection ${collection.name} had already been dropped (possible race condition)")
+                case n if n > 0 => logger.warn(s"Dropped index $indexName on collection ${collection.name} as TTL value incorrect")
+                case _ => logger.warn(s"Index index $indexName on collection ${collection.name} had already been dropped (possible race condition)")
               }
-          } getOrElse Future.successful(Logger.info(s"Index $indexName on collection ${collection.name} has correct TTL $ttl"))
+          } getOrElse Future.successful(logger.info(s"Index $indexName on collection ${collection.name} has correct TTL $ttl"))
       }
 
   }

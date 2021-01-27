@@ -17,58 +17,56 @@
 package connectors
 
 import audit._
-import com.google.inject.ImplementedBy
-import com.google.inject.Inject
+import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.FeatureToggleName.IntegrationFrameworkMisc
-import models.PsaSubscription
-import models.PsaToBeRemovedFromScheme
+import models.{PsaSubscription, PsaToBeRemovedFromScheme}
 import org.joda.time.LocalDate
-import play.Logger
+import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import service.FeatureToggleService
-import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.{HttpClient, _}
+import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
-import utils.ErrorHandler
-import utils.HttpResponseHelper
-import utils.InvalidPayloadHandler
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.util.Success
-import scala.util.Try
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Success, Try}
 
 @ImplementedBy(classOf[DesConnectorImpl])
 trait DesConnector {
 
-  def registerPSA(registerData: JsValue)(implicit
-                                         headerCarrier: HeaderCarrier,
-                                         ec: ExecutionContext,
-                                         request: RequestHeader): Future[Either[HttpException, JsValue]]
+  def registerPSA(registerData: JsValue)
+                 (implicit
+                  headerCarrier: HeaderCarrier,
+                  ec: ExecutionContext,
+                  request: RequestHeader): Future[Either[HttpException, JsValue]]
 
-  def getPSASubscriptionDetails(psaId: String)(implicit
-                                               headerCarrier: HeaderCarrier,
-                                               ec: ExecutionContext,
-                                               request: RequestHeader): Future[Either[HttpException, JsValue]]
+  def getPSASubscriptionDetails(psaId: String)
+                               (implicit
+                                headerCarrier: HeaderCarrier,
+                                ec: ExecutionContext,
+                                request: RequestHeader): Future[Either[HttpException, JsValue]]
 
-  def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
-                                                          headerCarrier: HeaderCarrier,
-                                                          ec: ExecutionContext,
-                                                          request: RequestHeader): Future[Either[HttpException, JsValue]]
+  def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)
+               (implicit
+                headerCarrier: HeaderCarrier,
+                ec: ExecutionContext,
+                request: RequestHeader): Future[Either[HttpException, JsValue]]
 
-  def deregisterPSA(psaId: String)(implicit
-                                   headerCarrier: HeaderCarrier,
-                                   ec: ExecutionContext,
-                                   request: RequestHeader): Future[Either[HttpException, JsValue]]
+  def deregisterPSA(psaId: String)
+                   (implicit
+                    headerCarrier: HeaderCarrier,
+                    ec: ExecutionContext,
+                    request: RequestHeader): Future[Either[HttpException, JsValue]]
 
-  def updatePSA(psaId: String, data: JsValue)(implicit
-                               headerCarrier: HeaderCarrier,
-                               ec: ExecutionContext,
-                               request: RequestHeader): Future[Either[HttpException, JsValue]]
+  def updatePSA(psaId: String, data: JsValue)
+               (implicit
+                headerCarrier: HeaderCarrier,
+                ec: ExecutionContext,
+                request: RequestHeader): Future[Either[HttpException, JsValue]]
 }
 
 case class PSAFailedMapToUserAnswersException() extends Exception
@@ -82,12 +80,19 @@ class DesConnectorImpl @Inject()(
                                   psaSubscriptionDetailsTransformer: PSASubscriptionDetailsTransformer,
                                   schemeAuditService: SchemeAuditService,
                                   featureToggleService: FeatureToggleService
-                                ) extends DesConnector with HttpResponseHelper with ErrorHandler with PSADeEnrolAuditService {
+                                )
+  extends DesConnector
+    with HttpResponseHelper
+    with ErrorHandler
+    with PSADeEnrolAuditService {
 
-  override def registerPSA(registerData: JsValue)(implicit
-                                                  headerCarrier: HeaderCarrier,
-                                                  ec: ExecutionContext,
-                                                  request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  private val logger = Logger(classOf[DesConnectorImpl])
+
+  override def registerPSA(registerData: JsValue)
+                          (implicit
+                           headerCarrier: HeaderCarrier,
+                           ec: ExecutionContext,
+                           request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     val psaSchema = "/resources/schemas/psaSubscription.json"
 
@@ -100,10 +105,11 @@ class DesConnectorImpl @Inject()(
     } andThen logFailures("register PSA", registerData, psaSchema, url)
   }
 
-  override def getPSASubscriptionDetails(psaId: String)(implicit
-                                                        headerCarrier: HeaderCarrier,
-                                                        ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  override def getPSASubscriptionDetails(psaId: String)
+                                        (implicit
+                                         headerCarrier: HeaderCarrier,
+                                         ec: ExecutionContext,
+                                         request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
 
@@ -119,10 +125,11 @@ class DesConnectorImpl @Inject()(
 
   }
 
-  override def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
-                                                                   headerCarrier: HeaderCarrier,
-                                                                   ec: ExecutionContext,
-                                                                   request: RequestHeader): Future[Either[HttpException, JsValue]] =
+  override def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)
+                        (implicit
+                         headerCarrier: HeaderCarrier,
+                         ec: ExecutionContext,
+                         request: RequestHeader): Future[Either[HttpException, JsValue]] =
     featureToggleService.get(IntegrationFrameworkMisc).flatMap { toggle =>
       if (toggle.isEnabled) {
 
@@ -155,22 +162,23 @@ class DesConnectorImpl @Inject()(
       logFailures("Remove PSA from scheme", data, schema, url)
   }
 
-  override def deregisterPSA(psaId: String)(implicit
-                                            headerCarrier: HeaderCarrier,
-                                            ec: ExecutionContext,
-                                            request: RequestHeader): Future[Either[HttpException, JsValue]] =
+  override def deregisterPSA(psaId: String)
+                            (implicit
+                             headerCarrier: HeaderCarrier,
+                             ec: ExecutionContext,
+                             request: RequestHeader): Future[Either[HttpException, JsValue]] =
     featureToggleService.get(IntegrationFrameworkMisc).flatMap { toggle =>
       val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
-      if(toggle.isEnabled) {
+      if (toggle.isEnabled) {
 
-      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-        headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
-      deregisterAdministrator(
-        config.deregisterPsaIFUrl.format(psaId),
-        data,
-        "/resources/schemas/deregister1469.json",
-        psaId)(hc, implicitly, implicitly)
-    } else {
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
+          headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
+        deregisterAdministrator(
+          config.deregisterPsaIFUrl.format(psaId),
+          data,
+          "/resources/schemas/deregister1469.json",
+          psaId)(hc, implicitly, implicitly)
+      } else {
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
         deregisterAdministrator(
@@ -179,7 +187,7 @@ class DesConnectorImpl @Inject()(
           "/resources/schemas/deregisterPsa.json",
           psaId)(hc, implicitly, implicitly)
       }
-  }
+    }
 
   private def deregisterAdministrator(url: String, data: JsValue, schema: String, psaId: String)
                                      (implicit hc: HeaderCarrier, ec: ExecutionContext,
@@ -190,10 +198,11 @@ class DesConnectorImpl @Inject()(
       sendPSADeEnrolEvent(psaId)(auditService.sendEvent) andThen
       logFailures("deregister PSA", data, schema, url)
 
-  override def updatePSA(psaId: String, data: JsValue)(implicit
-                                                       headerCarrier: HeaderCarrier,
-                                                       ec: ExecutionContext,
-                                                       request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  override def updatePSA(psaId: String, data: JsValue)
+                        (implicit
+                         headerCarrier: HeaderCarrier,
+                         ec: ExecutionContext,
+                         request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     val psaVariationSchema = "/resources/schemas/psaVariation.json"
 
@@ -235,16 +244,16 @@ class DesConnectorImpl @Inject()(
   private def logFailures(endpoint: String, data: JsValue, schemaPath: String, args: String*): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
     case Success(Left(e: BadRequestException)) if e.message.contains("INVALID_PAYLOAD") =>
       invalidPayloadHandler.logFailures(schemaPath, args.headOption.getOrElse(""))(data)
-    case Success(Left(e: HttpResponse)) => Logger.warn(s"$endpoint received error response from DES", e)
+    case Success(Left(e: HttpResponse)) => logger.warn(s"$endpoint received error response from DES", e)
   }
 
   private def validateGetJson(json: JsValue): JsValue = {
 
     val temporaryMappingTest = json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers)
     if (temporaryMappingTest.isSuccess)
-      Logger.warn("PensionAdministratorSuccessfulMapToUserAnswers")
+      logger.warn("PensionAdministratorSuccessfulMapToUserAnswers")
     else {
-      Logger.warn(s"PensionAdministratorFailedMapToUserAnswers - [$temporaryMappingTest]")
+      logger.warn(s"PensionAdministratorFailedMapToUserAnswers - [$temporaryMappingTest]")
     }
     json.validate[PsaSubscription] match {
       case JsSuccess(_, _) =>

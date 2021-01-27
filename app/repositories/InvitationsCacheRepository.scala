@@ -16,16 +16,15 @@
 
 package repositories
 
-import java.nio.charset.StandardCharsets
-
 import com.google.inject.{Inject, Singleton}
 import models.Invitation
 import org.joda.time.{DateTime, DateTimeZone}
+import org.slf4j.{Logger, LoggerFactory}
+import play.api.Configuration
 import play.api.libs.json._
-import play.api.{Configuration, Logger}
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.{Cursor, ReadPreference}
 import reactivemongo.api.indexes.{Index, IndexType}
+import reactivemongo.api.{Cursor, ReadPreference}
 import reactivemongo.bson.Subtype.GenericBinarySubtype
 import reactivemongo.bson.{BSONBinary, BSONDocument, BSONObjectID}
 import reactivemongo.play.json.ImplicitBSONHandlers._
@@ -33,17 +32,21 @@ import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
+import java.nio.charset.StandardCharsets
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class InvitationsCacheRepository @Inject()(
                                             component: ReactiveMongoComponent,
                                             config: Configuration
-                                          )(implicit val ec: ExecutionContext) extends ReactiveRepository[JsValue, BSONObjectID](
-  config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
-  component.mongoConnector.db,
-  implicitly
-) {
+                                          )(implicit val ec: ExecutionContext)
+  extends ReactiveRepository[JsValue, BSONObjectID](
+    collectionName = config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
+    mongo = component.mongoConnector.db,
+    domainFormat = implicitly
+  ) {
+
+  override val logger: Logger = LoggerFactory.getLogger("InvitationsCacheRepository")
   private val encryptionKey: String = "manage.json.encryption"
   // scalastyle:off magic.number
   private val ttl = 0
@@ -120,12 +123,12 @@ class InvitationsCacheRepository @Inject()(
   } yield {
     ()
   }) recoverWith {
-    case t: Throwable => Future.successful(Logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
+    case t: Throwable => Future.successful(logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
   } andThen {
     case _ => CollectionDiagnostics.logCollectionInfo(collection)
   }
 
-  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None, isUnique:Boolean = false): Future[Boolean] = {
+  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None, isUnique: Boolean = false): Future[Boolean] = {
 
     val fieldIndexes = fields.map((_, IndexType.Ascending))
 
@@ -135,15 +138,16 @@ class InvitationsCacheRepository @Inject()(
     }
 
     val indexCreationDescription = {
-      def addExpireAfterSecondsDescription(s:String) = ttl.fold(s)(ttl => s"$s (expireAfterSeconds = $ttl)")
+      def addExpireAfterSecondsDescription(s: String) = ttl.fold(s)(ttl => s"$s (expireAfterSeconds = $ttl)")
+
       addExpireAfterSecondsDescription(s"Attempt to create Mongo index $index (unique = ${index.unique}))")
     }
 
-    collection.indexesManager.ensure(index) map{ result =>
-      Logger.debug( indexCreationDescription + s" was successful and result is: $result")
+    collection.indexesManager.ensure(index) map { result =>
+      logger.debug(indexCreationDescription + s" was successful and result is: $result")
       result
     } recover {
-      case e => Logger.error(indexCreationDescription + s" was unsuccessful", e)
+      case e => logger.error(indexCreationDescription + s" was unsuccessful", e)
         false
     }
   }
@@ -162,8 +166,8 @@ class InvitationsCacheRepository @Inject()(
         BSONDocument("$set" -> Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray, expireAt = invitation.expireAt))))
     } else {
       val record = JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId.value,
-                                                    invitation.pstr,
-                                                    Json.toJson(invitation), expireAt = invitation.expireAt)
+        invitation.pstr,
+        Json.toJson(invitation), expireAt = invitation.expireAt)
       (BSONDocument(inviteePsaIdKey -> invitation.inviteePsaId.value, pstrKey -> invitation.pstr),
         BSONDocument("$set" -> Json.toJson(record)))
     }

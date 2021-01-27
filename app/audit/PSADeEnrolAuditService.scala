@@ -27,9 +27,11 @@ import scala.util.{Failure, Success, Try}
 
 trait PSADeEnrolAuditService {
 
+  private val logger = Logger(classOf[PSADeEnrolAuditService])
+
   def sendPSADeEnrolEvent(psaId: String)
-                              (sendEvent: PSADeEnrol => Unit)
-                              (implicit request: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+                         (sendEvent: PSADeEnrol => Unit)
+                         (implicit request: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
 
     case Success(Right(response)) =>
       sendAuditEvent(psaId, Status.OK, Some(response))(sendEvent)
@@ -38,17 +40,15 @@ trait PSADeEnrolAuditService {
       sendAuditEvent(psaId, e.responseCode, None)(sendEvent)
 
     case Failure(t) =>
-      Logger.error("Error in sending audit event for PSA de-enrolment", t)
+      logger.error("Error in sending audit event for PSA de-enrolment", t)
   }
 
-  private def sendAuditEvent(psaId: String, status: Int, response: Option[JsValue])(sendEvent: PSADeEnrol => Unit): Unit
-
-  = {
+  private def sendAuditEvent(psaId: String, status: Int, response: Option[JsValue])
+                            (sendEvent: PSADeEnrol => Unit): Unit =
     sendEvent(
       PSADeEnrol(
         psaId = psaId,
         status = status,
         response = response)
     )
-  }
 }

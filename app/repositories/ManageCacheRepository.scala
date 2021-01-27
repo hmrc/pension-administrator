@@ -17,10 +17,10 @@
 package repositories
 
 import java.nio.charset.StandardCharsets
-
 import org.joda.time.{DateTime, DateTimeZone}
+import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.json._
-import play.api.{Configuration, Logger}
+import play.api.Configuration
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.Subtype.GenericBinarySubtype
@@ -33,16 +33,19 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import scala.concurrent.{ExecutionContext, Future}
 
 abstract class ManageCacheRepository(
-                                              index: String,
-                                              ttl: Option[Int],
-                                              component: ReactiveMongoComponent,
-                                              encryptionKey: String,
-                                              config: Configuration
-                                            )(implicit ec: ExecutionContext) extends ReactiveRepository[JsValue, BSONObjectID](
-  index,
-  component.mongoConnector.db,
-  implicitly
-) {
+                                      index: String,
+                                      ttl: Option[Int],
+                                      component: ReactiveMongoComponent,
+                                      encryptionKey: String,
+                                      config: Configuration
+                                    )(implicit ec: ExecutionContext)
+  extends ReactiveRepository[JsValue, BSONObjectID](
+    collectionName = index,
+    mongo = component.mongoConnector.db,
+    domainFormat = implicitly
+  ) {
+
+  override val logger: Logger = LoggerFactory.getLogger("ManageCacheRepository")
   private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
 
@@ -50,17 +53,18 @@ abstract class ManageCacheRepository(
                                 id: String,
                                 data: BSONBinary,
                                 lastUpdated: DateTime)
+
   // scalastyle:off magic.number
   private object DataEntry {
     def apply(id: String,
               data: Array[Byte],
               lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)): DataEntry =
-     DataEntry(id, BSONBinary(data, GenericBinarySubtype), lastUpdated)
+      DataEntry(id, BSONBinary(data, GenericBinarySubtype), lastUpdated)
 
-      private implicit val dateFormat: Format[DateTime] =
+    private implicit val dateFormat: Format[DateTime] =
       ReactiveMongoFormats.dateTimeFormats
-      implicit val format: Format[DataEntry] = Json.format[DataEntry]
-    }
+    implicit val format: Format[DataEntry] = Json.format[DataEntry]
+  }
 
   // scalastyle:on magic.number
 
@@ -85,7 +89,7 @@ abstract class ManageCacheRepository(
   } yield {
     ()
   }) recoverWith {
-    case t: Throwable => Future.successful(Logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
+    case t: Throwable => Future.successful(logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
   } andThen {
     case _ => CollectionDiagnostics.logCollectionInfo(collection)
   }
@@ -105,11 +109,11 @@ abstract class ManageCacheRepository(
 
     collection.indexesManager.ensure(index) map {
       result => {
-        Logger.warn(s"Created index $indexName on collection ${collection.name} with TTL value $ttl -> result: $result")
+        logger.warn(s"Created index $indexName on collection ${collection.name} with TTL value $ttl -> result: $result")
         result
       }
     } recover {
-      case e => Logger.error("Failed to set TTL index", e)
+      case e => logger.error("Failed to set TTL index", e)
         false
     }
   }
@@ -169,7 +173,7 @@ abstract class ManageCacheRepository(
   }
 
   def remove(id: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    Logger.warn(s"Removing row from collection ${collection.name} externalId:$id")
+    logger.warn(s"Removing row from collection ${collection.name} externalId:$id")
     val selector = BSONDocument("id" -> id)
     collection.delete().one(selector).map(_.ok)
   }
