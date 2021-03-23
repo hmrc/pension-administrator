@@ -36,7 +36,7 @@ trait HttpResponseHelper extends HttpErrorFunctions {
       case BAD_REQUEST if badResponseSeq.exists(response.body.contains(_)) =>
         new BadRequestException(response.body)
       case NOT_FOUND =>
-        new NotFoundException(response.body)
+        new NotFoundException(s"For URL $url received response: ${response.body}")
       case status if is4xx(status) =>
         throw UpstreamErrorResponse(
           upstreamResponseMessage(methodContext, url, status, response.body), status, status, response.headers
