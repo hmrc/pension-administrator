@@ -20,6 +20,10 @@ GET           /journey-cache/manage-pensions/:id        controllers.cache.Manage
 POST          /journey-cache/manage-pensions/:id        controllers.cache.ManagePensionsCacheController.save(id: String)
 DELETE        /journey-cache/manage-pensions/:id        controllers.cache.ManagePensionsCacheController.remove(id: String)
 
+GET           /journey-cache/session-data/:id           controllers.cache.SessionDataCacheController.get(id: String)
+POST          /journey-cache/session-data/:id           controllers.cache.SessionDataCacheController.save(id: String)
+DELETE        /journey-cache/session-data/:id           controllers.cache.SessionDataCacheController.remove(id: String)
+
 GET           /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.get(id: String)
 POST          /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.save(id: String)
 DELETE        /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.remove(id: String)
