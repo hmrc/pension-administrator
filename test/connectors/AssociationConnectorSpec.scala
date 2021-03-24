@@ -20,7 +20,7 @@ import audit._
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import connectors.helper.ConnectorBehaviours
-import models.FeatureToggle.{Disabled, Enabled}
+import models.FeatureToggle.{Enabled, Disabled}
 import models.FeatureToggleName.IntegrationFrameworkMisc
 import models._
 import org.scalatest._
@@ -97,6 +97,20 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   doTestsForGetMinimalDetails("findMinimalDetailsByID",
     _.findMinimalDetailsByID(psaId.id, psaType, psaRegime)
   )
+
+  "findMinimalDetailsByID" should "return None when a not found response returned" in {
+    server.stubFor(
+      get(urlEqualTo(psaMinimalDetailsUrl))
+        .willReturn(
+          notFound()
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+    connector.findMinimalDetailsByID(psaId.id, psaType, psaRegime).map { response =>
+      response.right.value shouldBe None
+    }
+  }
 
   "acceptInvitation" should "check headers" in {
     val correlationId = hc.requestId.map(_.value).getOrElse("test-correlation-id")
@@ -305,7 +319,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     methodName:String,
     codeToTest:AssociationConnector => Future[Either[HttpException, Option[MinimalDetails]]]
   ):Unit = {
-    s"$methodName with IF toggle switched off" should "return OK (200) with a JSON payload" in {
+    methodName should "return OK (200) with a JSON payload" in {
 
       server.stubFor(
         get(urlEqualTo(psaMinimalDetailsUrl))

@@ -79,18 +79,14 @@ class AssociationConnectorImpl @Inject()(
       headerCarrier: HeaderCarrier,
       ec: ExecutionContext,
       request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] = {
-    val xx = getMinimalDetails(idValue, idType, regime)
-    xx.map { yy =>
-      val rr = yy.map{ vv =>
-        Option(vv)
-      }
-      rr match {
-        case aaa@Right(_) => aaa
-        case Left(ex) if ex.responseCode == NOT_FOUND =>Right(None)
-        case aaa@Left(_) => aaa
+    getMinimalDetails(idValue, idType, regime)
+      .map( _.map( Option(_)))
+      .map{
+        case r@Right(_) => r
+        case Left(ex) if ex.responseCode == NOT_FOUND => Right(None)
+        case l@Left(_) => l
       }
     }
-  }
 
   override def getMinimalDetails(idValue: String, idType: String, regime: String)
                                 (implicit
