@@ -8,17 +8,17 @@ object AppDependencies {
 
   val compile: Seq[ModuleID] = Seq(
     ws,
-    "uk.gov.hmrc"       %% "simple-reactivemongo"       % "7.31.0-play-27",
+    "uk.gov.hmrc"       %% "simple-reactivemongo"       % "8.0.0-play-27",
     "com.typesafe.play" %% "play-json"                  % "2.6.10",
     "com.typesafe.play" %% "play-json-joda"             % "2.6.10",
     "uk.gov.hmrc"       %% "bootstrap-backend-play-27"  % "3.4.0",
     "com.networknt"     %  "json-schema-validator"      % "1.0.3",
-    "uk.gov.hmrc"       %% "domain"                     % "5.10.0-play-27",
+    "uk.gov.hmrc"       %% "domain"                     % "5.11.0-play-27",
     ehcache
   )
 
   def test(scope: String = "test, it"): Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"             %% "reactivemongo-test"     % "4.22.0-play-27"    % Test,
+    "uk.gov.hmrc"             %% "reactivemongo-test"     % "5.0.0-play-27"     % Test,
     "org.scalatest"           %% "scalatest"              % "3.0.8"             % scope,
     "org.pegdown"             %  "pegdown"                % "1.6.0"             % scope,
     "org.scalacheck"          %% "scalacheck"             % "1.14.0"            % scope,
