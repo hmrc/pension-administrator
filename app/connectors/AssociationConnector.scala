@@ -79,31 +79,37 @@ class AssociationConnectorImpl @Inject()(
       headerCarrier: HeaderCarrier,
       ec: ExecutionContext,
       request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] = {
-    getMinimalDetails(idValue, idType, regime)
-      .map( _.map( Option(_)))
-      .map{
-        case r@Right(_) => r
-        case Left(ex) if ex.responseCode == NOT_FOUND =>
-          Right(None)
-        case l@Left(_) => l
-      }
+        retrieveMinimalDetails(idValue, idType, regime)
+          .map( _.map( Option(_)))
+          .map{
+            case r@Right(_) => r
+            case Left(ex) if ex.responseCode == NOT_FOUND =>
+              Right(None)
+            case l@Left(_) => l
+          } andThen logWarning("IF PSA minimal details")
     }
 
   override def getMinimalDetails(idValue: String, idType: String, regime: String)
                                 (implicit
                                  headerCarrier: HeaderCarrier,
                                  ec: ExecutionContext,
-                                 request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
+                                 request: RequestHeader): Future[Either[HttpException, MinimalDetails]] =
+    retrieveMinimalDetails(idValue, idType, regime) andThen logWarning("IF PSA minimal details")
+
+  private def retrieveMinimalDetails(idValue: String, idType: String, regime: String)
+    (implicit
+      headerCarrier: HeaderCarrier,
+      ec: ExecutionContext,
+      request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
     featureToggleService.get(IntegrationFrameworkMisc).flatMap {
       case Enabled(IntegrationFrameworkMisc) =>
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
           headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
         val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(regime, idType, idValue)
-
         httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
           implicitly) map {
           handleResponseIF(_, minimalDetailsUrl)
-        } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
+        } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent)
 
       case _ => // Ignore idType for original API because always PSA
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
@@ -112,7 +118,7 @@ class AssociationConnectorImpl @Inject()(
         httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
           implicitly) map {
           handleResponseDES(_, minimalDetailsUrl)
-        } andThen sendGetMinimalPSADetailsEvent(psaId = idValue)(auditService.sendEvent) andThen logWarning("PSA minimal details")
+        } andThen sendGetMinimalPSADetailsEvent(psaId = idValue)(auditService.sendEvent)
     }
   }
 
