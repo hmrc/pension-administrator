@@ -17,7 +17,7 @@
 package connectors
 
 import audit.{AssociationAuditService, AuditService}
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import com.google.inject.{Inject, Singleton, ImplementedBy}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.FeatureToggle.Enabled
@@ -28,13 +28,19 @@ import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import service.FeatureToggleService
-import uk.gov.hmrc.http.{HttpClient, _}
-import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+import uk.gov.hmrc.http.{HttpClient, BadRequestException, _}
+import utils.{ErrorHandler, InvalidPayloadHandler, HttpResponseHelper}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
+
+  def findMinimalDetailsByID(idValue: String, idType: String, regime: String)
+    (implicit
+      headerCarrier: HeaderCarrier,
+      ec: ExecutionContext,
+      request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]]
 
   def getMinimalDetails(idValue: String, idType: String, regime: String)
                        (implicit
@@ -67,6 +73,24 @@ class AssociationConnectorImpl @Inject()(
   import AssociationConnectorImpl._
 
   private val logger = Logger(classOf[AssociationConnectorImpl])
+
+  override def findMinimalDetailsByID(idValue: String, idType: String, regime: String)
+    (implicit
+      headerCarrier: HeaderCarrier,
+      ec: ExecutionContext,
+      request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] = {
+    val xx = getMinimalDetails(idValue, idType, regime)
+    xx.map { yy =>
+      val rr = yy.map{ vv =>
+        Option(vv)
+      }
+      rr match {
+        case aaa@Right(_) => aaa
+        case Left(ex) if ex.responseCode == NOT_FOUND =>Right(None)
+        case aaa@Left(_) => aaa
+      }
+    }
+  }
 
   override def getMinimalDetails(idValue: String, idType: String, regime: String)
                                 (implicit

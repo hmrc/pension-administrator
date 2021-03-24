@@ -368,6 +368,14 @@ class FakeAssociationConnector extends AssociationConnector {
 
   }
 
+
+  def findMinimalDetailsByID(idValue: String, idType: String, regime: String)(implicit
+    headerCarrier: HeaderCarrier,
+    ec: ExecutionContext,
+    request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] =
+    getMinimalDetails(idValue, idType, regime).map(_.map(Option(_)))
+
+
   override def acceptInvitation(invitation: AcceptedInvitation)
     (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, requestHeader: RequestHeader): Future[Either[HttpException, Unit]] = {
     throw new NotImplementedError()
