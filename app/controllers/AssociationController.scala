@@ -42,8 +42,9 @@ class AssociationController @Inject()(
   def getMinimalDetails: Action[AnyContent] = Action.async {
     implicit request =>
       retrieveIdAndTypeFromHeaders{ (idValue, idType, regime) =>
-          associationConnector.getMinimalDetails(idValue, idType, regime).map {
-            case Right(psaDetails) => Ok(Json.toJson(psaDetails))
+          associationConnector.findMinimalDetailsByID(idValue, idType, regime).map {
+            case Right(Some(psaDetails)) => Ok(Json.toJson(psaDetails))
+            case Right(None) => NotFound("no match found")
             case Left(e) => result(e)
           }
       }

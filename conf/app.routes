@@ -14,7 +14,6 @@ POST          /psa-variation/:psaId                     controllers.SchemeContro
 GET           /get-name                                 controllers.AssociationController.getName
 GET           /get-email                                controllers.AssociationController.getEmail
 GET           /get-minimal-psa                          controllers.AssociationController.getMinimalDetails
-GET           /find-minimal-psa                         controllers.AssociationController.findMinimalDetailsByID
 
 POST          /accept-invitation                        controllers.AssociationController.acceptInvitation
 

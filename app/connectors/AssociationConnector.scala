@@ -83,7 +83,8 @@ class AssociationConnectorImpl @Inject()(
       .map( _.map( Option(_)))
       .map{
         case r@Right(_) => r
-        case Left(ex) if ex.responseCode == NOT_FOUND => Right(None)
+        case Left(ex) if ex.responseCode == NOT_FOUND =>
+          Right(None)
         case l@Left(_) => l
       }
     }
@@ -146,7 +147,8 @@ class AssociationConnectorImpl @Inject()(
             Right(value)
           }
         )
-      case _ => Left(handleErrorResponse("Minimal details", url, response, badResponseSeq))
+      case _ =>
+        Left(handleErrorResponse("Minimal details", url, response, badResponseSeq))
     }
   }
 
