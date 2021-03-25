@@ -80,12 +80,9 @@ class AssociationConnectorImpl @Inject()(
       ec: ExecutionContext,
       request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] = {
         retrieveMinimalDetails(idValue, idType, regime)
-          .map( _.map( Option(_)))
           .map{
-            case r@Right(_) => r
-            case Left(ex) if ex.responseCode == NOT_FOUND =>
-              Right(None)
-            case l@Left(_) => l
+            case Left(ex) if ex.responseCode == NOT_FOUND => Right(None)
+            case response => response.map(Option(_))
           } andThen logWarning("IF PSA minimal details")
     }
 
