@@ -23,8 +23,8 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
-import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
+import play.api.libs.json.{Json, JsValue}
+import play.api.mvc.{RequestHeader, AnyContentAsEmpty}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AffinityGroup
@@ -258,6 +258,12 @@ object AssociationControllerSpec extends MockitoSugar {
                                            headerCarrier: HeaderCarrier,
                                            ec: ExecutionContext,
                                            request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = minimalPsaDetailsResponse
+
+    def findMinimalDetailsByID(idValue: String, idType: String, regime: String)(implicit
+      headerCarrier: HeaderCarrier,
+      ec: ExecutionContext,
+      request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] =
+      getMinimalDetails(idValue, idType, regime).map(_.map( Option(_)))
 
     override def acceptInvitation(invitation: AcceptedInvitation)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader):
     Future[Either[HttpException, Unit]] = acceptInvitationResponse

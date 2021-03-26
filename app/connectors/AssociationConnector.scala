@@ -17,7 +17,7 @@
 package connectors
 
 import audit.{AssociationAuditService, AuditService}
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import com.google.inject.{Inject, Singleton, ImplementedBy}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.FeatureToggle.Enabled
@@ -28,13 +28,19 @@ import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import service.FeatureToggleService
-import uk.gov.hmrc.http.{HttpClient, _}
-import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+import uk.gov.hmrc.http.{HttpClient, BadRequestException, _}
+import utils.{ErrorHandler, InvalidPayloadHandler, HttpResponseHelper}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
+
+  def findMinimalDetailsByID(idValue: String, idType: String, regime: String)
+    (implicit
+      headerCarrier: HeaderCarrier,
+      ec: ExecutionContext,
+      request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]]
 
   def getMinimalDetails(idValue: String, idType: String, regime: String)
                        (implicit
@@ -68,21 +74,39 @@ class AssociationConnectorImpl @Inject()(
 
   private val logger = Logger(classOf[AssociationConnectorImpl])
 
+  override def findMinimalDetailsByID(idValue: String, idType: String, regime: String)
+    (implicit
+      headerCarrier: HeaderCarrier,
+      ec: ExecutionContext,
+      request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] = {
+        retrieveMinimalDetails(idValue, idType, regime)
+          .map{
+            case Left(ex) if ex.responseCode == NOT_FOUND => Right(None)
+            case response => response.map(Option(_))
+          } andThen logWarning("IF PSA minimal details")
+    }
+
   override def getMinimalDetails(idValue: String, idType: String, regime: String)
                                 (implicit
                                  headerCarrier: HeaderCarrier,
                                  ec: ExecutionContext,
-                                 request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
+                                 request: RequestHeader): Future[Either[HttpException, MinimalDetails]] =
+    retrieveMinimalDetails(idValue, idType, regime) andThen logWarning("IF PSA minimal details")
+
+  private def retrieveMinimalDetails(idValue: String, idType: String, regime: String)
+    (implicit
+      headerCarrier: HeaderCarrier,
+      ec: ExecutionContext,
+      request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
     featureToggleService.get(IntegrationFrameworkMisc).flatMap {
       case Enabled(IntegrationFrameworkMisc) =>
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
           headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
         val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(regime, idType, idValue)
-
         httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
           implicitly) map {
           handleResponseIF(_, minimalDetailsUrl)
-        } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
+        } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent)
 
       case _ => // Ignore idType for original API because always PSA
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
@@ -91,7 +115,7 @@ class AssociationConnectorImpl @Inject()(
         httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
           implicitly) map {
           handleResponseDES(_, minimalDetailsUrl)
-        } andThen sendGetMinimalPSADetailsEvent(psaId = idValue)(auditService.sendEvent) andThen logWarning("PSA minimal details")
+        } andThen sendGetMinimalPSADetailsEvent(psaId = idValue)(auditService.sendEvent)
     }
   }
 
@@ -126,7 +150,8 @@ class AssociationConnectorImpl @Inject()(
             Right(value)
           }
         )
-      case _ => Left(handleErrorResponse("Minimal details", url, response, badResponseSeq))
+      case _ =>
+        Left(handleErrorResponse("Minimal details", url, response, badResponseSeq))
     }
   }
 
