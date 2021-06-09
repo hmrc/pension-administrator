@@ -20,14 +20,11 @@ import audit.{AssociationAuditService, AuditService}
 import com.google.inject.{Inject, Singleton, ImplementedBy}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.FeatureToggle.Enabled
-import models.FeatureToggleName.IntegrationFrameworkMisc
 import models._
 import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import service.FeatureToggleService
 import uk.gov.hmrc.http.{HttpClient, BadRequestException, _}
 import utils.{ErrorHandler, InvalidPayloadHandler, HttpResponseHelper}
 
@@ -62,8 +59,7 @@ class AssociationConnectorImpl @Inject()(
                                           appConfig: AppConfig,
                                           invalidPayloadHandler: InvalidPayloadHandler,
                                           headerUtils: HeaderUtils,
-                                          auditService: AuditService,
-                                          featureToggleService: FeatureToggleService
+                                          auditService: AuditService
                                         )
   extends AssociationConnector
     with HttpResponseHelper
@@ -98,41 +94,13 @@ class AssociationConnectorImpl @Inject()(
       headerCarrier: HeaderCarrier,
       ec: ExecutionContext,
       request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
-    featureToggleService.get(IntegrationFrameworkMisc).flatMap {
-      case Enabled(IntegrationFrameworkMisc) =>
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-          headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
-        val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(regime, idType, idValue)
-        httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
-          implicitly) map {
-          handleResponseIF(_, minimalDetailsUrl)
-        } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent)
-
-      case _ => // Ignore idType for original API because always PSA
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
-
-        val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(idValue)
-        httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
-          implicitly) map {
-          handleResponseDES(_, minimalDetailsUrl)
-        } andThen sendGetMinimalPSADetailsEvent(psaId = idValue)(auditService.sendEvent)
-    }
-  }
-
-  private def handleResponseDES(response: HttpResponse, url: String): Either[HttpException, MinimalDetails] = {
-    val badResponseSeq = Seq("INVALID_PSAID", "INVALID_CORRELATIONID")
-    response.status match {
-      case OK =>
-        response.json.validate[MinimalDetails](MinimalDetails.minimalDetailsDESReads).fold(
-          _ => {
-            invalidPayloadHandler.logFailures("/resources/schemas/getPSAMinimalDetails.json")(response.json)
-            Left(new BadRequestException("INVALID PAYLOAD"))
-          },
-          value =>
-            Right(value)
-        )
-      case _ => Left(handleErrorResponse("PSA minimal details", url, response, badResponseSeq))
-    }
+      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
+        headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
+      val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(regime, idType, idValue)
+      httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
+        implicitly) map {
+        handleResponseIF(_, minimalDetailsUrl)
+      } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent)
   }
 
   private def handleResponseIF(response: HttpResponse, url: String): Either[HttpException, MinimalDetails] = {
@@ -186,23 +154,12 @@ class AssociationConnectorImpl @Inject()(
   }
 
   def acceptInvitation(acceptedInvitation: AcceptedInvitation)
-                      (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
-    featureToggleService.get(IntegrationFrameworkMisc).flatMap { toggle =>
-      if (toggle.isEnabled) {
-
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-          headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
-        val url = appConfig.createPsaAssociationIFUrl.format(acceptedInvitation.pstr)
-        val data = Json.toJson(acceptedInvitation)(writesIFAcceptedInvitation)
-        association(url, data, acceptedInvitation, "createAssociationRequest1445.json")(hc, implicitly, implicitly)
-
-      } else {
-
-        val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
-        val url = appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)
-        val data = Json.toJson(acceptedInvitation)(writesAcceptedInvitation)
-        association(url, data, acceptedInvitation, "createPsaAssociationRequest.json")(hc, implicitly, implicitly)
-      }
+                      (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] = {
+      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
+        headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
+      val url = appConfig.createPsaAssociationIFUrl.format(acceptedInvitation.pstr)
+      val data = Json.toJson(acceptedInvitation)(writesIFAcceptedInvitation)
+      association(url, data, acceptedInvitation, "createAssociationRequest1445.json")(hc, implicitly, implicitly)
     }
 
   private def association(url: String, data: JsValue, acceptedInvitation: AcceptedInvitation, schemaFile: String)

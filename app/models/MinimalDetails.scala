@@ -17,7 +17,7 @@
 package models
 
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, Json, Reads, Writes}
+import play.api.libs.json.{Writes, Json, JsPath, Reads}
 
 case class MinimalDetails(
                               email: String,
@@ -37,15 +37,6 @@ case class MinimalDetails(
 }
 
 object MinimalDetails {
-  implicit val minimalDetailsDESReads: Reads[MinimalDetails] = (
-    (JsPath \ "email").read[String] and
-      (JsPath \ "psaSuspensionFlag").read[Boolean] and
-      (JsPath \ "psaMinimalDetails" \ "individualDetails").readNullable[IndividualDetails](IndividualDetails.individualDetailReads) and
-      (JsPath \ "psaMinimalDetails" \ "organisationOrPartnershipName").readNullable[String]
-    ) ((email, isPsaSuspended, indvDetails, orgName) =>
-    MinimalDetails(email, isPsaSuspended, orgName, indvDetails, rlsFlag = false, deceasedFlag = false)
-  )
-
   implicit val minimalDetailsIFReads: Reads[MinimalDetails] = (
     (JsPath \ "email").read[String] and
       (JsPath \ "psaSuspensionFlag").readNullable[Boolean] and

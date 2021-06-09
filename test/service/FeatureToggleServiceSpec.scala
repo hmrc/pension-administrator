@@ -18,14 +18,14 @@ package service
 
 import akka.Done
 import base.SpecBase
-import models.FeatureToggle.{Disabled, Enabled}
-import models.FeatureToggleName.{IntegrationFrameworkListSchemes, IntegrationFrameworkMisc, PSPAuthorisation}
-import models.{FeatureToggle, FeatureToggleName, OperationFailed, OperationSucceeded}
+import models.FeatureToggle.{Enabled, Disabled}
+import models.FeatureToggleName.Dummy
+import models.{OperationFailed, FeatureToggle, FeatureToggleName, OperationSucceeded}
 import org.mockito.ArgumentCaptor
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{Gen, Arbitrary}
 import org.scalatest.MustMatchers
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.mockito.MockitoSugar
@@ -100,9 +100,7 @@ class FeatureToggleServiceSpec
     when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
 
     OUT.getAll.futureValue mustBe Seq(
-      Disabled(IntegrationFrameworkMisc),
-      Disabled(PSPAuthorisation),
-      Disabled(IntegrationFrameworkListSchemes)
+      Disabled(Dummy)
     )
   }
 
@@ -110,13 +108,13 @@ class FeatureToggleServiceSpec
     val adminDataRepository = mock[AdminDataRepository]
     when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
     val OUT = new FeatureToggleService(adminDataRepository, new FakeCache())
-    OUT.get(IntegrationFrameworkMisc).futureValue mustBe Disabled(IntegrationFrameworkMisc)
+    OUT.get(Dummy).futureValue mustBe Disabled(Dummy)
   }
 
   "When a toggle exists in the repo, override default" in {
     val adminDataRepository = mock[AdminDataRepository]
-    when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq(Enabled(IntegrationFrameworkMisc))))
+    when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq(Enabled(Dummy))))
     val OUT = new FeatureToggleService(adminDataRepository, new FakeCache())
-    OUT.get(IntegrationFrameworkMisc).futureValue mustBe Enabled(IntegrationFrameworkMisc)
+    OUT.get(Dummy).futureValue mustBe Enabled(Dummy)
   }
 }

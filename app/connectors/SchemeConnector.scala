@@ -16,18 +16,15 @@
 
 package connectors
 
-import com.google.inject.{ImplementedBy, Inject}
+import com.google.inject.{Inject, ImplementedBy}
 import config.AppConfig
-import models.FeatureToggleName.IntegrationFrameworkMisc
 import models.SchemeReferenceNumber
 import play.api.Logger
 import play.api.http.Status._
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{Json, JsValue}
 import play.api.mvc.RequestHeader
-import service.FeatureToggleService
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.{HttpClient, _}
 import utils.{ErrorHandler, HttpResponseHelper}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -53,8 +50,7 @@ trait SchemeConnector {
 
 class SchemeConnectorImpl @Inject()(
                                      http: HttpClient,
-                                     config: AppConfig,
-                                     featureToggleService: FeatureToggleService
+                                     config: AppConfig
                                    ) extends SchemeConnector with HttpResponseHelper with ErrorHandler {
 
   private val logger = Logger(classOf[SchemeConnectorImpl])
@@ -82,15 +78,8 @@ class SchemeConnectorImpl @Inject()(
                    (implicit headerCarrier: HeaderCarrier,
                     ec: ExecutionContext,
                     request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-    featureToggleService.get(IntegrationFrameworkMisc).flatMap { toggle =>
-      if (toggle.isEnabled) {
-        val headers = Seq(("idType", "psaid"), ("idValue", psaId), ("Content-Type", "application/json"))
-        callListOfSchemes(config.listOfSchemesIFUrl, headers)
-      } else {
-        val headers = Seq(("psaId", psaId), ("Content-Type", "application/json"))
-        callListOfSchemes(config.listOfSchemesUrl, headers)
-      }
-    }
+      val headers = Seq(("idType", "psaid"), ("idValue", psaId), ("Content-Type", "application/json"))
+      callListOfSchemes(config.listOfSchemesIFUrl, headers)
   }
 
   private def callListOfSchemes(url: String, headers: Seq[(String, String)])
