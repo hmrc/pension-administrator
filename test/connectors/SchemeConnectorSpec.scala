@@ -147,7 +147,7 @@ object SchemeConnectorSpec extends JsonFileReader {
   val auditService = new StubSuccessfulAuditService()
   val logger = new StubLogger()
   val checkForAssociationUrl = "/pensions-scheme/is-psa-associated"
-  val listSchemesUrl = "/pensions-scheme/if-list-of-schemes"
+  val listSchemesUrl = "/pensions-scheme/list-of-schemes"
   val srn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")
   val psaId: PsaId = PsaId("A7654321")
 
