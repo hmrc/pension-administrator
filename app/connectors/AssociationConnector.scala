@@ -181,31 +181,6 @@ object AssociationConnectorImpl {
     }
   }
 
-  private val addressWrites: Writes[Address] = Writes {
-    case ukAddress: UkAddress =>
-      val underlying = Map[String, JsValue](
-        "nonUKAddress" -> JsBoolean(false),
-        "line1" -> JsString(ukAddress.addressLine1),
-        "postalCode" -> JsString(ukAddress.postalCode),
-        "countryCode" -> JsString(ukAddress.countryCode)
-      ) ++
-        optional("line2", ukAddress.addressLine2) ++
-        optional("line3", ukAddress.addressLine3) ++
-        optional("line4", ukAddress.addressLine4)
-      JsObject(underlying)
-    case nonUkAddress: InternationalAddress =>
-      val underlying = Map[String, JsValue](
-        "nonUKAddress" -> JsBoolean(true),
-        "line1" -> JsString(nonUkAddress.addressLine1),
-        "countryCode" -> JsString(nonUkAddress.countryCode)
-      ) ++
-        optional("line2", nonUkAddress.addressLine2) ++
-        optional("line3", nonUkAddress.addressLine3) ++
-        optional("line4", nonUkAddress.addressLine4) ++
-        optional("postalCode", nonUkAddress.postalCode)
-      JsObject(underlying)
-  }
-
   private val ifAddressWrites: Writes[Address] = Writes {
     case ukAddress: UkAddress =>
       val underlying = Map[String, JsValue](
@@ -231,49 +206,7 @@ object AssociationConnectorImpl {
       JsObject(underlying)
   }
 
-  val writesAcceptedInvitation: Writes[AcceptedInvitation] = Writes {
-    { invite =>
-      val pensionAdviserDetails = invite.pensionAdviserDetails match {
-        case Some(adviser) => Json.obj(
-          "pensionAdviserDetails" -> Json.obj(
-            "name" -> adviser.name,
-            "addressDetails" -> addressWrites.writes(adviser.addressDetail),
-            "contactDetails" -> Json.obj(
-              "email" -> adviser.email
-            )
-          )
-        )
-        case _ => Json.obj()
-      }
-
-      val declarationDuties: (String, JsBoolean) =
-        if (invite.declarationDuties) {
-          "box5" -> JsBoolean(true)
-        }
-        else {
-          "box6" -> JsBoolean(true)
-        }
-
-      val declarationDetails = Json.obj(
-        "box1" -> invite.declaration,
-        "box2" -> invite.declaration,
-        "box3" -> invite.declaration,
-        "box4" -> invite.declaration
-      ) + declarationDuties ++ pensionAdviserDetails
-
-      Json.obj(
-        "psaAssociationDetails" -> Json.obj(
-          "psaAssociationIDsDetails" -> Json.obj(
-            "inviteePSAID" -> invite.inviteePsaId,
-            "inviterPSAID" -> invite.inviterPsaId
-          ),
-          "declarationDetails" -> declarationDetails
-        )
-      )
-    }
-  }
-
-  val writesIFAcceptedInvitation: Writes[AcceptedInvitation] = Writes {
+  private val writesIFAcceptedInvitation: Writes[AcceptedInvitation] = Writes {
     { invite =>
       val pensionAdviserDetails = invite.pensionAdviserDetails match {
         case Some(adviser) => Json.obj(
