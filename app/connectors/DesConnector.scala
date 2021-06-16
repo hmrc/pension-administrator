@@ -131,7 +131,7 @@ class DesConnectorImpl @Inject()(
                          request: RequestHeader): Future[Either[HttpException, JsValue]] = {
       implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
         headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
-      val url: String = config.removePsaIFUrl.format(psaToBeRemoved.pstr)
+      val url: String = config.removePsaUrl.format(psaToBeRemoved.pstr)
       val data: JsValue = Json.obj(
         "ceaseIDType" -> "PSAID",
         "ceaseNumber" -> psaToBeRemoved.psaId,
@@ -159,7 +159,7 @@ class DesConnectorImpl @Inject()(
       implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
         headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
       deregisterAdministrator(
-        config.deregisterPsaIFUrl.format(psaId),
+        config.deregisterPsaUrl.format(psaId),
         data,
         "/resources/schemas/deregister1469.json",
         psaId)(hc, implicitly, implicitly)

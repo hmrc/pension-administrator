@@ -96,7 +96,7 @@ class AssociationConnectorImpl @Inject()(
       request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
       implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
         headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
-      val minimalDetailsUrl = appConfig.psaMinimalDetailsIFUrl.format(regime, idType, idValue)
+      val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(regime, idType, idValue)
       httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
         implicitly) map {
         handleResponseIF(_, minimalDetailsUrl)
@@ -157,7 +157,7 @@ class AssociationConnectorImpl @Inject()(
                       (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] = {
       implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
         headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
-      val url = appConfig.createPsaAssociationIFUrl.format(acceptedInvitation.pstr)
+      val url = appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)
       val data = Json.toJson(acceptedInvitation)(writesIFAcceptedInvitation)
       association(url, data, acceptedInvitation, "createAssociationRequest1445.json")(hc, implicitly, implicitly)
     }
