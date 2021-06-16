@@ -158,6 +158,7 @@ class AssociationConnectorImpl @Inject()(
       implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
         headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
       val url = appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)
+
       val data = Json.toJson(acceptedInvitation)(writesIFAcceptedInvitation)
       association(url, data, acceptedInvitation, "createAssociationRequest1445.json")(hc, implicitly, implicitly)
     }
@@ -226,7 +227,7 @@ object AssociationConnectorImpl {
           Json.obj("box5" -> JsBoolean(true))
         } else {
           Json.obj(
-            "box6" -> JsBoolean(true)) ++ pensionAdviserDetails
+            "box6" -> JsString("true")) ++ pensionAdviserDetails
         }
 
       val declarationDetails = Json.obj(
