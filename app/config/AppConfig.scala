@@ -40,7 +40,7 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
   lazy val removePsaIFUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.remove.psa")}"
   lazy val deregisterPsaIFUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.deregister.psa")}"
   lazy val createPsaAssociationIFUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.createPsaAssociation")}"
-  lazy val listOfSchemesIFUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.if.listOfSchemes")}"
+  lazy val listOfSchemesUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.if.listOfSchemes")}"
 
   lazy val psaSubscriptionDetailsUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.psa.subscription.details")}"
   lazy val psaVariationDetailsUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.psa.variation.details")}"
