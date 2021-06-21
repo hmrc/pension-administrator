@@ -16,47 +16,19 @@
 
 package audit
 
-import models.{AcceptedInvitation, MinimalDetails}
+import models.{MinimalDetails, AcceptedInvitation}
 import play.api.Logger
 import play.api.http.Status
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{Json, JsValue}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HttpException
 
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success, Try}
+import scala.util.{Try, Success, Failure}
 
 trait AssociationAuditService {
 
   private val logger = Logger(classOf[AssociationAuditService])
-
-  def sendGetMinimalPSADetailsEvent(psaId: String)(sendEvent: MinimalPSADetailsEvent => Unit)
-                                   (implicit rh: RequestHeader, ec: ExecutionContext):
-  PartialFunction[Try[Either[HttpException, MinimalDetails]], Unit] = {
-
-    case Success(Right(psaMinimalDetails)) =>
-      sendEvent(
-        MinimalPSADetailsEvent(
-          psaId = psaId,
-          psaName = psaMinimalDetails.name,
-          isPsaSuspended = Some(psaMinimalDetails.isPsaSuspended),
-          status = Status.OK,
-          response = Some(Json.toJson(psaMinimalDetails))
-        )
-      )
-    case Success(Left(e)) =>
-      sendEvent(
-        MinimalPSADetailsEvent(
-          psaId = psaId,
-          psaName = None,
-          isPsaSuspended = None,
-          status = e.responseCode,
-          response = None
-        )
-      )
-    case Failure(t) =>
-      logger.error("Error in AssociationConnector connector", t)
-  }
 
   def sendGetMinimalDetailsEvent(idType: String, idValue: String)(sendEvent: MinimalDetailsEvent => Unit)
     (implicit rh: RequestHeader, ec: ExecutionContext):

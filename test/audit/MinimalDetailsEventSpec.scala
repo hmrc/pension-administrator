@@ -19,29 +19,35 @@ package audit
 import org.scalatest.{FlatSpec, Matchers}
 import play.api.libs.json.Json
 
-class MinimalPSADetailsEventSpec extends FlatSpec with Matchers {
+class MinimalDetailsEventSpec extends FlatSpec with Matchers {
 
   "MinimalPSADetails.details" should "output the correct map of data" in {
 
     val response = Json.obj("name" -> "response")
 
-    val event = MinimalPSADetailsEvent(
-      psaId = "A2500001",
-      psaName = Some("John Doe"),
-      isPsaSuspended = Some(false),
+    val event = MinimalDetailsEvent(
+      idType = "PSAID",
+      idValue = "A2500001",
+      name = Some("John Doe"),
+      rlsFlag = Some(false),
+      deceasedFlag = Some(false),
+      isSuspended = Some(false),
       status = 200,
       response = Some(response)
     )
 
     val expected: Map[String, String] = Map(
-      "PSAID" -> "A2500001",
-      "PSAName" -> "John Doe",
+      "idType" -> "PSAID",
+      "idType" -> "A2500001",
+      "name" -> "John Doe",
       "isPsaSuspended" -> "false",
+      "rlsFlag" -> "false",
+      "deceasedFlag" -> "false",
       "status" -> "200",
       "response" -> Json.stringify(response)
     )
 
-    event.auditType shouldBe "GetMinPSADetails"
+    event.auditType shouldBe "GetMinDetails"
 
     event.details shouldBe expected
   }
