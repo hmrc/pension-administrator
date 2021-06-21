@@ -16,16 +16,12 @@
 
 package connectors
 
-import audit.{AuditService, StubSuccessfulAuditService}
+import audit.{StubSuccessfulAuditService, AuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import connectors.helper.ConnectorBehaviours
-import models.FeatureToggle.Enabled
-import models.FeatureToggleName.IntegrationFrameworkMisc
 import models.SchemeReferenceNumber
-import org.mockito.Matchers.any
-import org.mockito.Mockito.when
 import org.scalatest._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.LoggerLike
@@ -36,10 +32,8 @@ import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import service.FeatureToggleService
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{UpstreamErrorResponse, BadRequestException, NotFoundException, HeaderCarrier}
 import utils.{StubLogger, WireMockHelper}
-
-import scala.concurrent.Future
 
 class SchemeConnectorSpec extends AsyncFlatSpec
   with Matchers
@@ -102,8 +96,6 @@ class SchemeConnectorSpec extends AsyncFlatSpec
   }
 
   "SchemeConnector listSchemes" should "handle OK (200)" in {
-    when(mockFeatureToggleService.get(any())).thenReturn(Future.successful(Enabled(IntegrationFrameworkMisc)))
-
     server.stubFor(
       get(urlEqualTo(listSchemesUrl))
         .withHeader("Content-Type", equalTo("application/json"))
@@ -155,7 +147,7 @@ object SchemeConnectorSpec extends JsonFileReader {
   val auditService = new StubSuccessfulAuditService()
   val logger = new StubLogger()
   val checkForAssociationUrl = "/pensions-scheme/is-psa-associated"
-  val listSchemesUrl = "/pensions-scheme/if-list-of-schemes"
+  val listSchemesUrl = "/pensions-scheme/list-of-schemes"
   val srn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")
   val psaId: PsaId = PsaId("A7654321")
 

@@ -16,73 +16,13 @@
 
 package models.Reads
 
-import models.{IndividualDetails, MinimalDetails}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import models.{MinimalDetails, IndividualDetails}
+import org.scalatest.{OptionValues, MustMatchers, WordSpec}
 import play.api.libs.json._
 
 class PsaMinimalDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues {
 
   import PsaMinimalDetailsReadsSpec._
-
-  "A payload containing psa minimal details in DES format" should {
-
-    "transform to a valid individual details model" when {
-      val individualDetailsPayload = Json.parse(
-        """{
-          |			"firstName": "testFirst",
-          |			"middleName": "testMiddle",
-          |			"lastName": "testLast"
-          |		}
-        """.stripMargin
-      )
-      "we have firstName" in {
-        val output = individualDetailsPayload.as[IndividualDetails](IndividualDetails.individualDetailReads)
-        output.firstName mustBe psaMinimalDetailsUser.individualDetails.value.firstName
-      }
-
-      "we have middle name" in {
-        val output = individualDetailsPayload.as[IndividualDetails](IndividualDetails.individualDetailReads)
-        output.middleName.value mustBe psaMinimalDetailsUser.individualDetails.value.middleName.value
-      }
-      "we have last name" in {
-        val output = individualDetailsPayload.as[IndividualDetails](IndividualDetails.individualDetailReads)
-        output.lastName mustBe psaMinimalDetailsUser.individualDetails.value.lastName
-      }
-    }
-
-    "transform to a valid PSA Minimal Details model" when {
-
-      "we have an email" in {
-        val output = individualDetailPayload.as[MinimalDetails](MinimalDetails.minimalDetailsDESReads)
-        output.email mustBe psaMinimalDetailsUser.email
-      }
-
-      "we have psaSuspensionFlag" in {
-        val output = individualDetailPayload.as[MinimalDetails](MinimalDetails.minimalDetailsDESReads)
-        output.isPsaSuspended mustBe psaMinimalDetailsUser.isPsaSuspended
-      }
-
-      "we have minimal detail object with individual data" in {
-        val output = individualDetailPayload.as[MinimalDetails](MinimalDetails.minimalDetailsDESReads)
-        output.individualDetails mustBe psaMinimalDetailsUser.individualDetails
-      }
-
-      "we have minimal detail object with organisation data" in {
-        val output = orgPayload.as[MinimalDetails](MinimalDetails.minimalDetailsDESReads)
-        output.organisationName mustBe psaMinimalDetailsUser.organisationName
-      }
-
-      "we have rlsFlag as defaulting to false" in {
-        val output = individualDetailPayload.as[MinimalDetails](MinimalDetails.minimalDetailsDESReads)
-        output.rlsFlag mustBe false
-      }
-
-      "we have deceasedFlag as defaulting to false" in {
-        val output = individualDetailPayload.as[MinimalDetails](MinimalDetails.minimalDetailsDESReads)
-        output.deceasedFlag mustBe false
-      }
-    }
-  }
 
   "A payload containing psa minimal details in IF format" should {
 
@@ -123,21 +63,6 @@ class PsaMinimalDetailsReadsSpec extends WordSpec with MustMatchers with OptionV
 }
 
 object PsaMinimalDetailsReadsSpec {
-
-  private val individualDetailPayload = Json.parse(
-    """{
-      |	"processingDate": "2001-12-17T09:30:47Z",
-      |	"psaMinimalDetails": {
-      |		"individualDetails": {
-      |			"firstName": "testFirst",
-      |			"middleName": "testMiddle",
-      |			"lastName": "testLast"
-      |		}
-      |	},
-      |	"email": "test@email.com",
-      |	"psaSuspensionFlag": true
-      |}""".stripMargin)
-
   private val individualDetailIFPayload = Json.parse(
     """{
       |	"processingDate": "2001-12-17T09:30:47Z",
@@ -153,21 +78,6 @@ object PsaMinimalDetailsReadsSpec {
       |	"rlsFlag": true,
       |	"deceasedFlag": true
       |}""".stripMargin)
-
-  private val orgPayload = Json.parse(
-    """
-      |{
-      |	"processingDate": "2009-12-17T09:30:47Z",
-      |	"psaMinimalDetails": {
-      |		"organisationOrPartnershipName": "test org name"
-      |	},
-      |	"email": "test@email.com",
-      |	"psaSuspensionFlag": true
-      |}
-      |
-    """.stripMargin
-
-  )
 
   private val orgIFPayload = Json.parse(
     """

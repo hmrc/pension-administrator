@@ -35,18 +35,16 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
   lazy val registerWithoutIdIndividualUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.register.without.id.individual")}"
   lazy val registerWithIdIndividualUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.register.with.id.individual")}"
   lazy val registerWithIdOrganisationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.register.with.id.organisation")}"
-  lazy val psaMinimalDetailsUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.psa.minimal.details")}"
-  lazy val psaMinimalDetailsIFUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.psa.minimal.details")}"
+
+  lazy val psaMinimalDetailsUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.psa.minimal.details")}"
+  lazy val removePsaUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.remove.psa")}"
+  lazy val deregisterPsaUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.deregister.psa")}"
+  lazy val createPsaAssociationUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.createPsaAssociation")}"
+  lazy val listOfSchemesUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.if.listOfSchemes")}"
 
   lazy val psaSubscriptionDetailsUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.psa.subscription.details")}"
   lazy val psaVariationDetailsUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.psa.variation.details")}"
-  lazy val removePsaUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.remove.psa")}"
-  lazy val removePsaIFUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.remove.psa")}"
-  lazy val deregisterPsaUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.deregister.psa")}"
-  lazy val deregisterPsaIFUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.deregister.psa")}"
 
-  lazy val createPsaAssociationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.createPsaAssociation")}"
-  lazy val createPsaAssociationIFUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.createPsaAssociation")}"
   lazy val desEnvironment: String = runModeConfiguration.getOptional[String]("microservice.services.des-hod.env").getOrElse("local")
   lazy val authorization: String = "Bearer " + runModeConfiguration.getOptional[String]("microservice.services.des-hod.authorizationToken").getOrElse("local")
 
@@ -57,8 +55,6 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
 
   lazy val emailUrl: String = s"$baseUrlEmail${runModeConfiguration.underlying.getString("serviceUrls.email")}"
   lazy val checkAssociationUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.checkPsaAssociation")}"
-  lazy val listOfSchemesUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.listOfSchemes")}"
-  lazy val listOfSchemesIFUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.if.listOfSchemes")}"
   lazy val getSchemeDetailsUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.getSchemeDetails")}"
 
   lazy val invitationExpiryDays: Int = runModeConfiguration.underlying.getInt("invitationExpiryDays")
