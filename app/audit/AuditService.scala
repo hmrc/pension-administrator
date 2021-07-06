@@ -20,7 +20,7 @@ import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import play.api.Logger
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.play.HeaderCarrierConverter
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
@@ -45,7 +45,7 @@ class AuditServiceImpl @Inject()(
   private val logger = Logger(classOf[AuditServiceImpl])
 
   private implicit def toHc(request: RequestHeader): AuditHeaderCarrier =
-    auditHeaderCarrier(HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session)))
+    auditHeaderCarrier(HeaderCarrierConverter.fromRequestAndSession(request, request.session))
 
   def sendEvent[T <: AuditEvent](event: T)
                                 (implicit rh: RequestHeader, ec: ExecutionContext): Unit = {

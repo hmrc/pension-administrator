@@ -18,11 +18,8 @@ package audit
 
 import base.SpecBase
 import play.api.libs.json.Json
-import play.api.mvc.RequestHeader
-import play.api.test.FakeRequest
 
 class SchemeAuditServiceSpec extends SpecBase {
-  private implicit val rh: RequestHeader = FakeRequest("", "")
 
   "getName" should {
     "work for partnerships" in {

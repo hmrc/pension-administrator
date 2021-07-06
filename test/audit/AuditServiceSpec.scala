@@ -16,20 +16,20 @@
 
 package audit
 
-import akka.stream.Materializer
 import org.scalatest.{AsyncFlatSpec, Inside, Matchers}
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.inject.{ApplicationLifecycle, bind}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.config.AuditingConfig
-import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.audit.http.connector.{AuditChannel, AuditConnector, AuditCounter, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuditServiceSpec extends AsyncFlatSpec with Matchers with Inside {
+class AuditServiceSpec extends AsyncFlatSpec with Matchers with Inside with MockitoSugar {
 
   import AuditServiceSpec._
 
@@ -75,7 +75,7 @@ object FakeAuditConnector extends AuditConnector {
 
   private var sentEvent: DataEvent = _
 
-  override def auditingConfig: AuditingConfig = AuditingConfig(None, enabled = false, "test audit service")
+  override def auditingConfig: AuditingConfig = AuditingConfig(None, enabled = false, "test audit service", false)
 
   override def sendEvent(event: DataEvent)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AuditResult] = {
     sentEvent = event
@@ -84,9 +84,9 @@ object FakeAuditConnector extends AuditConnector {
 
   def lastSentEvent: DataEvent = sentEvent
 
-  override def materializer: Materializer = ???
+  override def auditChannel: AuditChannel = ???
 
-  override def lifecycle: ApplicationLifecycle = ???
+  override def auditCounter: AuditCounter = ???
 }
 
 case class TestAuditEvent(payload: String) extends AuditEvent {
