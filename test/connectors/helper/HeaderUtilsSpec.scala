@@ -20,8 +20,6 @@ import config.AppConfig
 import org.scalatest.MustMatchers
 import org.scalatestplus.play.PlaySpec
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.logging.RequestId
 
 class HeaderUtilsSpec extends PlaySpec with MustMatchers {
 
@@ -32,11 +30,9 @@ class HeaderUtilsSpec extends PlaySpec with MustMatchers {
     "call desHeader" must {
 
       "return all the appropriate headers" in {
-        implicit val hc: HeaderCarrier = HeaderCarrier(requestId = Some(RequestId("govuk-tax-4725c811-9251-4c06-9b8f-f1d84659b2dfe")))
-
-        val result = headerUtils.desHeader
+        val result = headerUtils.desHeaderWithoutCorrelationId
         result mustEqual Seq("Environment" -> "local", "Authorization" -> "Bearer test-token",
-          "Content-Type" -> "application/json", "CorrelationId" -> "4725c81192514c069b8ff1d84659b2df")
+          "Content-Type" -> "application/json")
       }
     }
 

@@ -120,7 +120,7 @@ object DeregistrationControllerSpec extends JsonFileReader {
       |}""".stripMargin)
   private val psaId = "A123456"
   
-  private def getSchemeDetails(psaArray: JsArray = Json.arr(psaObject(psaId))): JsObject =
+  private def getSchemeDetails(psaArray: JsArray): JsObject =
     Json.obj("psaDetails"  -> psaArray)
 
   private def psaObject(psaId: String) = Json.obj(

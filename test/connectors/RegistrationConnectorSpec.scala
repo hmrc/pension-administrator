@@ -20,8 +20,8 @@ import audit.{AuditService, PSARegistration, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours
-import models.{SuccessResponse, User}
 import models.registrationnoid._
+import models.{SuccessResponse, User}
 import org.joda.time.LocalDate
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 import play.api.inject.bind
@@ -32,7 +32,6 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.logging.RequestId
 import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl, StubLogger, WireMockHelper}
 
 class RegistrationConnectorSpec extends AsyncFlatSpec
