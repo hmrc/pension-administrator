@@ -75,10 +75,11 @@ class RegistrationController @Inject()(
                   Json.obj("organisation" -> Json.toJson(orgWithInvalidCharactersRemoved))
                 registerConnector.registerWithIdOrganisation(utr, user, registerWithIdData) map handleResponse
               case Success((None, _)) =>
-                Future.failed(new BadRequestException(s"Bad Request returned from frontend for Register With Id Organisation - no UTR found"))
+                logger.warn("Bad Request returned for Register With Id Organisation - no UTR found")
+                Future.failed(new BadRequestException("Bad Request returned for Register With Id Organisation - no UTR found"))
               case Failure(e) =>
-                logger.warn(s"Bad Request returned from frontend for Register With Id Organisation $e")
-                Future.failed(new BadRequestException(s"Bad Request returned from frontend for Register With Id Organisation $e"))
+                logger.warn(s"Bad Request returned for Register With Id Organisation $e")
+                Future.failed(new BadRequestException(s"Bad Request returned for Register With Id Organisation $e"))
             }
           case _ =>
             Future.failed(new BadRequestException("No request body received for Organisation"))
