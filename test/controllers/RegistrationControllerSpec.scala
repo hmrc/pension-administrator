@@ -265,7 +265,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
           ScalaFutures.whenReady(result.failed) { e =>
             e mustBe a[BadRequestException]
-            e.getMessage must startWith("Bad Request returned from frontend for Register With Id Organisation")
+            e.getMessage must startWith("Bad Request returned for Register With Id Organisation")
           }
 
         }
