@@ -74,6 +74,8 @@ class RegistrationController @Inject()(
                 val registerWithIdData = mandatoryPODSData(true).as[JsObject] ++
                   Json.obj("organisation" -> Json.toJson(orgWithInvalidCharactersRemoved))
                 registerConnector.registerWithIdOrganisation(utr, user, registerWithIdData) map handleResponse
+              case Success((None, _)) =>
+                Future.failed(new BadRequestException(s"Bad Request returned from frontend for Register With Id Organisation - no UTR found"))
               case Failure(e) =>
                 logger.warn(s"Bad Request returned from frontend for Register With Id Organisation $e")
                 Future.failed(new BadRequestException(s"Bad Request returned from frontend for Register With Id Organisation $e"))
