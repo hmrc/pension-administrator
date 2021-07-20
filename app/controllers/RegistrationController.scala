@@ -28,6 +28,7 @@ import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
+import utils.UtrHelper.stripUtr
 import utils.ValidationUtils._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -66,13 +67,19 @@ class RegistrationController @Inject()(
       retrieveUser { user =>
         request.body.asJson match {
           case Some(jsBody) =>
-            Try(((jsBody \ "utr").convertTo[String], jsBody.convertTo[Organisation])) match {
+            val utr = (jsBody \ "utr").convertTo[String]
+            val org = jsBody.convertTo[Organisation]
+            val strippedUtr = stripUtr(Some("UTR"), Some(utr))
+              
+            Try((utr, org)) match {
               case Success((utr, org)) =>
+
                 val orgWithInvalidCharactersRemoved = org.copy( organisationName =
                   org.organisationName.replaceAll("""[^a-zA-Z0-9- '&\/]+""", ""))
                 val registerWithIdData = mandatoryPODSData(true).as[JsObject] ++
                   Json.obj("organisation" -> Json.toJson(orgWithInvalidCharactersRemoved))
                 registerConnector.registerWithIdOrganisation(utr, user, registerWithIdData) map handleResponse
+
               case Failure(e) =>
                 logger.warn(s"Bad Request returned from frontend for Register With Id Organisation $e")
                 Future.failed(new BadRequestException(s"Bad Request returned from frontend for Register With Id Organisation $e"))
