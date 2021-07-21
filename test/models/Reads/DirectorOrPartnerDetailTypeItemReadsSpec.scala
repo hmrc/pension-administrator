@@ -87,7 +87,7 @@ class DirectorOrPartnerDetailTypeItemReadsSpec extends WordSpec with MustMatcher
           s"We have a $personType utr and reason" in {
             val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](DirectorOrPartnerDetailTypeItem.apiReads(personType))
 
-            result.head.utr mustBe directorOrPartnerSample(personType).utr
+            result.head.utr mustBe Some("0123456789")
             result.head.noUtrReason mustBe directorOrPartnerSample(personType).noUtrReason
           }
 
@@ -144,9 +144,9 @@ object DirectorOrPartnerDetailTypeItemReadsSpec {
     "dateOfBirth" -> JsString("2019-01-31"),
     "nino" -> Json.obj("value" -> JsString("SL211111A")),
     "noNinoReason" -> JsString("he can't find it"),
-    "utr" -> Json.obj("value" -> JsString("123456789")),
+    "utr" -> Json.obj("value" -> JsString("0123456789")),
     "noUtrReason" -> JsString("he can't find it"),
-    s"${personType}Utr" -> Json.obj("hasUtr" -> JsBoolean(true), "utr" -> JsString("123456789")),
+    s"${personType}Utr" -> Json.obj("hasUtr" -> JsBoolean(true), "utr" -> JsString("0123456789")),
     s"${personType}AddressYears" -> JsString("over_a_year")
   ) + (s"${personType}ContactDetails" -> Json.obj("email" -> "test@test.com", "phone" -> "07592113")) + (s"${personType}Address" ->
     Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"), "country" -> JsString("IT")))

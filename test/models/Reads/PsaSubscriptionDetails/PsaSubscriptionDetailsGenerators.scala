@@ -94,6 +94,17 @@ trait PsaSubscriptionDetailsGenerators {
     )
   }
 
+  val utrGenerator: Gen[String] = {
+    val utrRange: Gen[String] = Gen.listOfN[Char](randomNumberFromRange(10, 13), Gen.numChar).map(_.mkString)
+    randomNumberFromRange(1, 3) match {
+      case 1 => utrRange
+      case 2 => "k" + utrRange
+      case 3 => utrRange + "k"
+    }
+  }
+
+  private def randomNumberFromRange(min: Int, max: Int): Int = Gen.chooseNum(min, max).sample.fold(min)(c => c)
+
   val dateGenerator: Gen[LocalDate] = for {
     day <- Gen.choose(1,28)
     month <-Gen.choose(1,12)
@@ -147,7 +158,7 @@ trait PsaSubscriptionDetailsGenerators {
     lastName <- Gen.alphaStr
     dateOfBirth <- dateGenerator
     nino <- Gen.alphaUpperStr
-    utr <- Gen.alphaUpperStr
+    utr <- utrGenerator
     previousAddressDetails <- previousAddressGenerator
     correspondenceCommonDetails <- Gen.option(correspondenceCommonDetailsGenerator)
   } yield {
