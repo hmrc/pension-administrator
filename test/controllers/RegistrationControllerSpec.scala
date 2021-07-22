@@ -215,7 +215,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     "return OK when request utr and organisation get successful response from connector, stripping out any invalid characters from the name" in {
       val inputData = Json.obj(
-        "utr" -> "1100000000",
+        "utr" -> "1100000000k",
         "organisationName" -> """(Test) %"Ltd"^$£!""",
         "organisationType" -> "LLP"
       )
@@ -265,7 +265,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
           ScalaFutures.whenReady(result.failed) { e =>
             e mustBe a[BadRequestException]
-            e.getMessage must startWith("Bad Request returned from frontend for Register With Id Organisation")
+            e.getMessage must startWith("Bad Request returned for Register With Id Organisation")
           }
 
         }

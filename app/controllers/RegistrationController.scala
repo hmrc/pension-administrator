@@ -28,6 +28,7 @@ import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
+import utils.UtrHelper.stripUtr
 import utils.ValidationUtils._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -66,16 +67,19 @@ class RegistrationController @Inject()(
       retrieveUser { user =>
         request.body.asJson match {
           case Some(jsBody) =>
-            Try(((jsBody \ "utr").convertTo[String], jsBody.convertTo[Organisation])) match {
-              case Success((utr, org)) =>
+            Try(stripUtr(Some("UTR"), Some((jsBody \ "utr").convertTo[String])), jsBody.convertTo[Organisation]) match {
+              case Success((Some(utr), org)) =>
                 val orgWithInvalidCharactersRemoved = org.copy( organisationName =
                   org.organisationName.replaceAll("""[^a-zA-Z0-9- '&\/]+""", ""))
                 val registerWithIdData = mandatoryPODSData(true).as[JsObject] ++
                   Json.obj("organisation" -> Json.toJson(orgWithInvalidCharactersRemoved))
                 registerConnector.registerWithIdOrganisation(utr, user, registerWithIdData) map handleResponse
+              case Success((None, _)) =>
+                logger.warn("Bad Request returned for Register With Id Organisation - no UTR found")
+                Future.failed(new BadRequestException("Bad Request returned for Register With Id Organisation - no UTR found"))
               case Failure(e) =>
-                logger.warn(s"Bad Request returned from frontend for Register With Id Organisation $e")
-                Future.failed(new BadRequestException(s"Bad Request returned from frontend for Register With Id Organisation $e"))
+                logger.warn(s"Bad Request returned for Register With Id Organisation $e")
+                Future.failed(new BadRequestException(s"Bad Request returned for Register With Id Organisation $e"))
             }
           case _ =>
             Future.failed(new BadRequestException("No request body received for Organisation"))

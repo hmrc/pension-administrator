@@ -64,9 +64,7 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
 
     Try(json.convertTo[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)) match {
       case Success(pensionSchemeAdministrator) =>
-
         block(pensionSchemeAdministrator)
-
       case Failure(e) =>
         logger.warn(s"Bad Request returned from frontend for PSA $e")
         Future.failed(new BadRequestException(s"Bad Request returned from frontend for PSA $e"))
