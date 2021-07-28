@@ -106,7 +106,7 @@ trait Samples {
     dateOfBirth = LocalDate.parse("2019-01-31"),
     referenceOrNino = Some("SL211111A"),
     noNinoReason = Some("he can't find it"),
-    utr = Some("123456789"),
+    utr = Some("123456789K"),
     noUtrReason = Some("he can't find it"),
     correspondenceCommonDetail = correspondenceCommonDetails,
     previousAddressDetail = PreviousAddressDetails(isPreviousAddressLast12Month = false))
