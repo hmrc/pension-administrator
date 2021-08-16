@@ -18,7 +18,7 @@ package controllers.admin
 
 import base.SpecBase
 import models.FeatureToggle.Enabled
-import models.FeatureToggleName.Dummy
+import models.FeatureToggleName.Migration
 import models.OperationSucceeded
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{times, verify, reset, when}
@@ -44,9 +44,9 @@ class FeatureToggleControllerSpec
   override def beforeEach(): Unit = {
     reset(mockAdminDataRepository, mockFeatureToggleService)
     when(mockAdminDataRepository.getFeatureToggles)
-      .thenReturn(Future.successful(Seq(Enabled(Dummy))))
+      .thenReturn(Future.successful(Seq(Enabled(Migration))))
     when(mockFeatureToggleService.getAll)
-      .thenReturn(Future.successful(Seq(Enabled(Dummy))))
+      .thenReturn(Future.successful(Seq(Enabled(Migration))))
   }
 
   "FeatureToggleController.getAll" must {
@@ -66,16 +66,16 @@ class FeatureToggleControllerSpec
         .thenReturn(Future.successful(true))
 
       when(mockFeatureToggleService.get(any()))
-        .thenReturn(Future.successful(Enabled(Dummy)))
+        .thenReturn(Future.successful(Enabled(Migration)))
 
       val controller = new FeatureToggleController(controllerComponents, mockFeatureToggleService)
 
-      val result = controller.get(Dummy)(fakeRequest)
+      val result = controller.get(Migration)(fakeRequest)
 
       status(result) mustBe OK
 
       verify(mockFeatureToggleService, times(1))
-        .get(name = Dummy)
+        .get(name = Migration)
     }
   }
 
@@ -89,23 +89,23 @@ class FeatureToggleControllerSpec
 
       val controller = new FeatureToggleController(controllerComponents, mockFeatureToggleService)
 
-      val result = controller.put(Dummy)(fakeRequest.withJsonBody(JsBoolean(true)))
+      val result = controller.put(Migration)(fakeRequest.withJsonBody(JsBoolean(true)))
 
       status(result) mustBe NO_CONTENT
 
       verify(mockFeatureToggleService, times(1))
-        .set(toggleName = Dummy, enabled = true)
+        .set(toggleName = Migration, enabled = true)
     }
 
     "not set the feature toggles and return BAD_REQUEST" in {
       val controller = new FeatureToggleController(controllerComponents, mockFeatureToggleService)
 
-      val result = controller.put(Dummy)(fakeRequest.withJsonBody(Json.obj("blah" -> "blah")))
+      val result = controller.put(Migration)(fakeRequest.withJsonBody(Json.obj("blah" -> "blah")))
 
       status(result) mustBe BAD_REQUEST
 
       verify(mockFeatureToggleService, times(0))
-        .set(toggleName = Dummy, enabled = true)
+        .set(toggleName = Migration, enabled = true)
     }
   }
 }
