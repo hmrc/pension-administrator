@@ -139,11 +139,11 @@ class AssociationConnectorImpl @Inject()(
   }
 
   private def processResponse(acceptedInvitation: AcceptedInvitation,
-                              response: HttpResponse, url: String, schemaFile: String)
+                              response: HttpResponse, url: String, schemaFile: String, originalData: JsValue)
                              (implicit request: RequestHeader, ec: ExecutionContext): Either[HttpException, Unit] = {
 
     sendAcceptInvitationAuditEvent(acceptedInvitation, response.status,
-      if (response.body.isEmpty) None else Some(response.json))(auditService.sendEvent)
+      if (response.body.isEmpty) None else Some(response.json), originalData)(auditService.sendEvent)
 
     if (response.status == OK) {
       logger.info(s"POST of $url returned successfully")
@@ -169,7 +169,7 @@ class AssociationConnectorImpl @Inject()(
     logger.debug(s"[Accept-Invitation-Outgoing-Payload] - ${data.toString()}")
     httpClient.POST[JsValue, HttpResponse](url, data)(
       implicitly, implicitly, hc, implicitly
-    ) map (processResponse(acceptedInvitation, _, url, schemaFile))
+    ) map (processResponse(acceptedInvitation, _, url, schemaFile, data))
   }
 }
 

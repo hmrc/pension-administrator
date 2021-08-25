@@ -41,11 +41,13 @@ class InvitationAcceptanceAuditEventSpec extends FlatSpec with Matchers {
       pensionAdviserDetails = Some(pensionAdviserDetailUK))
 
     val responseJson = Json.obj("abc" -> "def")
+    val originalJson = Json.obj("def" -> "ghi")
 
     val event = InvitationAcceptanceAuditEvent(
       acceptedInvitation = acceptedInvitation,
       status = 200,
-      response = Some(responseJson)
+      response = Some(responseJson),
+      originalJson
     )
 
     val expected: Map[String, String] = Map(
@@ -54,6 +56,7 @@ class InvitationAcceptanceAuditEventSpec extends FlatSpec with Matchers {
       "inviterPsaId" -> acceptedInvitation.inviterPsaId.id,
       "declaration" -> acceptedInvitation.declaration.toString,
       "declarationDuties" -> acceptedInvitation.declarationDuties.toString,
+      "originalData" -> Json.stringify(originalJson),
       "response" -> Json.stringify(responseJson)
     )
 

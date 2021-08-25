@@ -65,10 +65,10 @@ trait AssociationAuditService {
   }
 
   def sendAcceptInvitationAuditEvent(acceptedInvitation: AcceptedInvitation, status: Int,
-                                     response: Option[JsValue])(sendEvent: InvitationAcceptanceAuditEvent => Unit)
+                                     response: Option[JsValue], originalData: JsValue)(sendEvent: InvitationAcceptanceAuditEvent => Unit)
                                    (implicit rh: RequestHeader, ec: ExecutionContext): Unit = {
 
-    sendEvent(InvitationAcceptanceAuditEvent(acceptedInvitation, status, response))
+    sendEvent(InvitationAcceptanceAuditEvent(acceptedInvitation, status, response, originalData))
 
   }
 

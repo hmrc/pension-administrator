@@ -21,7 +21,7 @@ import play.api.libs.json.{JsValue, Json}
 
 case class InvitationAcceptanceAuditEvent(acceptedInvitation: AcceptedInvitation,
                                           status: Int,
-                                          response: Option[JsValue]
+                                          response: Option[JsValue], originalData: JsValue
                                          ) extends AuditEvent {
 
   override def auditType: String = "PSAInvitationAccepted"
@@ -38,7 +38,8 @@ case class InvitationAcceptanceAuditEvent(acceptedInvitation: AcceptedInvitation
           case Some(json) => Json.stringify(json)
           case _ => ""
         }
-      }
+      },
+      "originalData" -> Json.stringify(originalData)
     )
 }
 
