@@ -227,7 +227,7 @@ object AssociationConnectorImpl {
           Json.obj("box5" -> JsBoolean(true))
         } else {
           Json.obj(
-            "box6" -> JsString("true")) ++ pensionAdviserDetails
+            "box6" -> JsBoolean(true)) ++ pensionAdviserDetails
         }
 
       val declarationDetails = Json.obj(
