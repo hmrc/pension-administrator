@@ -44,6 +44,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   private val psaRegime = "poda"
   private val psaId = PsaId("A2123456")
+  private val inviteePsaId = PsaId("A2123457")
+  private val pstr = "pstr"
   private val psaType = "psaid"
   private val psaMinimunIndividualDetailPayload = Json.parse(
     """{
@@ -78,7 +80,12 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private val logger = new StubLogger()
   private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/poda/psaid/$psaId"
+  private val createPsaAssociationUrl = s"/pension-online/association/pods/$pstr"
   private val mockFeatureToggleService = mock[FeatureToggleService]
+
+  private val adviserName = "Adviser"
+  private val adviserAddress = UkAddress("line1", Some("line2"), Some("line3"), Some("line4"), "GB", "Test")
+  private val adviserEmail = "a@a.c"
 
   override def beforeEach(): Unit = {
     auditService.reset()
@@ -97,6 +104,65 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
   private lazy val connector = injector.instanceOf[AssociationConnector]
+
+  "acceptInvitation" should "process correctly a request including pension adviser" in {
+    val pensionAdviserDetails = PensionAdviserDetails(name = adviserName, addressDetail = adviserAddress, email = adviserEmail)
+
+    val invitation = AcceptedInvitation(
+      pstr = pstr,
+      inviteePsaId = inviteePsaId,
+      inviterPsaId= psaId,
+      declaration = true,
+      declarationDuties = false,
+      pensionAdviserDetails= Some(pensionAdviserDetails)
+    )
+
+    val testJsonBody = Json.obj( fields =
+      "psaAssociationIDsDetails" -> Json.obj( fields =
+          "inviteeIDType" -> "PSAID",
+          "inviteeIDNumber" -> inviteePsaId,
+          "inviterPSAID" -> psaId
+      ),
+      "psaDeclarationDetails" -> Json.obj( fields =
+        "box1" -> true,
+        "box2" -> true,
+        "box3" -> true,
+        "box4" -> true,
+        "box6" -> true,
+        "pensionAdviserDetails" -> Json.obj( fields =
+          "name" -> pensionAdviserDetails.name,
+          "addressDetails" -> Json.obj( fields =
+            "addressLine1" -> adviserAddress.addressLine1,
+            "nonUKAddress" -> "false",
+            "addressLine4" -> adviserAddress.addressLine4,
+            "addressLine3" -> adviserAddress.addressLine3,
+            "postalCode" -> adviserAddress.postalCode,
+            "countryCode" -> "GB",
+            "addressLine2" -> adviserAddress.addressLine2
+          ),
+          "contactDetails" -> Json.obj( fields =
+            "email" -> pensionAdviserDetails.email
+          )
+        )
+      )
+    )
+
+    server.stubFor(
+      post(urlEqualTo(createPsaAssociationUrl))
+        .withRequestBody(equalToJson(Json.stringify(testJsonBody)))
+        .willReturn(
+          ok()
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+
+
+
+    connector.acceptInvitation(invitation).map { response =>
+      response.right.value shouldBe ()
+    }
+
+  }
 
   "getMinimalDetails with IF toggle switched ON" should "return OK (200) with a JSON payload" in {
 
