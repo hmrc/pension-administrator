@@ -49,6 +49,7 @@ object MinimalDetails {
   )
 
   implicit val defaultWrites : Writes[MinimalDetails] = Json.writes[MinimalDetails]
+  implicit val defaultReads :  Reads[MinimalDetails] = Json.reads[MinimalDetails]
 }
 
 case class IndividualDetails(

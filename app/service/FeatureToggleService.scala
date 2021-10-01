@@ -17,7 +17,7 @@
 package service
 
 import models.FeatureToggle._
-import models.FeatureToggleName.Migration
+import models.FeatureToggleName.{Migration, PsaMinimalDetails}
 import models._
 import play.api.cache.AsyncCacheApi
 import repositories.AdminDataRepository
@@ -34,7 +34,8 @@ class FeatureToggleService @Inject()(
   private val cacheValidFor: FiniteDuration = Duration(2, Seconds)
 
   private val defaults: Seq[FeatureToggle] = Seq(
-    Disabled(Migration)
+    Disabled(Migration),
+    Disabled(PsaMinimalDetails)
   )
 
   private def addDefaults(fromDb: Seq[FeatureToggle]): Seq[FeatureToggle] = {

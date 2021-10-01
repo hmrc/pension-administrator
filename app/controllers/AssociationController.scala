@@ -17,22 +17,27 @@
 package controllers
 
 import connectors.AssociationConnector
-import javax.inject.Inject
-import models.{MinimalDetails, AcceptedInvitation}
+import models.FeatureToggle.Enabled
+import models.FeatureToggleName.PsaMinimalDetails
+import models.{AcceptedInvitation, MinimalDetails}
 import play.api.Logger
-import play.api.libs.json.Json
-import play.api.mvc.Result
-import play.api.mvc.{ControllerComponents, RequestHeader, AnyContent, Action}
+import play.api.libs.json.{JsError, JsSuccess, Json}
+import play.api.mvc._
+import repositories.MinimalDetailsCacheRepository
+import service.FeatureToggleService
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.{AuthRetrievals, ErrorHandler}
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class AssociationController @Inject()(
                                        associationConnector: AssociationConnector,
+                                       minimalDetailsCacheRepository: MinimalDetailsCacheRepository,
+                                       featureToggleService: FeatureToggleService,
                                        retrievals: AuthRetrievals,
                                        cc: ControllerComponents
                                      ) extends BackendController(cc) with ErrorHandler {
@@ -85,7 +90,8 @@ class AssociationController @Inject()(
   def getEmail: Action[AnyContent] = Action.async {
     implicit request =>
       retrievals.getPsaId flatMap {
-        case Some(psaId) => associationConnector.getMinimalDetails(psaId.id, "psaid", "poda") map {
+        case Some(psaId) =>
+          getMinimalDetail(psaId.id, "psaid", "poda") map {
           case Right(psaDetails) => Ok(psaDetails.email)
           case Left(e) => result(e)
         }
@@ -116,10 +122,52 @@ class AssociationController @Inject()(
     implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
     psaId map {
       id =>
-        associationConnector.getMinimalDetails(id.id, "psaid", "poda")
+        getMinimalDetail(id.id, "psaid", "poda")
     } getOrElse {
       Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
     }
+  }
+
+  private def getMinimalDetail(idValue: String, idType: String, regime: String)(
+    implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
+
+    featureToggleService.get(PsaMinimalDetails).flatMap {
+        case Enabled(_) =>
+            minimalDetailsCacheRepository.get(idValue).flatMap {
+              case Some(response)=>
+                response.validate[MinimalDetails](MinimalDetails.defaultReads) match {
+                  case JsSuccess(value, _) => Future.successful(Right(value))
+                  case JsError(errors) =>
+                    getOrCacheMinimalDetails(idValue, idType, regime)
+                }
+              case _ => getOrCacheMinimalDetails(idValue, idType, regime)
+            }
+        case _ => associationConnector.getMinimalDetails(idValue, idType, regime)
+      }
+
+  }
+
+  private def getOrCacheMinimalDetails(idValue: String, idType: String, regime: String)(
+  implicit hc: HeaderCarrier, request: RequestHeader):Future[Either[HttpException, MinimalDetails]]={
+
+    associationConnector.getMinimalDetails(idValue, idType, regime) flatMap  {
+            case Right(psaDetails) => {
+              minimalDetailsCacheRepository.upsert(idValue,Json.toJson(psaDetails)).map(_ =>
+                    Right(psaDetails)
+              )
+            }
+            case Left(e) => Future.successful(Left(e))
+    }
+  }
+
+  def removeMinimalDetails: Action[AnyContent] = Action.async {
+    implicit request =>
+     {
+        request.headers.get("psaId") match {
+          case Some(psaId) => minimalDetailsCacheRepository.remove(psaId).map(_ => Ok)
+          case _ => Future.failed(new BadRequestException("Bad Request without psaId"))
+        }
+      }
   }
 
 }
