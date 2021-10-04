@@ -39,7 +39,7 @@ object FeatureToggleName {
     val asString = "migration"
   }
   case object PsaMinimalDetails extends FeatureToggleName {
-    val asString = "psa-minimal-details"
+    val asString = "psa-minimal-details-cache"
   }
 
   val toggles = Seq(Migration,PsaMinimalDetails)
