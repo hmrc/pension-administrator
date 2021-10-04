@@ -18,15 +18,19 @@ package controllers
 
 import base.JsonFileReader
 import connectors.AssociationConnector
+import models.FeatureToggle.{Disabled, Enabled}
+import models.FeatureToggleName.PsaMinimalDetails
 import models._
 import org.mockito.Matchers._
 import org.mockito.Mockito._
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
-import play.api.libs.json.{Json, JsValue}
-import play.api.mvc.{RequestHeader, AnyContentAsEmpty}
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import repositories.MinimalDetailsCacheRepository
+import service.FeatureToggleService
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
@@ -41,6 +45,51 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
   "getMinimalDetails" should "return OK when service returns successfully" in {
 
     val result = controller().getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
+
+    status(result) mustBe OK
+    contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
+  }
+
+  it should "return OK when service returns successfully with Future Toggle Enable and success form Repo" in {
+
+
+    when(mockMinimalDetailsCacheRepository.get(any())(any()))
+      .thenReturn (Future.successful {
+        Some(Json.toJson(psaMinimalDetailsIndividualUser))
+      })
+    val result = controller(isEnabledFeatureToggle = true).getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
+
+    status(result) mustBe OK
+    contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
+  }
+
+  it should "return OK when service returns successfully with Future Toggle Enable and Jserror " in {
+
+
+    when(mockMinimalDetailsCacheRepository.get(any())(any()))
+      .thenReturn(Future.successful {
+        Some(Json.obj())
+      })
+    when(mockMinimalDetailsCacheRepository.upsert(any(),any())(any()))
+      .thenReturn(Future.successful(true))
+
+    val result = controller(isEnabledFeatureToggle = true).getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
+
+    status(result) mustBe OK
+    contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
+  }
+
+  it should "return OK when service returns successfully with Future Toggle Enable and None return " in {
+
+
+    when(mockMinimalDetailsCacheRepository.get(any())(any()))
+      .thenReturn(Future.successful {
+        None
+      })
+    when(mockMinimalDetailsCacheRepository.upsert(any(),any())(any()))
+      .thenReturn(Future.successful(true))
+
+    val result = controller(isEnabledFeatureToggle = true).getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
 
     status(result) mustBe OK
     contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
@@ -67,7 +116,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     val result = controller().getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
 
     status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "not found"
+    contentAsString(result) mustBe "no match found"
   }
 
   "acceptInvitation" should "return Created when the data is posted successfully" in {
@@ -272,15 +321,26 @@ object AssociationControllerSpec extends MockitoSugar {
   val fakeAssociationConnector = new FakeAssociationConnector
 
   lazy val mockAuthRetrievals: AuthRetrievals = mock[AuthRetrievals]
+  lazy val mockMinimalDetailsCacheRepository: MinimalDetailsCacheRepository = mock[MinimalDetailsCacheRepository]
+  lazy val mockFeatureToggleService: FeatureToggleService = mock[FeatureToggleService]
+  var featureToggle: FeatureToggle = Disabled(PsaMinimalDetails)
+
+  def setFeatureToggle(isEnabled: Boolean): Unit = {
+    if (isEnabled)
+      this.featureToggle = Enabled(PsaMinimalDetails)
+    else
+      this.featureToggle = Disabled(PsaMinimalDetails)
+  }
 
   def controller(psaId: Option[PsaId] = Some(PsaId("A2123456")),
-                 affinityGroup: Option[AffinityGroup] = Some(AffinityGroup.Individual)): AssociationController = {
-
+                 affinityGroup: Option[AffinityGroup] = Some(AffinityGroup.Individual),isEnabledFeatureToggle:Boolean=false): AssociationController = {
+    setFeatureToggle(isEnabledFeatureToggle)
     when(mockAuthRetrievals.getPsaId(any(), any()))
       .thenReturn(Future.successful(psaId))
-
-    new AssociationController(fakeAssociationConnector, mockAuthRetrievals, stubControllerComponents())
-
+    when(mockFeatureToggleService.get(any()))
+      .thenReturn(Future.successful(featureToggle))
+    new AssociationController(fakeAssociationConnector,mockMinimalDetailsCacheRepository,mockFeatureToggleService,
+      mockAuthRetrievals, stubControllerComponents())
   }
 
   val acceptedInvitationRequest: JsValue = Json.parse(

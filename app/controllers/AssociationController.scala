@@ -47,9 +47,10 @@ class AssociationController @Inject()(
   def getMinimalDetails: Action[AnyContent] = Action.async {
     implicit request =>
       retrieveIdAndTypeFromHeaders{ (idValue, idType, regime) =>
-          associationConnector.findMinimalDetailsByID(idValue, idType, regime).map {
-            case Right(Some(psaDetails)) => Ok(Json.toJson(psaDetails))
-            case Right(None) => NotFound("no match found")
+        getMinimalDetail(idValue, idType, regime)
+         .map {
+            case Right(psaDetails) => Ok(Json.toJson(psaDetails))
+            case Left(ex) if ex.responseCode == NOT_FOUND => NotFound("no match found")
             case Left(e) => result(e)
           }
       }
@@ -137,8 +138,7 @@ class AssociationController @Inject()(
               case Some(response)=>
                 response.validate[MinimalDetails](MinimalDetails.defaultReads) match {
                   case JsSuccess(value, _) => Future.successful(Right(value))
-                  case JsError(errors) =>
-                    getOrCacheMinimalDetails(idValue, idType, regime)
+                  case JsError(errors) => getOrCacheMinimalDetails(idValue, idType, regime)
                 }
               case _ => getOrCacheMinimalDetails(idValue, idType, regime)
             }
@@ -158,16 +158,6 @@ class AssociationController @Inject()(
             }
             case Left(e) => Future.successful(Left(e))
     }
-  }
-
-  def removeMinimalDetails: Action[AnyContent] = Action.async {
-    implicit request =>
-     {
-        request.headers.get("psaId") match {
-          case Some(psaId) => minimalDetailsCacheRepository.remove(psaId).map(_ => Ok)
-          case _ => Future.failed(new BadRequestException("Bad Request without psaId"))
-        }
-      }
   }
 
 }

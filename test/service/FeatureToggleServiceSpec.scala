@@ -18,14 +18,14 @@ package service
 
 import akka.Done
 import base.SpecBase
-import models.FeatureToggle.{Enabled, Disabled}
-import models.FeatureToggleName.Migration
-import models.{OperationFailed, FeatureToggle, FeatureToggleName, OperationSucceeded}
+import models.FeatureToggle.{Disabled, Enabled}
+import models.FeatureToggleName.{Migration, PsaMinimalDetails}
+import models.{FeatureToggle, FeatureToggleName, OperationFailed, OperationSucceeded}
 import org.mockito.ArgumentCaptor
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.{Gen, Arbitrary}
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.MustMatchers
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.mockito.MockitoSugar
@@ -100,7 +100,8 @@ class FeatureToggleServiceSpec
     when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
 
     OUT.getAll.futureValue mustBe Seq(
-      Disabled(Migration)
+      Disabled(Migration),
+      Disabled(PsaMinimalDetails)
     )
   }
 
