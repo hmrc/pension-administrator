@@ -33,12 +33,6 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
 
-  def findMinimalDetailsByID(idValue: String, idType: String, regime: String)
-    (implicit
-      headerCarrier: HeaderCarrier,
-      ec: ExecutionContext,
-      request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]]
-
   def getMinimalDetails(idValue: String, idType: String, regime: String)
                        (implicit
                         headerCarrier: HeaderCarrier,
@@ -69,18 +63,6 @@ class AssociationConnectorImpl @Inject()(
   import AssociationConnectorImpl._
 
   private val logger = Logger(classOf[AssociationConnectorImpl])
-
-  override def findMinimalDetailsByID(idValue: String, idType: String, regime: String)
-    (implicit
-      headerCarrier: HeaderCarrier,
-      ec: ExecutionContext,
-      request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] = {
-        retrieveMinimalDetails(idValue, idType, regime)
-          .map{
-            case Left(ex) if ex.responseCode == NOT_FOUND => Right(None)
-            case response => response.map(Option(_))
-          } andThen logWarning("IF PSA minimal details")
-    }
 
   override def getMinimalDetails(idValue: String, idType: String, regime: String)
                                 (implicit
