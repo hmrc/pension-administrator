@@ -100,7 +100,7 @@ class RegistrationConnectorImpl @Inject()(
 
     val schema = "/resources/schemas/registrationWithoutIdRequest.json"
     val url = config.registerWithoutIdOrganisationUrl
-    val correlationId = headerUtils.getCorrelationId(hc.requestId.map(_.value))
+    val correlationId = headerUtils.getCorrelationId(None)
 
     val registerWithNoIdData = Json.toJson(registerData)(OrganisationRegistrant.writesOrganisationRegistrantRequest(correlationId))
 
@@ -124,7 +124,7 @@ class RegistrationConnectorImpl @Inject()(
                                           request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = {
     val schema = "/resources/schemas/registrationWithoutIdRequest.json"
     val url = config.registerWithoutIdIndividualUrl
-    val correlationId = headerUtils.getCorrelationId(hc.requestId.map(_.value))
+    val correlationId = headerUtils.getCorrelationId(None)
 
     val body = Json.toJson(registrationRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(correlationId))
 
