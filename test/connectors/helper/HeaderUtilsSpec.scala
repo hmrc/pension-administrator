@@ -37,23 +37,18 @@ class HeaderUtilsSpec extends PlaySpec with MustMatchers {
     }
 
     "call getCorrelationId" must {
-
-      "return the correct CorrelationId when the request Id is more than 32 characters" in {
-        val requestId = Some("govuk-tax-4725c811-9251-4c06-9b8f-f1d84659b2dfe")
-        val result = headerUtils.getCorrelationId(requestId)
-        result mustEqual "4725c81192514c069b8ff1d84659b2df"
-      }
-
-      "return the correct CorrelationId when the request Id is less than 32 characters" in {
-        val requestId = Some("govuk-tax-4725c811-9251-4c06-9b8f-f1")
-        val result = headerUtils.getCorrelationId(requestId)
-        result mustEqual "4725c81192514c069b8ff1"
-      }
-
-      "return the correct CorrelationId when the request Id does not have gov-uk-tax or -" in {
+      "return a CorrelationId of the correct size" in {
         val requestId = Some("4725c81192514c069b8ff1")
-        val result = headerUtils.getCorrelationId(requestId)
-        result mustEqual "4725c81192514c069b8ff1"
+        val result = headerUtils.getCorrelationId
+        result.length mustEqual headerUtils.maxLengthCorrelationId
+      }
+    }
+
+    "call getCorrelationIdIF" must {
+      "return a CorrelationId of the correct size" in {
+        val requestId = Some("4725c81192514c069b8ff1")
+        val result = headerUtils.getCorrelationIdIF
+        result.length mustEqual headerUtils.maxLengthCorrelationIdIF
       }
     }
   }

@@ -54,8 +54,8 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     when(mockHeaderUtils.desHeaderWithoutCorrelationId).thenReturn(Nil)
     when(mockHeaderUtils.integrationFrameworkHeader(any())).thenReturn(Nil)
     when(mockHeaderUtils.desHeader(any())).thenReturn(Nil)
-    when(mockHeaderUtils.getCorrelationId(any())).thenReturn(testCorrelationId)
-    when(mockHeaderUtils.getCorrelationIdIF(any())).thenReturn(testCorrelationId)
+    when(mockHeaderUtils.getCorrelationId).thenReturn(testCorrelationId)
+    when(mockHeaderUtils.getCorrelationIdIF).thenReturn(testCorrelationId)
     super.beforeEach()
   }
 

@@ -17,7 +17,7 @@
 package connectors
 
 import audit._
-import com.google.inject.{ImplementedBy, Inject}
+import com.google.inject.{Inject, ImplementedBy}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.registrationnoid._
@@ -27,7 +27,7 @@ import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{HttpClient, _}
-import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+import utils.{ErrorHandler, InvalidPayloadHandler, HttpResponseHelper}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -100,7 +100,7 @@ class RegistrationConnectorImpl @Inject()(
 
     val schema = "/resources/schemas/registrationWithoutIdRequest.json"
     val url = config.registerWithoutIdOrganisationUrl
-    val correlationId = headerUtils.getCorrelationId(None)
+    val correlationId = headerUtils.getCorrelationId
 
     val registerWithNoIdData = Json.toJson(registerData)(OrganisationRegistrant.writesOrganisationRegistrantRequest(correlationId))
 
@@ -124,7 +124,7 @@ class RegistrationConnectorImpl @Inject()(
                                           request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = {
     val schema = "/resources/schemas/registrationWithoutIdRequest.json"
     val url = config.registerWithoutIdIndividualUrl
-    val correlationId = headerUtils.getCorrelationId(None)
+    val correlationId = headerUtils.getCorrelationId
 
     val body = Json.toJson(registrationRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(correlationId))
 
