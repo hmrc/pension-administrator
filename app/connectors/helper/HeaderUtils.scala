@@ -35,8 +35,7 @@ class HeaderUtils @Inject()(config: AppConfig) {
   }
 
   def desHeader(implicit hc: HeaderCarrier): Seq[(String, String)] = {
-    val requestId = getCorrelationId
-    desHeaderWithoutCorrelationId ++ Seq("CorrelationId" -> requestId)
+    desHeaderWithoutCorrelationId ++ Seq("CorrelationId" -> getCorrelationId)
   }
 
   def getCorrelationId: String = randomUUID.toString.slice(0, maxLengthCorrelationId)
