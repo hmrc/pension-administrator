@@ -19,11 +19,14 @@ package connectors
 import audit.{AuditService, PSARegistration, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
-import connectors.helper.ConnectorBehaviours
+import connectors.helper.{ConnectorBehaviours, HeaderUtils}
 import models.registrationnoid._
 import models.{SuccessResponse, User}
 import org.joda.time.LocalDate
+import org.mockito.Matchers.any
+import org.mockito.Mockito.when
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
@@ -39,12 +42,20 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
   with Matchers
   with WireMockHelper
   with EitherValues
+  with MockitoSugar
   with ConnectorBehaviours {
 
   import RegistrationConnectorSpec._
 
+  private val mockHeaderUtils = mock[HeaderUtils]
+
   override def beforeEach(): Unit = {
     auditService.reset()
+    when(mockHeaderUtils.desHeaderWithoutCorrelationId).thenReturn(Nil)
+    when(mockHeaderUtils.integrationFrameworkHeader(any())).thenReturn(Nil)
+    when(mockHeaderUtils.desHeader(any())).thenReturn(Nil)
+    when(mockHeaderUtils.getCorrelationId(any())).thenReturn(testCorrelationId)
+    when(mockHeaderUtils.getCorrelationIdIF(any())).thenReturn(testCorrelationId)
     super.beforeEach()
   }
 
@@ -52,6 +63,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
   override protected def bindings: Seq[GuiceableModule] = Seq[GuiceableModule](
     bind(classOf[AuditService]).toInstance(auditService),
+    bind(classOf[HeaderUtils]).toInstance(mockHeaderUtils),
     bind(classOf[InvalidPayloadHandler]).toInstance(invalidPayloadHandler)
   )
 
@@ -404,9 +416,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     server
       .stubFor(
         post(urlEqualTo(registerIndividualWithoutIdUrl))
-          .withHeader("Authorization", matching("^.+$"))
           .withHeader("Content-Type", equalTo("application/json"))
-          .withHeader("Environment", matching("^.+$"))
           .withRequestBody(equalToJson(Json.stringify(registerIndividualWithoutIdRequestJson)))
           .willReturn(
             aResponse()
@@ -585,9 +595,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     server
       .stubFor(
         post(urlEqualTo(registerIndividualWithoutIdUrl))
-          .withHeader("Authorization", matching("^.+$"))
           .withHeader("Content-Type", equalTo("application/json"))
-          .withHeader("Environment", matching("^.+$"))
           .withRequestBody(equalToJson(Json.stringify(registerIndividualWithoutIdRequestJson)))
           .willReturn(
             aResponse()
@@ -723,7 +731,7 @@ object RegistrationConnectorSpec {
   val auditService = new StubSuccessfulAuditService()
   val invalidPayloadHandler = new InvalidPayloadHandlerImpl(stubLogger)
 
-  implicit val hc: HeaderCarrier = HeaderCarrier(requestId = Some(RequestId(testCorrelationId)))
+  implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
   val registerWithoutIdResponse: RegisterWithoutIdResponse = RegisterWithoutIdResponse(
