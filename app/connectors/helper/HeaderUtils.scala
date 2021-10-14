@@ -18,13 +18,11 @@ package connectors.helper
 
 import com.google.inject.Inject
 import config.AppConfig
-import play.api.Logger
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.util.UUID.randomUUID
 
 class HeaderUtils @Inject()(config: AppConfig) {
-  private val logger = Logger(classOf[HeaderUtils])
   val maxLengthCorrelationId = 32
   val maxLengthCorrelationIdIF = 36
 
@@ -39,11 +37,9 @@ class HeaderUtils @Inject()(config: AppConfig) {
     desHeaderWithoutCorrelationId ++ Seq("CorrelationId" -> getCorrelationId)
   }
 
-  def getCorrelationId: String = {
-    val c = randomUUID.toString.slice(0, maxLengthCorrelationId)
-    logger.warn(s"CORRELATION ID = $c")
-    c
-  }
+  def getCorrelationId: String = randomUUID.toString
+    .replaceAll("-", "")
+    .slice(0, maxLengthCorrelationId)
 
   def integrationFrameworkHeader(implicit hc: HeaderCarrier): Seq[(String, String)] = {
     Seq("Environment" -> config.integrationframeworkEnvironment,
