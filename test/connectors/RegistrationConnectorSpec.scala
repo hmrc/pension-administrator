@@ -23,10 +23,10 @@ import connectors.helper.{ConnectorBehaviours, HeaderUtils}
 import models.registrationnoid._
 import models.{SuccessResponse, User}
 import org.joda.time.LocalDate
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
-import org.scalatestplus.mockito.MockitoSugar
+import org.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsNull, JsObject, JsValue, Json}

@@ -21,7 +21,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours
 import models._
 import org.scalatest._
-import org.scalatestplus.mockito.MockitoSugar
+import org.mockito.MockitoSugar
 import org.slf4j.event.Level
 import play.api.LoggerLike
 import play.api.inject.bind
@@ -34,6 +34,7 @@ import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import utils.{StubLogger, WireMockHelper}
 import service.FeatureToggleService
+import org.scalatest.matchers.should.Matchers
 
 class AssociationConnectorSpec extends AsyncFlatSpec
   with Matchers

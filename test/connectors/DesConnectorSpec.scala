@@ -24,7 +24,7 @@ import connectors.helper.ConnectorBehaviours
 import models.{PsaToBeRemovedFromScheme, PSTR, SchemeReferenceNumber}
 import org.joda.time.LocalDate
 import org.scalatest._
-import org.scalatestplus.mockito.MockitoSugar
+import org.mockito.MockitoSugar
 import org.slf4j.event.Level
 import play.api.http.Status._
 import play.api.inject.bind

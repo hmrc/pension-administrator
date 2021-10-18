@@ -23,9 +23,9 @@ import controllers.EmailResponseControllerSpec.fakeAuditService
 import models.enumeration.JourneyType
 import models.{AcceptedInvitation, IndividualDetails, Invitation, MinimalDetails, _}
 import org.joda.time.DateTime
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{never, times, verify, when}
-import org.scalatestplus.mockito.MockitoSugar
+import org.mockito.MockitoSugar
 import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
 import play.api.Application
 import play.api.inject.Injector

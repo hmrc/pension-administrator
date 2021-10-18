@@ -17,7 +17,7 @@
 package audit
 
 import org.scalatest.{AsyncFlatSpec, Inside, Matchers}
-import org.scalatestplus.mockito.MockitoSugar
+import org.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
