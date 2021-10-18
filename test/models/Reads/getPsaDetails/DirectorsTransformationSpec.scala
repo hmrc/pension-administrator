@@ -16,12 +16,14 @@
 
 package models.Reads.getPsaDetails
 
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 import utils.JsonTransformations.{AddressTransformer, DirectorOrPartnerTransformer, LegalStatusTransformer}
 
-class DirectorsTransformationSpec extends WordSpec with MustMatchers with OptionValues {
+class DirectorsTransformationSpec extends AnyWordSpec with Matchers with OptionValues {
 
   "A payload containing a director" must {
     "map correctly to a valid user answers director" when {

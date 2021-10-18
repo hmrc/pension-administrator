@@ -17,10 +17,12 @@
 package models.Reads
 
 import models.{InternationalAddress, PreviousAddressDetails, Samples, UkAddress}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.{JsBoolean, JsString, Json}
 
-class PreviousAddressDetailReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class PreviousAddressDetailReadsSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
   "JSON payload with previous address details" should {
     "Map to a valid previousAddressDetails object correctly" when {
       "we have a companyAddressYears flag as true" in {

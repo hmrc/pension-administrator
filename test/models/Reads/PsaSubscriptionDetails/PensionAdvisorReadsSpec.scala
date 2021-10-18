@@ -18,10 +18,12 @@ package models.Reads.PsaSubscriptionDetails
 
 import models.{CorrespondenceAddress, PensionAdvisor, PsaContactDetails}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 
-class PensionAdvisorReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
+class PensionAdvisorReadsSpec extends AnyWordSpec with Matchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A payload containing details for a pension advisor" should {
     "Map correctly to a Pension Advisor object" when {
       "We have a name" in {

@@ -21,10 +21,9 @@ import models.FeatureToggle.Enabled
 import models.FeatureToggleName.Migration
 import models.OperationSucceeded
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{times, verify, reset, when}
-import org.scalatest.BeforeAndAfterEach
 import org.mockito.MockitoSugar
-import play.api.libs.json.{Json, JsBoolean}
+import org.scalatest.BeforeAndAfterEach
+import play.api.libs.json.{JsBoolean, Json}
 import play.api.test.Helpers._
 import repositories.AdminDataRepository
 import service.FeatureToggleService

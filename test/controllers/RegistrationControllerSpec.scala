@@ -16,7 +16,8 @@
 
 package controllers
 
-import base.{JsonFileReader, SpecBase}
+import akka.stream.Materializer
+import base.SpecBase
 import connectors.RegistrationConnector
 import models._
 import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
@@ -24,10 +25,8 @@ import org.joda.time.LocalDate
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.{ArgumentCaptor, MockitoSugar}
 import org.scalacheck.Gen
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.matchers.must.Matchers
 import org.scalatest.BeforeAndAfter
-import org.scalatest.wordspec.AsyncWordSpec
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json._
@@ -52,6 +51,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
   private val mockRegistrationConnector = mock[RegistrationConnector]
 
+  implicit val mat: Materializer = app.materializer
 
   private def registrationController(retrievals: Future[_]): RegistrationController =
     new RegistrationController(

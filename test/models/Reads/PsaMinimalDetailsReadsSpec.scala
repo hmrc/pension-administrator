@@ -17,10 +17,12 @@
 package models.Reads
 
 import models.{MinimalDetails, IndividualDetails}
-import org.scalatest.{OptionValues, MustMatchers, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json._
 
-class PsaMinimalDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues {
+class PsaMinimalDetailsReadsSpec extends AnyWordSpec with Matchers with OptionValues {
 
   import PsaMinimalDetailsReadsSpec._
 

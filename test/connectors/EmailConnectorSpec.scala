@@ -18,14 +18,15 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.SendEmailRequest
-import org.scalatest.{AsyncFlatSpec, MustMatchers}
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.must.Matchers
 import play.api.http.Status
 import play.api.inject.Injector
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.WireMockHelper
 
-class EmailConnectorSpec extends AsyncFlatSpec with MustMatchers with WireMockHelper {
+class EmailConnectorSpec extends AsyncFlatSpec with Matchers with WireMockHelper {
 
   import EmailConnectorSpec._
 

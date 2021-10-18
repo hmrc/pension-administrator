@@ -22,9 +22,9 @@ import models.FeatureToggle.{Disabled, Enabled}
 import models.FeatureToggleName.PsaMinimalDetails
 import models._
 import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
-import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import org.mockito.MockitoSugar
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
@@ -38,7 +38,7 @@ import utils.AuthRetrievals
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMatchers {
+class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers {
 
   import AssociationControllerSpec._
 

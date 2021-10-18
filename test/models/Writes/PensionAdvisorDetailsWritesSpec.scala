@@ -18,17 +18,19 @@ package models.Writes
 
 import base.CommonHelper
 import models.{Samples, Reads => _, _}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.Json
 
-class PensionAdvisorDetailsWritesSpec extends WordSpec with MustMatchers with OptionValues with Samples with CommonHelper {
+class PensionAdvisorDetailsWritesSpec extends AnyWordSpec with Matchers with OptionValues with Samples with CommonHelper {
 
   "A pension advisor details object" should {
     "Map pension advisor" when {
       val result = Json.toJson(pensionAdvisorDetail)(PensionAdvisorDetail.psaUpdateWrites)
 
       Seq(
-        ("addressDetails", Json.toJson(nonUkAddressSample)(Address.updateWrites)),
+        ("addressDetails", Json.toJson(nonUkAddressSample)(InternationalAddress.updatePreviousAddressWrites)),
         ("contactDetails", Json.toJson(contactDetailsSample))
       ).foreach { testElement =>
 

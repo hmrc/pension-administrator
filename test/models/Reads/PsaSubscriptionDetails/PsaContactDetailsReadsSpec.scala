@@ -18,9 +18,11 @@ package models.Reads.PsaSubscriptionDetails
 
 import models.PsaContactDetails
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class PsaContactDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
+class PsaContactDetailsReadsSpec extends AnyWordSpec with Matchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A payload containing psa contact details" should {
     "parse to a valid tactDetails object" when {
       "we have a telephone number" in {

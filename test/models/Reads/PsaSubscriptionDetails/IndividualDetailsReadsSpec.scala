@@ -18,10 +18,12 @@ package models.Reads.PsaSubscriptionDetails
 
 import models.IndividualDetailType
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 
-class IndividualDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
+class IndividualDetailsReadsSpec extends AnyWordSpec with Matchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A psa subscription details payload containing individual details" should {
     "parse the individual details into an Individual Details object" when {
 

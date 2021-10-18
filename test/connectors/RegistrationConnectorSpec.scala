@@ -24,9 +24,11 @@ import models.registrationnoid._
 import models.{SuccessResponse, User}
 import org.joda.time.LocalDate
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
-import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.EitherValues
 import org.mockito.MockitoSugar
+import play.api.Logger
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
@@ -728,8 +730,9 @@ object RegistrationConnectorSpec {
   )
 
   val stubLogger = new StubLogger()
+  val logger = Logger(classOf[RegistrationConnectorSpec])
   val auditService = new StubSuccessfulAuditService()
-  val invalidPayloadHandler = new InvalidPayloadHandlerImpl(stubLogger)
+  val invalidPayloadHandler = new InvalidPayloadHandlerImpl(logger)
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")

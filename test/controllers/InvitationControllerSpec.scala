@@ -19,7 +19,8 @@ package controllers
 import base.JsonFileReader
 import models.{IndividualDetails, MinimalDetails}
 import org.mockito.MockitoSugar
-import org.scalatest.{AsyncFlatSpec, MustMatchers}
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.must.Matchers
 import play.api.libs.json._
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
@@ -29,7 +30,7 @@ import uk.gov.hmrc.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class InvitationControllerSpec extends AsyncFlatSpec with MustMatchers  {
+class InvitationControllerSpec extends AsyncFlatSpec with Matchers  {
 
   import InvitationControllerSpec._
 

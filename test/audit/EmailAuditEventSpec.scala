@@ -18,10 +18,11 @@ package audit
 
 import models.Sent
 import models.enumeration.JourneyType
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import uk.gov.hmrc.domain.PsaId
 
-class EmailAuditEventSpec extends FlatSpec with Matchers {
+class EmailAuditEventSpec extends AnyFlatSpec with Matchers {
 
   "EmailAuditEvent" should "output the correct map of data" in {
 

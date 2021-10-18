@@ -20,9 +20,9 @@ import akka.stream.Materializer
 import akka.util.ByteString
 import org.apache.commons.lang3.RandomUtils
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
-import org.mockito.Mockito._
 import org.mockito.MockitoSugar
-import org.scalatest.{AsyncFlatSpec, MustMatchers}
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.must.Matchers
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -38,7 +38,7 @@ import utils.testhelpers.InvitationBuilder._
 
 import scala.concurrent.Future
 
-class InvitationsCacheControllerSpec extends AsyncFlatSpec with MustMatchers with MockitoSugar {
+class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with MockitoSugar {
   val app = new GuiceApplicationBuilder().configure("run.mode" -> "Test").build()
   implicit lazy val mat: Materializer = app.materializer
   private val cc = app.injector.instanceOf[ControllerComponents]

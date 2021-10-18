@@ -19,7 +19,9 @@ package service
 import audit.{PSAChanges, PSASubscription, SchemeAuditService, StubSuccessfulAuditService}
 import base.SpecBase
 import models.PensionSchemeAdministrator
-import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
+import org.scalatest.EitherValues
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty

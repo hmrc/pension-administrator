@@ -17,10 +17,12 @@
 package models.Writes
 
 import models.ContactDetails
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
-class ContactDetailsWritesSpec extends WordSpec with MustMatchers with OptionValues {
+class ContactDetailsWritesSpec extends AnyWordSpec with Matchers with OptionValues {
   "A contact details object" should {
     "serialize correctly to a valid des payload" when {
       val contactDetails = ContactDetails("16342346",None,None,"test@test.com")

@@ -19,6 +19,7 @@ package audit
 import base.SpecBase
 import play.api.libs.json.Json
 
+
 class SchemeAuditServiceSpec extends SpecBase {
 
   "getName" should {

@@ -16,14 +16,16 @@
 
 package connectors
 
-import audit.{StubSuccessfulAuditService, AuditService}
+import audit.{AuditService, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import connectors.helper.ConnectorBehaviours
 import models.SchemeReferenceNumber
-import org.scalatest._
 import org.mockito.MockitoSugar
+import org.scalatest.{EitherValues, OptionValues, RecoverMethods}
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.LoggerLike
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
@@ -32,7 +34,7 @@ import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import service.FeatureToggleService
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http.{UpstreamErrorResponse, BadRequestException, NotFoundException, HeaderCarrier}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, UpstreamErrorResponse}
 import utils.{StubLogger, WireMockHelper}
 
 class SchemeConnectorSpec extends AsyncFlatSpec

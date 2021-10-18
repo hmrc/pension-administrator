@@ -18,10 +18,12 @@ package models.Writes
 
 import base.JsonFileReader
 import models.{PensionSchemeAdministrator, PreviousAddressDetails, Samples}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
-class PensionSchemeAdministratorWritesSpec extends WordSpec with MustMatchers with OptionValues with Samples with JsonFileReader {
+class PensionSchemeAdministratorWritesSpec extends AnyWordSpec with Matchers with OptionValues with Samples with JsonFileReader {
   "An object of a Pension Scheme Administrator" should {
     Seq("director", "partner").foreach { personType =>
 

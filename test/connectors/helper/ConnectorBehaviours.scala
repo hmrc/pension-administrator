@@ -18,7 +18,9 @@ package connectors.helper
 
 import com.github.tomakehurst.wiremock.client.MappingBuilder
 import com.github.tomakehurst.wiremock.client.WireMock._
-import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
+import org.scalatest.EitherValues
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.test.Helpers._
 import uk.gov.hmrc.http._
 import utils.WireMockHelper

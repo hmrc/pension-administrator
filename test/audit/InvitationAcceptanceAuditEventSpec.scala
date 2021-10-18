@@ -17,11 +17,12 @@
 package audit
 
 import models.{AcceptedInvitation, PensionAdviserDetails, UkAddress}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.Json
 import uk.gov.hmrc.domain.PsaId
 
-class InvitationAcceptanceAuditEventSpec extends FlatSpec with Matchers {
+class InvitationAcceptanceAuditEventSpec extends AnyFlatSpec with Matchers {
 
   "InvitationAcceptanceAuditEvent" should "output the correct map of data" in {
 

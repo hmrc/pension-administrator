@@ -20,8 +20,9 @@ import audit._
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours
 import models._
-import org.scalatest._
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.mockito.MockitoSugar
+import org.scalatest.{EitherValues, OptionValues}
 import org.slf4j.event.Level
 import play.api.LoggerLike
 import play.api.inject.bind

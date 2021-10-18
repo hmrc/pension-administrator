@@ -21,14 +21,12 @@ import base.SpecBase
 import models.FeatureToggle.{Disabled, Enabled}
 import models.FeatureToggleName.{Migration, PsaMinimalDetails}
 import models.{FeatureToggle, FeatureToggleName, OperationFailed, OperationSucceeded}
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.{ArgumentCaptor, MockitoSugar}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.MustMatchers
 import org.scalatest.concurrent.ScalaFutures
-import org.mockito.MockitoSugar
+import org.scalatest.matchers.must.Matchers
 import play.api.cache.AsyncCacheApi
 import repositories.AdminDataRepository
 
@@ -41,7 +39,7 @@ class FeatureToggleServiceSpec
   extends SpecBase
     with MockitoSugar
     with ScalaFutures
-    with MustMatchers {
+    with Matchers {
 
   implicit private val arbitraryFeatureToggleName: Arbitrary[FeatureToggleName] =
     Arbitrary {

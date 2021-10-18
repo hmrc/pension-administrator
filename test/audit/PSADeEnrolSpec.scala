@@ -16,11 +16,12 @@
 
 package audit
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.Json
 import play.api.test.Helpers._
 
-class PSADeEnrolSpec extends FlatSpec with Matchers {
+class PSADeEnrolSpec extends AnyFlatSpec with Matchers {
 
   private val psaId: String = "psa-id"
   private val status: Int = OK

@@ -16,10 +16,11 @@
 
 package audit
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.Json
 
-class PSAChangesSpec extends FlatSpec with Matchers {
+class PSAChangesSpec extends AnyFlatSpec with Matchers {
 
   private val legalStatus = "aa"
   private val requestJson = Json.obj("abc" -> "def")

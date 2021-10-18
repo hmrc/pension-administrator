@@ -17,12 +17,13 @@
 package models.registrationnoid
 
 import org.joda.time.LocalDate
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import play.api.Logger
 import play.api.libs.json.{JsResultException, JsValue, Json}
 import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl}
 
-class RegistrationNoIdIndividualRequestSpec extends FlatSpec with Matchers {
+class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
 
   import RegistrationNoIdIndividualRequestSpec._
 
@@ -174,6 +175,8 @@ object RegistrationNoIdIndividualRequestSpec {
 
   val expectedResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890")
 
-  val invalidPayloadHandler: InvalidPayloadHandler = new InvalidPayloadHandlerImpl(Logger)
+  val logger = Logger(classOf[RegistrationNoIdIndividualRequestSpec])
+
+  val invalidPayloadHandler: InvalidPayloadHandler = new InvalidPayloadHandlerImpl(logger)
 
 }

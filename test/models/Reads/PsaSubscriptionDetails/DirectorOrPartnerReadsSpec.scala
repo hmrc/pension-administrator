@@ -17,11 +17,13 @@
 package models.Reads.PsaSubscriptionDetails
 
 import models.{CorrespondenceAddress, CorrespondenceDetails, DirectorOrPartner}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
 
 
-class DirectorOrPartnerReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
+class DirectorOrPartnerReadsSpec extends AnyWordSpec with Matchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A payload containing details for a Director or a Partner" should {
     "parse correctly to a PsaDirectorOrPartnerDetails object" when {
       "we have an entity type" in {

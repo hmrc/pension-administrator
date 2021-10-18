@@ -20,7 +20,8 @@ import akka.stream.Materializer
 import base.{JsonFileReader, SpecBase}
 import models.PsaToBeRemovedFromScheme
 import org.joda.time.LocalDate
-import org.scalatest.{AsyncFlatSpec, MustMatchers}
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.must.Matchers
 import play.api.http.Status.BAD_GATEWAY
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json.{JsResultException, JsValue, Json}
@@ -35,7 +36,7 @@ import utils.testhelpers.PsaSubscriptionBuilder._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with MustMatchers {
+class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers {
 
   import SchemeControllerSpec._
 

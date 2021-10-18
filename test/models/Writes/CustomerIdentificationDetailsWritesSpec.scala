@@ -17,11 +17,13 @@
 package models.Writes
 
 import models.{PensionSchemeAdministrator, Samples}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
 
-class CustomerIdentificationDetailsWritesSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class CustomerIdentificationDetailsWritesSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
   "A Pension Scheme Administrator" when {
     "Containing customer identification details" when {
       "Parse correctly to a valid customer identification details payload" when {

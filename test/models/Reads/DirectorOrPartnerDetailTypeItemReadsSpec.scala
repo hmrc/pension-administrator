@@ -17,11 +17,13 @@
 package models.Reads
 
 import models.{InternationalAddress, PreviousAddressDetails, Samples, Reads => _, _}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json._
 
 
-class DirectorOrPartnerDetailTypeItemReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class DirectorOrPartnerDetailTypeItemReadsSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
 
   import DirectorOrPartnerDetailTypeItemReadsSpec._
 

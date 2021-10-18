@@ -17,11 +17,11 @@
 package connectors.helper
 
 import config.AppConfig
-import org.scalatest.MustMatchers
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.PlaySpec
 import play.api.inject.guice.GuiceApplicationBuilder
 
-class HeaderUtilsSpec extends PlaySpec with MustMatchers {
+class HeaderUtilsSpec extends PlaySpec with Matchers {
 
   import HeaderUtilsSpec._
 

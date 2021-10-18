@@ -24,9 +24,10 @@ import models.enumeration.JourneyType
 import models.{AcceptedInvitation, IndividualDetails, Invitation, MinimalDetails, _}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{never, times, verify, when}
 import org.mockito.MockitoSugar
-import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers, OptionValues}
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{EitherValues, OptionValues}
 import play.api.Application
 import play.api.inject.Injector
 import play.api.inject.guice.GuiceApplicationBuilder
