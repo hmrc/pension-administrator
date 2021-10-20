@@ -62,7 +62,7 @@ class AssociationConnectorImpl @Inject()(
 
   import AssociationConnectorImpl._
 
-  private val logger = Logger(classOf[AssociationConnectorImpl])
+  private val logger = Logger(classOf[AssociationConnector])
 
   override def getMinimalDetails(idValue: String, idType: String, regime: String)
                                 (implicit

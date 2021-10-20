@@ -55,7 +55,7 @@ class RegistrationConnectorImpl @Inject()(
                                            invalidPayloadHandler: InvalidPayloadHandler
                                          ) extends RegistrationConnector with HttpResponseHelper with ErrorHandler with RegistrationAuditService {
 
-  private val logger = Logger(classOf[RegistrationConnectorImpl])
+  private val logger = Logger(classOf[RegistrationConnector])
 
   private def desHeaderCarrierWithoutCorrelationId: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeaderWithoutCorrelationId)
 

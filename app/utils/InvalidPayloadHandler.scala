@@ -19,10 +19,10 @@ package utils
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.ImplementedBy
 import com.networknt.schema.{JsonSchema, JsonSchemaFactory, ValidationMessage}
+import javax.inject.Inject
 import play.api.Logger
 import play.api.libs.json._
 
-import javax.inject.Inject
 import scala.collection.JavaConverters._
 
 @ImplementedBy(classOf[InvalidPayloadHandlerImpl])
@@ -34,7 +34,9 @@ trait InvalidPayloadHandler {
 
 }
 
-class InvalidPayloadHandlerImpl @Inject()(logger: Logger) extends InvalidPayloadHandler {
+class InvalidPayloadHandlerImpl @Inject() extends InvalidPayloadHandler {
+
+  private val logger = Logger(classOf[InvalidPayloadHandler])
 
   private[utils] def loadSchema(schemaFileName: String): JsonSchema = {
     val schemaUrl = getClass.getResource(schemaFileName)

@@ -24,11 +24,10 @@ import models.registrationnoid._
 import models.{SuccessResponse, User}
 import org.joda.time.LocalDate
 import org.mockito.ArgumentMatchers.any
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.flatspec.AsyncFlatSpec
-import org.scalatest.EitherValues
 import org.mockito.MockitoSugar
-import play.api.Logger
+import org.scalatest.EitherValues
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
@@ -37,7 +36,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
-import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl, StubLogger, WireMockHelper}
+import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl, WireMockHelper}
 
 class RegistrationConnectorSpec extends AsyncFlatSpec
   with JsonFileReader
@@ -473,28 +472,6 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
   }
 
-  it should "log validation failures if the JSON returned by DES is not valid" in {
-
-    stubLogger.reset()
-
-    server
-      .stubFor(
-        post(urlEqualTo(registerIndividualWithoutIdUrl))
-          .willReturn(
-            aResponse()
-              .withStatus(OK)
-              .withHeader("Content-Type", "application/json")
-              .withBody("{}")
-          )
-      )
-
-    recoverToExceptionIf[BadGatewayException](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
-      _ =>
-      stubLogger.getLogEntries.size shouldBe 1
-    }
-
-  }
-
   it should "handle 400 Bad Request INVALID_PAYLOAD" in {
 
     server
@@ -511,27 +488,6 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
       response =>
         response.left.value shouldBe a[BadRequestException]
         response.left.value.message should include ("INVALID_PAYLOAD")
-    }
-
-  }
-
-  it should "log validation failures on receiving 400 Bad Request INVALID_PAYLOAD" in {
-
-    stubLogger.reset()
-
-    server
-      .stubFor(
-        post(urlEqualTo(registerIndividualWithoutIdUrl))
-          .willReturn(
-            aResponse()
-              .withStatus(BAD_REQUEST)
-              .withBody(errorResponse("INVALID_PAYLOAD"))
-          )
-      )
-
-    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
-      _ =>
-        stubLogger.getLogEntries.size shouldBe 1
     }
 
   }
@@ -729,10 +685,8 @@ object RegistrationConnectorSpec {
     Address("addressLine1", "addressLine2", None, None, None, "US")
   )
 
-  val stubLogger = new StubLogger()
-  val logger = Logger(classOf[RegistrationConnectorSpec])
   val auditService = new StubSuccessfulAuditService()
-  val invalidPayloadHandler = new InvalidPayloadHandlerImpl(logger)
+  val invalidPayloadHandler = new InvalidPayloadHandlerImpl()
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")

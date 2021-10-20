@@ -20,22 +20,20 @@ import audit._
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours
 import models._
-import org.scalatest.flatspec.AsyncFlatSpec
 import org.mockito.MockitoSugar
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.{EitherValues, OptionValues}
-import org.slf4j.event.Level
-import play.api.LoggerLike
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import service.FeatureToggleService
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
-import utils.{StubLogger, WireMockHelper}
-import service.FeatureToggleService
-import org.scalatest.matchers.should.Matchers
+import utils.WireMockHelper
 
 class AssociationConnectorSpec extends AsyncFlatSpec
   with Matchers
@@ -80,7 +78,6 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
   private implicit val rh: RequestHeader = FakeRequest("", "")
   private implicit val hc: HeaderCarrier = HeaderCarrier()
-  private val logger = new StubLogger()
   private val psaMinimalDetailsUrl = s"/pension-online/psa-min-details/poda/psaid/$psaId"
   private val createPsaAssociationUrl = s"/pension-online/association/pods/$pstr"
   private val mockFeatureToggleService = mock[FeatureToggleService]
@@ -101,7 +98,6 @@ class AssociationConnectorSpec extends AsyncFlatSpec
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
       bind[AuditService].toInstance(auditService),
-      bind[LoggerLike].toInstance(logger),
       bind[FeatureToggleService].toInstance(mockFeatureToggleService)
     )
 
@@ -191,11 +187,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    logger.reset()
-
     connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
-      logger.getLogEntries.size shouldBe 1
-      logger.getLogEntries.head.level shouldBe Level.WARN
       response.left.value shouldBe a[BadRequestException]
       response.left.value.message shouldBe "INVALID PAYLOAD"
     }
