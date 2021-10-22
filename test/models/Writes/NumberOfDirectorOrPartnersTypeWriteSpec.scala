@@ -17,10 +17,12 @@
 package models.Writes
 
 import models.NumberOfDirectorOrPartnersType
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
-class NumberOfDirectorOrPartnersTypeWriteSpec extends WordSpec with MustMatchers with OptionValues {
+class NumberOfDirectorOrPartnersTypeWriteSpec extends AnyWordSpec with Matchers with OptionValues {
   "A NumberOfDirectorOrPartnersType object" should {
     "Correclty serialize to a valid DES payload" when {
       val numberOfDirectors = NumberOfDirectorOrPartnersType(Some(true),Some(false))

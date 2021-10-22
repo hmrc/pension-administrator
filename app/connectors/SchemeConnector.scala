@@ -53,7 +53,7 @@ class SchemeConnectorImpl @Inject()(
                                      config: AppConfig
                                    ) extends SchemeConnector with HttpResponseHelper with ErrorHandler {
 
-  private val logger = Logger(classOf[SchemeConnectorImpl])
+  private val logger = Logger(classOf[SchemeConnector])
 
   override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)
                                   (implicit headerCarrier: HeaderCarrier,

@@ -16,15 +16,16 @@
 
 package connectors
 
-import audit.{StubSuccessfulAuditService, AuditService}
+import audit.{AuditService, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import connectors.helper.ConnectorBehaviours
 import models.SchemeReferenceNumber
-import org.scalatest._
-import org.scalatestplus.mockito.MockitoSugar
-import play.api.LoggerLike
+import org.mockito.MockitoSugar
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{EitherValues, OptionValues, RecoverMethods}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json._
@@ -32,8 +33,8 @@ import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import service.FeatureToggleService
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http.{UpstreamErrorResponse, BadRequestException, NotFoundException, HeaderCarrier}
-import utils.{StubLogger, WireMockHelper}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, UpstreamErrorResponse}
+import utils.WireMockHelper
 
 class SchemeConnectorSpec extends AsyncFlatSpec
   with Matchers
@@ -52,7 +53,6 @@ class SchemeConnectorSpec extends AsyncFlatSpec
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
       bind[AuditService].toInstance(auditService),
-      bind[LoggerLike].toInstance(logger),
       bind[FeatureToggleService].toInstance(mockFeatureToggleService)
     )
 
@@ -145,7 +145,6 @@ object SchemeConnectorSpec extends JsonFileReader {
   private implicit val rh: RequestHeader = FakeRequest("", "")
 
   val auditService = new StubSuccessfulAuditService()
-  val logger = new StubLogger()
   val checkForAssociationUrl = "/pensions-scheme/is-psa-associated"
   val listSchemesUrl = "/pensions-scheme/list-of-schemes"
   val srn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")

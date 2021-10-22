@@ -17,10 +17,12 @@
 package models.Writes
 
 import models.{Address, InternationalAddress, UkAddress}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
-class AddressWritesSpec extends WordSpec with MustMatchers with OptionValues {
+class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
 
   "An updated address using updateWrites" should {
     "parse correctly to a valid DES format" when {

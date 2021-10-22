@@ -16,15 +16,17 @@
 
 package audit
 
-import org.scalatest.{AsyncFlatSpec, Inside, Matchers}
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.Inside
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.config.AuditingConfig
-import uk.gov.hmrc.play.audit.http.connector.{AuditChannel, AuditConnector, AuditCounter, AuditResult}
+import uk.gov.hmrc.play.audit.http.connector.{AuditChannel, AuditConnector, AuditResult, DatastreamMetrics}
 import uk.gov.hmrc.play.audit.model.DataEvent
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -86,7 +88,7 @@ object FakeAuditConnector extends AuditConnector {
 
   override def auditChannel: AuditChannel = ???
 
-  override def auditCounter: AuditCounter = ???
+  override def datastreamMetrics: DatastreamMetrics = ???
 }
 
 case class TestAuditEvent(payload: String) extends AuditEvent {

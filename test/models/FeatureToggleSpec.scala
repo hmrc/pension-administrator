@@ -18,15 +18,17 @@ package models
 
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.{EitherValues, FreeSpec, MustMatchers}
+import org.scalatest.EitherValues
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
 import play.api.mvc.PathBindable
 
 class FeatureToggleSpec
-  extends FreeSpec
+  extends AnyFreeSpec
     with ScalaCheckPropertyChecks
-    with MustMatchers
+    with Matchers
     with EitherValues {
 
   implicit private val arbitraryFeatureToggleName: Arbitrary[FeatureToggleName] = Arbitrary {

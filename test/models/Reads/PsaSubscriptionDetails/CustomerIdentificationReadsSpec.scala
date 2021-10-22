@@ -17,11 +17,13 @@
 package models.Reads.PsaSubscriptionDetails
 
 import models.CustomerIdentification
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
 
 
-class CustomerIdentificationReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
+class CustomerIdentificationReadsSpec extends AnyWordSpec with Matchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A valid payload with Customer Identification Details" should {
     "validate to a Customer Identification Details object" when {
       "we have a legal status" in {

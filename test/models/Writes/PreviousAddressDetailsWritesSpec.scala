@@ -17,10 +17,12 @@
 package models.Writes
 
 import models.{PreviousAddressDetails, Samples, UkAddress}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
-class PreviousAddressDetailsWritesSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class PreviousAddressDetailsWritesSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
 
   "A previous address details object" should {
     "Map previosaddressdetails inner object as `previousaddresdetail`" when {

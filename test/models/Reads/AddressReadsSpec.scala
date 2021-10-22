@@ -18,11 +18,13 @@ package models.Reads
 
 import models._
 import org.scalacheck.Gen
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json._
 
 
-class AddressReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class AddressReadsSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
   "A JSON Payload with an address" should {
     "Map correctly to an Address type" when {
       "we have an incoming address coming from DES" when {

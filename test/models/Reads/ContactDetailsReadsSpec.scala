@@ -17,10 +17,12 @@
 package models.Reads
 
 import models.ContactDetails
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.{JsBoolean, Json}
 
-class ContactDetailsReadsSpec extends WordSpec with MustMatchers with OptionValues {
+class ContactDetailsReadsSpec extends AnyWordSpec with Matchers with OptionValues {
 
   "A JSON payload containing contact details" should {
     "Map to a valid ContactDetails object" when {

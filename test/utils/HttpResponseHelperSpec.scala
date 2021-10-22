@@ -16,19 +16,19 @@
 
 package utils
 
-import org.mockito.Matchers._
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers._
+import org.mockito.MockitoSugar
 import org.scalacheck.Gen
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import org.scalatest.{FlatSpec, Matchers}
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json, OFormat}
 import uk.gov.hmrc.http._
 
 // scalastyle:off magic.number
 
-class HttpResponseHelperSpec extends FlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockitoSugar {
+class HttpResponseHelperSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockitoSugar {
 
   import HttpResponseHelperSpec._
 
@@ -116,7 +116,7 @@ class HttpResponseHelperSpec extends FlatSpec with Matchers with ScalaCheckDrive
     val json = Json.parse("{}")
     val onInvalid = mock[OnInvalidFunction]
 
-    doNothing().when(onInvalid).onInvalid(any())
+    doNothing.when(onInvalid).onInvalid(any())
 
     a[BadGatewayException] shouldBe thrownBy {
       fixture.validateJson(json, testMethod, testUrl, onInvalid.onInvalid)

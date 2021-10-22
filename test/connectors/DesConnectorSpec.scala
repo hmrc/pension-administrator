@@ -19,13 +19,13 @@ package connectors
 import audit._
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
-import connectors.DesConnectorSpec.{removalDate, pstr, psaId}
+import connectors.DesConnectorSpec.{psaId, pstr, removalDate}
 import connectors.helper.ConnectorBehaviours
-import models.{PsaToBeRemovedFromScheme, PSTR, SchemeReferenceNumber}
+import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
 import org.joda.time.LocalDate
-import org.scalatest._
-import org.scalatestplus.mockito.MockitoSugar
-import org.slf4j.event.Level
+import org.mockito.MockitoSugar
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.{EitherValues, OptionValues, RecoverMethods}
 import play.api.http.Status._
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
@@ -33,10 +33,9 @@ import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import play.api.test.Helpers.NOT_FOUND
-import play.api.LoggerLike
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.{StubLogger, WireMockHelper, FakeDesConnector}
+import utils.{FakeDesConnector, WireMockHelper}
 
 class DesConnectorSpec extends AsyncFlatSpec
   with WireMockHelper
@@ -70,14 +69,12 @@ class DesConnectorSpec extends AsyncFlatSpec
   val ceasePsaFromSchemeUrl = s"/pension-online/cease-scheme/pods/$pstr"
 
   val auditService = new StubSuccessfulAuditService()
-  val logger = new StubLogger()
 
   override protected def portConfigKey: String = "microservice.services.if-hod.port"
 
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
-      bind[AuditService].toInstance(auditService),
-      bind[LoggerLike].toInstance(logger)
+      bind[AuditService].toInstance(auditService)
     )
 
   lazy val connector: DesConnector = injector.instanceOf[DesConnector]
@@ -161,11 +158,11 @@ class DesConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    logger.reset()
+
     connector.removePSA(removePsaDataModel).map {
-      _ =>
-        logger.getLogEntries.size shouldBe 1
-        logger.getLogEntries.head.level shouldBe Level.WARN
+      response =>
+        response.left.value shouldBe a[BadRequestException]
+        response.left.value.message should include("INVALID_PAYLOAD")
     }
   }
 
@@ -285,5 +282,4 @@ object DesConnectorSpec extends JsonFileReader {
   val variationPsaUrl = s"/pension-online/psa-variation/psaid/$psaId"
 
   val auditService = new StubSuccessfulAuditService()
-  val logger = new StubLogger()
 }

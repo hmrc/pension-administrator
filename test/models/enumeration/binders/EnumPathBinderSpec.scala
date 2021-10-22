@@ -17,9 +17,11 @@
 package models.enumeration.binders
 
 import models.enumeration.binders.EnumPathBinderSpec.DummyEnum
-import org.scalatest.{EitherValues, MustMatchers, WordSpec}
+import org.scalatest.EitherValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class EnumPathBinderSpec extends WordSpec with MustMatchers with EitherValues {
+class EnumPathBinderSpec extends AnyWordSpec with Matchers with EitherValues {
 
   "EnumPathBinder" must {
 

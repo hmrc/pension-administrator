@@ -17,13 +17,15 @@
 package models.Reads.getPsaDetails
 
 import models.Reads.getPsaDetails.CustomerIdentificationDetailsTypeTransformationSpec.updateJson
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 import utils.JsonTransformations.{AddressTransformer, LegalStatusTransformer}
 
 
-class AddressTransformationSpec extends WordSpec with MustMatchers with OptionValues {
+class AddressTransformationSpec extends AnyWordSpec with Matchers with OptionValues {
 
   "A DES payload containing an address" must {
     lazy val transformedJson = desAddress.transform(addressTransformer.getAddress(__ \ 'testAddress, __ \ 'testAddressFromDes)).asOpt.value

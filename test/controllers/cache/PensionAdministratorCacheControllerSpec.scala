@@ -20,10 +20,10 @@ import akka.stream.Materializer
 import akka.util.ByteString
 import org.apache.commons.lang3.RandomUtils
 import org.joda.time.DateTime
-import org.mockito.Matchers.{eq => eqTo, _}
-import org.mockito.Mockito._
-import org.scalatest.{MustMatchers, WordSpec}
-import org.scalatestplus.mockito.MockitoSugar
+import org.mockito.ArgumentMatchers.{eq => eqTo, _}
+import org.mockito.MockitoSugar
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json.Json
@@ -37,8 +37,8 @@ import uk.gov.hmrc.http.UnauthorizedException
 import scala.concurrent.Future
 
 class PensionAdministratorCacheControllerSpec
-  extends WordSpec
-    with MustMatchers
+  extends AnyWordSpec
+    with Matchers
     with MockitoSugar
     with Injecting
     with GuiceOneAppPerSuite {

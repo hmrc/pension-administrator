@@ -19,10 +19,10 @@ package controllers.cache
 import akka.stream.Materializer
 import akka.util.ByteString
 import org.apache.commons.lang3.RandomUtils
-import org.mockito.Matchers.{eq => eqTo, _}
-import org.mockito.Mockito._
-import org.scalatest.{AsyncWordSpec, MustMatchers}
-import org.scalatestplus.mockito.MockitoSugar
+import org.mockito.ArgumentMatchers.{eq => eqTo, _}
+import org.mockito.MockitoSugar
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AsyncWordSpec
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.ControllerComponents
@@ -34,7 +34,7 @@ import uk.gov.hmrc.http.UnauthorizedException
 
 import scala.concurrent.Future
 
-class PSADataCacheControllerSpec extends AsyncWordSpec with MustMatchers with MockitoSugar {
+class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with MockitoSugar {
   private val app = new GuiceApplicationBuilder().configure("run.mode" -> "Test").build()
   implicit lazy val mat: Materializer = app.materializer
   private val cc = app.injector.instanceOf[ControllerComponents]

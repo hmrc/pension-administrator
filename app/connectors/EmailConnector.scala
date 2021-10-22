@@ -45,7 +45,7 @@ class EmailConnectorImpl @Inject()(
                                     http: HttpClient
                                   ) extends EmailConnector {
 
-  private val logger = Logger(classOf[EmailConnectorImpl])
+  private val logger = Logger(classOf[EmailConnector])
 
   override def sendEmail(email: SendEmailRequest)
                         (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EmailStatus] = {

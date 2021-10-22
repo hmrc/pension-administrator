@@ -17,10 +17,12 @@
 package models.Writes
 
 import models.{PensionSchemeAdministratorDeclarationType, Samples}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
-class DeclarationWritesSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class DeclarationWritesSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
   "An updated declaration" should {
     "Map correctly to a valid des payload" when {
       val declaration = PensionSchemeAdministratorDeclarationType(true,true,true,true,Some(true),Some(true),true, Some(pensionAdviserSample))

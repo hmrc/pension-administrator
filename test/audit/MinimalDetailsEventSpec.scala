@@ -16,10 +16,11 @@
 
 package audit
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.Json
 
-class MinimalDetailsEventSpec extends FlatSpec with Matchers {
+class MinimalDetailsEventSpec extends AnyFlatSpec with Matchers {
 
   "MinimalPSADetails.details" should "output the correct map of data" in {
 

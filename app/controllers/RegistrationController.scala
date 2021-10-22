@@ -67,7 +67,7 @@ class RegistrationController @Inject()(
       retrieveUser { user =>
         request.body.asJson match {
           case Some(jsBody) =>
-            Try(stripUtr(Some("UTR"), Some((jsBody \ "utr").convertTo[String])), jsBody.convertTo[Organisation]) match {
+            Try((stripUtr(Some("UTR"), Some((jsBody \ "utr").convertTo[String])), jsBody.convertTo[Organisation])) match {
               case Success((Some(utr), org)) =>
                 val orgWithInvalidCharactersRemoved = org.copy( organisationName =
                   org.organisationName.replaceAll("""[^a-zA-Z0-9- '&\/]+""", ""))

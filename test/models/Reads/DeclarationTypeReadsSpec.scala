@@ -18,11 +18,13 @@ package models.Reads
 
 import models.Samples
 import models.{Reads => _, _}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.{Json, _}
 
 
-class DeclarationTypeReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
 
   "A JSON Payload containing a declaration" should {
     "Map correctly a Pension Scheme Administrator Declaration Type" when {

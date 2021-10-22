@@ -17,10 +17,12 @@
 package models.Reads
 
 import models.{PensionSchemeAdministrator, Samples, Reads => _}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.{Json, _}
 
-class PensionSchemeAdministratorReadsCompanySpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class PensionSchemeAdministratorReadsCompanySpec extends AnyWordSpec with Matchers with OptionValues with Samples {
 
   "JSON Payload of a PSA" should {
     "Map to a valid PensionSchemeAdministrator object" when {

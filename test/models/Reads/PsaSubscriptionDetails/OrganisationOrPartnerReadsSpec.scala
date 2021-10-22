@@ -18,10 +18,12 @@ package models.Reads.PsaSubscriptionDetails
 
 import models.OrganisationOrPartner
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 
-class OrganisationOrPartnerReadsSpec extends WordSpec with MustMatchers with OptionValues with PsaSubscriptionDetailsGenerators {
+class OrganisationOrPartnerReadsSpec extends AnyWordSpec with Matchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A valid payload with Organisation or Partner Details" should {
     "validate to a Organisation or Partner Details object" when {
       "we have a name" in {

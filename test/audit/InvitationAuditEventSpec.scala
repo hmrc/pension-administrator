@@ -18,10 +18,11 @@ package audit
 
 import models._
 import org.joda.time.DateTime
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import uk.gov.hmrc.domain.PsaId
 
-class InvitationAuditEventSpec extends FlatSpec with Matchers {
+class InvitationAuditEventSpec extends AnyFlatSpec with Matchers {
 
   "InvitationAuditEvent" should "output the correct map of data" in {
 

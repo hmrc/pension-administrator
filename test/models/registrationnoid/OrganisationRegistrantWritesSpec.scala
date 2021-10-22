@@ -16,10 +16,11 @@
 
 package models.registrationnoid
 
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
-class OrganisationRegistrantWritesSpec extends WordSpec with MustMatchers {
+class OrganisationRegistrantWritesSpec extends AnyWordSpec with Matchers {
 
   "An OrganisationRegistrant" must {
     "parse correctly to a valid DES format" when {

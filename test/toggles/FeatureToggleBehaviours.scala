@@ -16,12 +16,13 @@
 
 package toggles
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
 import play.api.Configuration
 import play.api.inject.guice.GuiceApplicationBuilder
 
-class FeatureToggleBehaviours extends WordSpec with Matchers with GuiceOneAppPerTest {
+class FeatureToggleBehaviours extends AnyWordSpec with Matchers with GuiceOneAppPerTest {
 
   private def configuration(name: String, on: Option[Boolean]): Boolean = {
 

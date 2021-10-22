@@ -17,10 +17,12 @@
 package models.Reads
 
 import models.{OrganisationDetailType, Samples}
-import org.scalatest.{MustMatchers, OptionValues, WordSpec}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.{JsBoolean, JsString, JsValue, Json}
 
-class OrganisationDetailTypeReadsSpec extends WordSpec with MustMatchers with OptionValues with Samples {
+class OrganisationDetailTypeReadsSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
 
   import OrganisationDetailTypeReadsSpec._
 

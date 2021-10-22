@@ -16,10 +16,11 @@
 
 package audit
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.Json
 
-class PSASubscriptionSpec extends FlatSpec with Matchers {
+class PSASubscriptionSpec extends AnyFlatSpec with Matchers {
 
   "PSASubscription.details" should "output the correct map of data" in {
 
