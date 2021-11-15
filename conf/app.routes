@@ -29,7 +29,7 @@ GET           /journey-cache/psa-data/:id               controllers.cache.PSADat
 POST          /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.save(id: String)
 DELETE        /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.remove(id: String)
 
-POST          /email-response/:journeyType/*id          controllers.EmailResponseController.retrieveStatus(journeyType: JourneyType.Name, id: String)
+POST          /email-response/:journeyType/:id          controllers.EmailResponseController.retrieveStatus(journeyType: JourneyType.Name, id: String)
 POST          /invite                                   controllers.InvitationController.invite
 
 GET           /invitation/get-for-scheme                controllers.cache.InvitationsCacheController.getForScheme
