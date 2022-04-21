@@ -30,7 +30,7 @@ class EmailConnectorSpec extends AsyncFlatSpec with Matchers with WireMockHelper
 
   import EmailConnectorSpec._
 
-  override protected def portConfigKey: String = "microservice.services.email.port"
+  override protected def portConfigKeys: String = "microservice.services.email.port"
 
   "EmailConnector" must "return EmailSent when an email request is accepted by the API" in {
 

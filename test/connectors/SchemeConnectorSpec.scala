@@ -47,7 +47,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
 
   import SchemeConnectorSpec._
 
-  override protected def portConfigKey: String = "microservice.services.pensions-scheme.port"
+  override protected def portConfigKeys: String = "microservice.services.pensions-scheme.port"
   val mockFeatureToggleService: FeatureToggleService = mock[FeatureToggleService]
 
   override protected def bindings: Seq[GuiceableModule] =

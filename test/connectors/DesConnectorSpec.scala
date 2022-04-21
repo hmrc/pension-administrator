@@ -20,7 +20,7 @@ import audit._
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.DesConnectorSpec.{psaId, pstr, removalDate}
-import connectors.helper.ConnectorBehaviours
+import connectors.helper.{ConnectorBehaviours, PSASubscriptionFixture}
 import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
 import org.joda.time.LocalDate
 import org.mockito.MockitoSugar
@@ -36,6 +36,8 @@ import play.api.test.Helpers.NOT_FOUND
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.{FakeDesConnector, WireMockHelper}
+import play.api.libs.json.JodaWrites._
+
 
 class DesConnectorSpec extends AsyncFlatSpec
   with WireMockHelper
@@ -66,11 +68,16 @@ class DesConnectorSpec extends AsyncFlatSpec
     "ceaseDate" -> removalDate.toString
   )
   private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removalDate)
+
   val ceasePsaFromSchemeUrl = s"/pension-online/cease-scheme/pods/$pstr"
+
+  val registerPSAURL = "/pension-online/subscription"
+
+  val psaVariationURL = s"/pension-online/psa-variation/psaid/$psaId"
 
   val auditService = new StubSuccessfulAuditService()
 
-  override protected def portConfigKey: String = "microservice.services.if-hod.port"
+  override protected def portConfigKeys: String = "microservice.services.if-hod.port,microservice.services.des-hod.port"
 
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
@@ -78,6 +85,55 @@ class DesConnectorSpec extends AsyncFlatSpec
     )
 
   lazy val connector: DesConnector = injector.instanceOf[DesConnector]
+
+  it should "registerPSA successfully and return valid response" in {
+    val registerPsaResponseJson: JsValue =
+      Json.obj(
+        "processingDate" -> LocalDate.now,
+        "formBundle" -> "000020000000",
+        "psaId" -> "A2123456"
+      )
+    server.stubFor(
+      post(urlEqualTo(registerPSAURL))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .withRequestBody(equalToJson(Json.stringify(PSASubscriptionFixture.registerPSAValidPayload)))
+        .willReturn(
+          ok(Json.stringify(registerPsaResponseJson))
+            .withHeader("Content-Type", "application/json")
+        )
+    )
+    connector.registerPSA(PSASubscriptionFixture.registerPSAValidPayload).map{_.right.value shouldBe registerPsaResponseJson}
+  }
+
+  it should "throw exception when trying to registerPSA with invalid payload" in {
+    val thrown =  intercept[PSAValidationFailureException] {
+      connector.registerPSA(PSASubscriptionFixture.registerPSAInValidPayload)
+    }
+    assert(thrown.getMessage === "Invalid payload when registerPSA :-\n(\"#/definitions/individualDetailType/properties/dateOfBirth\"," +
+      " does not match pattern '^(((19|20)([2468][048]|[13579][26]|0[48])|2000)[-]02[-]29|((19|20)[0-9]{2}[-](0[469]|11)[-]" +
+      "(0[1-9]|1[0-9]|2[0-9]|30)|(19|20)[0-9]{2}[-](0[13578]|1[02])[-](0[1-9]|[12][0-9]|3[01])|(19|20)[0-9]{2}[-]02[-](0[1-9]|1[0-9]|2[0-8])))$)")
+  }
+
+  it should "updatePSA successfully and return valid response" in {
+    val updatePSAResponse = Json.obj("processingDate" -> LocalDate.now)
+    server.stubFor(
+      post(urlEqualTo(psaVariationURL)).
+        withHeader("Content-Type", equalTo("application/json")).
+        withRequestBody(equalToJson(Json.stringify(PSASubscriptionFixture.psaVariation))).
+        willReturn(ok(Json.stringify(updatePSAResponse))
+          withHeader("Content-Type", "application/Json")))
+    connector.updatePSA(psaId.id,PSASubscriptionFixture.psaVariation).map{_.right.value shouldBe updatePSAResponse}
+  }
+
+  it should "throw schema error when trying to updatePSA with invalid payload" in {
+    val thrown =  intercept[PSAValidationFailureException] {
+      connector.updatePSA(psaId.id, PSASubscriptionFixture.psaVariationInvalid)
+    }
+    assert(thrown.getMessage === "Invalid payload when updatePSA :-\n(\"#/definitions/individualDetailsType/properties/dateOfBirth\"," +
+      " does not match pattern '^(((19|20)([2468][048]|[13579][26]|0[48])|2000)[-]02[-]29|((19|20)[0-9]{2}[-](0[469]|11)[-]" +
+      "(0[1-9]|1[0-9]|2[0-9]|30)|(19|20)[0-9]{2}[-](0[13578]|1[02])[-](0[1-9]|[12][0-9]|3[01])|(19|20)[0-9]{2}[-]02[-](0[1-9]|1[0-9]|2[0-8])))$)")
+
+  }
 
   "Cease PSA with toggle on" should "handle OK (200)" in {
     val successResponse = FakeDesConnector.removePsaResponseJson
