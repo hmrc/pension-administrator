@@ -21,7 +21,7 @@ import config.AppConfig
 import connectors.{AssociationConnector, SchemeConnector}
 import controllers.EmailResponseControllerSpec.fakeAuditService
 import models.enumeration.JourneyType
-import models.{AcceptedInvitation, IndividualDetails, Invitation, MinimalDetails, _}
+import models._
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar
@@ -213,6 +213,17 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
       val fixture = testFixture(app)
 
       fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.fullName)) map {
+        response =>
+          verify(fixture.repository, times(1)).insert(any())(any())
+          response.right.value should equal(())
+      }
+    }
+  }
+
+   it should "match lineantly an individual when the invitation includes their middle name" in {
+    running() { app =>
+      val fixture = testFixture(app)
+      fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, "John Paul Doe")) map {
         response =>
           verify(fixture.repository, times(1)).insert(any())(any())
           response.right.value should equal(())

@@ -74,7 +74,8 @@ class InvitationServiceImpl @Inject()(
                   auditService.sendEvent(InvitationAuditEvent(invitation))
                   sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
                 }
-              case true if doNamesMatch(invitation.inviteeName, psaDetails)  => Future.successful(Left(new ForbiddenException("The invitation is to a PSA already associated with this scheme")))
+              case true if doNamesMatch(invitation.inviteeName, psaDetails)  =>
+                Future.successful(Left(new ForbiddenException("The invitation is to a PSA already associated with this scheme")))
               case _ => Future.successful(Left(new NotFoundException("The name and PSA Id do not match")))
             }
           }
@@ -120,7 +121,8 @@ class InvitationServiceImpl @Inject()(
 
     val psaName = whichIndividualName(individualDetails, matchFullName)
 
-    if (FuzzyNameMatcher.matches(inviteeName, psaName)) {
+    if (FuzzyNameMatcher.matches(inviteeName, psaName) ||
+      (inviteeName.contains(individualDetails.firstName) && inviteeName.contains(individualDetails.lastName))) {
       true
     } else if (matchFullName) {
       doIndividualNamesMatch(inviteeName, individualDetails, matchFullName = false)
