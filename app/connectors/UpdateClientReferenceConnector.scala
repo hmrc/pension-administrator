@@ -23,7 +23,7 @@ import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{HttpClient, _}
-import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+import utils.{ErrorDetailsExtractor, ErrorHandler, HttpResponseHelper, JSONPayloadSchemaValidator}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,44 +34,44 @@ trait UpdateClientReferenceConnector {
     implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]]
 }
 
+case class UpdateClientRefValidationFailureException(error: String) extends Exception(error)
+
 class UpdateClientReferenceConnectorImpl @Inject()(
-                                           http: HttpClient,
-                                           config: AppConfig,
-                                           headerUtils: HeaderUtils,
-                                           invalidPayloadHandler: InvalidPayloadHandler
-                                         ) extends UpdateClientReferenceConnector with HttpResponseHelper with ErrorHandler {
+                                                    http: HttpClient,
+                                                    config: AppConfig,
+                                                    headerUtils: HeaderUtils,
+                                                    jsonPayloadSchemaValidator: JSONPayloadSchemaValidator
+                                                  ) extends UpdateClientReferenceConnector with HttpResponseHelper with ErrorHandler {
 
   override def updateClientReference(jsValue: JsValue)
-                                       (implicit headerCarrier: HeaderCarrier,
-                                        ec: ExecutionContext,
-                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                    (implicit headerCarrier: HeaderCarrier,
+                                     ec: ExecutionContext,
+                                     request: RequestHeader): Future[Either[HttpException, JsValue]] = {
     val updateClientReferenceUrl = config.updateClientReferenceUrl
     val schema = "/resources/schemas/updateClientReference1857.json"
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
       headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
-    http.POST(updateClientReferenceUrl, jsValue)(implicitly, implicitly[HttpReads[HttpResponse]], hc, implicitly) map {
-      handleResponse[JsValue](_, updateClientReferenceUrl, schema,  jsValue, "Update Client Reference")
+    val validationResult = jsonPayloadSchemaValidator.validateJsonPayload(schema, jsValue)
+    validationResult match {
+      case JsError(error) =>
+        val errors = ErrorDetailsExtractor.getErrors(error)
+        throw UpdateClientRefValidationFailureException(s"Invalid payload when updateClientReference :-\n$errors")
+      case JsSuccess(_, _) =>
+        http.POST[JsValue, HttpResponse](updateClientReferenceUrl, jsValue)(implicitly, implicitly[HttpReads[HttpResponse]], hc, implicitly) map {
+          handlePostResponse(_, updateClientReferenceUrl)
+        }
     }
 
   }
 
+  private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
 
-  private def handleResponse[A](response: HttpResponse, url: String, schema: String, requestBody: JsValue, methodContext: String)(
-    implicit reads: Reads[A]): Either[HttpException, A] = {
+    val badResponseSeq = Seq("INVALID_CORRELATION_ID", "INVALID_PAYLOAD", "INVALID_REGIME")
 
-    val method = "POST"
     response.status match {
-      case OK =>
-        val onInvalid = invalidPayloadHandler.logFailures(schema) _
-        Right(parseAndValidateJson[A](response.body, method, url, onInvalid))
-
-      case BAD_REQUEST if response.body.contains("INVALID_PAYLOAD") =>
-        invalidPayloadHandler.logFailures(schema)(requestBody)
-        Left(new BadRequestException(upstreamResponseMessage(method, url, BAD_REQUEST, response.body)))
-
-      case _ =>
-        Left(handleErrorResponse(methodContext, url, response, Seq.empty))
+      case OK => Right(response.json)
+      case _ => Left(handleErrorResponse("Update Client Reference", url, response, badResponseSeq))
     }
   }
 }
