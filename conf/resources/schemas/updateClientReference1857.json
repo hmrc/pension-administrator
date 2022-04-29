@@ -1,0 +1,39 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title": "04CC - API#1857 PODS Update Client Reference - Request Schema Draft - v0.1.0",
+	"type": "object",
+	"properties": {
+    "identifierDetails": {
+      "type": "object",
+      "required": [
+        "pstr",
+        "psaId",
+        "pspId"
+      ],
+      "properties": {
+        "pstr": {
+          "type": "string", 
+          "pattern": "^[0-9]{8}[A-Z]{2}$"
+          },
+        "psaId": {
+          "type": "string", 
+          "pattern": "^A[0-9]{7}$"
+          },
+        "pspId": {
+          "type": "string", 
+          "pattern": "^[0-2]{1}[0-9]{7}$"
+        },
+        "clientReference": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9À-ÿ !#$%&'‘’\"“”«»()*+,./:;=?@\\[\\]|~£€¥\\u005C—–‐_^`-]{1,100}$"
+        }
+      },
+      "additionalProperties": false 
+    }
+    
+  },
+	"required": [
+		"identifierDetails"
+	],
+	"additionalProperties": false
+}

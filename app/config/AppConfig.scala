@@ -59,5 +59,6 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
 
   lazy val invitationExpiryDays: Int = runModeConfiguration.underlying.getInt("invitationExpiryDays")
   lazy val invitationCallbackUrl: String = s"$baseUrlPensionAdministrator${runModeConfiguration.underlying.getString("serviceUrls.invitation.callback")}"
+  lazy val updateClientReferenceUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.updateClientReference")}"
 
 }

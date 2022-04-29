@@ -44,6 +44,9 @@ object FeatureToggleName {
   case object TriageV2 extends FeatureToggleName {
     val asString = "triagev2"
   }
+  case object UpdateClientReference extends FeatureToggleName {
+    val asString = "update-client-reference"
+  }
 
   val toggles = Seq(Migration,PsaMinimalDetails)
 
@@ -51,6 +54,7 @@ object FeatureToggleName {
     case JsString(Migration.asString) => JsSuccess(Migration)
     case JsString(PsaMinimalDetails.asString) => JsSuccess(PsaMinimalDetails)
     case JsString(TriageV2.asString) => JsSuccess(TriageV2)
+    case JsString(UpdateClientReference.asString) => JsSuccess(UpdateClientReference)
     case _ => JsError("Unrecognised feature toggle name")
   }
 

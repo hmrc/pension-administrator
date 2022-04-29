@@ -39,3 +39,5 @@ POST          /invitation/add                           controllers.cache.Invita
 DELETE        /invitation                               controllers.cache.InvitationsCacheController.remove
 
 GET           /can-deregister/:id                       controllers.DeregistrationController.canDeregister(id: String)
+
+POST          /updateClientReference                    controllers.UpdateClientReferenceController.updateClientReference
