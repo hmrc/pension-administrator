@@ -91,7 +91,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     super.beforeEach()
   }
 
-  override protected def portConfigKey: String = "microservice.services.if-hod.port"
+  override protected def portConfigKeys: String = "microservice.services.if-hod.port"
 
   private val auditService = new StubSuccessfulAuditService()
 

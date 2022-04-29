@@ -21,11 +21,13 @@ import play.api.libs.json._
 
 import java.io.{File, FileInputStream}
 import com.eclipsesource.schema.drafts.Version7._
+import org.apache.commons.lang3.StringUtils
+import java.util.regex.Pattern
 import scala.collection.Seq
 
 
 object ErrorDetailsExtractor {
-
+  val pattern: Pattern = Pattern.compile(".*!([^!]*)'.*")
   def getErrors(error: Seq[(JsPath, Seq[JsonValidationError])]): String = {
     val message = new StringBuilder("")
     error.flatMap(_._2).foldLeft(message){
@@ -33,7 +35,12 @@ object ErrorDetailsExtractor {
         val json = Json.parse(validationErrors.args.mkString)
         val jsonTransformer = (__ \ 'schemaPath).json.pick
         val errorPath = json.transform(jsonTransformer)
-        stringBuilder.append((errorPath.getOrElse(JsNull), validationErrors.message))
+        val flagInputData = StringUtils.replaceOnce(StringUtils.replaceOnce(validationErrors.message, "'", "!"), "'", "!")
+        val matcher = pattern.matcher(flagInputData)
+        if (matcher.matches)
+          stringBuilder.append((errorPath.getOrElse(JsNull), matcher.group(1)))
+        else
+          stringBuilder.append((errorPath.getOrElse(JsNull), validationErrors.message))
     }
     message.toString()
   }
@@ -41,7 +48,7 @@ object ErrorDetailsExtractor {
 
 
 class JSONPayloadSchemaValidator {
-  private val basePath = System.getProperty("user.dir")
+  val basePath = System.getProperty("user.dir")
 
   def validateJsonPayload(jsonSchemaPath: String, data: JsValue): JsResult[JsValue] = {
     implicit val validator: SchemaValidator = SchemaValidator()
@@ -52,3 +59,4 @@ class JSONPayloadSchemaValidator {
   }
 
 }
+

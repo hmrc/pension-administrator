@@ -60,7 +60,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     super.beforeEach()
   }
 
-  override protected def portConfigKey: String = "microservice.services.des-hod.port"
+  override protected def portConfigKeys: String = "microservice.services.des-hod.port"
 
   override protected def bindings: Seq[GuiceableModule] = Seq[GuiceableModule](
     bind(classOf[AuditService]).toInstance(auditService),

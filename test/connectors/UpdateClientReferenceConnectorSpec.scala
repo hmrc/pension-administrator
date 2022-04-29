@@ -58,7 +58,7 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
     super.beforeEach()
   }
 
-  override protected def portConfigKey: String = "microservice.services.if-hod.port"
+  override protected def portConfigKeys: String = "microservice.services.if-hod.port"
 
   override protected def bindings: Seq[GuiceableModule] = Seq[GuiceableModule](
     bind(classOf[HeaderUtils]).toInstance(mockHeaderUtils)
@@ -98,11 +98,10 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
     val x = intercept[UpdateClientRefValidationFailureException] {
       connector.updateClientReference(testUpdateClientReferenceInvalid)
     }
-
     assert(x.getMessage === "Invalid payload when updateClientReference :-" +
-      "\n(\"#/properties/identifierDetails/properties/pspId\",'115426' does not match pattern '^[0-2]{1}[0-9]{7}$'.)" +
-      "(\"#/properties/identifierDetails/properties/psaId\",'A38698' does not match pattern '^A[0-9]{7}$'.)" +
-      "(\"#/properties/identifierDetails/properties/pstr\",'45554528A' does not match pattern '^[0-9]{8}[A-Z]{2}$'.)")
+      "\n(\"#/properties/identifierDetails/properties/pspId\", does not match pattern '^[0-2]{1}[0-9]{7}$)" +
+      "(\"#/properties/identifierDetails/properties/psaId\", does not match pattern '^A[0-9]{7}$)" +
+      "(\"#/properties/identifierDetails/properties/pstr\", does not match pattern '^[0-9]{8}[A-Z]{2}$)")
   }
 
   it should "handle BAD_REQUEST (400)" in {
