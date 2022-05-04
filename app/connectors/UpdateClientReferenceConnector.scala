@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[UpdateClientReferenceConnectorImpl])
 trait UpdateClientReferenceConnector {
 
-  def updateClientReference(updateClientReferenceRequest: UpdateClientReferenceRequest)(
+  def updateClientReference(updateClientReferenceRequest: UpdateClientReferenceRequest, userAction: Option[String])(
     implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]]
 }
 
@@ -44,9 +44,10 @@ class UpdateClientReferenceConnectorImpl @Inject()(
                                                     headerUtils: HeaderUtils,
                                                     jsonPayloadSchemaValidator: JSONPayloadSchemaValidator,
                                                     auditService: AuditService
-                                                  ) extends UpdateClientReferenceConnector with HttpResponseHelper with ErrorHandler with UpdateClientReferenceAuditService {
+                                                  ) extends UpdateClientReferenceConnector
+  with HttpResponseHelper with ErrorHandler with UpdateClientReferenceAuditService {
 
-  override def updateClientReference(updateClientReferenceRequest: UpdateClientReferenceRequest)
+  override def updateClientReference(updateClientReferenceRequest: UpdateClientReferenceRequest, userAction: Option[String])
                                     (implicit headerCarrier: HeaderCarrier,
                                      ec: ExecutionContext,
                                      request: RequestHeader): Future[Either[HttpException, JsValue]] = {
@@ -63,7 +64,7 @@ class UpdateClientReferenceConnectorImpl @Inject()(
       case JsSuccess(_, _) =>
         http.POST[JsValue, HttpResponse](updateClientReferenceUrl, jsValue)(implicitly, implicitly[HttpReads[HttpResponse]], hc, implicitly) map {
           handlePostResponse(_, updateClientReferenceUrl)
-        } andThen sendClientReferenceEvent(updateClientReferenceRequest, None)(auditService.sendEvent)
+        } andThen sendClientReferenceEvent(updateClientReferenceRequest, userAction)(auditService.sendEvent)
     }
 
   }

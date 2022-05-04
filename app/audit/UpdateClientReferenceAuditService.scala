@@ -16,9 +16,10 @@
 
 package audit
 
-import models.{IdentifierDetails, UpdateClientReferenceRequest}
+import models.UpdateClientReferenceRequest
 import play.api.Logger
-import play.api.libs.json.JsValue
+import play.api.http.Status
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HttpException
 
@@ -31,9 +32,9 @@ trait UpdateClientReferenceAuditService {
 
   def sendClientReferenceEvent(
                                 updateClientReferenceRequest: UpdateClientReferenceRequest,
-                                response: Option[JsValue]
+                                userAction: Option[String]
                               )(
-                                sendEvent: UpdateClientReferenceAuditEvent=> Unit
+                                sendEvent: UpdateClientReferenceAuditEvent => Unit
                               )(
                                 implicit request: RequestHeader,
                                 ec: ExecutionContext
@@ -42,13 +43,17 @@ trait UpdateClientReferenceAuditService {
     case Success(Right(json)) =>
       sendAuditEvent(
         updateClientReferenceRequest,
-        Some(json)
+        Some(json),
+        Status.OK,
+        userAction
       )(sendEvent)
 
     case Success(Left(e)) =>
       sendAuditEvent(
         updateClientReferenceRequest,
-        None
+        Some(Json.toJson("reason" -> e.message)),
+        e.responseCode,
+        userAction
       )(sendEvent)
 
     case Failure(t) =>
@@ -58,14 +63,18 @@ trait UpdateClientReferenceAuditService {
 
   private def sendAuditEvent(
                               updateClientReferenceRequest: UpdateClientReferenceRequest,
-                              response: Option[JsValue]
+                              response: Option[JsValue],
+                              status: Int,
+                              userAction: Option[String]
                             )(
                               sendEvent: UpdateClientReferenceAuditEvent => Unit
                             ): Unit =
     sendEvent(
       UpdateClientReferenceAuditEvent(
         updateClientReferenceRequest,
-        response
+        response,
+        status,
+        userAction
       )
     )
 

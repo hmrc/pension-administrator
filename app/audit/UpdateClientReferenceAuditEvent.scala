@@ -16,10 +16,13 @@
 
 package audit
 
-import models.{IdentifierDetails, UpdateClientReferenceRequest}
+import models.UpdateClientReferenceRequest
 import play.api.libs.json.{JsValue, Json}
 
-case class UpdateClientReferenceAuditEvent(updateClientReferenceRequest: UpdateClientReferenceRequest, response: Option[JsValue]) extends AuditEvent {
+case class UpdateClientReferenceAuditEvent(updateClientReferenceRequest: UpdateClientReferenceRequest,
+                                           response: Option[JsValue],
+                                           status:Int,
+                                           userAction: Option[String]=None) extends AuditEvent {
   override def auditType: String = "UpdateClientReferenceAudit"
 
   override def details: Map[String, String] =
@@ -28,7 +31,8 @@ case class UpdateClientReferenceAuditEvent(updateClientReferenceRequest: UpdateC
       "psaId" -> updateClientReferenceRequest.psaId,
       "pspId" -> updateClientReferenceRequest.pspId,
       "clientReference" -> updateClientReferenceRequest.clientReference.getOrElse(""),
-      "userAction" -> "",
+      "status" -> status.toString,
+      "userAction" -> userAction.getOrElse(""),
       "response" -> {
         response match {
           case Some(json) => Json.stringify(json)
