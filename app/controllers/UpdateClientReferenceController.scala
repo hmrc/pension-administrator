@@ -43,7 +43,7 @@ class UpdateClientReferenceController @Inject()(
           case Some(jsValue) =>
             jsValue.validate[UpdateClientReferenceRequest] match {
               case JsSuccess(updateClientRef, _) =>
-                updateClientReferenceConnector.updateClientReference(Json.toJson(new IdentifierDetails(updateClientRef))) map handleResponse
+                updateClientReferenceConnector.updateClientReference(updateClientRef) map handleResponse
               case JsError(_) =>
                 val error = new BadRequestException(s"Invalid request received from frontend for update Client Reference" )
                 Future.failed(error)
