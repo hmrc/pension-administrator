@@ -16,10 +16,11 @@
 
 package connectors
 
+import audit.{AuditService, StubSuccessfulAuditService, UpdateClientReferenceAuditEvent}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.{ConnectorBehaviours, HeaderUtils}
-import models.User
+import models.{UpdateClientReferenceRequest, User}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar
 import org.scalatest.EitherValues
@@ -27,7 +28,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -61,7 +62,8 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
   override protected def portConfigKeys: String = "microservice.services.if-hod.port"
 
   override protected def bindings: Seq[GuiceableModule] = Seq[GuiceableModule](
-    bind(classOf[HeaderUtils]).toInstance(mockHeaderUtils)
+    bind(classOf[HeaderUtils]).toInstance(mockHeaderUtils),
+    bind[AuditService].toInstance(auditService)
   )
 
   def connector: UpdateClientReferenceConnector = app.injector.instanceOf[UpdateClientReferenceConnector]
@@ -77,9 +79,11 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.updateClientReference(testUpdateClientReference).map {
+    connector.updateClientReference(testUpdateClientReference,None).map {
       response =>
         response.right.value shouldBe successResponse
+        val expectedAuditEvent = UpdateClientReferenceAuditEvent(testUpdateClientReference,Some(successResponse),OK,None)
+        auditService.verifySent(expectedAuditEvent) shouldBe true
     }
 
   }
@@ -96,7 +100,7 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
     )
 
     val x = intercept[UpdateClientRefValidationFailureException] {
-      connector.updateClientReference(testUpdateClientReferenceInvalid)
+      connector.updateClientReference(testUpdateClientReferenceInvalid,None)
     }
     assert(x.getMessage === "Invalid payload when updateClientReference :-" +
       "\n(\"#/properties/identifierDetails/properties/pspId\", does not match pattern '^[0-2]{1}[0-9]{7}$)" +
@@ -116,16 +120,19 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
     )
 
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.updateClientReference(testUpdateClientReference)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.updateClientReference(testUpdateClientReference,None)) map {
       ex =>
         ex.statusCode shouldBe BAD_REQUEST
         ex.message should include("INVALID_PSTR")
+        val expectedAuditEvent = UpdateClientReferenceAuditEvent(testUpdateClientReference,
+          Some(Json.parse(errorResponse("INVALID_PSTR"))),400,None)
+        auditService.verifySent(expectedAuditEvent) shouldBe true
     }
   }
 
 
   it should behave like errorHandlerForPostApiFailures(
-    connector.updateClientReference(testUpdateClientReference),
+    connector.updateClientReference(testUpdateClientReference,None),
     updateClientReferenceUrl
   )
 
@@ -134,16 +141,16 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
 object UpdateClientReferenceConnectorSpec {
 
   val updateClientReferenceUrl = "/pension-online/update-client-reference/pods"
-
+  val auditService = new StubSuccessfulAuditService()
 
   val testOrganisation: User = User("test-external-id", AffinityGroup.Organisation)
   val testIndividual: User = User("test-external-id", AffinityGroup.Individual)
   val testCorrelationId = "testCorrelationId"
-  val testUpdateClientReference: JsObject = Json.obj("identifierDetails" ->
-    Json.obj("pstr" -> "45554528AV", "psaId" -> "A3869826", "pspId" -> "11542640", "clientReference" -> "as1234aasda"))
+  val testUpdateClientReference: UpdateClientReferenceRequest = UpdateClientReferenceRequest(
+    pstr= "45554528AV", psaId= "A3869826", pspId= "11542640", clientReference =Some("as1234aasda"))
 
-  val testUpdateClientReferenceInvalid: JsObject = Json.obj("identifierDetails" ->
-    Json.obj("pstr" -> "45554528A", "psaId" -> "A38698", "pspId" -> "115426", "clientReference" -> "as1234aasdaaaaaaaaaaaa"))
+  val testUpdateClientReferenceInvalid: UpdateClientReferenceRequest = UpdateClientReferenceRequest(
+      pstr= "45554528A", psaId= "A38698", pspId= "115426", clientReference =Some("as1234aasdaaaaaaaaaaaa"))
 
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
