@@ -124,9 +124,6 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
       ex =>
         ex.statusCode shouldBe BAD_REQUEST
         ex.message should include("INVALID_PSTR")
-        val expectedAuditEvent = UpdateClientReferenceAuditEvent(testUpdateClientReference,
-          Some(Json.parse(errorResponse("INVALID_PSTR"))),400,None)
-        auditService.verifySent(expectedAuditEvent) shouldBe true
     }
   }
 
