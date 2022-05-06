@@ -21,7 +21,7 @@ import play.api.Logger
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.HttpException
+import uk.gov.hmrc.http.{HttpException, UpstreamErrorResponse}
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
@@ -49,6 +49,21 @@ trait UpdateClientReferenceAuditService {
       )(sendEvent)
 
     case Success(Left(e)) =>
+      sendAuditEvent(
+        updateClientReferenceRequest,
+        Some(Json.toJson("reason" -> e.message)),
+        e.responseCode,
+        userAction
+      )(sendEvent)
+    case Failure(e: UpstreamErrorResponse) =>
+      sendAuditEvent(
+        updateClientReferenceRequest,
+        Some(Json.toJson("reason" -> e.message)),
+        e.statusCode,
+        userAction
+      )(sendEvent)
+
+    case Failure(e: HttpException) =>
       sendAuditEvent(
         updateClientReferenceRequest,
         Some(Json.toJson("reason" -> e.message)),
