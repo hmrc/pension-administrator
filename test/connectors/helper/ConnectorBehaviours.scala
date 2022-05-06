@@ -33,6 +33,10 @@ trait ConnectorBehaviours extends AsyncFlatSpec with WireMockHelper with EitherV
 
     errorHandlerForApiFailures(call, post(urlEqualTo(url)))
   }
+  def errorHandlerForPutApiFailures[A](call: => Future[Either[HttpException, A]], url: String): Unit = {
+
+    errorHandlerForApiFailures(call, put(urlEqualTo(url)))
+  }
 
   def errorHandlerForGetApiFailures[A](call: => Future[Either[HttpException, A]], url: String): Unit = {
 
