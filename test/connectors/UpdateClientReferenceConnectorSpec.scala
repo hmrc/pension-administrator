@@ -69,7 +69,7 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
   "updateClientReference" should "handle OK (200)" in {
 
     server.stubFor(
-      post(urlEqualTo(updateClientReferenceUrl))
+      put(urlEqualTo(updateClientReferenceUrl))
         .willReturn(
           ok
             .withHeader("Content-Type", "application/json")
@@ -87,7 +87,7 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
   it should "handle validation failure" in {
 
     server.stubFor(
-      post(urlEqualTo(updateClientReferenceUrl))
+      put(urlEqualTo(updateClientReferenceUrl))
         .willReturn(
           ok
             .withHeader("Content-Type", "application/json")
@@ -107,7 +107,7 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
   it should "handle BAD_REQUEST (400)" in {
 
     server.stubFor(
-      post(urlEqualTo(updateClientReferenceUrl))
+      put(urlEqualTo(updateClientReferenceUrl))
         .willReturn(
           badRequest
             .withHeader("Content-Type", "application/json")
@@ -124,7 +124,7 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
   }
 
 
-  it should behave like errorHandlerForPostApiFailures(
+  it should behave like errorHandlerForPutApiFailures(
     connector.updateClientReference(testUpdateClientReference),
     updateClientReferenceUrl
   )
