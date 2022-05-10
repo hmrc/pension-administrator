@@ -38,22 +38,14 @@ object FeatureToggleName {
   case object Migration extends FeatureToggleName {
     val asString = "migration"
   }
-  case object PsaMinimalDetails extends FeatureToggleName {
-    val asString = "psa-minimal-details-cache"
-  }
-  case object TriageV2 extends FeatureToggleName {
-    val asString = "triagev2"
-  }
   case object UpdateClientReference extends FeatureToggleName {
     val asString = "update-client-reference"
   }
 
-  val toggles = Seq(Migration,PsaMinimalDetails)
+  val toggles = Seq(Migration)
 
   implicit val reads: Reads[FeatureToggleName] = Reads {
     case JsString(Migration.asString) => JsSuccess(Migration)
-    case JsString(PsaMinimalDetails.asString) => JsSuccess(PsaMinimalDetails)
-    case JsString(TriageV2.asString) => JsSuccess(TriageV2)
     case JsString(UpdateClientReference.asString) => JsSuccess(UpdateClientReference)
     case _ => JsError("Unrecognised feature toggle name")
   }
