@@ -25,7 +25,7 @@ import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{HttpClient, _}
-import utils.{ErrorDetailsExtractor, ErrorHandler, HttpResponseHelper, JSONPayloadSchemaValidator}
+import utils.{ErrorHandler, HttpResponseHelper, JSONPayloadSchemaValidator}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -57,16 +57,12 @@ class UpdateClientReferenceConnectorImpl @Inject()(
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
       headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
     val validationResult = jsonPayloadSchemaValidator.validateJsonPayload(schema, jsValue)
-    validationResult match {
-      case JsError(error) =>
-        val errors = ErrorDetailsExtractor.getErrors(error)
-        throw UpdateClientRefValidationFailureException(s"Invalid payload when updateClientReference :-\n$errors")
-      case JsSuccess(_, _) =>
-        http.PUT[JsValue, HttpResponse](updateClientReferenceUrl, jsValue)(implicitly, implicitly[HttpReads[HttpResponse]], hc, implicitly) map {
-          handlePostResponse(_, updateClientReferenceUrl)
-        } andThen sendClientReferenceEvent(updateClientReferenceRequest, userAction)(auditService.sendEvent)
-    }
-
+    if(validationResult.nonEmpty)
+      throw UpdateClientRefValidationFailureException(s"Invalid payload when updateClientReference :-\n${validationResult.mkString}")
+      else
+      http.PUT[JsValue, HttpResponse](updateClientReferenceUrl, jsValue)(implicitly, implicitly[HttpReads[HttpResponse]], hc, implicitly) map {
+        handlePostResponse(_, updateClientReferenceUrl)
+      } andThen sendClientReferenceEvent(updateClientReferenceRequest, userAction)(auditService.sendEvent)
   }
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {
