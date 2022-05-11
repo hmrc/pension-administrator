@@ -62,7 +62,7 @@ class UpdateClientReferenceConnectorImpl @Inject()(
         val errors = ErrorDetailsExtractor.getErrors(error)
         throw UpdateClientRefValidationFailureException(s"Invalid payload when updateClientReference :-\n$errors")
       case JsSuccess(_, _) =>
-        http.POST[JsValue, HttpResponse](updateClientReferenceUrl, jsValue)(implicitly, implicitly[HttpReads[HttpResponse]], hc, implicitly) map {
+        http.PUT[JsValue, HttpResponse](updateClientReferenceUrl, jsValue)(implicitly, implicitly[HttpReads[HttpResponse]], hc, implicitly) map {
           handlePostResponse(_, updateClientReferenceUrl)
         } andThen sendClientReferenceEvent(updateClientReferenceRequest, userAction)(auditService.sendEvent)
     }
