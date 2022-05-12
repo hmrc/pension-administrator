@@ -27,7 +27,7 @@ import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{HttpClient, _}
-import utils.{ErrorDetailsExtractor, ErrorHandler, HttpResponseHelper, InvalidPayloadHandler, JSONPayloadSchemaValidator}
+import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler, JSONPayloadSchemaValidator}
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -98,16 +98,12 @@ class DesConnectorImpl @Inject()(
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
     val validationResult = jsonPayloadSchemaValidator.validateJsonPayload(psaSchema, registerData)
-
-    validationResult match {
-      case JsError(error) =>
-        val errors = ErrorDetailsExtractor.getErrors(error)
-        throw PSAValidationFailureException(s"Invalid payload when registerPSA :-\n$errors")
-      case JsSuccess(_, _) =>
-        http.POST[JsValue, HttpResponse](url, registerData)(implicitly, implicitly, hc, implicitly) map {
-          handlePostResponse(_, url)
-        }
-    }
+    if(validationResult.nonEmpty)
+      throw PSAValidationFailureException(s"Invalid payload when registerPSA :-\n${validationResult.mkString}")
+    else
+      http.POST[JsValue, HttpResponse](url, registerData)(implicitly, implicitly, hc, implicitly) map {
+        handlePostResponse(_, url)
+      }
   }
 
   override def getPSASubscriptionDetails(psaId: String)
@@ -152,17 +148,13 @@ class DesConnectorImpl @Inject()(
                                  (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
     val validationResult = jsonPayloadSchemaValidator.validateJsonPayload(schema, data)
 
-    validationResult match {
-      case JsError(error) =>
-        val errors = ErrorDetailsExtractor.getErrors(error)
-        throw PSAValidationFailureException(s"Invalid payload when registerPSA :-\n$errors")
-      case JsSuccess(_, _) =>
-        http.POST[JsValue, HttpResponse](url, data)(implicitly, implicitly, hc, implicitly) map {
-          handlePostResponse(_, url)
-        } andThen schemeAuditService.sendPSARemovalAuditEvent(psaToBeRemoved)(auditService.sendEvent) andThen
-          logFailures("Remove PSA from scheme", data, schema, url)
-    }
-
+    if(validationResult.nonEmpty)
+      throw PSAValidationFailureException(s"Invalid payload when registerPSA :-\n${validationResult.mkString}")
+    else
+      http.POST[JsValue, HttpResponse](url, data)(implicitly, implicitly, hc, implicitly) map {
+        handlePostResponse(_, url)
+      } andThen schemeAuditService.sendPSARemovalAuditEvent(psaToBeRemoved)(auditService.sendEvent) andThen
+        logFailures("Remove PSA from scheme", data, schema, url)
   }
 
   override def deregisterPSA(psaId: String)
@@ -200,15 +192,12 @@ class DesConnectorImpl @Inject()(
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader(headerCarrier))
     val validationResult = jsonPayloadSchemaValidator.validateJsonPayload(psaVariationSchema, data)
-    validationResult match {
-      case JsError(error) =>
-        val errors = ErrorDetailsExtractor.getErrors(error)
-        throw PSAValidationFailureException(s"Invalid payload when updatePSA :-\n$errors")
-      case JsSuccess(_, _) =>
-        http.POST[JsValue, HttpResponse](url, data)(implicitly, implicitly, hc, implicitly) map {
-          handlePostResponse(_, url)
-        }
-    }
+    if(validationResult.nonEmpty)
+      throw PSAValidationFailureException(s"Invalid payload when updatePSA :-\n${validationResult.mkString}")
+    else
+      http.POST[JsValue, HttpResponse](url, data)(implicitly, implicitly, hc, implicitly) map {
+        handlePostResponse(_, url)
+      }
   }
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {

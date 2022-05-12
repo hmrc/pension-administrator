@@ -102,10 +102,10 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
     val x = intercept[UpdateClientRefValidationFailureException] {
       connector.updateClientReference(testUpdateClientReferenceInvalid,None)
     }
-    assert(x.getMessage === "Invalid payload when updateClientReference :-" +
-      "\n(\"#/properties/identifierDetails/properties/pspId\", does not match pattern '^[0-2]{1}[0-9]{7}$)" +
-      "(\"#/properties/identifierDetails/properties/psaId\", does not match pattern '^A[0-9]{7}$)" +
-      "(\"#/properties/identifierDetails/properties/pstr\", does not match pattern '^[0-9]{8}[A-Z]{2}$)")
+    assert(x.getMessage === "Invalid payload when updateClientReference :-\nValidationFailure(pattern,$.identifierDetails.pstr: " +
+      "does not match the regex pattern ^[0-9]{8}[A-Z]{2}$,None)ValidationFailure(pattern,$.identifierDetails.pspId: " +
+      "does not match the regex pattern ^[0-2]{1}[0-9]{7}$,None)ValidationFailure(pattern,$.identifierDetails.psaId: " +
+      "does not match the regex pattern ^A[0-9]{7}$,None)")
   }
 
   it should "handle BAD_REQUEST (400)" in {
