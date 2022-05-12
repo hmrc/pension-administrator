@@ -71,7 +71,7 @@ class UpdateClientReferenceControllerSpec extends SpecBase with MockitoSugar wit
         "processingDate" -> LocalDateTime.now().toString()
       )
 
-      when(mockUpdateClientReferenceConnector.updateClientReference(any())
+      when(mockUpdateClientReferenceConnector.updateClientReference(any(),any())
       (any(), any(), any()))
         .thenReturn(Future.successful(Right(successResponse)))
 
@@ -124,7 +124,7 @@ class UpdateClientReferenceControllerSpec extends SpecBase with MockitoSugar wit
 
       forAll(connectorFailureGen) { connectorFailure =>
 
-        when(mockUpdateClientReferenceConnector.updateClientReference(any())(any(), any(), any()))
+        when(mockUpdateClientReferenceConnector.updateClientReference(any(),any())(any(), any(), any()))
           .thenReturn(Future.successful(Left(connectorFailure)))
 
         val result = updateClientReferenceController(individualRetrievals).updateClientReference(fakeRequest.withJsonBody(requestBody))
@@ -177,7 +177,7 @@ class UpdateClientReferenceControllerSpec extends SpecBase with MockitoSugar wit
         "reason" -> "DES is currently experiencing problems that require live service intervention."
       )
 
-      when(mockUpdateClientReferenceConnector.updateClientReference(any())(any(), any(), any()))
+      when(mockUpdateClientReferenceConnector.updateClientReference(any(),any())(any(), any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
 
       val result = updateClientReferenceController(individualRetrievals).updateClientReference(fakeRequest.withJsonBody(requestBody))
@@ -187,13 +187,13 @@ class UpdateClientReferenceControllerSpec extends SpecBase with MockitoSugar wit
         e.getMessage mustBe failureResponse.toString()
 
         verify(mockUpdateClientReferenceConnector, times(1))
-          .updateClientReference(any())(any(), any(), any())
+          .updateClientReference(any(),any())(any(), any(), any())
       }
     }
 
     "throw Exception when any other exception returned from connector" in {
 
-      when(mockUpdateClientReferenceConnector.updateClientReference(any())(any(), any(), any()))
+      when(mockUpdateClientReferenceConnector.updateClientReference(any(),any())(any(), any(), any()))
         .thenReturn(Future.failed(new Exception("Generic Exception")))
 
       val result = updateClientReferenceController(individualRetrievals).updateClientReference(fakeRequest.withJsonBody(requestBody))
@@ -203,7 +203,7 @@ class UpdateClientReferenceControllerSpec extends SpecBase with MockitoSugar wit
         e.getMessage mustBe "Generic Exception"
 
         verify(mockUpdateClientReferenceConnector, times(1))
-          .updateClientReference(any())(any(), any(), any())
+          .updateClientReference(any(),any())(any(), any(), any())
       }
     }
   }

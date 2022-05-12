@@ -16,46 +16,55 @@
 
 package utils
 
-import com.eclipsesource.schema.{JsonSource, SchemaValidator}
 import play.api.libs.json._
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.networknt.schema.{JsonSchemaFactory, ValidationMessage}
 
-import java.io.{File, FileInputStream}
-import com.eclipsesource.schema.drafts.Version7._
-import org.apache.commons.lang3.StringUtils
-import java.util.regex.Pattern
-import scala.collection.Seq
-
-
-object ErrorDetailsExtractor {
-  val pattern: Pattern = Pattern.compile(".*!([^!]*)'.*")
-  def getErrors(error: Seq[(JsPath, Seq[JsonValidationError])]): String = {
-    val message = new StringBuilder("")
-    error.flatMap(_._2).foldLeft(message){
-      (stringBuilder, validationErrors) =>
-        val json = Json.parse(validationErrors.args.mkString)
-        val jsonTransformer = (__ \ 'schemaPath).json.pick
-        val errorPath = json.transform(jsonTransformer)
-        val flagInputData = StringUtils.replaceOnce(StringUtils.replaceOnce(validationErrors.message, "'", "!"), "'", "!")
-        val matcher = pattern.matcher(flagInputData)
-        if (matcher.matches)
-          stringBuilder.append((errorPath.getOrElse(JsNull), matcher.group(1)))
-        else
-          stringBuilder.append((errorPath.getOrElse(JsNull), validationErrors.message))
-    }
-    message.toString()
-  }
-}
-
+import scala.collection.JavaConverters.asScalaSetConverter
 
 class JSONPayloadSchemaValidator {
   val basePath = System.getProperty("user.dir")
 
-  def validateJsonPayload(jsonSchemaPath: String, data: JsValue): JsResult[JsValue] = {
-    implicit val validator: SchemaValidator = SchemaValidator()
-    val initialFile = new File(s"$basePath/conf/$jsonSchemaPath")
-    val targetStream = new FileInputStream(initialFile)
-    val jsonSchema = JsonSource.schemaFromStream(targetStream).get
-    validator.validate(jsonSchema, data)
+  def validateJsonPayload(jsonSchemaPath: String, data: JsValue): Set[ValidationFailure] = {
+    val schemaUrl = getClass.getResource(jsonSchemaPath)
+    val factory = JsonSchemaFactory.getInstance()
+    val schema = factory.getSchema(schemaUrl)
+
+    val mapper = new ObjectMapper()
+    val jsonNode = mapper.readTree(data.toString())
+
+    val set = schema.validate(jsonNode).asScala.toSet
+
+    set.map {
+      message =>
+        val value = valueFromJson(message, data)
+        ValidationFailure(message.getType, message.getMessage, value)
+    }
+  }
+
+  private def valueFromJson(message: ValidationMessage, json: JsValue): Option[String] = {
+    message.getType match {
+      case "enum" | "format" | "maximum" | "maxLength" | "minimum" | "minLength" | "pattern" | "type" =>
+        (json \ message.getPath).toEither match {
+          case Right(jsValue) =>
+            jsValue match {
+              case JsBoolean(bool) => Some(bool.toString)
+              case JsNull => Some("null")
+              case JsNumber(n) => Some(depersonalise(n.toString))
+              case JsString(s) => Some(depersonalise(s))
+              case _ => None
+            }
+          case Left(_) => None
+        }
+      case _ => None
+    }
+  }
+
+
+  private def depersonalise(value: String): String = {
+    value
+      .replaceAll("[a-zA-Z]", "x")
+      .replaceAll("[0-9]", "9")
   }
 
 }
