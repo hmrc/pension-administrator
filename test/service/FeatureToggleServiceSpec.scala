@@ -19,7 +19,7 @@ package service
 import akka.Done
 import base.SpecBase
 import models.FeatureToggle.{Disabled, Enabled}
-import models.FeatureToggleName.{Migration, PsaMinimalDetails, TriageV2, UpdateClientReference}
+import models.FeatureToggleName.{FromIvToPdv, Migration, PsaMinimalDetails, TriageV2, UpdateClientReference}
 import models.{FeatureToggle, FeatureToggleName, OperationFailed, OperationSucceeded}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.{ArgumentCaptor, MockitoSugar}
@@ -101,7 +101,8 @@ class FeatureToggleServiceSpec
       Disabled(Migration),
       Disabled(PsaMinimalDetails),
       Disabled(TriageV2),
-      Disabled(UpdateClientReference)
+      Disabled(UpdateClientReference),
+      Disabled(FromIvToPdv)
     )
   }
 
