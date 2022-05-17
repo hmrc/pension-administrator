@@ -19,7 +19,7 @@ package service
 import akka.Done
 import base.SpecBase
 import models.FeatureToggle.{Disabled, Enabled}
-import models.FeatureToggleName.UpdateClientReference
+import models.FeatureToggleName.{PsaFromIvToPdv, UpdateClientReference}
 import models.{FeatureToggle, FeatureToggleName, OperationFailed, OperationSucceeded}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.{ArgumentCaptor, MockitoSugar}
@@ -98,7 +98,8 @@ class FeatureToggleServiceSpec
     when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
 
     OUT.getAll.futureValue mustBe Seq(
-      Disabled(UpdateClientReference)
+      Disabled(UpdateClientReference),
+      Disabled(PsaFromIvToPdv)
     )
   }
 
