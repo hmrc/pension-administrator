@@ -17,14 +17,11 @@
 package controllers
 
 import connectors.AssociationConnector
-import models.FeatureToggle.Enabled
-import models.FeatureToggleName.PsaMinimalDetails
 import models.{AcceptedInvitation, MinimalDetails}
 import play.api.Logger
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc._
 import repositories.MinimalDetailsCacheRepository
-import service.FeatureToggleService
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -37,7 +34,6 @@ import scala.concurrent.Future
 class AssociationController @Inject()(
                                        associationConnector: AssociationConnector,
                                        minimalDetailsCacheRepository: MinimalDetailsCacheRepository,
-                                       featureToggleService: FeatureToggleService,
                                        retrievals: AuthRetrievals,
                                        cc: ControllerComponents
                                      ) extends BackendController(cc) with ErrorHandler {
@@ -131,20 +127,14 @@ class AssociationController @Inject()(
 
   private def getMinimalDetail(idValue: String, idType: String, regime: String)(
     implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
-
-    featureToggleService.get(PsaMinimalDetails).flatMap {
-        case Enabled(_) =>
             minimalDetailsCacheRepository.get(idValue).flatMap {
               case Some(response)=>
                 response.validate[MinimalDetails](MinimalDetails.defaultReads) match {
                   case JsSuccess(value, _) => Future.successful(Right(value))
-                  case JsError(errors) => getAndCacheMinimalDetails(idValue, idType, regime)
+                  case JsError(_) => getAndCacheMinimalDetails(idValue, idType, regime)
                 }
               case _ => getAndCacheMinimalDetails(idValue, idType, regime)
             }
-        case _ => associationConnector.getMinimalDetails(idValue, idType, regime)
-      }
-
   }
 
   private def getAndCacheMinimalDetails(idValue: String, idType: String, regime: String)(
