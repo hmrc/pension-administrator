@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets
 import com.google.inject.Inject
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.{Logger, LoggerFactory}
-import play.api.libs.json._
+import play.api.libs.json.{Json, _}
 import play.api.Configuration
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.indexes.{Index, IndexType}
@@ -108,14 +108,14 @@ class PSADataCacheRepository @Inject()(
           dataEntry =>
             val dataAsString = new String(dataEntry.data.byteArray, StandardCharsets.UTF_8)
             val decrypted: PlainText = jsonCrypto.decrypt(Crypted(dataAsString))
-            Json.parse(decrypted.value)
+            Json.parse(decrypted.value).as[JsObject] ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.getMillis))
         }
       }
     } else {
       collection.find(BSONDocument("id" -> credId), projection = Option.empty[JsObject]).one[DataEntryWithoutEncryption].map {
         _.map {
           dataEntry =>
-            dataEntry.data
+            dataEntry.data.as[JsObject] ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.getMillis))
         }
       }
     }

@@ -17,7 +17,7 @@
 package service
 
 import models.FeatureToggle._
-import models.FeatureToggleName.{PsaFromIvToPdv, UpdateClientReference}
+import models.FeatureToggleName.{PsaFromIvToPdv, PsaRegistration, UpdateClientReference}
 import models._
 import play.api.cache.AsyncCacheApi
 import repositories.AdminDataRepository
@@ -35,7 +35,8 @@ class FeatureToggleService @Inject()(
 
   private val defaults: Seq[FeatureToggle] = Seq(
     Disabled(UpdateClientReference),
-    Disabled(PsaFromIvToPdv)
+    Disabled(PsaFromIvToPdv),
+    Disabled(PsaRegistration)
   )
 
   private def addDefaults(fromDb: Seq[FeatureToggle]): Seq[FeatureToggle] = {
