@@ -18,17 +18,17 @@ package repositories
 
 import com.google.inject.Inject
 import play.api.Configuration
-import play.modules.reactivemongo.ReactiveMongoComponent
+import uk.gov.hmrc.mongo.MongoComponent
 
 import scala.concurrent.ExecutionContext
 
 class SessionDataCacheRepository @Inject()(
-                                        config: Configuration,
-                                        component: ReactiveMongoComponent
-                                      )(implicit val ec: ExecutionContext) extends ManageCacheRepository(
+                                            config: Configuration,
+                                            mongoComponent: MongoComponent
+                                          )(implicit val ec: ExecutionContext) extends ManageCacheRepository(
   config.underlying.getString("mongodb.pension-administrator-cache.session-data.name"),
-  Some(config.underlying.getInt("mongodb.pension-administrator-cache.session-data.timeToLiveInSeconds")),
-  component,
+  config.underlying.getInt("mongodb.pension-administrator-cache.session-data.timeToLiveInSeconds"),
+  mongoComponent,
   "manage.json.encryption",
   config
 )

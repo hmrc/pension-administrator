@@ -16,136 +16,126 @@
 
 package repositories
 
+import com.mongodb.client.model.FindOneAndUpdateOptions
+
 import java.nio.charset.StandardCharsets
 import org.joda.time.{DateTime, DateTimeZone}
-import org.slf4j.{Logger, LoggerFactory}
+import org.mongodb.scala.bson.BsonBinary
+import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes, Updates}
 import play.api.libs.json._
-import play.api.Configuration
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.bson.Subtype.GenericBinarySubtype
-import reactivemongo.bson.{BSONBinary, BSONDocument, BSONObjectID}
-import reactivemongo.play.json.ImplicitBSONHandlers._
+import play.api.{Configuration, Logging}
+import repositories.ManageCacheEntry.{DataEntry, JsonDataEntry, ManageCacheEntry, ManageCacheEntryFormats}
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
-import uk.gov.hmrc.mongo.ReactiveRepository
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
+import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}
 
-abstract class ManageCacheRepository(
-                                      index: String,
-                                      ttl: Option[Int],
-                                      component: ReactiveMongoComponent,
-                                      encryptionKey: String,
-                                      config: Configuration
-                                    )(implicit ec: ExecutionContext)
-  extends ReactiveRepository[JsValue, BSONObjectID](
-    collectionName = index,
-    mongo = component.mongoConnector.db,
-    domainFormat = implicitly
-  ) {
+object ManageCacheEntry {
 
-  override val logger: Logger = LoggerFactory.getLogger("ManageCacheRepository")
-  private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
-  private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
+  sealed trait ManageCacheEntry
+  case class DataEntry(id: String, data: BsonBinary, lastUpdated: DateTime) extends ManageCacheEntry
+  case class JsonDataEntry(id: String, data: JsValue, lastUpdated: DateTime) extends ManageCacheEntry
 
-  private case class DataEntry(
-                                id: String,
-                                data: BSONBinary,
-                                lastUpdated: DateTime)
+  object DataEntry {
+    def apply(id: String, data: Array[Byte], lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)): DataEntry =
+      DataEntry(id, BsonBinary(data), lastUpdated)
 
-  // scalastyle:off magic.number
-  private object DataEntry {
-    def apply(id: String,
-              data: Array[Byte],
-              lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)): DataEntry =
-      DataEntry(id, BSONBinary(data, GenericBinarySubtype), lastUpdated)
+    final val bsonBinaryReads: Reads[BsonBinary] = byteArrayReads.map(t=> BsonBinary(t))
+    final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(t=> t.getData)
+    implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
 
-    private implicit val dateFormat: Format[DateTime] =
-      ReactiveMongoFormats.dateTimeFormats
+    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
     implicit val format: Format[DataEntry] = Json.format[DataEntry]
   }
 
-  // scalastyle:on magic.number
-
-  private case class JsonDataEntry(
-                                    id: String,
-                                    data: JsValue,
-                                    lastUpdated: DateTime
-                                  )
-
-  private object JsonDataEntry {
-    private implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
+  object JsonDataEntry {
+    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
     implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 
-  private val fieldName = "lastUpdated"
-  private val createdIndexName = "dataExpiry"
-  private val expireAfterSeconds = "expireAfterSeconds"
-
-  (for {
-    _ <- CollectionDiagnostics.checkIndexTtl(collection, createdIndexName, ttl)
-    _ <- ensureIndex(fieldName, createdIndexName, ttl)
-  } yield {
-    ()
-  }) recoverWith {
-    case t: Throwable => Future.successful(logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
-  } andThen {
-    case _ => CollectionDiagnostics.logCollectionInfo(collection)
+  object ManageCacheEntryFormats{
+    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
+    implicit val format: Format[ManageCacheEntry] = Json.format[ManageCacheEntry]
   }
+}
 
-  private def ensureIndex(field: String, indexName: String, ttl: Option[Int]): Future[Boolean] = {
-
-    val defaultIndex: Index = Index(Seq((field, IndexType.Ascending)), Some(indexName))
-
-    val index: Index = ttl.fold(defaultIndex) { ttl =>
-      Index(
-        Seq((field, IndexType.Ascending)),
-        Some(indexName),
-        background = true,
-        options = BSONDocument(expireAfterSeconds -> ttl)
+abstract class ManageCacheRepository(
+                                      collectionName: String,
+                                      ttl: Int,
+                                      mongoComponent: MongoComponent,
+                                      encryptionKey: String,
+                                      config: Configuration
+                                    )(implicit ec: ExecutionContext)
+  extends PlayMongoRepository[ManageCacheEntry](
+    collectionName = collectionName,
+    mongoComponent = mongoComponent,
+    domainFormat = ManageCacheEntryFormats.format,
+    extraCodecs = Seq(
+      Codecs.playFormatCodec(JsonDataEntry.format),
+      Codecs.playFormatCodec(DataEntry.format),
+    ),
+    indexes = Seq(
+      IndexModel(
+        Indexes.ascending("lastUpdated"),
+        IndexOptions().name("dataExpiry").expireAfter(ttl, TimeUnit.SECONDS).background(true)
       )
-    }
+    )
+  ) with Logging {
 
-    collection.indexesManager.ensure(index) map {
-      result => {
-        logger.warn(s"Created index $indexName on collection ${collection.name} with TTL value $ttl -> result: $result")
-        result
-      }
-    } recover {
-      case e => logger.error("Failed to set TTL index", e)
-        false
-    }
-  }
+  import ManageCacheEntryFormats._
+
+  private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
+  private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
+  private val idField: String = "id"
 
   def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
-    val document: JsValue = {
+    val setOperation: Bson = {
       if (encrypted) {
         val unencrypted = PlainText(Json.stringify(data))
         val encryptedData = jsonCrypto.encrypt(unencrypted).value
         val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
-        Json.toJson(DataEntry(id, dataAsByteArray))
-      } else
-        Json.toJson(JsonDataEntry(id, data, DateTime.now(DateTimeZone.UTC)))
+        val entry = DataEntry(id, dataAsByteArray)
+        Updates.combine(
+          Updates.set(idField, entry.id),
+          Updates.set("data", entry.data),
+          Updates.set("lastUpdated", Codecs.toBson(entry.lastUpdated))
+        )
+      } else {
+        Updates.combine(
+          Updates.set(idField, id),
+          Updates.set("data", Codecs.toBson(data)),
+          Updates.set("lastUpdated", Codecs.toBson(DateTime.now(DateTimeZone.UTC)))
+        )
+      }
     }
-    val selector = BSONDocument("id" -> id)
-    val modifier = BSONDocument("$set" -> document)
-    collection.update(ordered = false).one(selector, modifier, upsert = true)
-      .map(_.ok)
+
+    collection.findOneAndUpdate(
+      filter = Filters.eq(idField, id),
+      update = setOperation, new FindOneAndUpdateOptions().upsert(true)).toFutureOption().map {
+      case Some(_) => true
+      case None =>
+        logger.error(s"Failed to save or update the row with id=$id")
+        false
+    }
   }
 
   def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
     if (encrypted) {
-      collection.find(BSONDocument("id" -> id), projection = Option.empty[JsObject]).one[DataEntry].map {
+      collection.find[DataEntry](Filters.equal(idField, id)).headOption().map {
         _.map {
           dataEntry =>
-            val dataAsString = new String(dataEntry.data.byteArray, StandardCharsets.UTF_8)
+            val dataAsString = new String(dataEntry.data.getData, StandardCharsets.UTF_8)
             val decrypted: PlainText = jsonCrypto.decrypt(Crypted(dataAsString))
             Json.parse(decrypted.value)
         }
       }
     } else {
-      collection.find(BSONDocument("id" -> id), projection = Option.empty[JsObject]).one[JsonDataEntry].map {
+      collection.find[JsonDataEntry](Filters.equal(idField, id)).headOption().map {
         _.map {
           dataEntry =>
             dataEntry.data
@@ -156,14 +146,14 @@ abstract class ManageCacheRepository(
 
   def getLastUpdated(id: String)(implicit ec: ExecutionContext): Future[Option[DateTime]] = {
     if (encrypted) {
-      collection.find(BSONDocument("id" -> id), projection = Option.empty[JsObject]).one[DataEntry].map {
+      collection.find[DataEntry](Filters.equal(idField, id)).headOption().map {
         _.map {
           dataEntry =>
             dataEntry.lastUpdated
         }
       }
     } else {
-      collection.find(BSONDocument("id" -> id), projection = Option.empty[JsObject]).one[JsonDataEntry].map {
+      collection.find[JsonDataEntry](Filters.equal(idField, id)).headOption().map {
         _.map {
           dataEntry =>
             dataEntry.lastUpdated
@@ -173,9 +163,10 @@ abstract class ManageCacheRepository(
   }
 
   def remove(id: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    logger.warn(s"Removing row from collection ${collection.name} externalId:$id")
-    val selector = BSONDocument("id" -> id)
-    collection.delete().one(selector).map(_.ok)
+    collection.deleteOne(Filters.equal(idField, id)).toFuture().map { result =>
+      logger.info(s"Removing row from collection $collectionName externalId:$id")
+      result.wasAcknowledged
+    }
   }
 
 }

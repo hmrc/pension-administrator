@@ -17,143 +17,112 @@
 package repositories
 
 import com.google.inject.{Inject, Singleton}
+import com.mongodb.client.model.FindOneAndUpdateOptions
 import models.Invitation
 import org.joda.time.{DateTime, DateTimeZone}
-import org.slf4j.{Logger, LoggerFactory}
-import play.api.Configuration
+import org.mongodb.scala.bson.BsonBinary
+import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model._
 import play.api.libs.json._
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.api.{Cursor, ReadPreference}
-import reactivemongo.bson.Subtype.GenericBinarySubtype
-import reactivemongo.bson.{BSONBinary, BSONDocument, BSONObjectID}
-import reactivemongo.play.json.ImplicitBSONHandlers._
+import play.api.{Configuration, Logging}
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
-import uk.gov.hmrc.mongo.ReactiveRepository
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
+import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
+import InvitationsCacheEntry._
 
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}
 
-@Singleton
-class InvitationsCacheRepository @Inject()(
-                                            component: ReactiveMongoComponent,
-                                            config: Configuration
-                                          )(implicit val ec: ExecutionContext)
-  extends ReactiveRepository[JsValue, BSONObjectID](
-    collectionName = config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
-    mongo = component.mongoConnector.db,
-    domainFormat = implicitly
-  ) {
 
-  override val logger: Logger = LoggerFactory.getLogger("InvitationsCacheRepository")
-  private val encryptionKey: String = "manage.json.encryption"
-  // scalastyle:off magic.number
-  private val ttl = 0
-  private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
-  private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
+object InvitationsCacheEntry {
 
-  private case class DataEntry(
-                                inviteePsaId: String,
-                                pstr: String,
-                                data: BSONBinary,
-                                lastUpdated: DateTime,
-                                expireAt: DateTime)
+  sealed trait InvitationsCacheEntry
 
-  private object DataEntry {
+  case class DataEntry(inviteePsaId: String, pstr: String, data: BsonBinary, lastUpdated: DateTime, expireAt: DateTime) extends InvitationsCacheEntry
+
+  case class JsonDataEntry(inviteePsaId: String, pstr: String, data: JsValue, lastUpdated: DateTime, expireAt: DateTime) extends InvitationsCacheEntry
+
+  object DataEntry {
     def apply(inviteePsaId: String,
               pstr: String,
               data: Array[Byte],
               lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
               expireAt: DateTime): DataEntry = {
 
-      DataEntry(inviteePsaId, pstr, BSONBinary(
-        data,
-        GenericBinarySubtype),
-        lastUpdated,
-        expireAt
-      )
-
+      DataEntry(inviteePsaId, pstr, BsonBinary(data), lastUpdated, expireAt)
     }
 
-    implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
-    implicit val reads: OFormat[DataEntry] = Json.format[DataEntry]
-    implicit val writes: OWrites[DataEntry] = Json.format[DataEntry]
+    final val bsonBinaryReads: Reads[BsonBinary] = byteArrayReads.map(BsonBinary(_))
+    final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(_.getData)
+    implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
+
+    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
+    implicit val format: Format[DataEntry] = Json.format[DataEntry]
   }
 
-  // scalastyle:on magic.number
-
-  private case class JsonDataEntry(inviteePsaId: String,
-                                   pstr: String,
-                                   data: JsValue,
-                                   lastUpdated: DateTime,
-                                   expireAt: DateTime
-                                  )
-
-  private object JsonDataEntry {
+  object JsonDataEntry {
     def applyJsonDataEntry(inviteePsaId: String,
                            pstr: String,
                            data: JsValue,
                            lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
                            expireAt: DateTime): JsonDataEntry = {
 
-      JsonDataEntry(inviteePsaId, pstr, data,
-        lastUpdated,
-        expireAt)
+      JsonDataEntry(inviteePsaId, pstr, data, lastUpdated, expireAt)
     }
 
-    implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
-    implicit val reads: OFormat[JsonDataEntry] = Json.format[JsonDataEntry]
-    implicit val writes: OWrites[JsonDataEntry] = Json.format[JsonDataEntry]
+    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
+    implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 
-  private val expireAt = "expireAt"
-  private val dataExpiry = "dataExpiry"
-  private val expireAfterSeconds = "expireAfterSeconds"
+  object InvitationsCacheEntryFormats{
+    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
+    implicit val format: Format[InvitationsCacheEntry] = Json.format[InvitationsCacheEntry]
+  }
+}
+
+@Singleton
+class InvitationsCacheRepository @Inject()(
+                                            mongoComponent: MongoComponent,
+                                            config: Configuration
+                                          )(implicit val ec: ExecutionContext)
+  extends PlayMongoRepository[InvitationsCacheEntry](
+    collectionName = config.underlying.getString("mongodb.pension-administrator-cache.invitations.name"),
+    mongoComponent = mongoComponent,
+    domainFormat = InvitationsCacheEntryFormats.format,
+    extraCodecs = Seq(
+      Codecs.playFormatCodec(JsonDataEntry.format),
+      Codecs.playFormatCodec(DataEntry.format),
+    ),
+    indexes = Seq(
+      IndexModel(
+        Indexes.ascending("expireAt"),
+        IndexOptions().name("dataExpiry").expireAfter(0, TimeUnit.SECONDS).background(true)
+      ),
+      IndexModel(
+        Indexes.ascending("inviteePsaId", "pstr"),
+        IndexOptions().name("inviteePsaId_Pstr").unique(true).background(true)
+      ),
+      IndexModel(
+        Indexes.ascending("pstr"),
+        IndexOptions().name("pstr").background(true)
+      )
+    )
+  ) with Logging {
+
+  import InvitationsCacheEntryFormats._
+
+  private val encryptionKey: String = "manage.json.encryption"
+
+  private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
+  private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
+
   private val inviteePsaIdKey = "inviteePsaId"
   private val pstrKey = "pstr"
-  private val uniqueInvitation = "inviteePsaId_Pstr"
-  private val pstrIndexName = "pstr"
 
-  (for {
-    _ <- CollectionDiagnostics.checkIndexTtl(collection, dataExpiry, Some(ttl))
-    _ <- ensureIndex(fields = Seq(expireAt), indexName = dataExpiry, ttl = Some(ttl))
-    _ <- ensureIndex(fields = Seq(inviteePsaIdKey, pstrKey), indexName = uniqueInvitation, isUnique = true)
-    _ <- ensureIndex(fields = Seq(pstrKey), indexName = pstrIndexName)
-  } yield {
-    ()
-  }) recoverWith {
-    case t: Throwable => Future.successful(logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
-  } andThen {
-    case _ => CollectionDiagnostics.logCollectionInfo(collection)
-  }
-
-  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None, isUnique: Boolean = false): Future[Boolean] = {
-
-    val fieldIndexes = fields.map((_, IndexType.Ascending))
-
-    val index = {
-      val defaultIndex = Index(fieldIndexes, Some(indexName), background = true, unique = isUnique)
-      ttl.map(ttl => defaultIndex.copy(options = BSONDocument(expireAfterSeconds -> ttl))).fold(defaultIndex)(identity)
-    }
-
-    val indexCreationDescription = {
-      def addExpireAfterSecondsDescription(s: String) = ttl.fold(s)(ttl => s"$s (expireAfterSeconds = $ttl)")
-
-      addExpireAfterSecondsDescription(s"Attempt to create Mongo index $index (unique = ${index.unique}))")
-    }
-
-    collection.indexesManager.ensure(index) map { result =>
-      logger.debug(indexCreationDescription + s" was successful and result is: $result")
-      result
-    } recover {
-      case e => logger.error(indexCreationDescription + s" was unsuccessful", e)
-        false
-    }
-  }
-
-  def insert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
-
+  def upsert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
     val (selector, modifier) = if (encrypted) {
       val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId.value)).value
       val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
@@ -161,58 +130,73 @@ class InvitationsCacheRepository @Inject()(
       val unencrypted = PlainText(Json.stringify(Json.toJson(invitation)))
       val encryptedData = jsonCrypto.encrypt(unencrypted).value
       val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
-
-      (BSONDocument(inviteePsaIdKey -> encryptedInviteePsaId, pstrKey -> encryptedPstr),
-        BSONDocument("$set" -> Json.toJson(DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray, expireAt = invitation.expireAt))))
+      val dataEntry = DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray, expireAt = invitation.expireAt)
+      (Filters.and(Filters.equal(inviteePsaIdKey, encryptedInviteePsaId), Filters.equal(pstrKey, encryptedPstr)),
+        Updates.combine(
+          Updates.set("inviteePsaId", dataEntry.inviteePsaId),
+          Updates.set("pstr", dataEntry.pstr),
+          Updates.set("data", dataEntry.data),
+          Updates.set("lastUpdated", Codecs.toBson(dataEntry.lastUpdated)),
+          Updates.set("expireAt", Codecs.toBson(dataEntry.expireAt))
+        ))
     } else {
       val record = JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId.value,
-        invitation.pstr,
-        Json.toJson(invitation), expireAt = invitation.expireAt)
-      (BSONDocument(inviteePsaIdKey -> invitation.inviteePsaId.value, pstrKey -> invitation.pstr),
-        BSONDocument("$set" -> Json.toJson(record)))
+        invitation.pstr, Json.toJson(invitation), expireAt = invitation.expireAt)
+
+      (Filters.and(Filters.equal(inviteePsaIdKey, invitation.inviteePsaId.value), Filters.equal(pstrKey, invitation.pstr)),
+        Updates.combine(
+          Updates.set("inviteePsaId", record.inviteePsaId),
+          Updates.set("pstr", record.pstr),
+          Updates.set("data", Codecs.toBson(record.data)),
+          Updates.set("lastUpdated", Codecs.toBson(record.lastUpdated)),
+          Updates.set("expireAt", Codecs.toBson(record.expireAt))
+        ))
     }
-    collection.update(ordered = false).one(selector, modifier, upsert = true)
-      .map(_.ok)
+
+    collection.findOneAndUpdate(
+      filter = selector,
+      update = modifier, new FindOneAndUpdateOptions().upsert(true)).toFutureOption().map {
+      case Some(_) => true
+      case None =>
+        logger.error(s"Failed to save or update the row with filters=${selector.toString}")
+        false
+    }
   }
 
-  private def encryptKeys(mapOfKeys: Map[String, String]): Map[String, String] = {
-    mapOfKeys.map {
-      case key if key._1 == "inviteePsaId" =>
+  private def filterEncryptKeys(mapOfKeys: Map[String, String]): Bson = {
+    val filters = mapOfKeys.map {
+      case key if key._1 == "inviteePsaId" || key._1 == "pstr" =>
         val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
-        (key._1, encryptedValue)
-      case key if key._1 == "pstr" =>
-        val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
-        (key._1, encryptedValue)
-      case key => key
-    }
+        Filters.equal(key._1, encryptedValue)
+      case key => Filters.equal(key._1, key._2)
+    }.toList
+    Filters.and(filters: _*)
   }
 
   def getByKeys(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Option[List[Invitation]]] = {
     if (encrypted) {
-      val encryptedMapOfKeys = encryptKeys(mapOfKeys)
-      val queryBuilder = collection.find(encryptedMapOfKeys, None)(implicitly, BSONDocumentWrites)
-      queryBuilder.cursor[DataEntry](ReadPreference.primary).collect[List](-1, Cursor.FailOnError[List[DataEntry]]()).map { de =>
-        val listOfInvitationsJson = de.map {
+      collection.find[DataEntry](filterEncryptKeys(mapOfKeys)).toFuture().map { res =>
+        val listOfInvitationsJson = res.map {
           dataEntry =>
-            val dataAsString = new String(dataEntry.data.byteArray, StandardCharsets.UTF_8)
+            val dataAsString = new String(dataEntry.data.getData, StandardCharsets.UTF_8)
             val decrypted: PlainText = jsonCrypto.decrypt(Crypted(dataAsString))
             Json.parse(decrypted.value)
-        }
+        }.toList
         listToOption(listOfInvitationsJson)
       }
     } else {
-      val queryBuilder = collection.find(mapOfKeys, None)(implicitly, BSONDocumentWrites)
-      queryBuilder.cursor[JsonDataEntry](ReadPreference.primary).collect[List](-1, Cursor.FailOnError[List[JsonDataEntry]]()).map { de =>
-        val listOfInvitationsJson = de.map {
+      val filters = mapOfKeys.map(t => Filters.equal(t._1, t._2)).toList
+      collection.find[JsonDataEntry](Filters.and(filters: _*)).toFuture().map { res =>
+        val listOfInvitationsJson = res.map {
           dataEntry =>
             dataEntry.data
-        }
+        }.toList
         listToOption(listOfInvitationsJson)
       }
     }
   }
 
-  private def listToOption(data: List[JsValue]) = {
+  private def listToOption(data: List[JsValue]): Option[List[Invitation]] = {
     if (data.isEmpty) {
       None
     } else {
@@ -228,10 +212,14 @@ class InvitationsCacheRepository @Inject()(
 
   def remove(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Boolean] = {
     val selector = if (encrypted) {
-      encryptKeys(mapOfKeys)
+      filterEncryptKeys(mapOfKeys)
     } else {
-      mapOfKeys
+      val filters = mapOfKeys.map(t => Filters.equal(t._1, t._2)).toList
+      Filters.and(filters: _*)
     }
-    collection.delete().one(selector).map(_.ok)
+    collection.deleteOne(selector).toFuture().map { result =>
+      logger.info(s"Removing row from collection $collectionName")
+      result.wasAcknowledged
+    }
   }
 }

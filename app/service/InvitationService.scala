@@ -109,7 +109,7 @@ class InvitationServiceImpl @Inject()(
 
 
   private def insertInvitation(invitation: Invitation)(implicit ec: ExecutionContext): Future[Either[HttpException, Unit]] =
-    repository.insert(invitation).map(_ => Right(())) recover {
+    repository.upsert(invitation).map(_ => Right(())) recover {
       case exception: Exception => Left(MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}"""))
     }
 

@@ -28,8 +28,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import reactivemongo.bson.BSONDocument
-import reactivemongo.core.errors.DatabaseException
+import com.mongodb.MongoException
 import repositories.InvitationsCacheRepository
 import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -53,7 +52,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
 
     ".insert" should "return 201 when the request body can be parsed and passed to the repository successfully" in {
 
-      when(repo.insert(any())(any())).thenReturn(Future.successful(true))
+      when(repo.upsert(any())(any())).thenReturn(Future.successful(true))
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
       val result = call(controller.add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation1)))
@@ -62,7 +61,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
 
     it should "return 400 when the request body cannot be parsed" in {
 
-      when(repo.insert(any())(any())).thenReturn(Future.successful(true))
+      when(repo.upsert(any())(any())).thenReturn(Future.successful(true))
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
       recoverToExceptionIf[BadRequestException](
@@ -75,7 +74,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
 
     it should "return 400 when the request body cannot be parsed as valid json" in {
 
-      when(repo.insert(any())(any())).thenReturn(Future.successful(true))
+      when(repo.upsert(any())(any())).thenReturn(Future.successful(true))
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
       val badJson = Json.obj(
@@ -104,15 +103,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
     }
 
     it should "throw a MongoDBFailedException when the mongodb insert call is failed with DatabaseException" in {
-      val databaseException = new DatabaseException {
-        override def originalDocument: Option[BSONDocument] = None
-
-        override def code: Option[Int] = None
-
-        override def message: String = "mongo error"
-      }
-
-      when(repo.insert(any())(any())).thenReturn(Future.failed(databaseException))
+      when(repo.upsert(any())(any())).thenReturn(Future.failed(new MongoException(0, "mongo error")))
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
       recoverToExceptionIf[MongoDBFailedException](

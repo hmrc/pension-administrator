@@ -20,10 +20,8 @@ import connectors.helper.PSASubscriptionFixture
 import org.mockito.MockitoSugar
 import org.scalatest.BeforeAndAfter
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsError, JsSuccess}
 
 class JSONPayloadSchemaValidatorSpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter {
 
