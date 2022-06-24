@@ -54,7 +54,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
         when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
         mongoCollectionDrop()
 
-        val record = ("id-1", Json.parse("""{"data":"1"}"""))
+        val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
         Await.result(psaDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
 
         val filters = Filters.eq(idField, record._1)
@@ -164,7 +164,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
         mongoCollectionDrop()
 
 
-        val record = ("id-1", Json.parse("""{"data":"1"}"""))
+        val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
         Await.result(psaDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
 
         whenReady(psaDataCacheRepository.get(record._1)) { documentsInDB =>
