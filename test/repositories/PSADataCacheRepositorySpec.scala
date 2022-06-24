@@ -55,13 +55,15 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
         mongoCollectionDrop()
 
         val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
-        Await.result(psaDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
-
         val filters = Filters.eq(idField, record._1)
-        whenReady(
-          psaDataCacheRepository.collection.find[DataEntryWithoutEncryption](filters).toFuture()) {
-          documentsInDB =>
-            documentsInDB.size mustBe 1
+
+        val documentsInDB = for {
+          _ <- psaDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- psaDataCacheRepository.collection.find[DataEntryWithoutEncryption](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) { documentsInDB =>
+          documentsInDB.size mustBe 1
         }
       }
 
@@ -69,51 +71,55 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
         when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
         mongoCollectionDrop()
 
-        val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
-        val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
+        val record1 = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true}"""))
+        val record2 = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
 
-        Await.result(psaDataCacheRepository.upsert(record1._1, record1._2).map { _ =>
-          psaDataCacheRepository.upsert(record2._1, record2._2)
-        }, Duration.Inf)
+        val filters = Filters.eq(idField, "Ext-b9443dbb-3d88-465d-9696-47d6ef94f356")
+        val documentsInDB = for {
+          _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
+          _ <- psaDataCacheRepository.upsert(record2._1, record2._2)
+          documentsInDB <- psaDataCacheRepository.collection.find[DataEntryWithoutEncryption](filters).toFuture()
+        } yield documentsInDB
 
-        val filters = Filters.eq(idField, "id-1")
-        whenReady(
-          psaDataCacheRepository.collection.find[DataEntryWithoutEncryption](filters).toFuture()) {
-          documentsInDB =>
-            documentsInDB.size mustBe 1
-            documentsInDB.head.data mustBe record2._2
-            documentsInDB.head.data must not be record1._2
+        whenReady(documentsInDB) { documentsInDB =>
+          documentsInDB.size mustBe 1
+          documentsInDB.head.data mustBe record2._2
+          documentsInDB.head.data must not be record1._2
         }
       }
 
-      "insert a new session data cache as DataEntryWithoutEncryption in Mongo collection when encrypted false and id is not same" in {
+      "save a new session data cache as DataEntryWithoutEncryption in Mongo collection when encrypted false and id is not same" in {
         when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
         mongoCollectionDrop()
 
         val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
         val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
 
-        Await.result(psaDataCacheRepository.upsert(record1._1, record1._2).map { _ =>
-          psaDataCacheRepository.upsert(record2._1, record2._2)
-        }, Duration.Inf)
+        val documentsInDB = for {
+          _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
+          _ <- psaDataCacheRepository.upsert(record2._1, record1._2)
+          documentsInDB <- psaDataCacheRepository.collection.find[DataEntryWithoutEncryption].toFuture()
+        } yield documentsInDB
 
-        whenReady(
-          psaDataCacheRepository.collection.find[DataEntryWithoutEncryption].toFuture()) {
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 2
         }
       }
 
-      "insert a new session data cache as EncryptedDataEntry in Mongo collection when encrypted true and collection is empty" in {
+      "save a new session data cache as EncryptedDataEntry in Mongo collection when encrypted true and collection is empty" in {
         when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(psaDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
-
         val filters = Filters.eq(idField, "id-1")
-        whenReady(
-          psaDataCacheRepository.collection.find[EncryptedDataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- psaDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- psaDataCacheRepository.collection.find[EncryptedDataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
         }
@@ -125,32 +131,34 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
         val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
         val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
-
-        Await.result(psaDataCacheRepository.upsert(record1._1, record1._2).map { _ =>
-          psaDataCacheRepository.upsert(record2._1, record2._2)
-        }, Duration.Inf)
-
         val filters = Filters.eq(idField, "id-1")
-        whenReady(
-          psaDataCacheRepository.collection.find[EncryptedDataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
+          _ <- psaDataCacheRepository.upsert(record2._1, record2._2)
+          documentsInDB <- psaDataCacheRepository.collection.find[EncryptedDataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
         }
       }
 
-      "insert a new session data cache as EncryptedDataEntry in Mongo collection when encrypted true and id is not same" in {
+      "save a new session data cache as EncryptedDataEntry in Mongo collection when encrypted true and id is not same" in {
         when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
         mongoCollectionDrop()
 
         val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
         val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
 
-        Await.result(psaDataCacheRepository.upsert(record1._1, record1._2).map { _ =>
-          psaDataCacheRepository.upsert(record2._1, record2._2)
-        }, Duration.Inf)
+        val documentsInDB = for {
+          _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
+          _ <- psaDataCacheRepository.upsert(record2._1, record2._2)
+          documentsInDB <- psaDataCacheRepository.collection.find[EncryptedDataEntry].toFuture()
+        } yield documentsInDB
 
-        whenReady(
-          psaDataCacheRepository.collection.find[EncryptedDataEntry].toFuture()) {
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 2
         }
@@ -163,11 +171,13 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
         when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
         mongoCollectionDrop()
 
-
         val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
-        Await.result(psaDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- psaDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- psaDataCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(psaDataCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
       }
@@ -178,9 +188,12 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(psaDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- psaDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- psaDataCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(psaDataCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
       }
@@ -193,16 +206,23 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(psaDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
 
-        whenReady(psaDataCacheRepository.get(record._1)) { documentsInDB =>
+        val documentsInDB = for {
+          _ <- psaDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- psaDataCacheRepository.get(record._1)
+        } yield documentsInDB
+
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(psaDataCacheRepository.remove(record._1), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- psaDataCacheRepository.remove(record._1)
+          documentsInDB2 <- psaDataCacheRepository.get(record._1)
+        } yield documentsInDB2
 
-        whenReady(psaDataCacheRepository.get(record._1)) { documentsInDB =>
-          documentsInDB.isDefined mustBe false
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe false
         }
       }
 
@@ -212,16 +232,22 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(psaDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- psaDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- psaDataCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(psaDataCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(psaDataCacheRepository.remove("2"), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- psaDataCacheRepository.remove("2")
+          documentsInDB2 <- psaDataCacheRepository.get(record._1)
+        } yield documentsInDB2
 
-        whenReady(psaDataCacheRepository.get(record._1)) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe true
         }
       }
 
@@ -231,16 +257,23 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(psaDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- psaDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- psaDataCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(psaDataCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(psaDataCacheRepository.remove(record._1), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- psaDataCacheRepository.remove(record._1)
+          documentsInDB2 <- psaDataCacheRepository.get(record._1)
+        } yield documentsInDB2
 
-        whenReady(psaDataCacheRepository.get(record._1)) { documentsInDB =>
-          documentsInDB.isDefined mustBe false
+
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe false
         }
       }
 
@@ -250,16 +283,22 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(psaDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- psaDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- psaDataCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(psaDataCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(psaDataCacheRepository.remove("2"), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- psaDataCacheRepository.remove("2")
+          documentsInDB2 <- psaDataCacheRepository.get(record._1)
+        } yield documentsInDB2
 
-        whenReady(psaDataCacheRepository.get(record._1)) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe true
         }
       }
     }

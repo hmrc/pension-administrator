@@ -56,11 +56,14 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(minimalDetailsCacheRepository.upsert(record._1, record._2), Duration.Inf)
-
         val filters = Filters.eq(idField, record._1)
-        whenReady(
-          minimalDetailsCacheRepository.collection.find[JsonDataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- minimalDetailsCacheRepository.collection.find[JsonDataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
         }
@@ -72,14 +75,15 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
         val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
         val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
-
-        Await.result(minimalDetailsCacheRepository.upsert(record1._1, record1._2).map { _ =>
-          minimalDetailsCacheRepository.upsert(record2._1, record2._2)
-        }, Duration.Inf)
-
         val filters = Filters.eq(idField, "id-1")
-        whenReady(
-          minimalDetailsCacheRepository.collection.find[JsonDataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record1._1, record1._2)
+          _ <- minimalDetailsCacheRepository.upsert(record2._1, record2._2)
+          documentsInDB <- minimalDetailsCacheRepository.collection.find[JsonDataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
             documentsInDB.head.data mustBe record2._2
@@ -87,34 +91,38 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         }
       }
 
-      "insert a new minimal details cache as JsonDataEntry in Mongo collection when encrypted false and id is not same" in {
+      "save a new minimal details cache as JsonDataEntry in Mongo collection when encrypted false and id is not same" in {
         when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
         mongoCollectionDrop()
 
         val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
         val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
 
-        Await.result(minimalDetailsCacheRepository.upsert(record1._1, record1._2).map { _ =>
-          minimalDetailsCacheRepository.upsert(record2._1, record2._2)
-        }, Duration.Inf)
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record1._1, record1._2)
+          _ <- minimalDetailsCacheRepository.upsert(record2._1, record2._2)
+          documentsInDB <- minimalDetailsCacheRepository.collection.find[JsonDataEntry].toFuture()
+        } yield documentsInDB
 
-        whenReady(
-          minimalDetailsCacheRepository.collection.find[JsonDataEntry].toFuture()) {
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 2
         }
       }
 
-      "insert a new minimal details cache as DataEntry in Mongo collection when encrypted true and collection is empty" in {
+      "save a new minimal details cache as DataEntry in Mongo collection when encrypted true and collection is empty" in {
         when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(minimalDetailsCacheRepository.upsert(record._1, record._2), Duration.Inf)
-
         val filters = Filters.eq(idField, record._1)
-        whenReady(
-          minimalDetailsCacheRepository.collection.find[DataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- minimalDetailsCacheRepository.collection.find[DataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
         }
@@ -126,14 +134,15 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
         val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
         val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
-
-        Await.result(minimalDetailsCacheRepository.upsert(record1._1, record1._2).map { _ =>
-          minimalDetailsCacheRepository.upsert(record2._1, record2._2)
-        }, Duration.Inf)
-
         val filters = Filters.eq(idField, "id-1")
-        whenReady(
-          minimalDetailsCacheRepository.collection.find[DataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record1._1, record1._2)
+          _ <- minimalDetailsCacheRepository.upsert(record2._1, record2._2)
+          documentsInDB <- minimalDetailsCacheRepository.collection.find[DataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
         }
@@ -146,12 +155,13 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
         val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
 
-        Await.result(minimalDetailsCacheRepository.upsert(record1._1, record1._2).map { _ =>
-          minimalDetailsCacheRepository.upsert(record2._1, record2._2)
-        }, Duration.Inf)
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record1._1, record1._2)
+          _ <- minimalDetailsCacheRepository.upsert(record2._1, record2._2)
+          documentsInDB <- minimalDetailsCacheRepository.collection.find[DataEntry].toFuture()
+        } yield documentsInDB
 
-        whenReady(
-          minimalDetailsCacheRepository.collection.find[DataEntry].toFuture()) {
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 2
         }
@@ -165,9 +175,12 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(minimalDetailsCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- minimalDetailsCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(minimalDetailsCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
       }
@@ -178,9 +191,12 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(minimalDetailsCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- minimalDetailsCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(minimalDetailsCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
       }
@@ -193,9 +209,12 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(minimalDetailsCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- minimalDetailsCacheRepository.getLastUpdated(record._1)
+        } yield documentsInDB
 
-        whenReady(minimalDetailsCacheRepository.getLastUpdated(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.get.compareTo(DateTime.now(DateTimeZone.UTC)) mustBe -1
         }
       }
@@ -206,9 +225,12 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(minimalDetailsCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- minimalDetailsCacheRepository.getLastUpdated(record._1)
+        } yield documentsInDB
 
-        whenReady(minimalDetailsCacheRepository.getLastUpdated(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.get.compareTo(DateTime.now(DateTimeZone.UTC)) mustBe -1
 
         }
@@ -222,16 +244,21 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(minimalDetailsCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- minimalDetailsCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(minimalDetailsCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
+        val documentsInDB2 = for {
+          _ <- minimalDetailsCacheRepository.remove(record._1)
+          documentsInDB2 <- minimalDetailsCacheRepository.get(record._1)
+        } yield documentsInDB2
 
-        Await.result(minimalDetailsCacheRepository.remove(record._1), Duration.Inf)
-
-        whenReady(minimalDetailsCacheRepository.get(record._1)) { documentsInDB =>
-          documentsInDB.isDefined mustBe false
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe false
         }
       }
 
@@ -241,16 +268,22 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(minimalDetailsCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- minimalDetailsCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(minimalDetailsCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(minimalDetailsCacheRepository.remove("2"), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- minimalDetailsCacheRepository.remove("2")
+          documentsInDB2 <- minimalDetailsCacheRepository.get(record._1)
+        } yield documentsInDB2
 
-        whenReady(minimalDetailsCacheRepository.get(record._1)) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe true
         }
       }
 
@@ -260,16 +293,22 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(minimalDetailsCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- minimalDetailsCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(minimalDetailsCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(minimalDetailsCacheRepository.remove(record._1), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- minimalDetailsCacheRepository.remove(record._1)
+          documentsInDB2 <- minimalDetailsCacheRepository.get(record._1)
+        } yield documentsInDB2
 
-        whenReady(minimalDetailsCacheRepository.get(record._1)) { documentsInDB =>
-          documentsInDB.isDefined mustBe false
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe false
         }
       }
 
@@ -279,16 +318,22 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(minimalDetailsCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- minimalDetailsCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(minimalDetailsCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(minimalDetailsCacheRepository.remove("2"), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- minimalDetailsCacheRepository.remove("2")
+          documentsInDB2 <- minimalDetailsCacheRepository.get(record._1)
+        } yield documentsInDB2
 
-        whenReady(minimalDetailsCacheRepository.get(record._1)) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe true
         }
       }
     }

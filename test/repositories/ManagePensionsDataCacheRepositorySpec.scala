@@ -56,11 +56,14 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(managePensionsDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
-
         val filters = Filters.eq(idField, record._1)
-        whenReady(
-          managePensionsDataCacheRepository.collection.find[JsonDataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- managePensionsDataCacheRepository.collection.find[JsonDataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
             documentsInDB.map(_.id mustBe "id-1")
@@ -73,14 +76,15 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
         val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
         val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
-
-        Await.result(managePensionsDataCacheRepository.upsert(record1._1, record1._2).map { _ =>
-          managePensionsDataCacheRepository.upsert(record2._1, record2._2)
-        }, Duration.Inf)
-
         val filters = Filters.eq(idField, "id-1")
-        whenReady(
-          managePensionsDataCacheRepository.collection.find[JsonDataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record1._1, record1._2)
+          _ <- managePensionsDataCacheRepository.upsert(record2._1, record2._2)
+          documentsInDB <- managePensionsDataCacheRepository.collection.find[JsonDataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
             documentsInDB.head.data mustBe record2._2
@@ -95,12 +99,13 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
         val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
 
-        Await.result(managePensionsDataCacheRepository.upsert(record1._1, record1._2).map { _ =>
-          managePensionsDataCacheRepository.upsert(record2._1, record2._2)
-        }, Duration.Inf)
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record1._1, record1._2)
+          _ <- managePensionsDataCacheRepository.upsert(record2._1, record2._2)
+          documentsInDB <- managePensionsDataCacheRepository.collection.find[JsonDataEntry].toFuture()
+        } yield documentsInDB
 
-        whenReady(
-          managePensionsDataCacheRepository.collection.find[JsonDataEntry].toFuture()) {
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 2
         }
@@ -111,11 +116,14 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(managePensionsDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
-
         val filters = Filters.eq(idField, record._1)
-        whenReady(
-          managePensionsDataCacheRepository.collection.find[DataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- managePensionsDataCacheRepository.collection.find[DataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
         }
@@ -127,14 +135,15 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
         val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
         val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
-
-        Await.result(managePensionsDataCacheRepository.upsert(record1._1, record1._2).map { _ =>
-          managePensionsDataCacheRepository.upsert(record2._1, record2._2)
-        }, Duration.Inf)
-
         val filters = Filters.eq(idField, "id-1")
-        whenReady(
-          managePensionsDataCacheRepository.collection.find[DataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record1._1, record1._2)
+          _ <- managePensionsDataCacheRepository.upsert(record2._1, record2._2)
+          documentsInDB <- managePensionsDataCacheRepository.collection.find[DataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
         }
@@ -147,12 +156,13 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
         val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
 
-        Await.result(managePensionsDataCacheRepository.upsert(record1._1, record1._2).map { _ =>
-          managePensionsDataCacheRepository.upsert(record2._1, record2._2)
-        }, Duration.Inf)
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record1._1, record1._2)
+          _ <- managePensionsDataCacheRepository.upsert(record2._1, record2._2)
+          documentsInDB <- managePensionsDataCacheRepository.collection.find[DataEntry].toFuture()
+        } yield documentsInDB
 
-        whenReady(
-          managePensionsDataCacheRepository.collection.find[DataEntry].toFuture()) {
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 2
         }
@@ -166,9 +176,13 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(managePensionsDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
 
-        whenReady(managePensionsDataCacheRepository.get(record._1)) { documentsInDB =>
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- managePensionsDataCacheRepository.get(record._1)
+        } yield documentsInDB
+
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
       }
@@ -179,9 +193,13 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(managePensionsDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
 
-        whenReady(managePensionsDataCacheRepository.get(record._1)) { documentsInDB =>
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- managePensionsDataCacheRepository.get(record._1)
+        } yield documentsInDB
+
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
       }
@@ -194,9 +212,12 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(managePensionsDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- managePensionsDataCacheRepository.getLastUpdated(record._1)
+        } yield documentsInDB
 
-        whenReady(managePensionsDataCacheRepository.getLastUpdated(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.get.compareTo(DateTime.now(DateTimeZone.UTC)) mustBe -1
         }
       }
@@ -207,9 +228,12 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(managePensionsDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- managePensionsDataCacheRepository.getLastUpdated(record._1)
+        } yield documentsInDB
 
-        whenReady(managePensionsDataCacheRepository.getLastUpdated(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.get.compareTo(DateTime.now(DateTimeZone.UTC)) mustBe -1
 
         }
@@ -223,16 +247,22 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(managePensionsDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- managePensionsDataCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(managePensionsDataCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(managePensionsDataCacheRepository.remove(record._1), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- managePensionsDataCacheRepository.remove(record._1)
+          documentsInDB2 <- managePensionsDataCacheRepository.get(record._1)
+        } yield documentsInDB2
 
-        whenReady(managePensionsDataCacheRepository.get(record._1)) { documentsInDB =>
-          documentsInDB.isDefined mustBe false
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe false
         }
       }
 
@@ -242,16 +272,22 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(managePensionsDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- managePensionsDataCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(managePensionsDataCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(managePensionsDataCacheRepository.remove("2"), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- managePensionsDataCacheRepository.remove("2")
+          documentsInDB2 <- managePensionsDataCacheRepository.get(record._1)
+        } yield documentsInDB2
 
-        whenReady(managePensionsDataCacheRepository.get(record._1)) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe true
         }
       }
 
@@ -261,16 +297,22 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(managePensionsDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- managePensionsDataCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(managePensionsDataCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(managePensionsDataCacheRepository.remove(record._1), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- managePensionsDataCacheRepository.remove(record._1)
+          documentsInDB2 <- managePensionsDataCacheRepository.get(record._1)
+        } yield documentsInDB2
 
-        whenReady(managePensionsDataCacheRepository.get(record._1)) { documentsInDB =>
-          documentsInDB.isDefined mustBe false
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe false
         }
       }
 
@@ -280,16 +322,22 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         mongoCollectionDrop()
 
         val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        Await.result(managePensionsDataCacheRepository.upsert(record._1, record._2), Duration.Inf)
+        val documentsInDB = for {
+          _ <- managePensionsDataCacheRepository.upsert(record._1, record._2)
+          documentsInDB <- managePensionsDataCacheRepository.get(record._1)
+        } yield documentsInDB
 
-        whenReady(managePensionsDataCacheRepository.get(record._1)) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(managePensionsDataCacheRepository.remove("2"), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- managePensionsDataCacheRepository.remove("2")
+          documentsInDB2 <- managePensionsDataCacheRepository.get(record._1)
+        } yield documentsInDB2
 
-        whenReady(managePensionsDataCacheRepository.get(record._1)) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe true
         }
       }
     }

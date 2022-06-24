@@ -33,8 +33,8 @@ import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.mongo.MongoComponent
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 
 class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with MongoEmbedDatabase with BeforeAndAfter with
   BeforeAndAfterEach { // scalastyle:off magic.number
@@ -56,11 +56,14 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
         val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
-        Await.result(invitationsCacheRepository.upsert(record), Duration.Inf)
 
         val filters = Filters.and(Filters.eq("inviteePsaId", "A2500002"), Filters.eq("pstr", "pstr"))
-        whenReady(
-          invitationsCacheRepository.collection.find[JsonDataEntry](filters).toFuture()) {
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record)
+          documentsInDB <- invitationsCacheRepository.collection.find[JsonDataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
         }
@@ -74,14 +77,15 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
         val record2 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
-
-        Await.result(invitationsCacheRepository.upsert(record1).map { _ =>
-          invitationsCacheRepository.upsert(record2)
-        }, Duration.Inf)
-
         val filters = Filters.and(Filters.eq("inviteePsaId", "A2500002"), Filters.eq("pstr", "pstr"))
-        whenReady(
-          invitationsCacheRepository.collection.find[JsonDataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record1)
+          _ <- invitationsCacheRepository.upsert(record2)
+          documentsInDB <- invitationsCacheRepository.collection.find[JsonDataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
             documentsInDB.head.expireAt mustBe record2.expireAt
@@ -99,12 +103,13 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         val record2 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
           PsaId("A9876543"), PsaId("A9876544"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
 
-        Await.result(invitationsCacheRepository.upsert(record1).map { _ =>
-          invitationsCacheRepository.upsert(record2)
-        }, Duration.Inf)
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record1)
+          _ <- invitationsCacheRepository.upsert(record2)
+          documentsInDB <- invitationsCacheRepository.collection.find[JsonDataEntry].toFuture()
+        } yield documentsInDB
 
-        whenReady(
-          invitationsCacheRepository.collection.find[JsonDataEntry].toFuture()) {
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 2
         }
@@ -119,12 +124,13 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         val record2 = Invitation(SchemeReferenceNumber("id"), "pstr2", "schemeName",
           PsaId("A9876543"), PsaId("A9876544"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
 
-        Await.result(invitationsCacheRepository.upsert(record1).map { _ =>
-          invitationsCacheRepository.upsert(record2)
-        }, Duration.Inf)
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record1)
+          _ <- invitationsCacheRepository.upsert(record2)
+          documentsInDB <- invitationsCacheRepository.collection.find[JsonDataEntry].toFuture()
+        } yield documentsInDB
 
-        whenReady(
-          invitationsCacheRepository.collection.find[JsonDataEntry].toFuture()) {
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 2
         }
@@ -136,11 +142,14 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
         val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
-        Await.result(invitationsCacheRepository.upsert(record), Duration.Inf)
-
         val filters = Filters.and(Filters.eq("inviteePsaId", "qPiTIC6PennxowJl8O5lqw=="), Filters.eq("pstr", "U87ezLMl9HOlyHOsEGXrNg=="))
-        whenReady(
-          invitationsCacheRepository.collection.find[DataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record)
+          documentsInDB <- invitationsCacheRepository.collection.find[DataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
         }
@@ -154,14 +163,15 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
         val record2 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
-
-        Await.result(invitationsCacheRepository.upsert(record1).map { _ =>
-          invitationsCacheRepository.upsert(record2)
-        }, Duration.Inf)
-
         val filters = Filters.and(Filters.eq("inviteePsaId", "qPiTIC6PennxowJl8O5lqw=="), Filters.eq("pstr", "U87ezLMl9HOlyHOsEGXrNg=="))
-        whenReady(
-          invitationsCacheRepository.collection.find[DataEntry](filters).toFuture()) {
+
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record1)
+          _ <- invitationsCacheRepository.upsert(record2)
+          documentsInDB <- invitationsCacheRepository.collection.find[DataEntry](filters).toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 1
             documentsInDB.head.expireAt mustBe record2.expireAt
@@ -177,12 +187,13 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         val record2 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
           PsaId("A9876543"), PsaId("A9876544"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
 
-        Await.result(invitationsCacheRepository.upsert(record1).map { _ =>
-          invitationsCacheRepository.upsert(record2)
-        }, Duration.Inf)
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record1)
+          _ <- invitationsCacheRepository.upsert(record2)
+          documentsInDB <- invitationsCacheRepository.collection.find[DataEntry].toFuture()
+        } yield documentsInDB
 
-        whenReady(
-          invitationsCacheRepository.collection.find[DataEntry].toFuture()) {
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 2
         }
@@ -197,12 +208,13 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         val record2 = Invitation(SchemeReferenceNumber("id"), "pstr2", "schemeName",
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
 
-        Await.result(invitationsCacheRepository.upsert(record1).map { _ =>
-          invitationsCacheRepository.upsert(record2)
-        }, Duration.Inf)
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record1)
+          _ <- invitationsCacheRepository.upsert(record2)
+          documentsInDB <- invitationsCacheRepository.collection.find[DataEntry].toFuture()
+        } yield documentsInDB
 
-        whenReady(
-          invitationsCacheRepository.collection.find[DataEntry].toFuture()) {
+        whenReady(documentsInDB) {
           documentsInDB =>
             documentsInDB.size mustBe 2
         }
@@ -217,9 +229,13 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
         val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
-        Await.result(invitationsCacheRepository.upsert(record), Duration.Inf)
 
-        whenReady(invitationsCacheRepository.getByKeys(Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr"))) { documentsInDB =>
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record)
+          documentsInDB <- invitationsCacheRepository.getByKeys(Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr"))
+        } yield documentsInDB
+
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
       }
@@ -231,9 +247,13 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
         val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
-        Await.result(invitationsCacheRepository.upsert(record), Duration.Inf)
 
-        whenReady(invitationsCacheRepository.getByKeys(Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr"))) { documentsInDB =>
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record)
+          documentsInDB <- invitationsCacheRepository.getByKeys(Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr"))
+        } yield documentsInDB
+
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
       }
@@ -247,18 +267,24 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
         val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
-        Await.result(invitationsCacheRepository.upsert(record), Duration.Inf)
-
         val filters = Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr")
 
-        whenReady(invitationsCacheRepository.getByKeys(filters)) { documentsInDB =>
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record)
+          documentsInDB <- invitationsCacheRepository.getByKeys(filters)
+        } yield documentsInDB
+
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(invitationsCacheRepository.remove(filters), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- invitationsCacheRepository.remove(filters)
+          documentsInDB2 <- invitationsCacheRepository.getByKeys(filters)
+        } yield documentsInDB2
 
-        whenReady(invitationsCacheRepository.getByKeys(filters)) { documentsInDB =>
-          documentsInDB.isDefined mustBe false
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe false
         }
       }
 
@@ -269,18 +295,24 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
         val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
-        Await.result(invitationsCacheRepository.upsert(record), Duration.Inf)
-
         val filters = Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr")
 
-        whenReady(invitationsCacheRepository.getByKeys(filters)) { documentsInDB =>
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record)
+          documentsInDB <- invitationsCacheRepository.getByKeys(filters)
+        } yield documentsInDB
+
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(invitationsCacheRepository.remove(Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr2")), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- invitationsCacheRepository.remove(Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr2"))
+          documentsInDB2 <- invitationsCacheRepository.getByKeys(filters)
+        } yield documentsInDB2
 
-        whenReady(invitationsCacheRepository.getByKeys(filters)) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe true
         }
       }
 
@@ -291,18 +323,24 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
         val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
-        Await.result(invitationsCacheRepository.upsert(record), Duration.Inf)
-
         val filters = Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr")
 
-        whenReady(invitationsCacheRepository.getByKeys(filters)) { documentsInDB =>
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record)
+          documentsInDB <- invitationsCacheRepository.getByKeys(filters)
+        } yield documentsInDB
+
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
 
-        Await.result(invitationsCacheRepository.remove(filters), Duration.Inf)
+        val documentsInDB2 = for {
+          _ <- invitationsCacheRepository.remove(filters)
+          documentsInDB2 <- invitationsCacheRepository.getByKeys(filters)
+        } yield documentsInDB2
 
-        whenReady(invitationsCacheRepository.getByKeys(filters)) { documentsInDB =>
-          documentsInDB.isDefined mustBe false
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe false
         }
       }
 
@@ -313,18 +351,23 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
         val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
           PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
-        Await.result(invitationsCacheRepository.upsert(record), Duration.Inf)
-
         val filters = Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr")
 
-        whenReady(invitationsCacheRepository.getByKeys(filters)) { documentsInDB =>
+        val documentsInDB = for {
+          _ <- invitationsCacheRepository.upsert(record)
+          documentsInDB <- invitationsCacheRepository.getByKeys(filters)
+        } yield documentsInDB
+
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.isDefined mustBe true
         }
+        val documentsInDB2 = for {
+          _ <- invitationsCacheRepository.remove(Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr2"))
+          documentsInDB2 <- invitationsCacheRepository.getByKeys(filters)
+        } yield documentsInDB2
 
-        Await.result(invitationsCacheRepository.remove(Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr2")), Duration.Inf)
-
-        whenReady(invitationsCacheRepository.getByKeys(filters)) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
+        whenReady(documentsInDB2) { documentsInDB2 =>
+          documentsInDB2.isDefined mustBe true
         }
       }
 

@@ -28,6 +28,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterEach}
 import play.api.Configuration
 import repositories.FeatureToggleMongoFormatter.{FeatureToggles, featureToggles, id}
 import uk.gov.hmrc.mongo.MongoComponent
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -48,12 +49,14 @@ class AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matcher
     "getFeatureToggle" must {
       "get FeatureToggles from Mongo collection" in {
         mongoCollectionDrop()
-        Await.result(
-          adminDataRepository.collection.insertOne(
-            FeatureToggles("toggles", Seq(FeatureToggle(PsaRegistration, enabled = true), FeatureToggle(PsaFromIvToPdv, enabled = false)))).headOption(),
-          Duration.Inf)
 
-        whenReady(adminDataRepository.getFeatureToggles) { documentsInDB =>
+        val documentsInDB = for {
+          _ <- adminDataRepository.collection.insertOne(
+            FeatureToggles("toggles", Seq(FeatureToggle(PsaRegistration, enabled = true), FeatureToggle(PsaFromIvToPdv, enabled = false)))).headOption()
+          documentsInDB <- adminDataRepository.getFeatureToggles
+        } yield documentsInDB
+
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.size mustBe 2
         }
       }
@@ -62,10 +65,13 @@ class AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matcher
     "setFeatureToggle" must {
       "set new FeatureToggles in Mongo collection" in {
         mongoCollectionDrop()
-        Await.result(adminDataRepository.setFeatureToggles(Seq(FeatureToggle(PsaRegistration, enabled = true),
-          FeatureToggle(PsaFromIvToPdv, enabled = false))), Duration.Inf)
+        val documentsInDB = for {
+          _ <- adminDataRepository.setFeatureToggles(Seq(FeatureToggle(PsaRegistration, enabled = true),
+            FeatureToggle(PsaFromIvToPdv, enabled = false)))
+          documentsInDB <- adminDataRepository.collection.find[FeatureToggles](Filters.eq(id, featureToggles)).headOption()
+        } yield documentsInDB
 
-        whenReady(adminDataRepository.collection.find[FeatureToggles](Filters.eq(id, featureToggles)).headOption()) { documentsInDB =>
+        whenReady(documentsInDB) { documentsInDB =>
           documentsInDB.map(_.toggles.size mustBe 2)
         }
       }

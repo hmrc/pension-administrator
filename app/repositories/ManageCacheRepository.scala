@@ -17,36 +17,36 @@
 package repositories
 
 import com.mongodb.client.model.FindOneAndUpdateOptions
-
-import java.nio.charset.StandardCharsets
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mongodb.scala.bson.BsonBinary
-import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes, Updates}
+import org.mongodb.scala.model._
 import play.api.libs.json._
 import play.api.{Configuration, Logging}
 import repositories.ManageCacheEntry.{DataEntry, JsonDataEntry, ManageCacheEntry, ManageCacheEntryFormats}
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
 import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
+import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}
 
 object ManageCacheEntry {
 
   sealed trait ManageCacheEntry
+
   case class DataEntry(id: String, data: BsonBinary, lastUpdated: DateTime) extends ManageCacheEntry
+
   case class JsonDataEntry(id: String, data: JsValue, lastUpdated: DateTime) extends ManageCacheEntry
 
   object DataEntry {
     def apply(id: String, data: Array[Byte], lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)): DataEntry =
       DataEntry(id, BsonBinary(data), lastUpdated)
 
-    final val bsonBinaryReads: Reads[BsonBinary] = byteArrayReads.map(t=> BsonBinary(t))
-    final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(t=> t.getData)
+    final val bsonBinaryReads: Reads[BsonBinary] = byteArrayReads.map(t => BsonBinary(t))
+    final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(t => t.getData)
     implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
 
     implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
@@ -58,7 +58,7 @@ object ManageCacheEntry {
     implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 
-  object ManageCacheEntryFormats{
+  object ManageCacheEntryFormats {
     implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
     implicit val format: Format[ManageCacheEntry] = Json.format[ManageCacheEntry]
   }
@@ -94,29 +94,29 @@ abstract class ManageCacheRepository(
   private val idField: String = "id"
 
   def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
-    val setOperation: Bson = {
-      if (encrypted) {
-        val unencrypted = PlainText(Json.stringify(data))
-        val encryptedData = jsonCrypto.encrypt(unencrypted).value
-        val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
-        val entry = DataEntry(id, dataAsByteArray)
-        Updates.combine(
-          Updates.set(idField, entry.id),
-          Updates.set("data", entry.data),
-          Updates.set("lastUpdated", Codecs.toBson(entry.lastUpdated))
-        )
-      } else {
-        Updates.combine(
-          Updates.set(idField, id),
-          Updates.set("data", Codecs.toBson(data)),
-          Updates.set("lastUpdated", Codecs.toBson(DateTime.now(DateTimeZone.UTC)))
-        )
-      }
+    if (encrypted) {
+      val unencrypted = PlainText(Json.stringify(data))
+      val encryptedData = jsonCrypto.encrypt(unencrypted).value
+      val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
+      val entry = DataEntry(id, dataAsByteArray)
+      val setOperation = Updates.combine(
+        Updates.set(idField, entry.id),
+        Updates.set("data", entry.data),
+        Updates.set("lastUpdated", Codecs.toBson(entry.lastUpdated))
+      )
+      collection.withDocumentClass[DataEntry]().findOneAndUpdate(
+        filter = Filters.eq(idField, id),
+        update = setOperation, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => true)
+    } else {
+      val setOperation = Updates.combine(
+        Updates.set(idField, id),
+        Updates.set("data", Codecs.toBson(data)),
+        Updates.set("lastUpdated", Codecs.toBson(DateTime.now(DateTimeZone.UTC)))
+      )
+      collection.withDocumentClass[JsonDataEntry]().findOneAndUpdate(
+        filter = Filters.eq(idField, id),
+        update = setOperation, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => true)
     }
-
-    collection.findOneAndUpdate(
-      filter = Filters.eq(idField, id),
-      update = setOperation, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => true)
   }
 
   def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {

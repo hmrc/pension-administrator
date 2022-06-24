@@ -20,7 +20,6 @@ import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mongodb.scala.bson.BsonBinary
-import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import play.api.libs.json._
 import play.api.{Configuration, Logging}
@@ -95,7 +94,6 @@ class PSADataCacheRepository @Inject()(
     )
   ) with Logging {
 
-  private val idField: String = "id"
 
   import PSADataCacheEntryFormats._
 
@@ -103,37 +101,39 @@ class PSADataCacheRepository @Inject()(
   private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, configuration.underlying)
   private val encrypted: Boolean = configuration.get[Boolean](path = "encrypted")
   private val expireInDays = configuration.get[Int](path = "mongodb.pension-administrator-cache.psa-data.timeToLiveInDays")
+  private val idField: String = "id"
 
   private def evaluatedExpireAt: DateTime = DateTime.now(DateTimeZone.UTC).toLocalDate.plusDays(expireInDays + 1).toDateTimeAtStartOfDay()
 
   def upsert(credId: String, userData: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
-    val setOperation: Bson = {
-      if (encrypted) {
-        val unencrypted = PlainText(Json.stringify(userData))
-        val encryptedData = jsonCrypto.encrypt(unencrypted).value
-        val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
-        val encryptedDataEntry = EncryptedDataEntry(id = credId, data = dataAsByteArray, expireAt = evaluatedExpireAt)
-        Updates.combine(
-          Updates.set(idField, encryptedDataEntry.id),
-          Updates.set("data", encryptedDataEntry.data),
-          Updates.set("lastUpdated", Codecs.toBson(encryptedDataEntry.lastUpdated)),
-          Updates.set("expireAt", Codecs.toBson(encryptedDataEntry.expireAt))
-        )
-      } else {
-        val dataEntryWithoutEncryption = DataEntryWithoutEncryption.applyDataEntry(id = credId, data = userData, expireAt = evaluatedExpireAt)
-        Updates.combine(
-          Updates.set(idField, dataEntryWithoutEncryption.id),
-          Updates.set("data", Codecs.toBson(dataEntryWithoutEncryption.data)),
-          Updates.set("lastUpdated", Codecs.toBson(dataEntryWithoutEncryption.lastUpdated)),
-          Updates.set("expireAt", Codecs.toBson(dataEntryWithoutEncryption.expireAt))
-        )
-      }
+    if (encrypted) {
+      val unencrypted = PlainText(Json.stringify(userData))
+      val encryptedData = jsonCrypto.encrypt(unencrypted).value
+      val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
+      val encryptedDataEntry = EncryptedDataEntry(id = credId, data = dataAsByteArray, expireAt = evaluatedExpireAt)
+      val setOperation = Updates.combine(
+        Updates.set(idField, encryptedDataEntry.id),
+        Updates.set("data", encryptedDataEntry.data),
+        Updates.set("lastUpdated", Codecs.toBson(encryptedDataEntry.lastUpdated)),
+        Updates.set("expireAt", Codecs.toBson(encryptedDataEntry.expireAt))
+      )
+      collection.withDocumentClass[EncryptedDataEntry]().findOneAndUpdate(
+        filter = Filters.eq(idField, credId),
+        update = setOperation, new FindOneAndUpdateOptions().upsert(true))
+        .toFuture().map(_ => true)
+    } else {
+      val dataEntryWithoutEncryption = DataEntryWithoutEncryption.applyDataEntry(id = credId, data = userData, expireAt = evaluatedExpireAt)
+      val setOperation = Updates.combine(
+        Updates.set(idField, dataEntryWithoutEncryption.id),
+        Updates.set("data", Codecs.toBson(dataEntryWithoutEncryption.data)),
+        Updates.set("lastUpdated", Codecs.toBson(dataEntryWithoutEncryption.lastUpdated)),
+        Updates.set("expireAt", Codecs.toBson(dataEntryWithoutEncryption.expireAt))
+      )
+      collection.withDocumentClass[DataEntryWithoutEncryption]().findOneAndUpdate(
+        filter = Filters.eq(idField, credId),
+        update = setOperation, new FindOneAndUpdateOptions().upsert(true))
+        .toFuture().map(_ => true)
     }
-
-    collection.findOneAndUpdate(
-      filter = Filters.eq(idField, credId),
-      update = setOperation, new FindOneAndUpdateOptions().upsert(true))
-      .toFuture().map(_ => true)
   }
 
   def get(credId: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
@@ -151,8 +151,7 @@ class PSADataCacheRepository @Inject()(
         _.map {
           dataEntry =>
             val jsObject = dataEntry.data.as[JsObject]
-            val t = jsObject ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.getMillis))
-            t
+            jsObject ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.getMillis))
         }
       }
     }

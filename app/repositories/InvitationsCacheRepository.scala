@@ -114,16 +114,14 @@ class InvitationsCacheRepository @Inject()(
 
   import InvitationsCacheEntryFormats._
 
+  private val inviteePsaIdKey = "inviteePsaId"
+  private val pstrKey = "pstr"
   private val encryptionKey: String = "manage.json.encryption"
-
   private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
 
-  private val inviteePsaIdKey = "inviteePsaId"
-  private val pstrKey = "pstr"
-
   def upsert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
-    val (selector, modifier) = if (encrypted) {
+    if (encrypted) {
       val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId.value)).value
       val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
 
@@ -131,31 +129,35 @@ class InvitationsCacheRepository @Inject()(
       val encryptedData = jsonCrypto.encrypt(unencrypted).value
       val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
       val dataEntry = DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray, expireAt = invitation.expireAt)
-      (Filters.and(Filters.equal(inviteePsaIdKey, encryptedInviteePsaId), Filters.equal(pstrKey, encryptedPstr)),
-        Updates.combine(
-          Updates.set("inviteePsaId", dataEntry.inviteePsaId),
-          Updates.set("pstr", dataEntry.pstr),
-          Updates.set("data", dataEntry.data),
-          Updates.set("lastUpdated", Codecs.toBson(dataEntry.lastUpdated)),
-          Updates.set("expireAt", Codecs.toBson(dataEntry.expireAt))
-        ))
+
+      val modifier = Updates.combine(
+        Updates.set("inviteePsaId", dataEntry.inviteePsaId),
+        Updates.set("pstr", dataEntry.pstr),
+        Updates.set("data", dataEntry.data),
+        Updates.set("lastUpdated", Codecs.toBson(dataEntry.lastUpdated)),
+        Updates.set("expireAt", Codecs.toBson(dataEntry.expireAt))
+      )
+      val selector = Filters.and(Filters.equal(inviteePsaIdKey, encryptedInviteePsaId), Filters.equal(pstrKey, encryptedPstr))
+      collection.withDocumentClass[DataEntry]().findOneAndUpdate(
+        filter = selector,
+        update = modifier, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => true)
     } else {
       val record = JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId.value,
         invitation.pstr, Json.toJson(invitation), expireAt = invitation.expireAt)
 
-      (Filters.and(Filters.equal(inviteePsaIdKey, invitation.inviteePsaId.value), Filters.equal(pstrKey, invitation.pstr)),
-        Updates.combine(
-          Updates.set("inviteePsaId", record.inviteePsaId),
-          Updates.set("pstr", record.pstr),
-          Updates.set("data", Codecs.toBson(record.data)),
-          Updates.set("lastUpdated", Codecs.toBson(record.lastUpdated)),
-          Updates.set("expireAt", Codecs.toBson(record.expireAt))
-        ))
-    }
+      val modifier = Updates.combine(
+        Updates.set("inviteePsaId", record.inviteePsaId),
+        Updates.set("pstr", record.pstr),
+        Updates.set("data", Codecs.toBson(record.data)),
+        Updates.set("lastUpdated", Codecs.toBson(record.lastUpdated)),
+        Updates.set("expireAt", Codecs.toBson(record.expireAt))
+      )
+      val selector = Filters.and(Filters.equal(inviteePsaIdKey, invitation.inviteePsaId.value), Filters.equal(pstrKey, invitation.pstr))
 
-    collection.findOneAndUpdate(
-      filter = selector,
-      update = modifier, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => true)
+      collection.withDocumentClass[JsonDataEntry]().findOneAndUpdate(
+        filter = selector,
+        update = modifier, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => true)
+    }
   }
 
   private def filterEncryptKeys(mapOfKeys: Map[String, String]): Bson = {
