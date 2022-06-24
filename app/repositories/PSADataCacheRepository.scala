@@ -132,13 +132,8 @@ class PSADataCacheRepository @Inject()(
 
     collection.findOneAndUpdate(
       filter = Filters.eq(idField, credId),
-      update = setOperation, new FindOneAndUpdateOptions().upsert(true)).toFutureOption().map {
-      case Some(_) => true
-      case None =>
-        logger.error(s"Failed to update the PSA DataCache with id=s$credId")
-        false
-    }
-
+      update = setOperation, new FindOneAndUpdateOptions().upsert(true))
+      .toFuture().map(_ => true)
   }
 
   def get(credId: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
@@ -156,7 +151,8 @@ class PSADataCacheRepository @Inject()(
         _.map {
           dataEntry =>
             val jsObject = dataEntry.data.as[JsObject]
-            jsObject ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.getMillis))
+            val t = jsObject ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.getMillis))
+            t
         }
       }
     }

@@ -68,11 +68,7 @@ class AdminDataRepository @Inject()(
     val upsertOptions = new FindOneAndUpdateOptions().upsert(true)
     collection.findOneAndUpdate(
       filter = Filters.eq(id, featureToggles),
-      update = set(featureToggles, Codecs.toBson(toggles)), upsertOptions).toFutureOption().map {
-      case Some(_) => true
-      case None =>
-        logger.error("Failed to update the feature toggle")
-        false
-    }
+      update = set(featureToggles, Codecs.toBson(toggles)), upsertOptions)
+      .toFuture().map(_ => true)
   }
 }

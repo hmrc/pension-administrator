@@ -77,7 +77,7 @@ object InvitationsCacheEntry {
     implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 
-  object InvitationsCacheEntryFormats{
+  object InvitationsCacheEntryFormats {
     implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
     implicit val format: Format[InvitationsCacheEntry] = Json.format[InvitationsCacheEntry]
   }
@@ -155,12 +155,7 @@ class InvitationsCacheRepository @Inject()(
 
     collection.findOneAndUpdate(
       filter = selector,
-      update = modifier, new FindOneAndUpdateOptions().upsert(true)).toFutureOption().map {
-      case Some(_) => true
-      case None =>
-        logger.error(s"Failed to save or update the row with filters=${selector.toString}")
-        false
-    }
+      update = modifier, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => true)
   }
 
   private def filterEncryptKeys(mapOfKeys: Map[String, String]): Bson = {

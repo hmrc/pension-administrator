@@ -116,12 +116,7 @@ abstract class ManageCacheRepository(
 
     collection.findOneAndUpdate(
       filter = Filters.eq(idField, id),
-      update = setOperation, new FindOneAndUpdateOptions().upsert(true)).toFutureOption().map {
-      case Some(_) => true
-      case None =>
-        logger.error(s"Failed to save or update the row with id=$id")
-        false
-    }
+      update = setOperation, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => true)
   }
 
   def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
