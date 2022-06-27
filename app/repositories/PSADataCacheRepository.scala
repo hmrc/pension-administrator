@@ -80,7 +80,7 @@ class PSADataCacheRepository @Inject()(
     domainFormat = PSADataCacheEntryFormats.format,
     extraCodecs = Seq(
       Codecs.playFormatCodec(DataEntryWithoutEncryption.format),
-      Codecs.playFormatCodec(EncryptedDataEntry.format),
+      Codecs.playFormatCodec(EncryptedDataEntry.format)
     ),
     indexes = Seq(
       IndexModel(

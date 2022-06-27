@@ -77,7 +77,7 @@ abstract class ManageCacheRepository(
     domainFormat = ManageCacheEntryFormats.format,
     extraCodecs = Seq(
       Codecs.playFormatCodec(JsonDataEntry.format),
-      Codecs.playFormatCodec(DataEntry.format),
+      Codecs.playFormatCodec(DataEntry.format)
     ),
     indexes = Seq(
       IndexModel(

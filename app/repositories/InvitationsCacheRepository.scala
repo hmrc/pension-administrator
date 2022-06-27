@@ -94,7 +94,7 @@ class InvitationsCacheRepository @Inject()(
     domainFormat = InvitationsCacheEntryFormats.format,
     extraCodecs = Seq(
       Codecs.playFormatCodec(JsonDataEntry.format),
-      Codecs.playFormatCodec(DataEntry.format),
+      Codecs.playFormatCodec(DataEntry.format)
     ),
     indexes = Seq(
       IndexModel(
