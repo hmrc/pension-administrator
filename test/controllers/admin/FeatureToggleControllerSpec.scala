@@ -19,7 +19,6 @@ package controllers.admin
 import base.SpecBase
 import models.FeatureToggle.Enabled
 import models.FeatureToggleName.UpdateClientReference
-import models.OperationSucceeded
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar
 import org.scalatest.BeforeAndAfterEach
@@ -62,7 +61,7 @@ class FeatureToggleControllerSpec
   "FeatureToggleController.get" must {
     "get the feature toggle value and return OK" in {
       when(mockAdminDataRepository.setFeatureToggles(any()))
-        .thenReturn(Future.successful(true))
+        .thenReturn(Future.successful(()))
 
       when(mockFeatureToggleService.get(any()))
         .thenReturn(Future.successful(Enabled(UpdateClientReference)))
@@ -81,10 +80,10 @@ class FeatureToggleControllerSpec
   "FeatureToggleController.put" must {
     "set the feature toggles and return NO_CONTENT" in {
       when(mockAdminDataRepository.setFeatureToggles(any()))
-        .thenReturn(Future.successful(true))
+        .thenReturn(Future.successful(()))
 
       when(mockFeatureToggleService.set(any(), any()))
-        .thenReturn(Future.successful(OperationSucceeded))
+        .thenReturn(Future.successful(()))
 
       val controller = new FeatureToggleController(controllerComponents, mockFeatureToggleService)
 

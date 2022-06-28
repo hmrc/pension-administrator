@@ -20,7 +20,7 @@ import akka.Done
 import base.SpecBase
 import models.FeatureToggle.{Disabled, Enabled}
 import models.FeatureToggleName.{PsaFromIvToPdv, PsaRegistration, UpdateClientReference}
-import models.{FeatureToggle, FeatureToggleName, OperationFailed, OperationSucceeded}
+import models.{FeatureToggle, FeatureToggleName}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.{ArgumentCaptor, MockitoSugar}
 import org.scalacheck.Arbitrary.arbitrary
@@ -65,30 +65,18 @@ class FeatureToggleServiceSpec
   "When set works in the repo returns a success result" in {
     val adminDataRepository = mock[AdminDataRepository]
     when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
-    when(adminDataRepository.setFeatureToggles(any())).thenReturn(Future.successful(true))
+    when(adminDataRepository.setFeatureToggles(any())).thenReturn(Future.successful(()))
 
     val OUT = new FeatureToggleService(adminDataRepository, new FakeCache())
     val toggleName = arbitrary[FeatureToggleName].sample.value
 
     whenReady(OUT.set(toggleName = toggleName, enabled = true)) {
       result =>
-        result mustBe OperationSucceeded
+        result mustBe ()
         val captor = ArgumentCaptor.forClass(classOf[Seq[FeatureToggle]])
         verify(adminDataRepository, times(1)).setFeatureToggles(captor.capture())
         captor.getValue must contain(Enabled(toggleName))
     }
-  }
-
-  "When set fails in the repo returns a success result" in {
-    val adminDataRepository = mock[AdminDataRepository]
-    val toggleName = arbitrary[FeatureToggleName].sample.value
-
-    val OUT = new FeatureToggleService(adminDataRepository, new FakeCache())
-
-    when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
-    when(adminDataRepository.setFeatureToggles(any())).thenReturn(Future.successful(false))
-
-    whenReady(OUT.set(toggleName = toggleName, enabled = true))(_ mustBe OperationFailed)
   }
 
   "When getAll is called returns all of the toggles from the repo" in {

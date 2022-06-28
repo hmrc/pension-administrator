@@ -105,7 +105,7 @@ class PSADataCacheRepository @Inject()(
 
   private def evaluatedExpireAt: DateTime = DateTime.now(DateTimeZone.UTC).toLocalDate.plusDays(expireInDays + 1).toDateTimeAtStartOfDay()
 
-  def upsert(credId: String, userData: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
+  def upsert(credId: String, userData: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
     if (encrypted) {
       val unencrypted = PlainText(Json.stringify(userData))
       val encryptedData = jsonCrypto.encrypt(unencrypted).value
@@ -120,7 +120,7 @@ class PSADataCacheRepository @Inject()(
       collection.withDocumentClass[EncryptedDataEntry]().findOneAndUpdate(
         filter = Filters.eq(idField, credId),
         update = setOperation, new FindOneAndUpdateOptions().upsert(true))
-        .toFuture().map(_ => true)
+        .toFuture().map(_ => ())
     } else {
       val dataEntryWithoutEncryption = DataEntryWithoutEncryption.applyDataEntry(id = credId, data = userData, expireAt = evaluatedExpireAt)
       val setOperation = Updates.combine(
@@ -132,7 +132,7 @@ class PSADataCacheRepository @Inject()(
       collection.withDocumentClass[DataEntryWithoutEncryption]().findOneAndUpdate(
         filter = Filters.eq(idField, credId),
         update = setOperation, new FindOneAndUpdateOptions().upsert(true))
-        .toFuture().map(_ => true)
+        .toFuture().map(_ => ())
     }
   }
 

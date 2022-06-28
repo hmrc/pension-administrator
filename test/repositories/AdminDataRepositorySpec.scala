@@ -75,6 +75,18 @@ class AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matcher
           documentsInDB.map(_.toggles.size mustBe 2)
         }
       }
+
+      "set empty FeatureToggles in Mongo collection" in {
+        mongoCollectionDrop()
+        val documentsInDB = for {
+          _ <- adminDataRepository.setFeatureToggles(Seq.empty)
+          documentsInDB <- adminDataRepository.collection.find[FeatureToggles].toFuture()
+        } yield documentsInDB
+
+        whenReady(documentsInDB) { documentsInDB =>
+          documentsInDB.map(_.toggles.size mustBe 0)
+        }
+      }
     }
   }
 }

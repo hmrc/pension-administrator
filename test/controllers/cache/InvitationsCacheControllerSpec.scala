@@ -52,7 +52,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
 
     ".insert" should "return 201 when the request body can be parsed and passed to the repository successfully" in {
 
-      when(repo.upsert(any())(any())).thenReturn(Future.successful(true))
+      when(repo.upsert(any())(any())).thenReturn(Future.successful(()))
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
       val result = call(controller.add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation1)))
@@ -61,7 +61,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
 
     it should "return 400 when the request body cannot be parsed" in {
 
-      when(repo.upsert(any())(any())).thenReturn(Future.successful(true))
+      when(repo.upsert(any())(any())).thenReturn(Future.successful(()))
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
       recoverToExceptionIf[BadRequestException](
@@ -74,7 +74,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
 
     it should "return 400 when the request body cannot be parsed as valid json" in {
 
-      when(repo.upsert(any())(any())).thenReturn(Future.successful(true))
+      when(repo.upsert(any())(any())).thenReturn(Future.successful(()))
       when(authConnector.authorise[Unit](any(), any())(any(), any())).thenReturn(Future.successful(()))
 
       val badJson = Json.obj(

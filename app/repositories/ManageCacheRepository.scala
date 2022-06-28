@@ -22,6 +22,7 @@ import org.mongodb.scala.bson.BsonBinary
 import org.mongodb.scala.model._
 import play.api.libs.json._
 import play.api.{Configuration, Logging}
+import repositories.ManageCacheEntry.ManageCacheEntryFormats.lastUpdatedKey
 import repositories.ManageCacheEntry.{DataEntry, JsonDataEntry, ManageCacheEntry, ManageCacheEntryFormats}
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
 import uk.gov.hmrc.mongo.MongoComponent
@@ -61,6 +62,10 @@ object ManageCacheEntry {
   object ManageCacheEntryFormats {
     implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
     implicit val format: Format[ManageCacheEntry] = Json.format[ManageCacheEntry]
+
+    val dataKey: String = "data"
+    val idField: String = "id"
+    val lastUpdatedKey: String = "lastUpdated"
   }
 }
 
@@ -81,7 +86,7 @@ abstract class ManageCacheRepository(
     ),
     indexes = Seq(
       IndexModel(
-        Indexes.ascending("lastUpdated"),
+        Indexes.ascending(lastUpdatedKey),
         IndexOptions().name("dataExpiry").expireAfter(ttl, TimeUnit.SECONDS).background(true)
       )
     )
@@ -91,9 +96,8 @@ abstract class ManageCacheRepository(
 
   private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
-  private val idField: String = "id"
 
-  def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
+  def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
     if (encrypted) {
       val unencrypted = PlainText(Json.stringify(data))
       val encryptedData = jsonCrypto.encrypt(unencrypted).value
@@ -101,21 +105,21 @@ abstract class ManageCacheRepository(
       val entry = DataEntry(id, dataAsByteArray)
       val setOperation = Updates.combine(
         Updates.set(idField, entry.id),
-        Updates.set("data", entry.data),
-        Updates.set("lastUpdated", Codecs.toBson(entry.lastUpdated))
+        Updates.set(dataKey, entry.data),
+        Updates.set(lastUpdatedKey, Codecs.toBson(entry.lastUpdated))
       )
       collection.withDocumentClass[DataEntry]().findOneAndUpdate(
         filter = Filters.eq(idField, id),
-        update = setOperation, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => true)
+        update = setOperation, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => ())
     } else {
       val setOperation = Updates.combine(
         Updates.set(idField, id),
-        Updates.set("data", Codecs.toBson(data)),
-        Updates.set("lastUpdated", Codecs.toBson(DateTime.now(DateTimeZone.UTC)))
+        Updates.set(dataKey, Codecs.toBson(data)),
+        Updates.set(lastUpdatedKey, Codecs.toBson(DateTime.now(DateTimeZone.UTC)))
       )
       collection.withDocumentClass[JsonDataEntry]().findOneAndUpdate(
         filter = Filters.eq(idField, id),
-        update = setOperation, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => true)
+        update = setOperation, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => ())
     }
   }
 

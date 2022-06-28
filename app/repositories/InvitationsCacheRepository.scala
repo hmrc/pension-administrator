@@ -31,6 +31,7 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
 import InvitationsCacheEntry._
+import repositories.InvitationsCacheEntry.InvitationsCacheEntryFormats.{expireAtKey, inviteePsaIdKey, pstrKey}
 
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
@@ -80,6 +81,12 @@ object InvitationsCacheEntry {
   object InvitationsCacheEntryFormats {
     implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
     implicit val format: Format[InvitationsCacheEntry] = Json.format[InvitationsCacheEntry]
+
+    val pstrKey = "pstr"
+    val inviteePsaIdKey = "inviteePsaId"
+    val expireAtKey = "expireAt"
+    val lastUpdatedKey = "lastUpdated"
+    val dataKey = "data"
   }
 }
 
@@ -98,29 +105,27 @@ class InvitationsCacheRepository @Inject()(
     ),
     indexes = Seq(
       IndexModel(
-        Indexes.ascending("expireAt"),
+        Indexes.ascending(expireAtKey),
         IndexOptions().name("dataExpiry").expireAfter(0, TimeUnit.SECONDS).background(true)
       ),
       IndexModel(
-        Indexes.ascending("inviteePsaId", "pstr"),
+        Indexes.ascending(inviteePsaIdKey, pstrKey),
         IndexOptions().name("inviteePsaId_Pstr").unique(true).background(true)
       ),
       IndexModel(
-        Indexes.ascending("pstr"),
-        IndexOptions().name("pstr").background(true)
+        Indexes.ascending(pstrKey),
+        IndexOptions().name(pstrKey).background(true)
       )
     )
   ) with Logging {
 
   import InvitationsCacheEntryFormats._
 
-  private val inviteePsaIdKey = "inviteePsaId"
-  private val pstrKey = "pstr"
   private val encryptionKey: String = "manage.json.encryption"
   private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
   private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, config.underlying)
 
-  def upsert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Boolean] = {
+  def upsert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Unit] = {
     if (encrypted) {
       val encryptedInviteePsaId = jsonCrypto.encrypt(PlainText(invitation.inviteePsaId.value)).value
       val encryptedPstr = jsonCrypto.encrypt(PlainText(invitation.pstr)).value
@@ -131,38 +136,38 @@ class InvitationsCacheRepository @Inject()(
       val dataEntry = DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray, expireAt = invitation.expireAt)
 
       val modifier = Updates.combine(
-        Updates.set("inviteePsaId", dataEntry.inviteePsaId),
-        Updates.set("pstr", dataEntry.pstr),
-        Updates.set("data", dataEntry.data),
-        Updates.set("lastUpdated", Codecs.toBson(dataEntry.lastUpdated)),
-        Updates.set("expireAt", Codecs.toBson(dataEntry.expireAt))
+        Updates.set(inviteePsaIdKey, dataEntry.inviteePsaId),
+        Updates.set(pstrKey, dataEntry.pstr),
+        Updates.set(dataKey, dataEntry.data),
+        Updates.set(lastUpdatedKey, Codecs.toBson(dataEntry.lastUpdated)),
+        Updates.set(expireAtKey, Codecs.toBson(dataEntry.expireAt))
       )
       val selector = Filters.and(Filters.equal(inviteePsaIdKey, encryptedInviteePsaId), Filters.equal(pstrKey, encryptedPstr))
       collection.withDocumentClass[DataEntry]().findOneAndUpdate(
         filter = selector,
-        update = modifier, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => true)
+        update = modifier, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => ())
     } else {
       val record = JsonDataEntry.applyJsonDataEntry(invitation.inviteePsaId.value,
         invitation.pstr, Json.toJson(invitation), expireAt = invitation.expireAt)
 
       val modifier = Updates.combine(
-        Updates.set("inviteePsaId", record.inviteePsaId),
-        Updates.set("pstr", record.pstr),
-        Updates.set("data", Codecs.toBson(record.data)),
-        Updates.set("lastUpdated", Codecs.toBson(record.lastUpdated)),
-        Updates.set("expireAt", Codecs.toBson(record.expireAt))
+        Updates.set(inviteePsaIdKey, record.inviteePsaId),
+        Updates.set(pstrKey, record.pstr),
+        Updates.set(dataKey, Codecs.toBson(record.data)),
+        Updates.set(lastUpdatedKey, Codecs.toBson(record.lastUpdated)),
+        Updates.set(expireAtKey, Codecs.toBson(record.expireAt))
       )
       val selector = Filters.and(Filters.equal(inviteePsaIdKey, invitation.inviteePsaId.value), Filters.equal(pstrKey, invitation.pstr))
 
       collection.withDocumentClass[JsonDataEntry]().findOneAndUpdate(
         filter = selector,
-        update = modifier, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => true)
+        update = modifier, new FindOneAndUpdateOptions().upsert(true)).toFuture().map(_ => ())
     }
   }
 
   private def filterEncryptKeys(mapOfKeys: Map[String, String]): Bson = {
     val filters = mapOfKeys.map {
-      case key if key._1 == "inviteePsaId" || key._1 == "pstr" =>
+      case key if key._1 == inviteePsaIdKey || key._1 == pstrKey =>
         val encryptedValue = jsonCrypto.encrypt(PlainText(key._2)).value
         Filters.equal(key._1, encryptedValue)
       case key => Filters.equal(key._1, key._2)

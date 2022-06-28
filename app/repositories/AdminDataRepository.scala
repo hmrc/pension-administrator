@@ -19,8 +19,8 @@ package repositories
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import models.FeatureToggle
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
 import org.mongodb.scala.model.Updates.set
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
 import play.api.libs.json._
 import play.api.{Configuration, Logging}
 import repositories.FeatureToggleMongoFormatter.{FeatureToggles, featureToggles, id}
@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object FeatureToggleMongoFormatter {
   case class FeatureToggles(_id: String, toggles: Seq[FeatureToggle])
 
-  implicit val featureToggleMongoFormatter: Format[FeatureToggles] =  Json.format[FeatureToggles]
+  implicit val featureToggleMongoFormatter: Format[FeatureToggles] = Json.format[FeatureToggles]
 
   val id = "_id"
   val featureToggles = "toggles"
@@ -48,8 +48,8 @@ class AdminDataRepository @Inject()(
     domainFormat = FeatureToggleMongoFormatter.featureToggleMongoFormatter,
     indexes = Seq(
       IndexModel(
-        Indexes.ascending("toggles"),
-        IndexOptions().name("toggles").unique(true).background(true))
+        Indexes.ascending(featureToggles),
+        IndexOptions().name(featureToggles).unique(true).background(true))
     )
   ) with Logging {
 
@@ -63,12 +63,12 @@ class AdminDataRepository @Inject()(
     )
   }
 
-  def setFeatureToggles(toggles: Seq[FeatureToggle]): Future[Boolean] = {
+  def setFeatureToggles(toggles: Seq[FeatureToggle]): Future[Unit] = {
 
     val upsertOptions = new FindOneAndUpdateOptions().upsert(true)
     collection.findOneAndUpdate(
       filter = Filters.eq(id, featureToggles),
       update = set(featureToggles, Codecs.toBson(toggles)), upsertOptions)
-      .toFuture().map(_ => true)
+      .toFuture().map(_ => ())
   }
 }

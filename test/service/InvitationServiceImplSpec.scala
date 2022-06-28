@@ -312,7 +312,7 @@ object InvitationServiceImplSpec extends MockitoSugar {
       )
 
     when(repository.upsert(any())(any()))
-      .thenReturn(Future.successful(true))
+      .thenReturn(Future.successful(()))
   }
 
   def testFixture(app: Application): TestFixture = new TestFixture() {
