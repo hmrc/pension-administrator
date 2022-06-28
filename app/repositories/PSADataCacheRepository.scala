@@ -16,156 +16,151 @@
 
 package repositories
 
-import java.nio.charset.StandardCharsets
 import com.google.inject.Inject
+import com.mongodb.client.model.FindOneAndUpdateOptions
 import org.joda.time.{DateTime, DateTimeZone}
-import org.slf4j.{Logger, LoggerFactory}
-import play.api.libs.json.{Json, _}
-import play.api.Configuration
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.bson.Subtype.GenericBinarySubtype
-import reactivemongo.bson.{BSONBinary, BSONDocument, BSONObjectID}
-import reactivemongo.play.json.ImplicitBSONHandlers._
+import org.mongodb.scala.bson.BsonBinary
+import org.mongodb.scala.model._
+import play.api.libs.json._
+import play.api.{Configuration, Logging}
+import repositories.PSADataCacheEntry.{DataEntryWithoutEncryption, EncryptedDataEntry, PSADataCacheEntry, PSADataCacheEntryFormats}
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
-import uk.gov.hmrc.mongo.ReactiveRepository
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
+import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
 
+import java.nio.charset.StandardCharsets
+import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}
 
+object PSADataCacheEntry {
+
+  sealed trait PSADataCacheEntry
+
+  case class EncryptedDataEntry(id: String, data: BsonBinary, lastUpdated: DateTime, expireAt: DateTime) extends PSADataCacheEntry
+
+  case class DataEntryWithoutEncryption(id: String, data: JsValue, lastUpdated: DateTime, expireAt: DateTime) extends PSADataCacheEntry
+
+  object EncryptedDataEntry {
+
+    def apply(id: String, data: Array[Byte], lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC), expireAt: DateTime): EncryptedDataEntry =
+      EncryptedDataEntry(id, BsonBinary(data), lastUpdated, expireAt)
+
+    final val bsonBinaryReads: Reads[BsonBinary] = byteArrayReads.map(t => BsonBinary(t))
+    final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(t => t.getData)
+    implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
+
+    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
+    implicit val format: Format[EncryptedDataEntry] = Json.format[EncryptedDataEntry]
+  }
+
+  object DataEntryWithoutEncryption {
+
+    def applyDataEntry(id: String, data: JsValue, lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC), expireAt: DateTime): DataEntryWithoutEncryption =
+      DataEntryWithoutEncryption(id, data, lastUpdated, expireAt)
+
+    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
+    implicit val format: Format[DataEntryWithoutEncryption] = Json.format[DataEntryWithoutEncryption]
+  }
+
+  object PSADataCacheEntryFormats {
+    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
+    implicit val format: Format[PSADataCacheEntry] = Json.format[PSADataCacheEntry]
+  }
+}
+
 class PSADataCacheRepository @Inject()(
-                                        mongoComponent: ReactiveMongoComponent,
+                                        mongoComponent: MongoComponent,
                                         configuration: Configuration
                                       )(implicit val ec: ExecutionContext)
-  extends ReactiveRepository[JsValue, BSONObjectID](
+  extends PlayMongoRepository[PSADataCacheEntry](
     collectionName = configuration.get[String](path = "mongodb.pension-administrator-cache.psa-data.name"),
-    mongo = mongoComponent.mongoConnector.db,
-    domainFormat = implicitly
-  ) {
+    mongoComponent = mongoComponent,
+    domainFormat = PSADataCacheEntryFormats.format,
+    extraCodecs = Seq(
+      Codecs.playFormatCodec(DataEntryWithoutEncryption.format),
+      Codecs.playFormatCodec(EncryptedDataEntry.format)
+    ),
+    indexes = Seq(
+      IndexModel(
+        Indexes.ascending("id"),
+        IndexOptions().name("credId").unique(true).background(true)
+      ),
+      IndexModel(
+        Indexes.ascending("expireAt"),
+        IndexOptions().name("dataExpiry").expireAfter(0, TimeUnit.SECONDS).background(true)
+      )
+    )
+  ) with Logging {
 
-  override val logger: Logger = LoggerFactory.getLogger("PSADataCacheRepository")
+
+  import PSADataCacheEntryFormats._
+
   private val encryptionKey = "psa.json.encryption"
   private val jsonCrypto: CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig(baseConfigKey = encryptionKey, configuration.underlying)
   private val encrypted: Boolean = configuration.get[Boolean](path = "encrypted")
   private val expireInDays = configuration.get[Int](path = "mongodb.pension-administrator-cache.psa-data.timeToLiveInDays")
+  private val idField: String = "id"
 
-  private def expireAt: DateTime = DateTime.now(DateTimeZone.UTC).toLocalDate.plusDays(expireInDays + 1).toDateTimeAtStartOfDay()
+  private def evaluatedExpireAt: DateTime = DateTime.now(DateTimeZone.UTC).toLocalDate.plusDays(expireInDays + 1).toDateTimeAtStartOfDay()
 
-  private val ttl = 0
-
-  (for {
-    _ <- ensureIndex(fields = Seq("expireAt"), indexName = "dataExpiry", ttl = Some(ttl))
-    _ <- ensureIndex(fields = Seq("id"), indexName = "credId", isUnique = true)
-  } yield {
-    ()
-  }) recoverWith {
-    case t: Throwable => Future.successful(logger.error(s"Error ensuring indexes on collection ${collection.name}", t))
-  } andThen {
-    case _ => CollectionDiagnostics.logCollectionInfo(collection)
-  }
-
-  private def ensureIndex(fields: Seq[String], indexName: String, ttl: Option[Int] = None, isUnique: Boolean = false): Future[Boolean] = {
-    val fieldIndexes = fields.map((_, IndexType.Ascending))
-    val index = {
-      val defaultIndex = Index(fieldIndexes, Some(indexName), background = true, unique = isUnique)
-      ttl.map(ttl => defaultIndex.copy(options = BSONDocument("expireAfterSeconds" -> ttl))).fold(defaultIndex)(identity)
+  def upsert(credId: String, userData: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
+    if (encrypted) {
+      val unencrypted = PlainText(Json.stringify(userData))
+      val encryptedData = jsonCrypto.encrypt(unencrypted).value
+      val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
+      val encryptedDataEntry = EncryptedDataEntry(id = credId, data = dataAsByteArray, expireAt = evaluatedExpireAt)
+      val setOperation = Updates.combine(
+        Updates.set(idField, encryptedDataEntry.id),
+        Updates.set("data", encryptedDataEntry.data),
+        Updates.set("lastUpdated", Codecs.toBson(encryptedDataEntry.lastUpdated)),
+        Updates.set("expireAt", Codecs.toBson(encryptedDataEntry.expireAt))
+      )
+      collection.withDocumentClass[EncryptedDataEntry]().findOneAndUpdate(
+        filter = Filters.eq(idField, credId),
+        update = setOperation, new FindOneAndUpdateOptions().upsert(true))
+        .toFuture().map(_ => ())
+    } else {
+      val dataEntryWithoutEncryption = DataEntryWithoutEncryption.applyDataEntry(id = credId, data = userData, expireAt = evaluatedExpireAt)
+      val setOperation = Updates.combine(
+        Updates.set(idField, dataEntryWithoutEncryption.id),
+        Updates.set("data", Codecs.toBson(dataEntryWithoutEncryption.data)),
+        Updates.set("lastUpdated", Codecs.toBson(dataEntryWithoutEncryption.lastUpdated)),
+        Updates.set("expireAt", Codecs.toBson(dataEntryWithoutEncryption.expireAt))
+      )
+      collection.withDocumentClass[DataEntryWithoutEncryption]().findOneAndUpdate(
+        filter = Filters.eq(idField, credId),
+        update = setOperation, new FindOneAndUpdateOptions().upsert(true))
+        .toFuture().map(_ => ())
     }
-
-    val indexCreationDescription = {
-      def addExpireAfterSecondsDescription(s: String): String = ttl.fold(s)(ttl => s"$s (expireAfterSeconds = $ttl)")
-
-      addExpireAfterSecondsDescription(s"Attempt to create Mongo index $index (unique = ${index.unique}))")
-    }
-
-    collection.indexesManager.ensure(index) map { result =>
-      logger.debug(indexCreationDescription + s" was successful and result is: $result")
-      result
-    } recover {
-      case e => logger.error(indexCreationDescription + s" was unsuccessful", e)
-        false
-    }
-  }
-
-  def upsert(credId: String, userData: JsValue)(implicit ec: ExecutionContext): Future[Boolean] = {
-    val document: JsValue = {
-      if (encrypted) {
-        val unencrypted = PlainText(Json.stringify(userData))
-        val encryptedData = jsonCrypto.encrypt(unencrypted).value
-        val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
-        Json.toJson(EncryptedDataEntry(id = credId, data = dataAsByteArray, expireAt = expireAt))
-      } else
-        Json.toJson(DataEntryWithoutEncryption.applyDataEntry(id = credId, data = userData, expireAt = expireAt))
-    }
-    val selector = BSONDocument("id" -> credId)
-    val modifier = BSONDocument("$set" -> document)
-    collection.update(ordered = false).one(selector, modifier, upsert = true).map(_.ok)
   }
 
   def get(credId: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] = {
     if (encrypted) {
-      collection.find(BSONDocument("id" -> credId), projection = Option.empty[JsObject]).one[EncryptedDataEntry].map {
+      collection.find[EncryptedDataEntry](Filters.equal(idField, credId)).headOption().map {
         _.map {
           dataEntry =>
-            val dataAsString = new String(dataEntry.data.byteArray, StandardCharsets.UTF_8)
+            val dataAsString = new String(dataEntry.data.getData, StandardCharsets.UTF_8)
             val decrypted: PlainText = jsonCrypto.decrypt(Crypted(dataAsString))
             Json.parse(decrypted.value).as[JsObject] ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.getMillis))
         }
       }
     } else {
-      collection.find(BSONDocument("id" -> credId), projection = Option.empty[JsObject]).one[DataEntryWithoutEncryption].map {
+      collection.find[DataEntryWithoutEncryption](Filters.equal(idField, credId)).headOption().map {
         _.map {
           dataEntry =>
-            dataEntry.data.as[JsObject] ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.getMillis))
+            val jsObject = dataEntry.data.as[JsObject]
+            jsObject ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.getMillis))
         }
       }
     }
   }
 
   def remove(credId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    logger.warn(s"Removing row from collection ${collection.name} credId:$credId")
-    val selector = BSONDocument("id" -> credId)
-    collection.delete().one(selector).map(_.ok)
-  }
-
-  private case class EncryptedDataEntry(
-                                         id: String,
-                                         data: BSONBinary,
-                                         lastUpdated: DateTime,
-                                         expireAt: DateTime)
-
-  private object EncryptedDataEntry {
-
-    def apply(id: String,
-              data: Array[Byte],
-              lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
-              expireAt: DateTime): EncryptedDataEntry = {
-
-      EncryptedDataEntry(id, BSONBinary(data, GenericBinarySubtype), lastUpdated, expireAt)
+    collection.deleteOne(Filters.equal(idField, credId)).toFuture().map { result =>
+      logger.info(s"Removing row from collection $collectionName credId:$credId")
+      result.wasAcknowledged
     }
-
-    implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
-    implicit val format: Format[EncryptedDataEntry] = Json.format[EncryptedDataEntry]
   }
-
-  private case class DataEntryWithoutEncryption(
-                                                 id: String,
-                                                 data: JsValue,
-                                                 lastUpdated: DateTime,
-                                                 expireAt: DateTime
-                                               )
-
-  private object DataEntryWithoutEncryption {
-
-    def applyDataEntry(id: String,
-                       data: JsValue,
-                       lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
-                       expireAt: DateTime): DataEntryWithoutEncryption = {
-
-      DataEntryWithoutEncryption(id, data, lastUpdated, expireAt)
-    }
-
-    implicit val dateFormat: Format[DateTime] = ReactiveMongoFormats.dateTimeFormats
-    implicit val format: Format[DataEntryWithoutEncryption] = Json.format[DataEntryWithoutEncryption]
-  }
-
 }

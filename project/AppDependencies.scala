@@ -8,7 +8,7 @@ object AppDependencies {
 
   val compile: Seq[ModuleID] = Seq(
     ws,
-    "uk.gov.hmrc"       %% "simple-reactivemongo"       % "8.0.0-play-28",
+    "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-28"         % "0.64.0",
     "com.typesafe.play" %% "play-json"                  % "2.9.2",
     "com.typesafe.play" %% "play-json-joda"             % "2.9.2",
     "uk.gov.hmrc"       %% "bootstrap-backend-play-28"  % "5.16.0",
@@ -18,7 +18,8 @@ object AppDependencies {
   )
 
   def test(scope: String = "test, it"): Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"             %% "reactivemongo-test"         % "5.0.0-play-28"     % Test,
+    "uk.gov.hmrc.mongo"       %% "hmrc-mongo-test-play-28"    % "0.64.0"            % Test,
+    "com.github.simplyscala"  %% "scalatest-embedmongo"       % "0.2.4"             % Test,
     "uk.gov.hmrc"             %% "bootstrap-test-play-28"     % "5.16.0"            % Test,
     "com.vladsch.flexmark"    % "flexmark-all"                % "0.36.8"            % "test, it",
     "org.mockito"             % "mockito-core"                % "4.0.0"             % "test",

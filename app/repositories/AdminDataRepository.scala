@@ -17,101 +17,58 @@
 package repositories
 
 import com.google.inject.Inject
+import com.mongodb.client.model.FindOneAndUpdateOptions
 import models.FeatureToggle
-import org.slf4j.{Logger, LoggerFactory}
+import org.mongodb.scala.model.Updates.set
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
 import play.api.libs.json._
-import play.api.Configuration
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.commands.WriteResult
-import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.bson.{BSONDocument, BSONObjectID}
-import reactivemongo.play.json.ImplicitBSONHandlers._
-import uk.gov.hmrc.mongo.ReactiveRepository
+import play.api.{Configuration, Logging}
+import repositories.FeatureToggleMongoFormatter.{FeatureToggles, featureToggles, id}
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import scala.concurrent.{ExecutionContext, Future}
 
+object FeatureToggleMongoFormatter {
+  case class FeatureToggles(_id: String, toggles: Seq[FeatureToggle])
+
+  implicit val featureToggleMongoFormatter: Format[FeatureToggles] = Json.format[FeatureToggles]
+
+  val id = "_id"
+  val featureToggles = "toggles"
+}
+
 class AdminDataRepository @Inject()(
-                                     mongoComponent: ReactiveMongoComponent,
+                                     mongoComponent: MongoComponent,
                                      configuration: Configuration
                                    )(implicit val ec: ExecutionContext)
-  extends ReactiveRepository[JsValue, BSONObjectID](
+  extends PlayMongoRepository[FeatureToggles](
     collectionName = configuration.get[String](path = "mongodb.pension-administrator-cache.admin-data.name"),
-    mongo = mongoComponent.mongoConnector.db,
-    domainFormat = implicitly
-  ) {
-
-  override val logger: Logger = LoggerFactory.getLogger("AdminDataRepository")
-
-  private val featureToggleDocumentId = "toggles"
-
-  val collectionIndexes = Seq(
-    Index(
-      key = Seq((featureToggleDocumentId, IndexType.Ascending)),
-      name = Some(featureToggleDocumentId),
-      background = true,
-      unique = true
+    mongoComponent = mongoComponent,
+    domainFormat = FeatureToggleMongoFormatter.featureToggleMongoFormatter,
+    indexes = Seq(
+      IndexModel(
+        Indexes.ascending(featureToggles),
+        IndexOptions().name(featureToggles).unique(true).background(true))
     )
-  )
+  ) with Logging {
 
-  (for {
-    _ <- createIndex(collectionIndexes)
-  } yield {
-    ()
-  }) recoverWith {
-    case t: Throwable =>
-      Future.successful(logger.error(s"Error creating indexes on collection ${collection.name}", t))
-  } andThen {
-    case _ => CollectionDiagnostics.logCollectionInfo(collection)
-  }
-
-  private def createIndex(indexes: Seq[Index]): Future[Seq[Boolean]] = {
-    Future.sequence(
-      indexes.map { index =>
-        collection.indexesManager.ensure(index) map { result =>
-          logger.debug(s"Index $index was created successfully and result is: $result")
-          result
-        } recover {
-          case e: Exception => logger.error(s"Failed to create index $index", e)
-            false
-        }
-      }
-    )
-  }
 
   def getFeatureToggles: Future[Seq[FeatureToggle]] = {
-
-    implicit val r: Reads[Option[FeatureToggle]] = Reads.optionNoError(FeatureToggle.reads)
-
-    collection
-      .find(
-        selector = BSONDocument("_id" -> featureToggleDocumentId),
-        projection = Option.empty[JsObject]
-      )
-      .one[JsObject].map(_.map(
-      js =>
-        (js \ "toggles")
-          .as[Seq[Option[FeatureToggle]]]
-          .collect {
-            case Some(toggle) => toggle
-          }
-    )).map(_.getOrElse(Seq.empty[FeatureToggle]))
+    collection.find[FeatureToggles](
+      Filters.eq(id, featureToggles)
+    ).headOption().map(_.map(ft =>
+      ft.toggles
+    ).getOrElse(Seq.empty[FeatureToggle])
+    )
   }
 
-  def setFeatureToggles(toggles: Seq[FeatureToggle]): Future[Boolean] = {
+  def setFeatureToggles(toggles: Seq[FeatureToggle]): Future[Unit] = {
 
-    val selector = Json.obj(
-      "_id" -> featureToggleDocumentId
-    )
-
-    val modifier = Json.obj(
-      "_id" -> featureToggleDocumentId,
-      "toggles" -> Json.toJson(toggles)
-    )
-
-    collection.update(ordered = false)
-      .one(selector, modifier, upsert = true).map {
-      lastError: WriteResult =>
-        lastError.ok
-    }
+    val upsertOptions = new FindOneAndUpdateOptions().upsert(true)
+    collection.findOneAndUpdate(
+      filter = Filters.eq(id, featureToggles),
+      update = set(featureToggles, Codecs.toBson(toggles)), upsertOptions)
+      .toFuture().map(_ => ())
   }
 }

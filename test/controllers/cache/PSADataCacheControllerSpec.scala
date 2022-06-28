@@ -84,7 +84,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
     s"on .save " must {
 
       "return 200 when the request body can be parsed and passed to the repository successfully" in {
-        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(true)
+        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
         val result = call(controller.save("testId"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
@@ -93,7 +93,6 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
       }
 
       "return REQUEST_ENTITY_TOO_LARGE when the request body cannot be parsed" in {
-        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(true)
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
         val result = call(controller.save(id = "testId"),

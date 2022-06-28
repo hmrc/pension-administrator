@@ -18,17 +18,17 @@ package repositories
 
 import com.google.inject.Inject
 import play.api.Configuration
-import play.modules.reactivemongo.ReactiveMongoComponent
+import uk.gov.hmrc.mongo.MongoComponent
 
 import scala.concurrent.ExecutionContext
 
 class MinimalDetailsCacheRepository @Inject()(
-                                        mongoComponent: ReactiveMongoComponent,
-                                        configuration: Configuration
-                                      )(implicit val ec: ExecutionContext)
+                                               mongoComponent: MongoComponent,
+                                               configuration: Configuration
+                                             )(implicit val ec: ExecutionContext)
   extends ManageCacheRepository(
     configuration.get[String](path = "mongodb.pension-administrator-cache.minimal-detail.name"),
-    Some(configuration.get[Int](path = "mongodb.pension-administrator-cache.minimal-detail.timeToLiveInSeconds")),
+    configuration.get[Int](path = "mongodb.pension-administrator-cache.minimal-detail.timeToLiveInSeconds"),
     mongoComponent,
     "manage.json.encryption",
     configuration

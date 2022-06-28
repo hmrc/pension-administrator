@@ -118,7 +118,7 @@ class PensionAdministratorCacheControllerSpec
 
       "return 200 when the request body can be parsed and passed to the repository successfully" in {
 
-        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(true)
+        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
         val result = call(controller(repo, authConnector).save("foo"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
@@ -127,7 +127,7 @@ class PensionAdministratorCacheControllerSpec
       }
 
       "return 413 when the request body cannot be parsed" in {
-        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(true)
+        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
         val result = call(controller(repo, authConnector).save("foo"), FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))

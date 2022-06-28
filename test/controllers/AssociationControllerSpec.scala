@@ -58,7 +58,7 @@ import AssociationControllerSpec._
         Some(Json.obj())
       })
     when(mockMinimalDetailsCacheRepository.upsert(any(),any())(any()))
-      .thenReturn(Future.successful(true))
+      .thenReturn(Future.successful(()))
 
     val result = controller(isEnabledFeatureToggle = true).getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
 
@@ -74,7 +74,7 @@ import AssociationControllerSpec._
         None
       })
     when(mockMinimalDetailsCacheRepository.upsert(any(),any())(any()))
-      .thenReturn(Future.successful(true))
+      .thenReturn(Future.successful(()))
 
     val result = controller(isEnabledFeatureToggle = true).getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
 

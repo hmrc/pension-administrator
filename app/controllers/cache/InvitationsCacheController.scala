@@ -42,7 +42,7 @@ class InvitationsCacheController @Inject()(
           jsValue =>
             jsValue.validate[Invitation].fold(
               _ => Future.failed(new BadRequestException("not valid value for PSA Invitation")),
-              value => repository.insert(value).map(_ => Created).recoverWith {
+              value => repository.upsert(value).map(_ => Created).recoverWith {
                 case exception: Exception =>
                   throw MongoDBFailedException(s"""Could not perform DB operation: ${exception.getMessage}""")
               }

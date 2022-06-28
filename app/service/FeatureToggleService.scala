@@ -51,16 +51,13 @@ class FeatureToggleService @Inject()(
         .map(addDefaults)
     }
 
-  def set(toggleName: FeatureToggleName, enabled: Boolean): Future[BinaryResult] =
+  def set(toggleName: FeatureToggleName, enabled: Boolean): Future[Unit] =
     getAll.flatMap {
       currentToggles =>
         val newToggles = currentToggles
           .filterNot(toggle => toggle.name == toggleName) :+ FeatureToggle(toggleName, enabled)
 
-        adminDataRepository.setFeatureToggles(newToggles).map {
-          case true => OperationSucceeded
-          case false => OperationFailed
-        }
+        adminDataRepository.setFeatureToggles(newToggles)
     }
 
   def get(name: FeatureToggleName): Future[FeatureToggle] =
