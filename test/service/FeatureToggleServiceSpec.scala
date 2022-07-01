@@ -19,7 +19,7 @@ package service
 import akka.Done
 import base.SpecBase
 import models.FeatureToggle.{Disabled, Enabled}
-import models.FeatureToggleName.{PsaFromIvToPdv, PsaRegistration, UpdateClientReference}
+import models.FeatureToggleName.{EnrolmentRecovery, PsaFromIvToPdv, PsaRegistration, UpdateClientReference}
 import models.{FeatureToggle, FeatureToggleName}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.{ArgumentCaptor, MockitoSugar}
@@ -88,7 +88,8 @@ class FeatureToggleServiceSpec
     OUT.getAll.futureValue mustBe Seq(
       Disabled(UpdateClientReference),
       Disabled(PsaFromIvToPdv),
-      Disabled(PsaRegistration)
+      Disabled(PsaRegistration),
+      Disabled(EnrolmentRecovery)
     )
   }
 
