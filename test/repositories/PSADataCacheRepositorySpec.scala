@@ -20,10 +20,12 @@ import com.github.simplyscala.MongoEmbedDatabase
 import com.typesafe.config.Config
 import org.mockito.MockitoSugar
 import org.mongodb.scala.model.Filters
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures.whenReady
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.time.{Milliseconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterEach}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, BeforeAndAfterEach}
 import play.api.Configuration
 import play.api.libs.json.Json
 import repositories.PSADataCacheEntry.{DataEntryWithoutEncryption, EncryptedDataEntry}
@@ -34,7 +36,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
 class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with MongoEmbedDatabase with BeforeAndAfter with
-  BeforeAndAfterEach { // scalastyle:off magic.number
+  BeforeAndAfterEach with BeforeAndAfterAll { // scalastyle:off magic.number
 
   private val idField: String = "id"
 
@@ -48,258 +50,261 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
     when(mockConfig.getString("psa.json.encryption.key")).thenReturn("gvBoGdgzqG1AarzF1LY0zQ==")
   }
 
-  withEmbedMongoFixture(port = 24680) { _ =>
-    "upsert" must {
-      "save a new session data cache as DataEntryWithoutEncryption in Mongo collection when encrypted false and collection is empty" in {
-        when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
-        mongoCollectionDrop()
+  override def beforeAll(): Unit = {
+    mongoStart(port = databasePort)
+    super.beforeAll()
+  }
 
-        val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
-        val filters = Filters.eq(idField, record._1)
+  "upsert" must {
+    "save a new session data cache as DataEntryWithoutEncryption in Mongo collection when encrypted false and collection is empty" in {
+      when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
+      mongoCollectionDrop()
 
-        val documentsInDB = for {
-          _ <- psaDataCacheRepository.upsert(record._1, record._2)
-          documentsInDB <- psaDataCacheRepository.collection.find[DataEntryWithoutEncryption](filters).toFuture()
-        } yield documentsInDB
+      val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
+      val filters = Filters.eq(idField, record._1)
 
-        whenReady(documentsInDB) { documentsInDB =>
-          documentsInDB.size mustBe 1
-        }
-      }
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.upsert(record._1, record._2)
+        documentsInDB <- psaDataCacheRepository.collection.find[DataEntryWithoutEncryption](filters).toFuture()
+      } yield documentsInDB
 
-      "update an existing session data cache as DataEntryWithoutEncryption in Mongo collection when encrypted false" in {
-        when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-        mongoCollectionDrop()
-
-        val record1 = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true}"""))
-        val record2 = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
-
-        val filters = Filters.eq(idField, "Ext-b9443dbb-3d88-465d-9696-47d6ef94f356")
-        val documentsInDB = for {
-          _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
-          _ <- psaDataCacheRepository.upsert(record2._1, record2._2)
-          documentsInDB <- psaDataCacheRepository.collection.find[DataEntryWithoutEncryption](filters).toFuture()
-        } yield documentsInDB
-
-        whenReady(documentsInDB) { documentsInDB =>
-          documentsInDB.size mustBe 1
-          documentsInDB.head.data mustBe record2._2
-          documentsInDB.head.data must not be record1._2
-        }
-      }
-
-      "save a new session data cache as DataEntryWithoutEncryption in Mongo collection when encrypted false and id is not same" in {
-        when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
-        mongoCollectionDrop()
-
-        val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
-        val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
-
-        val documentsInDB = for {
-          _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
-          _ <- psaDataCacheRepository.upsert(record2._1, record1._2)
-          documentsInDB <- psaDataCacheRepository.collection.find[DataEntryWithoutEncryption].toFuture()
-        } yield documentsInDB
-
-        whenReady(documentsInDB) {
-          documentsInDB =>
-            documentsInDB.size mustBe 2
-        }
-      }
-
-      "save a new session data cache as EncryptedDataEntry in Mongo collection when encrypted true and collection is empty" in {
-        when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
-        mongoCollectionDrop()
-
-        val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        val filters = Filters.eq(idField, "id-1")
-
-        val documentsInDB = for {
-          _ <- psaDataCacheRepository.upsert(record._1, record._2)
-          documentsInDB <- psaDataCacheRepository.collection.find[EncryptedDataEntry](filters).toFuture()
-        } yield documentsInDB
-
-        whenReady(documentsInDB) {
-          documentsInDB =>
-            documentsInDB.size mustBe 1
-        }
-      }
-
-      "update an existing session data cache as EncryptedDataEntry in Mongo collection when encrypted true" in {
-        when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
-        mongoCollectionDrop()
-
-        val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
-        val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
-        val filters = Filters.eq(idField, "id-1")
-
-        val documentsInDB = for {
-          _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
-          _ <- psaDataCacheRepository.upsert(record2._1, record2._2)
-          documentsInDB <- psaDataCacheRepository.collection.find[EncryptedDataEntry](filters).toFuture()
-        } yield documentsInDB
-
-        whenReady(documentsInDB) {
-          documentsInDB =>
-            documentsInDB.size mustBe 1
-        }
-      }
-
-      "save a new session data cache as EncryptedDataEntry in Mongo collection when encrypted true and id is not same" in {
-        when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
-        mongoCollectionDrop()
-
-        val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
-        val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
-
-        val documentsInDB = for {
-          _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
-          _ <- psaDataCacheRepository.upsert(record2._1, record2._2)
-          documentsInDB <- psaDataCacheRepository.collection.find[EncryptedDataEntry].toFuture()
-        } yield documentsInDB
-
-        whenReady(documentsInDB) {
-          documentsInDB =>
-            documentsInDB.size mustBe 2
-        }
+      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+        documentsInDB.size mustBe 1
       }
     }
 
-    "get" must {
-      "get a session data cache record as DataEntryWithoutEncryption by id in Mongo collection when encrypted false" in {
+    "update an existing session data cache as DataEntryWithoutEncryption in Mongo collection when encrypted false" in {
+      when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      mongoCollectionDrop()
 
-        when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
-        mongoCollectionDrop()
+      val record1 = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true}"""))
+      val record2 = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
 
-        val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
-        val documentsInDB = for {
-          _ <- psaDataCacheRepository.upsert(record._1, record._2)
-          documentsInDB <- psaDataCacheRepository.get(record._1)
-        } yield documentsInDB
+      val filters = Filters.eq(idField, "Ext-b9443dbb-3d88-465d-9696-47d6ef94f356")
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
+        _ <- psaDataCacheRepository.upsert(record2._1, record2._2)
+        documentsInDB <- psaDataCacheRepository.collection.find[DataEntryWithoutEncryption](filters).toFuture()
+      } yield documentsInDB
 
-        whenReady(documentsInDB) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
-        }
-      }
-
-      "get a session data cache record as EncryptedDataEntry by id in Mongo collection when encrypted true" in {
-
-        when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
-        mongoCollectionDrop()
-
-        val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        val documentsInDB = for {
-          _ <- psaDataCacheRepository.upsert(record._1, record._2)
-          documentsInDB <- psaDataCacheRepository.get(record._1)
-        } yield documentsInDB
-
-        whenReady(documentsInDB) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
-        }
+      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+        documentsInDB.size mustBe 1
+        documentsInDB.head.data mustBe record2._2
+        documentsInDB.head.data must not be record1._2
       }
     }
 
-    "remove" must {
-      "delete an existing DataEntryWithoutEncryption session data cache record by id in Mongo collection when encrypted false" in {
+    "save a new session data cache as DataEntryWithoutEncryption in Mongo collection when encrypted false and id is not same" in {
+      when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
+      mongoCollectionDrop()
 
-        when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
-        mongoCollectionDrop()
+      val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
+      val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
 
-        val record = ("id-1", Json.parse("""{"data":"1"}"""))
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
+        _ <- psaDataCacheRepository.upsert(record2._1, record1._2)
+        documentsInDB <- psaDataCacheRepository.collection.find[DataEntryWithoutEncryption].toFuture()
+      } yield documentsInDB
 
-        val documentsInDB = for {
-          _ <- psaDataCacheRepository.upsert(record._1, record._2)
-          documentsInDB <- psaDataCacheRepository.get(record._1)
-        } yield documentsInDB
+      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
+        documentsInDB =>
+          documentsInDB.size mustBe 2
+      }
+    }
 
-        whenReady(documentsInDB) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
-        }
+    "save a new session data cache as EncryptedDataEntry in Mongo collection when encrypted true and collection is empty" in {
+      when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
+      mongoCollectionDrop()
 
-        val documentsInDB2 = for {
-          _ <- psaDataCacheRepository.remove(record._1)
-          documentsInDB2 <- psaDataCacheRepository.get(record._1)
-        } yield documentsInDB2
+      val record = ("id-1", Json.parse("""{"data":"1"}"""))
+      val filters = Filters.eq(idField, "id-1")
 
-        whenReady(documentsInDB2) { documentsInDB2 =>
-          documentsInDB2.isDefined mustBe false
-        }
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.upsert(record._1, record._2)
+        documentsInDB <- psaDataCacheRepository.collection.find[EncryptedDataEntry](filters).toFuture()
+      } yield documentsInDB
+
+      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
+        documentsInDB =>
+          documentsInDB.size mustBe 1
+      }
+    }
+
+    "update an existing session data cache as EncryptedDataEntry in Mongo collection when encrypted true" in {
+      when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
+      mongoCollectionDrop()
+
+      val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
+      val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
+      val filters = Filters.eq(idField, "id-1")
+
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
+        _ <- psaDataCacheRepository.upsert(record2._1, record2._2)
+        documentsInDB <- psaDataCacheRepository.collection.find[EncryptedDataEntry](filters).toFuture()
+      } yield documentsInDB
+
+      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
+        documentsInDB =>
+          documentsInDB.size mustBe 1
+      }
+    }
+
+    "save a new session data cache as EncryptedDataEntry in Mongo collection when encrypted true and id is not same" in {
+      when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
+      mongoCollectionDrop()
+
+      val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
+      val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
+
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
+        _ <- psaDataCacheRepository.upsert(record2._1, record2._2)
+        documentsInDB <- psaDataCacheRepository.collection.find[EncryptedDataEntry].toFuture()
+      } yield documentsInDB
+
+      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
+        documentsInDB =>
+          documentsInDB.size mustBe 2
+      }
+    }
+  }
+
+  "get" must {
+    "get a session data cache record as DataEntryWithoutEncryption by id in Mongo collection when encrypted false" in {
+
+      when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
+      mongoCollectionDrop()
+
+      val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.upsert(record._1, record._2)
+        documentsInDB <- psaDataCacheRepository.get(record._1)
+      } yield documentsInDB
+
+      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+        documentsInDB.isDefined mustBe true
+      }
+    }
+
+    "get a session data cache record as EncryptedDataEntry by id in Mongo collection when encrypted true" in {
+
+      when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
+      mongoCollectionDrop()
+
+      val record = ("id-1", Json.parse("""{"data":"1"}"""))
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.upsert(record._1, record._2)
+        documentsInDB <- psaDataCacheRepository.get(record._1)
+      } yield documentsInDB
+
+      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+        documentsInDB.isDefined mustBe true
+      }
+    }
+  }
+
+  "remove" must {
+    "delete an existing DataEntryWithoutEncryption session data cache record by id in Mongo collection when encrypted false" in {
+
+      when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
+      mongoCollectionDrop()
+
+      val record = ("id-1", Json.parse("""{"data":"1"}"""))
+
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.upsert(record._1, record._2)
+        documentsInDB <- psaDataCacheRepository.get(record._1)
+      } yield documentsInDB
+
+      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+        documentsInDB.isDefined mustBe true
       }
 
-      "not delete an existing DataEntryWithoutEncryption session data cache record by id in Mongo collection when encrypted false and id incorrect" in {
+      val documentsInDB2 = for {
+        _ <- psaDataCacheRepository.remove(record._1)
+        documentsInDB2 <- psaDataCacheRepository.get(record._1)
+      } yield documentsInDB2
 
-        when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
-        mongoCollectionDrop()
+      whenReady(documentsInDB2, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB2 =>
+        documentsInDB2.isDefined mustBe false
+      }
+    }
 
-        val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        val documentsInDB = for {
-          _ <- psaDataCacheRepository.upsert(record._1, record._2)
-          documentsInDB <- psaDataCacheRepository.get(record._1)
-        } yield documentsInDB
+    "not delete an existing DataEntryWithoutEncryption session data cache record by id in Mongo collection when encrypted false and id incorrect" in {
 
-        whenReady(documentsInDB) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
-        }
+      when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
+      mongoCollectionDrop()
 
-        val documentsInDB2 = for {
-          _ <- psaDataCacheRepository.remove("2")
-          documentsInDB2 <- psaDataCacheRepository.get(record._1)
-        } yield documentsInDB2
+      val record = ("id-1", Json.parse("""{"data":"1"}"""))
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.upsert(record._1, record._2)
+        documentsInDB <- psaDataCacheRepository.get(record._1)
+      } yield documentsInDB
 
-        whenReady(documentsInDB2) { documentsInDB2 =>
-          documentsInDB2.isDefined mustBe true
-        }
+      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+        documentsInDB.isDefined mustBe true
       }
 
-      "delete an existing EncryptedDataEntry session data cache record by id in Mongo collection when encrypted true" in {
+      val documentsInDB2 = for {
+        _ <- psaDataCacheRepository.remove("2")
+        documentsInDB2 <- psaDataCacheRepository.get(record._1)
+      } yield documentsInDB2
 
-        when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
-        mongoCollectionDrop()
+      whenReady(documentsInDB2, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB2 =>
+        documentsInDB2.isDefined mustBe true
+      }
+    }
 
-        val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        val documentsInDB = for {
-          _ <- psaDataCacheRepository.upsert(record._1, record._2)
-          documentsInDB <- psaDataCacheRepository.get(record._1)
-        } yield documentsInDB
+    "delete an existing EncryptedDataEntry session data cache record by id in Mongo collection when encrypted true" in {
 
-        whenReady(documentsInDB) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
-        }
+      when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
+      mongoCollectionDrop()
 
-        val documentsInDB2 = for {
-          _ <- psaDataCacheRepository.remove(record._1)
-          documentsInDB2 <- psaDataCacheRepository.get(record._1)
-        } yield documentsInDB2
+      val record = ("id-1", Json.parse("""{"data":"1"}"""))
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.upsert(record._1, record._2)
+        documentsInDB <- psaDataCacheRepository.get(record._1)
+      } yield documentsInDB
 
-
-        whenReady(documentsInDB2) { documentsInDB2 =>
-          documentsInDB2.isDefined mustBe false
-        }
+      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+        documentsInDB.isDefined mustBe true
       }
 
-      "not delete an existing EncryptedDataEntry session data cache record by id in Mongo collection when encrypted true" in {
+      val documentsInDB2 = for {
+        _ <- psaDataCacheRepository.remove(record._1)
+        documentsInDB2 <- psaDataCacheRepository.get(record._1)
+      } yield documentsInDB2
 
-        when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
-        mongoCollectionDrop()
 
-        val record = ("id-1", Json.parse("""{"data":"1"}"""))
-        val documentsInDB = for {
-          _ <- psaDataCacheRepository.upsert(record._1, record._2)
-          documentsInDB <- psaDataCacheRepository.get(record._1)
-        } yield documentsInDB
+      whenReady(documentsInDB2, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB2 =>
+        documentsInDB2.isDefined mustBe false
+      }
+    }
 
-        whenReady(documentsInDB) { documentsInDB =>
-          documentsInDB.isDefined mustBe true
-        }
+    "not delete an existing EncryptedDataEntry session data cache record by id in Mongo collection when encrypted true" in {
 
-        val documentsInDB2 = for {
-          _ <- psaDataCacheRepository.remove("2")
-          documentsInDB2 <- psaDataCacheRepository.get(record._1)
-        } yield documentsInDB2
+      when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
+      mongoCollectionDrop()
 
-        whenReady(documentsInDB2) { documentsInDB2 =>
-          documentsInDB2.isDefined mustBe true
-        }
+      val record = ("id-1", Json.parse("""{"data":"1"}"""))
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.upsert(record._1, record._2)
+        documentsInDB <- psaDataCacheRepository.get(record._1)
+      } yield documentsInDB
+
+      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+        documentsInDB.isDefined mustBe true
+      }
+
+      val documentsInDB2 = for {
+        _ <- psaDataCacheRepository.remove("2")
+        documentsInDB2 <- psaDataCacheRepository.get(record._1)
+      } yield documentsInDB2
+
+      whenReady(documentsInDB2) { documentsInDB2 =>
+        documentsInDB2.isDefined mustBe true
       }
     }
   }
@@ -312,7 +317,8 @@ object PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar {
   private val mockAppConfig = mock[Configuration]
   private val mockConfig = mock[Config]
   private val databaseName = "pension-administrator"
-  private val mongoUri: String = s"mongodb://127.0.0.1:27017/$databaseName?heartbeatFrequencyMS=1000&rm.failover=default"
+  private val databasePort = 12350
+  private val mongoUri: String = s"mongodb://127.0.0.1:$databasePort/$databaseName?heartbeatFrequencyMS=1000&rm.failover=default"
   private val mongoComponent = MongoComponent(mongoUri)
 
   private def mongoCollectionDrop(): Void = Await

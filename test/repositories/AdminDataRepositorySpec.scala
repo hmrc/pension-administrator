@@ -24,68 +24,70 @@ import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.ScalaFutures.whenReady
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterEach}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, BeforeAndAfterEach}
 import play.api.Configuration
 import repositories.FeatureToggleMongoFormatter.{FeatureToggles, featureToggles, id}
 import uk.gov.hmrc.mongo.MongoComponent
-import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
 
 class AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with MongoEmbedDatabase with BeforeAndAfter with
-  BeforeAndAfterEach { // scalastyle:off magic.number
+  BeforeAndAfterEach with BeforeAndAfterAll { // scalastyle:off magic.number
 
   import AdminDataRepositorySpec._
+
+  override def beforeAll(): Unit = {
+    mongoStart(port = databasePort)
+    super.beforeAll()
+  }
 
   override def beforeEach: Unit = {
     super.beforeEach
     when(mockAppConfig.get[String](path = "mongodb.pension-administrator-cache.admin-data.name")).thenReturn("admin-data")
   }
 
-  withEmbedMongoFixture(port = 24680) { _ =>
+  "getFeatureToggle" must {
+    "get FeatureToggles from Mongo collection" in {
+      mongoCollectionDrop()
 
-    "getFeatureToggle" must {
-      "get FeatureToggles from Mongo collection" in {
-        mongoCollectionDrop()
+      val documentsInDB = for {
+        _ <- adminDataRepository.collection.insertOne(
+          FeatureToggles("toggles", Seq(FeatureToggle(PsaRegistration, enabled = true), FeatureToggle(PsaFromIvToPdv, enabled = false)))).headOption()
+        documentsInDB <- adminDataRepository.getFeatureToggles
+      } yield documentsInDB
 
-        val documentsInDB = for {
-          _ <- adminDataRepository.collection.insertOne(
-            FeatureToggles("toggles", Seq(FeatureToggle(PsaRegistration, enabled = true), FeatureToggle(PsaFromIvToPdv, enabled = false)))).headOption()
-          documentsInDB <- adminDataRepository.getFeatureToggles
-        } yield documentsInDB
+      whenReady(documentsInDB) { documentsInDB =>
+        documentsInDB.size mustBe 2
+      }
+    }
+  }
 
-        whenReady(documentsInDB) { documentsInDB =>
-          documentsInDB.size mustBe 2
-        }
+  "setFeatureToggle" must {
+    "set new FeatureToggles in Mongo collection" in {
+      mongoCollectionDrop()
+      val documentsInDB = for {
+        _ <- adminDataRepository.setFeatureToggles(Seq(FeatureToggle(PsaRegistration, enabled = true),
+          FeatureToggle(PsaFromIvToPdv, enabled = false)))
+        documentsInDB <- adminDataRepository.collection.find[FeatureToggles](Filters.eq(id, featureToggles)).headOption()
+      } yield documentsInDB
+
+      whenReady(documentsInDB) { documentsInDB =>
+        documentsInDB.map(_.toggles.size mustBe 2)
       }
     }
 
-    "setFeatureToggle" must {
-      "set new FeatureToggles in Mongo collection" in {
-        mongoCollectionDrop()
-        val documentsInDB = for {
-          _ <- adminDataRepository.setFeatureToggles(Seq(FeatureToggle(PsaRegistration, enabled = true),
-            FeatureToggle(PsaFromIvToPdv, enabled = false)))
-          documentsInDB <- adminDataRepository.collection.find[FeatureToggles](Filters.eq(id, featureToggles)).headOption()
-        } yield documentsInDB
+    "set empty FeatureToggles in Mongo collection" in {
+      mongoCollectionDrop()
+      val documentsInDB = for {
+        _ <- adminDataRepository.setFeatureToggles(Seq.empty)
+        documentsInDB <- adminDataRepository.collection.find[FeatureToggles].toFuture()
+      } yield documentsInDB
 
-        whenReady(documentsInDB) { documentsInDB =>
-          documentsInDB.map(_.toggles.size mustBe 2)
-        }
-      }
-
-      "set empty FeatureToggles in Mongo collection" in {
-        mongoCollectionDrop()
-        val documentsInDB = for {
-          _ <- adminDataRepository.setFeatureToggles(Seq.empty)
-          documentsInDB <- adminDataRepository.collection.find[FeatureToggles].toFuture()
-        } yield documentsInDB
-
-        whenReady(documentsInDB) { documentsInDB =>
-          documentsInDB.map(_.toggles.size mustBe 0)
-        }
+      whenReady(documentsInDB) { documentsInDB =>
+        documentsInDB.map(_.toggles.size mustBe 0)
       }
     }
   }
@@ -97,7 +99,8 @@ object AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar {
 
   private val mockAppConfig = mock[Configuration]
   private val databaseName = "pension-administrator"
-  private val mongoUri: String = s"mongodb://127.0.0.1:27017/$databaseName?heartbeatFrequencyMS=1000&rm.failover=default"
+  private val databasePort = 12346
+  private val mongoUri: String = s"mongodb://127.0.0.1:$databasePort/$databaseName?heartbeatFrequencyMS=1000&rm.failover=default"
   private val mongoComponent = MongoComponent(mongoUri)
 
   private def mongoCollectionDrop(): Void = Await
