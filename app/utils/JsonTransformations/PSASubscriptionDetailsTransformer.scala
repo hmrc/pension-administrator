@@ -19,20 +19,20 @@ package utils.JsonTransformations
 import com.google.inject.Inject
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
-import play.api.libs.json.{__, _}
+import play.api.libs.json._
 
-trait JsonTransformer{
+trait JsonTransformer {
   val doNothing: Reads[JsObject] = __.json.put(Json.obj())
 }
 
 
 class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTransformer,
-                                                 directorOrPartnerTransformer: DirectorOrPartnerTransformer,
-                                                 legalStatusTransformer: LegalStatusTransformer,
-                                                 registrationInfoTransformer: RegistrationInfoTransformer,
-                                                 payeAndVatTransformer: PayeAndVatTransformer,
-                                                 adviserTransformer: AdviserTransformer,
-                                                 individualTransformer: IndividualTransformer) extends JsonTransformer {
+                                                  directorOrPartnerTransformer: DirectorOrPartnerTransformer,
+                                                  legalStatusTransformer: LegalStatusTransformer,
+                                                  registrationInfoTransformer: RegistrationInfoTransformer,
+                                                  payeAndVatTransformer: PayeAndVatTransformer,
+                                                  adviserTransformer: AdviserTransformer,
+                                                  individualTransformer: IndividualTransformer) extends JsonTransformer {
 
   lazy val transformToUserAnswers: Reads[JsObject] =
     (registrationInfoTransformer.getRegistrationInfo and
@@ -50,21 +50,21 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
 
 
   private val getOrganisationOrPartnerDetails: Reads[JsObject] = {
-    legalStatusTransformer.returnPathBasedOnLegalStatus(__, __ \ 'businessName, __ \ 'businessName).flatMap { orgPath =>
-      orgPath.json.copyFrom((__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'name).json.pick)
+    legalStatusTransformer.returnPathBasedOnLegalStatus(__, __ \ Symbol("businessName"), __ \ Symbol("businessName")).flatMap { orgPath =>
+      orgPath.json.copyFrom((__ \ Symbol("psaSubscriptionDetails") \ Symbol("organisationOrPartnerDetails") \ Symbol("name")).json.pick)
     }
   }
 
   private val getCrn: Reads[JsObject] = {
-    (__ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails).read(__.read(readsCrn)).orElse(doNothing)
+    (__ \ Symbol("psaSubscriptionDetails") \ Symbol("organisationOrPartnerDetails")).read(__.read(readsCrn)).orElse(doNothing)
   }
 
-  def readsCrn: Reads[JsObject] =  {
-    (__ \ 'crnNumber).read[String].flatMap { _ =>
-      ((__ \ 'hasCrn).json.put(JsBoolean(true)) and
-        (__ \ "companyRegistrationNumber").json.copyFrom((__ \ 'crnNumber).json.pick)).reduce
+  def readsCrn: Reads[JsObject] = {
+    (__ \ Symbol("crnNumber")).read[String].flatMap { _ =>
+      ((__ \ Symbol("hasCrn")).json.put(JsBoolean(true)) and
+        (__ \ "companyRegistrationNumber").json.copyFrom((__ \ Symbol("crnNumber")).json.pick)).reduce
     } orElse {
-      (__ \ 'hasCrn).json.put(JsBoolean(false))
+      (__ \ Symbol("hasCrn")).json.put(JsBoolean(false))
     } orElse {
       doNothing
     }
@@ -72,9 +72,9 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
 
   private val getAreYouInUK: Reads[JsObject] = {
     val isNonUK = (__ \ "psaSubscriptionDetails" \ "correspondenceAddressDetails" \ "nonUKAddress")
-      .json.pick[JsBoolean].map{v => JsBoolean(!v.as[Boolean])}
+      .json.pick[JsBoolean].map { v => JsBoolean(!v.as[Boolean]) }
 
-    (__ \ 'areYouInUK).json.copyFrom(isNonUK)
+    (__ \ Symbol("areYouInUK")).json.copyFrom(isNonUK)
 
   }
 }

@@ -19,11 +19,11 @@ package utils
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.ImplementedBy
 import com.networknt.schema.{JsonSchema, JsonSchemaFactory, ValidationMessage}
-import javax.inject.Inject
 import play.api.Logger
 import play.api.libs.json._
 
-import scala.collection.JavaConverters._
+import javax.inject.Inject
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 @ImplementedBy(classOf[InvalidPayloadHandlerImpl])
 trait InvalidPayloadHandler {

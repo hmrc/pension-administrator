@@ -19,10 +19,8 @@ package audit
 import play.api.Logger
 import play.api.http.Status
 import play.api.libs.json.JsValue
-import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HttpException
 
-import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 trait PSADeEnrolAuditService {
@@ -30,8 +28,7 @@ trait PSADeEnrolAuditService {
   private val logger = Logger(classOf[PSADeEnrolAuditService])
 
   def sendPSADeEnrolEvent(psaId: String)
-                         (sendEvent: PSADeEnrol => Unit)
-                         (implicit request: RequestHeader, ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+                         (sendEvent: PSADeEnrol => Unit): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
 
     case Success(Right(response)) =>
       sendAuditEvent(psaId, Status.OK, Some(response))(sendEvent)

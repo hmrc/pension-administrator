@@ -18,9 +18,9 @@ package controllers
 
 import base.JsonFileReader
 import models.{IndividualDetails, MinimalDetails}
-import org.mockito.MockitoSugar
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json._
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
@@ -30,72 +30,72 @@ import uk.gov.hmrc.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class InvitationControllerSpec extends AsyncFlatSpec with Matchers  {
+class InvitationControllerSpec extends AsyncFlatSpec with Matchers {
 
   import InvitationControllerSpec._
 
   "invite" should "return Created when service returns successfully" in {
 
-      val result = controller.invite()(fakeRequest.withJsonBody(invitation))
+    val result = controller.invite()(fakeRequest.withJsonBody(invitation))
 
-      status(result) mustBe CREATED
+    status(result) mustBe CREATED
+  }
+
+  it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
+
+    fakeInvitationService.setInvitePsaResponse(
+      Future.successful(Left(new BadRequestException("bad request")))
+    )
+
+    val result = controller.invite()(fakeRequest.withJsonBody(invitation))
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "bad request"
+  }
+
+  it should "return NOT_FOUND when service returns NOT_FOUND" in {
+
+    fakeInvitationService.setInvitePsaResponse(
+      Future.successful(Left(new NotFoundException("not found")))
+    )
+
+    val result = controller.invite()(fakeRequest.withJsonBody(invitation))
+
+    status(result) mustBe NOT_FOUND
+    contentAsString(result) mustBe "not found"
+  }
+
+  it should "throw BadRequestException when no data received in the request" in {
+
+    recoverToSucceededIf[BadRequestException] {
+      controller.invite()(fakeRequest)
     }
+  }
 
-    it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
+  it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
 
-      fakeInvitationService.setInvitePsaResponse(
-        Future.successful(Left(new BadRequestException("bad request")))
-      )
+    fakeInvitationService.setInvitePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
-      val result = controller.invite()(fakeRequest.withJsonBody(invitation))
-
-      status(result) mustBe BAD_REQUEST
-      contentAsString(result) mustBe "bad request"
+    recoverToSucceededIf[UpstreamErrorResponse] {
+      controller.invite()(fakeRequest.withJsonBody(invitation))
     }
+  }
 
-    it should "return NOT_FOUND when service returns NOT_FOUND" in {
+  it should "throw Exception when service throws any unknown Exception" in {
 
-      fakeInvitationService.setInvitePsaResponse(
-        Future.successful(Left(new NotFoundException("not found")))
-      )
+    fakeInvitationService.setInvitePsaResponse(Future.failed(new Exception("Unknown Exception")))
 
-      val result = controller.invite()(fakeRequest.withJsonBody(invitation))
-
-      status(result) mustBe NOT_FOUND
-      contentAsString(result) mustBe "not found"
+    recoverToSucceededIf[Exception] {
+      controller.invite()(fakeRequest.withJsonBody(invitation))
     }
-
-    it should "throw BadRequestException when no data received in the request" in {
-
-      recoverToSucceededIf[BadRequestException] {
-        controller.invite()(fakeRequest)
-      }
-    }
-
-    it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
-
-      fakeInvitationService.setInvitePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
-
-      recoverToSucceededIf[UpstreamErrorResponse] {
-        controller.invite()(fakeRequest.withJsonBody(invitation))
-      }
-    }
-
-    it should "throw Exception when service throws any unknown Exception" in {
-
-      fakeInvitationService.setInvitePsaResponse(Future.failed(new Exception("Unknown Exception")))
-
-      recoverToSucceededIf[Exception] {
-        controller.invite()(fakeRequest.withJsonBody(invitation))
-      }
-    }
+  }
 }
 
-object InvitationControllerSpec extends JsonFileReader with MockitoSugar{
+object InvitationControllerSpec extends JsonFileReader with MockitoSugar {
 
   private val invitation = readJsonFromFile("/data/validInvitation.json")
 
-  val response = MinimalDetails("aaa@email.com",true,None,Some(IndividualDetails("John",Some("Doe"),"Doe")),
+  val response = MinimalDetails("aaa@email.com", true, None, Some(IndividualDetails("John", Some("Doe"), "Doe")),
     rlsFlag = true,
     deceasedFlag = true)
 
@@ -109,7 +109,7 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar{
 
     def invitePSA(jsValue: JsValue)
                  (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
-    invitePsaResponse
+      invitePsaResponse
   }
 
   val fakeInvitationService = new FakeInvitationService

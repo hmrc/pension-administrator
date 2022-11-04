@@ -21,12 +21,14 @@ import base.SpecBase
 import models.FeatureToggle.{Disabled, Enabled}
 import models.FeatureToggleName.{EnrolmentRecovery, PsaFromIvToPdv, PsaRegistration, UpdateClientReference}
 import models.{FeatureToggle, FeatureToggleName}
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.{ArgumentCaptor, MockitoSugar}
+import org.mockito.Mockito._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.cache.AsyncCacheApi
 import repositories.AdminDataRepository
 
@@ -72,7 +74,7 @@ class FeatureToggleServiceSpec
 
     whenReady(OUT.set(toggleName = toggleName, enabled = true)) {
       result =>
-        result mustBe ()
+        result mustBe()
         val captor = ArgumentCaptor.forClass(classOf[Seq[FeatureToggle]])
         verify(adminDataRepository, times(1)).setFeatureToggles(captor.capture())
         captor.getValue must contain(Enabled(toggleName))

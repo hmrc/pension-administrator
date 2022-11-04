@@ -20,10 +20,10 @@ import audit._
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.ConnectorBehaviours
 import models._
-import org.mockito.MockitoSugar
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{EitherValues, OptionValues}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
@@ -109,27 +109,27 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     val invitation = AcceptedInvitation(
       pstr = pstr,
       inviteePsaId = inviteePsaId,
-      inviterPsaId= psaId,
+      inviterPsaId = psaId,
       declaration = true,
       declarationDuties = false,
-      pensionAdviserDetails= Some(pensionAdviserDetails)
+      pensionAdviserDetails = Some(pensionAdviserDetails)
     )
 
-    val testJsonBody = Json.obj( fields =
-      "psaAssociationIDsDetails" -> Json.obj( fields =
-          "inviteeIDType" -> "PSAID",
-          "inviteeIDNumber" -> inviteePsaId,
-          "inviterPSAID" -> psaId
+    val testJsonBody = Json.obj(fields =
+      "psaAssociationIDsDetails" -> Json.obj(fields =
+        "inviteeIDType" -> "PSAID",
+        "inviteeIDNumber" -> inviteePsaId,
+        "inviterPSAID" -> psaId
       ),
-      "psaDeclarationDetails" -> Json.obj( fields =
+      "psaDeclarationDetails" -> Json.obj(fields =
         "box1" -> true,
         "box2" -> true,
         "box3" -> true,
         "box4" -> true,
         "box6" -> true,
-        "pensionAdviserDetails" -> Json.obj( fields =
+        "pensionAdviserDetails" -> Json.obj(fields =
           "name" -> pensionAdviserDetails.name,
-          "addressDetails" -> Json.obj( fields =
+          "addressDetails" -> Json.obj(fields =
             "addressLine1" -> adviserAddress.addressLine1,
             "nonUKAddress" -> "false",
             "addressLine4" -> adviserAddress.addressLine4,
@@ -138,7 +138,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
             "countryCode" -> "GB",
             "addressLine2" -> adviserAddress.addressLine2
           ),
-          "contactDetails" -> Json.obj( fields =
+          "contactDetails" -> Json.obj(fields =
             "email" -> pensionAdviserDetails.email
           )
         )
@@ -155,9 +155,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
 
-
     connector.acceptInvitation(invitation).map { response =>
-      response.right.value shouldBe ()
+      response.value shouldBe()
     }
 
   }
@@ -173,7 +172,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
-      response.right.value shouldBe psaMinimalDetailsIndividualUser
+      response.value shouldBe psaMinimalDetailsIndividualUser
     }
   }
 
@@ -381,7 +380,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType, psaRegime)) map {
       _ =>
-        auditService.verifyNothingSent shouldBe true
+        auditService.verifyNothingSent() shouldBe true
     }
 
   }

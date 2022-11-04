@@ -20,14 +20,15 @@ import audit.InvitationAuditEvent
 import config.AppConfig
 import connectors.{AssociationConnector, SchemeConnector}
 import controllers.EmailResponseControllerSpec.fakeAuditService
-import models.enumeration.JourneyType
 import models._
+import models.enumeration.JourneyType
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
-import org.mockito.MockitoSugar
+import org.mockito.Mockito._
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{EitherValues, OptionValues}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.Application
 import play.api.inject.Injector
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -58,7 +59,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
       fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, johnDoe.individualDetails.value.name)).map {
         response =>
           verify(fixture.repository, times(1)).upsert(any())(any())
-          response.right.value should equal(())
+          response.value should equal(())
       }
     }
   }
@@ -78,7 +79,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
 
       fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
         response =>
-          response.right.value should equal(())
+          response.value should equal(())
       }
     }
   }
@@ -90,7 +91,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
       fixture.invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
         response =>
           verify(fixture.repository, times(1)).upsert(any())(any())
-          response.right.value should equal(())
+          response.value should equal(())
       }
     }
   }
@@ -215,18 +216,18 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
       fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.fullName)) map {
         response =>
           verify(fixture.repository, times(1)).upsert(any())(any())
-          response.right.value should equal(())
+          response.value should equal(())
       }
     }
   }
 
-   it should "match lineantly an individual when the invitation includes their middle name" in {
+  it should "match lineantly an individual when the invitation includes their middle name" in {
     running() { app =>
       val fixture = testFixture(app)
       fixture.invitationService.invitePSA(invitationJson(johnDoePsaId, "John Paul Doe")) map {
         response =>
           verify(fixture.repository, times(1)).upsert(any())(any())
-          response.right.value should equal(())
+          response.value should equal(())
       }
     }
   }
@@ -238,7 +239,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
       fixture.invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.name)) map {
         response =>
           verify(fixture.repository, times(1)).upsert(any())(any())
-          response.right.value should equal(())
+          response.value should equal(())
       }
     }
   }
@@ -366,8 +367,8 @@ class FakeAssociationConnector extends AssociationConnector {
   import InvitationServiceImplSpec._
 
   def getMinimalDetails(idValue: String, idType: String, regime: String)
-                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext,
-                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
+                       (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext,
+                        request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
 
     PsaId(idValue) match {
       case `johnDoePsaId` | `associatedPsaId` => Future.successful(Right(johnDoe))
@@ -382,14 +383,16 @@ class FakeAssociationConnector extends AssociationConnector {
 
 
   def findMinimalDetailsByID(idValue: String, idType: String, regime: String)(implicit
-    headerCarrier: HeaderCarrier,
-    ec: ExecutionContext,
-    request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] =
+                                                                              headerCarrier: HeaderCarrier,
+                                                                              ec: ExecutionContext,
+                                                                              request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] =
     getMinimalDetails(idValue, idType, regime).map(_.map(Option(_)))
 
 
   override def acceptInvitation(invitation: AcceptedInvitation)
-    (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, requestHeader: RequestHeader): Future[Either[HttpException, Unit]] = {
+                               (implicit headerCarrier: HeaderCarrier,
+                                ec: ExecutionContext,
+                                requestHeader: RequestHeader): Future[Either[HttpException, Unit]] = {
     throw new NotImplementedError()
   }
 

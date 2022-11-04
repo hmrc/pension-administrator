@@ -22,11 +22,13 @@ import connectors.RegistrationConnector
 import models._
 import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
 import org.joda.time.LocalDate
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.{ArgumentCaptor, MockitoSugar}
+import org.mockito.Mockito._
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json._

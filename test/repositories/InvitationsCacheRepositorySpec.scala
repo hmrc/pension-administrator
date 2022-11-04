@@ -16,55 +16,59 @@
 
 package repositories
 
-import com.github.simplyscala.MongoEmbedDatabase
 import com.typesafe.config.Config
 import models.{Invitation, SchemeReferenceNumber}
 import org.joda.time.{DateTime, DateTimeZone}
-import org.mockito.MockitoSugar
+import org.mockito.Mockito._
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
-import org.scalatest.concurrent.ScalaFutures.whenReady
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.time.{Milliseconds, Span}
+import org.scalatest.time.{Millis, Milliseconds, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.libs.json.Json
 import repositories.InvitationsCacheEntry.{DataEntry, JsonDataEntry}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.mongo.MongoComponent
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
 
-class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with MongoEmbedDatabase with BeforeAndAfter with
-  BeforeAndAfterEach with BeforeAndAfterAll { // scalastyle:off magic.number
+class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport with BeforeAndAfter with
+  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
+
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
   import InvitationsCacheRepositorySpec._
 
-  override def beforeEach: Unit = {
-    super.beforeEach
+  var invitationsCacheRepository: InvitationsCacheRepository = _
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
     when(mockAppConfig.underlying).thenReturn(mockConfig)
     when(mockConfig.getString("mongodb.pension-administrator-cache.invitations.name")).thenReturn("invitations")
     when(mockConfig.getString("manage.json.encryption.key")).thenReturn("gvBoGdgzqG1AarzF1LY0zQ==")
   }
 
   override def beforeAll(): Unit = {
-    mongoStart(port = databasePort)
+    initMongoDExecutable()
+    startMongoD()
+    invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
     super.beforeAll()
   }
 
   "upsert" must {
     "save a new invitation cache as JsonDataEntry in Mongo collection when encrypted false and collection is empty" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
 
       val filters = Filters.and(Filters.eq("inviteePsaId", "A2500002"), Filters.eq("pstr", "pstr"))
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record)
         documentsInDB <- invitationsCacheRepository.collection.find[JsonDataEntry](filters).toFuture()
       } yield documentsInDB
@@ -77,7 +81,6 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
     "update an existing invitation cache as JsonDataEntry in Mongo collection when encrypted false" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
@@ -86,6 +89,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val filters = Filters.and(Filters.eq("inviteePsaId", "A2500002"), Filters.eq("pstr", "pstr"))
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record1)
         _ <- invitationsCacheRepository.upsert(record2)
         documentsInDB <- invitationsCacheRepository.collection.find[JsonDataEntry](filters).toFuture()
@@ -102,7 +106,6 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
     "save a new invitation cache as JsonDataEntry in Mongo collection when encrypted false and inviteePsaId is not same" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
@@ -110,6 +113,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         PsaId("A9876543"), PsaId("A9876544"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record1)
         _ <- invitationsCacheRepository.upsert(record2)
         documentsInDB <- invitationsCacheRepository.collection.find[JsonDataEntry].toFuture()
@@ -123,7 +127,6 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
     "save a new invitation cache as JsonDataEntry in Mongo collection when encrypted false and pstr is not same" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr1", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
@@ -131,6 +134,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         PsaId("A9876543"), PsaId("A9876544"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record1)
         _ <- invitationsCacheRepository.upsert(record2)
         documentsInDB <- invitationsCacheRepository.collection.find[JsonDataEntry].toFuture()
@@ -144,13 +148,13 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
     "save a new invitation cache as DataEntry in Mongo collection when encrypted true and collection is empty" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
       val filters = Filters.and(Filters.eq("inviteePsaId", "qPiTIC6PennxowJl8O5lqw=="), Filters.eq("pstr", "U87ezLMl9HOlyHOsEGXrNg=="))
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record)
         documentsInDB <- invitationsCacheRepository.collection.find[DataEntry](filters).toFuture()
       } yield documentsInDB
@@ -163,7 +167,6 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
     "update an existing invitation cache as DataEntry in Mongo collection when encrypted true" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
@@ -172,6 +175,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val filters = Filters.and(Filters.eq("inviteePsaId", "qPiTIC6PennxowJl8O5lqw=="), Filters.eq("pstr", "U87ezLMl9HOlyHOsEGXrNg=="))
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record1)
         _ <- invitationsCacheRepository.upsert(record2)
         documentsInDB <- invitationsCacheRepository.collection.find[DataEntry](filters).toFuture()
@@ -186,7 +190,6 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
     "save a new invitation cache as DataEntry in Mongo collection when encrypted true and inviteePsaId is not same" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
@@ -194,6 +197,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         PsaId("A9876543"), PsaId("A9876544"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record1)
         _ <- invitationsCacheRepository.upsert(record2)
         documentsInDB <- invitationsCacheRepository.collection.find[DataEntry].toFuture()
@@ -207,7 +211,6 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
     "save a new invitation cache as DataEntry in Mongo collection when encrypted true and pstr is not same" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr1", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
@@ -215,6 +218,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record1)
         _ <- invitationsCacheRepository.upsert(record2)
         documentsInDB <- invitationsCacheRepository.collection.find[DataEntry].toFuture()
@@ -231,12 +235,12 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
     "get an invitation cache record as JsonDataEntry by ids in Mongo collection when encrypted false" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record)
         documentsInDB <- invitationsCacheRepository.getByKeys(Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr"))
       } yield documentsInDB
@@ -249,12 +253,12 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
     "get an invitation cache record as DataEntry by ids in Mongo collection when encrypted true" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record)
         documentsInDB <- invitationsCacheRepository.getByKeys(Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr"))
       } yield documentsInDB
@@ -269,13 +273,13 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
     "delete an existing JsonDataEntry invitation cache record by ids in Mongo collection when encrypted false" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
       val filters = Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr")
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record)
         documentsInDB <- invitationsCacheRepository.getByKeys(filters)
       } yield documentsInDB
@@ -297,13 +301,13 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
     " not delete an existing JsonDataEntry invitation cache record by ids in Mongo collection when encrypted false and filters incorrect" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
       val filters = Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr")
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record)
         documentsInDB <- invitationsCacheRepository.getByKeys(filters)
       } yield documentsInDB
@@ -325,13 +329,13 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
     "delete an existing DataEntry invitation cache record by ids in Mongo collection when encrypted true" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
       val filters = Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr")
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record)
         documentsInDB <- invitationsCacheRepository.getByKeys(filters)
       } yield documentsInDB
@@ -353,13 +357,13 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
     "not delete an existing DataEntry invitation cache record by ids in Mongo collection when encrypted true" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
       val filters = Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr")
 
       val documentsInDB = for {
+        _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record)
         documentsInDB <- invitationsCacheRepository.getByKeys(filters)
       } yield documentsInDB
@@ -386,13 +390,10 @@ object InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar {
 
   private val mockAppConfig = mock[Configuration]
   private val mockConfig = mock[Config]
-  private val databaseName = "pension-administrator"
-  private val databasePort = 12347
-  private val mongoUri: String = s"mongodb://127.0.0.1:$databasePort/$databaseName?heartbeatFrequencyMS=1000&rm.failover=default"
-  private val mongoComponent = MongoComponent(mongoUri)
 
-  private def mongoCollectionDrop(): Void = Await
-    .result(invitationsCacheRepository.collection.drop().toFuture(), Duration.Inf)
-
-  def invitationsCacheRepository: InvitationsCacheRepository = new InvitationsCacheRepository(mongoComponent, mockAppConfig)
+  private def buildFormRepository(mongoHost: String, mongoPort: Int) = {
+    val databaseName = "pension-administrator"
+    val mongoUri = s"mongodb://$mongoHost:$mongoPort/$databaseName?heartbeatFrequencyMS=1000&rm.failover=default"
+    new InvitationsCacheRepository(MongoComponent(mongoUri), mockAppConfig)
+  }
 }

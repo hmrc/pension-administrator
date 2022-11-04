@@ -16,35 +16,36 @@
 
 package repositories
 
-import com.github.simplyscala.MongoEmbedDatabase
 import com.typesafe.config.Config
 import org.joda.time.{DateTime, DateTimeZone}
-import org.mockito.MockitoSugar
+import org.mockito.Mockito._
 import org.mongodb.scala.model.Filters
-import org.scalatest.concurrent.PatienceConfiguration.Timeout
-import org.scalatest.concurrent.ScalaFutures.whenReady
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.time.{Milliseconds, Span}
+import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.libs.json.Json
 import repositories.ManageCacheEntry.{DataEntry, JsonDataEntry}
 import uk.gov.hmrc.mongo.MongoComponent
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
 
-class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with MongoEmbedDatabase with BeforeAndAfter with
-  BeforeAndAfterEach with BeforeAndAfterAll { // scalastyle:off magic.number
+class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport with BeforeAndAfter with
+  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
 
-  private val idField: String = "id"
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
   import MinimalDetailsCacheRepositorySpec._
 
-  override def beforeEach: Unit = {
-    super.beforeEach
+  var minimalDetailsCacheRepository: MinimalDetailsCacheRepository = _
+
+  private val idField: String = "id"
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
     when(mockAppConfig.underlying).thenReturn(mockConfig)
     when(mockAppConfig.get[String](path = "mongodb.pension-administrator-cache.minimal-detail.name")).thenReturn("minimal-detail")
     when(mockAppConfig.get[Int]("mongodb.pension-administrator-cache.minimal-detail.timeToLiveInSeconds")).thenReturn(3600)
@@ -52,24 +53,29 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
   }
 
   override def beforeAll(): Unit = {
-    mongoStart(port = databasePort)
+    initMongoDExecutable()
+    startMongoD()
+    minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
     super.beforeAll()
   }
+
+  override def afterAll(): Unit =
+    stopMongoD()
 
   "upsert" must {
     "save a new minimal details cache as JsonDataEntry in Mongo collection when encrypted false and collection is empty" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
       val filters = Filters.eq(idField, record._1)
 
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
         documentsInDB <- minimalDetailsCacheRepository.collection.find[JsonDataEntry](filters).toFuture()
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
+      whenReady(documentsInDB) {
         documentsInDB =>
           documentsInDB.size mustBe 1
       }
@@ -77,19 +83,19 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
     "update an existing minimal details cache as JsonDataEntry in Mongo collection when encrypted false" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
       val filters = Filters.eq(idField, "id-1")
 
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record1._1, record1._2)
         _ <- minimalDetailsCacheRepository.upsert(record2._1, record2._2)
         documentsInDB <- minimalDetailsCacheRepository.collection.find[JsonDataEntry](filters).toFuture()
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
+      whenReady(documentsInDB) {
         documentsInDB =>
           documentsInDB.size mustBe 1
           documentsInDB.head.data mustBe record2._2
@@ -99,18 +105,18 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
     "save a new minimal details cache as JsonDataEntry in Mongo collection when encrypted false and id is not same" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
 
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record1._1, record1._2)
         _ <- minimalDetailsCacheRepository.upsert(record2._1, record2._2)
         documentsInDB <- minimalDetailsCacheRepository.collection.find[JsonDataEntry].toFuture()
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
+      whenReady(documentsInDB) {
         documentsInDB =>
           documentsInDB.size mustBe 2
       }
@@ -118,17 +124,17 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
     "save a new minimal details cache as DataEntry in Mongo collection when encrypted true and collection is empty" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
       val filters = Filters.eq(idField, record._1)
 
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
         documentsInDB <- minimalDetailsCacheRepository.collection.find[DataEntry](filters).toFuture()
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
+      whenReady(documentsInDB) {
         documentsInDB =>
           documentsInDB.size mustBe 1
       }
@@ -136,19 +142,19 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
     "update an existing minimal details cache as DataEntry in Mongo collection when encrypted true" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
       val filters = Filters.eq(idField, "id-1")
 
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record1._1, record1._2)
         _ <- minimalDetailsCacheRepository.upsert(record2._1, record2._2)
         documentsInDB <- minimalDetailsCacheRepository.collection.find[DataEntry](filters).toFuture()
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
+      whenReady(documentsInDB) {
         documentsInDB =>
           documentsInDB.size mustBe 1
       }
@@ -156,18 +162,18 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
     "insert a new minimal details cache as DataEntry in Mongo collection when encrypted true and id is not same" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
 
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record1._1, record1._2)
         _ <- minimalDetailsCacheRepository.upsert(record2._1, record2._2)
         documentsInDB <- minimalDetailsCacheRepository.collection.find[DataEntry].toFuture()
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
+      whenReady(documentsInDB) {
         documentsInDB =>
           documentsInDB.size mustBe 2
       }
@@ -178,15 +184,16 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     "get a minimal details cache record as JsonDataEntry by id in Mongo collection when encrypted false" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
+
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
         documentsInDB <- minimalDetailsCacheRepository.get(record._1)
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+      whenReady(documentsInDB) { documentsInDB =>
         documentsInDB.isDefined mustBe true
       }
     }
@@ -194,15 +201,16 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     "get a minimal details cache record as DataEntry by id in Mongo collection when encrypted true" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
+
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
         documentsInDB <- minimalDetailsCacheRepository.get(record._1)
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+      whenReady(documentsInDB) { documentsInDB =>
         documentsInDB.isDefined mustBe true
       }
     }
@@ -212,15 +220,16 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     "get a minimal details cache data's lastUpdated field by id in Mongo collection when encrypted false" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
+
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
         documentsInDB <- minimalDetailsCacheRepository.getLastUpdated(record._1)
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+      whenReady(documentsInDB) { documentsInDB =>
         documentsInDB.get.compareTo(DateTime.now(DateTimeZone.UTC)) mustBe -1
       }
     }
@@ -228,15 +237,16 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     "get a minimal details cache data's lastUpdated field by id in Mongo collection when encrypted true" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
+
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
         documentsInDB <- minimalDetailsCacheRepository.getLastUpdated(record._1)
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+      whenReady(documentsInDB) { documentsInDB =>
         documentsInDB.get.compareTo(DateTime.now(DateTimeZone.UTC)) mustBe -1
 
       }
@@ -247,15 +257,16 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     "delete an existing JsonDataEntry minimal details cache record by id in Mongo collection when encrypted false" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
+
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
         documentsInDB <- minimalDetailsCacheRepository.get(record._1)
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+      whenReady(documentsInDB) { documentsInDB =>
         documentsInDB.isDefined mustBe true
       }
       val documentsInDB2 = for {
@@ -263,7 +274,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         documentsInDB2 <- minimalDetailsCacheRepository.get(record._1)
       } yield documentsInDB2
 
-      whenReady(documentsInDB2, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB2 =>
+      whenReady(documentsInDB2) { documentsInDB2 =>
         documentsInDB2.isDefined mustBe false
       }
     }
@@ -271,15 +282,16 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     "not delete an existing JsonDataEntry minimal details cache record by id in Mongo collection when encrypted false and id incorrect" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
-      mongoCollectionDrop()
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
+
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
         documentsInDB <- minimalDetailsCacheRepository.get(record._1)
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+      whenReady(documentsInDB) { documentsInDB =>
         documentsInDB.isDefined mustBe true
       }
 
@@ -288,7 +300,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         documentsInDB2 <- minimalDetailsCacheRepository.get(record._1)
       } yield documentsInDB2
 
-      whenReady(documentsInDB2, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB2 =>
+      whenReady(documentsInDB2) { documentsInDB2 =>
         documentsInDB2.isDefined mustBe true
       }
     }
@@ -296,15 +308,16 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     "delete an existing DataEntry minimal details cache record by id in Mongo collection when encrypted true" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
+
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
         documentsInDB <- minimalDetailsCacheRepository.get(record._1)
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+      whenReady(documentsInDB) { documentsInDB =>
         documentsInDB.isDefined mustBe true
       }
 
@@ -313,7 +326,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         documentsInDB2 <- minimalDetailsCacheRepository.get(record._1)
       } yield documentsInDB2
 
-      whenReady(documentsInDB2, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB2 =>
+      whenReady(documentsInDB2) { documentsInDB2 =>
         documentsInDB2.isDefined mustBe false
       }
     }
@@ -321,15 +334,16 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     "not delete an existing DataEntry minimal details cache record by id in Mongo collection when encrypted true" in {
 
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
-      mongoCollectionDrop()
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
+
       val documentsInDB = for {
+        _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record._1, record._2)
         documentsInDB <- minimalDetailsCacheRepository.get(record._1)
       } yield documentsInDB
 
-      whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB =>
+      whenReady(documentsInDB) { documentsInDB =>
         documentsInDB.isDefined mustBe true
       }
 
@@ -338,7 +352,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         documentsInDB2 <- minimalDetailsCacheRepository.get(record._1)
       } yield documentsInDB2
 
-      whenReady(documentsInDB2, timeout = Timeout(Span(500L, Milliseconds))) { documentsInDB2 =>
+      whenReady(documentsInDB2) { documentsInDB2 =>
         documentsInDB2.isDefined mustBe true
       }
     }
@@ -352,13 +366,10 @@ object MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar {
 
   private val mockAppConfig = mock[Configuration]
   private val mockConfig = mock[Config]
-  private val databaseName = "pension-administrator"
-  private val databasePort = 12349
-  private val mongoUri: String = s"mongodb://127.0.0.1:$databasePort/$databaseName?heartbeatFrequencyMS=1000&rm.failover=default"
-  private val mongoComponent = MongoComponent(mongoUri)
 
-  private def mongoCollectionDrop(): Void = Await
-    .result(minimalDetailsCacheRepository.collection.drop().toFuture(), Duration.Inf)
-
-  def minimalDetailsCacheRepository: ManageCacheRepository = new MinimalDetailsCacheRepository(mongoComponent, mockAppConfig)
+  private def buildFormRepository(mongoHost: String, mongoPort: Int) = {
+    val databaseName = "pension-administrator"
+    val mongoUri = s"mongodb://$mongoHost:$mongoPort/$databaseName?heartbeatFrequencyMS=1000&rm.failover=default"
+    new MinimalDetailsCacheRepository(MongoComponent(mongoUri), mockAppConfig)
+  }
 }

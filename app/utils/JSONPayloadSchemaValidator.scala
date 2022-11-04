@@ -16,11 +16,11 @@
 
 package utils
 
-import play.api.libs.json._
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.networknt.schema.{JsonSchemaFactory, ValidationMessage}
+import play.api.libs.json._
 
-import scala.collection.JavaConverters.asScalaSetConverter
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 class JSONPayloadSchemaValidator {
   val basePath = System.getProperty("user.dir")

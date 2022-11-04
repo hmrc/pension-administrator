@@ -22,10 +22,10 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import connectors.helper.ConnectorBehaviours
 import models.SchemeReferenceNumber
-import org.mockito.MockitoSugar
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{EitherValues, OptionValues, RecoverMethods}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json._
@@ -48,6 +48,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
   import SchemeConnectorSpec._
 
   override protected def portConfigKeys: String = "microservice.services.pensions-scheme.port"
+
   val mockFeatureToggleService: FeatureToggleService = mock[FeatureToggleService]
 
   override protected def bindings: Seq[GuiceableModule] =
@@ -73,7 +74,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     )
 
     connector.checkForAssociation(psaId, srn) map { response =>
-      response.right.value shouldBe JsBoolean(true)
+      response.value shouldBe JsBoolean(true)
     }
 
   }
@@ -108,7 +109,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     )
 
     connector.listOfSchemes(psaId.id) map { response =>
-      response.right.value shouldBe validListOfSchemeResponse
+      response.value shouldBe validListOfSchemeResponse
     }
   }
 

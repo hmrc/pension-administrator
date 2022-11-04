@@ -88,9 +88,9 @@ trait Samples {
 
   def pensionSchemeAdministratorSample2(personType: String) = {
     val item1 = directorOrPartnerSample(personType) copy (previousAddressDetail = previousAddressDetailsSample2)
-    val item2 = item1 copy(firstName = "Paul", middleName = None, lastName = "Stephens", previousAddressDetail = previousAddressDetailsSample2)
+    val item2 = item1.copy(firstName = "Paul", middleName = None, lastName = "Stephens", previousAddressDetail = previousAddressDetailsSample2)
 
-    pensionSchemeAdministratorSample copy(
+    pensionSchemeAdministratorSample.copy(
       directorOrPartnerDetail = Some(List(item1, item2)
       ),
       declaration = declarationSample2,
@@ -121,10 +121,10 @@ trait Samples {
   val pensionAdviserSample = PensionAdvisorDetail("John", ukAddressSample, contactDetailsSample)
 
   def testDirectorOrPartner(personType: String): JsObject = Json.obj(s"${personType}Details" -> Json.obj(
-      "firstName" -> JsString("John"),
-      "lastName" -> JsString("Doe"),
-      "isDeleted" -> JsBoolean(false)
-    ),
+    "firstName" -> JsString("John"),
+    "lastName" -> JsString("Doe"),
+    "isDeleted" -> JsBoolean(false)
+  ),
     "dateOfBirth" -> JsString("2019-01-31"),
     s"${personType}Nino" -> Json.obj("hasNino" -> JsBoolean(true), "nino" -> JsString("SL211111A")),
     s"${personType}Utr" -> Json.obj("hasUtr" -> JsBoolean(true), "utr" -> JsString("123456789")),

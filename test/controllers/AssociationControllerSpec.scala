@@ -20,9 +20,10 @@ import base.JsonFileReader
 import connectors.AssociationConnector
 import models._
 import org.mockito.ArgumentMatchers._
-import org.mockito.MockitoSugar
+import org.mockito.Mockito._
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
@@ -36,12 +37,13 @@ import utils.AuthRetrievals
 import scala.concurrent.{ExecutionContext, Future}
 
 class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers {
-import AssociationControllerSpec._
+
+  import AssociationControllerSpec._
 
   "getMinimalDetails" should "return OK when service returns successfully with success form Repo" in {
 
     when(mockMinimalDetailsCacheRepository.get(any())(any()))
-      .thenReturn (Future.successful {
+      .thenReturn(Future.successful {
         Some(Json.toJson(psaMinimalDetailsIndividualUser))
       })
     val result = controller(isEnabledFeatureToggle = true).getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
@@ -57,7 +59,7 @@ import AssociationControllerSpec._
       .thenReturn(Future.successful {
         Some(Json.obj())
       })
-    when(mockMinimalDetailsCacheRepository.upsert(any(),any())(any()))
+    when(mockMinimalDetailsCacheRepository.upsert(any(), any())(any()))
       .thenReturn(Future.successful(()))
 
     val result = controller(isEnabledFeatureToggle = true).getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
@@ -73,7 +75,7 @@ import AssociationControllerSpec._
       .thenReturn(Future.successful {
         None
       })
-    when(mockMinimalDetailsCacheRepository.upsert(any(),any())(any()))
+    when(mockMinimalDetailsCacheRepository.upsert(any(), any())(any()))
       .thenReturn(Future.successful(()))
 
     val result = controller(isEnabledFeatureToggle = true).getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
@@ -291,15 +293,15 @@ object AssociationControllerSpec extends MockitoSugar {
     def setAcceptInvitationResponse(response: Future[Either[HttpException, Unit]]): Unit = this.acceptInvitationResponse = response
 
     def getMinimalDetails(idValue: String, idType: String, regime: String)(implicit
-                                           headerCarrier: HeaderCarrier,
-                                           ec: ExecutionContext,
-                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = minimalPsaDetailsResponse
+                                                                           headerCarrier: HeaderCarrier,
+                                                                           ec: ExecutionContext,
+                                                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = minimalPsaDetailsResponse
 
     def findMinimalDetailsByID(idValue: String, idType: String, regime: String)(implicit
-      headerCarrier: HeaderCarrier,
-      ec: ExecutionContext,
-      request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] =
-      getMinimalDetails(idValue, idType, regime).map(_.map( Option(_)))
+                                                                                headerCarrier: HeaderCarrier,
+                                                                                ec: ExecutionContext,
+                                                                                request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] =
+      getMinimalDetails(idValue, idType, regime).map(_.map(Option(_)))
 
     override def acceptInvitation(invitation: AcceptedInvitation)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader):
     Future[Either[HttpException, Unit]] = acceptInvitationResponse
@@ -312,10 +314,10 @@ object AssociationControllerSpec extends MockitoSugar {
 
 
   def controller(psaId: Option[PsaId] = Some(PsaId("A2123456")),
-                 affinityGroup: Option[AffinityGroup] = Some(AffinityGroup.Individual),isEnabledFeatureToggle:Boolean=false): AssociationController = {
+                 affinityGroup: Option[AffinityGroup] = Some(AffinityGroup.Individual), isEnabledFeatureToggle: Boolean = false): AssociationController = {
     when(mockAuthRetrievals.getPsaId(any(), any()))
       .thenReturn(Future.successful(psaId))
-    new AssociationController(fakeAssociationConnector,mockMinimalDetailsCacheRepository,
+    new AssociationController(fakeAssociationConnector, mockMinimalDetailsCacheRepository,
       mockAuthRetrievals, stubControllerComponents())
   }
 

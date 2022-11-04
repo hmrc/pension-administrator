@@ -18,7 +18,6 @@ package connectors.helper
 
 import com.google.inject.Inject
 import config.AppConfig
-import uk.gov.hmrc.http.HeaderCarrier
 
 import java.util.UUID.randomUUID
 
@@ -33,7 +32,7 @@ class HeaderUtils @Inject()(config: AppConfig) {
     )
   }
 
-  def desHeader(implicit hc: HeaderCarrier): Seq[(String, String)] = {
+  def desHeader: Seq[(String, String)] = {
     desHeaderWithoutCorrelationId ++ Seq("CorrelationId" -> getCorrelationId)
   }
 
@@ -41,7 +40,7 @@ class HeaderUtils @Inject()(config: AppConfig) {
     .replaceAll("-", "")
     .slice(0, maxLengthCorrelationId)
 
-  def integrationFrameworkHeader(implicit hc: HeaderCarrier): Seq[(String, String)] = {
+  def integrationFrameworkHeader: Seq[(String, String)] = {
     Seq("Environment" -> config.integrationframeworkEnvironment,
       "Authorization" -> config.integrationframeworkAuthorization,
       "Content-Type" -> "application/json",

@@ -20,8 +20,9 @@ import base.SpecBase
 import models.FeatureToggle.Enabled
 import models.FeatureToggleName.UpdateClientReference
 import org.mockito.ArgumentMatchers.any
-import org.mockito.MockitoSugar
+import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.{JsBoolean, Json}
 import play.api.test.Helpers._
 import repositories.AdminDataRepository
@@ -40,7 +41,8 @@ class FeatureToggleControllerSpec
   private val mockFeatureToggleService = mock[FeatureToggleService]
 
   override def beforeEach(): Unit = {
-    reset(mockAdminDataRepository, mockFeatureToggleService)
+    reset(mockAdminDataRepository)
+    reset(mockFeatureToggleService)
     when(mockAdminDataRepository.getFeatureToggles)
       .thenReturn(Future.successful(Seq(Enabled(UpdateClientReference))))
     when(mockFeatureToggleService.getAll)

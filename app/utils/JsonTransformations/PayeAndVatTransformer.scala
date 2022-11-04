@@ -19,7 +19,9 @@ package utils.JsonTransformations
 import com.google.inject.Inject
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
-import play.api.libs.json.{__, _}
+import play.api.libs.json._
+
+import scala.language.postfixOps
 
 class PayeAndVatTransformer @Inject()() extends JsonTransformer {
   val getPayeAndVat: Reads[JsObject] = {
@@ -35,24 +37,24 @@ class PayeAndVatTransformer @Inject()() extends JsonTransformer {
   }
 
   private def getVat: Reads[JsObject] = {
-    val vatRegistrationNumber = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'vatRegistrationNumber
+    val vatRegistrationNumber = __ \ Symbol("psaSubscriptionDetails") \ Symbol("organisationOrPartnerDetails") \ Symbol("vatRegistrationNumber")
     vatRegistrationNumber.read[String].flatMap { _ =>
-      (__ \ 'hasVat).json.put(JsBoolean(true)) and
+      (__ \ Symbol("hasVat")).json.put(JsBoolean(true)) and
         (__ \ "vat").json.copyFrom(vatRegistrationNumber.json.pick) reduce
     } orElse {
-      (__ \ 'hasVat).json.put(JsBoolean(false))
+      (__ \ Symbol("hasVat")).json.put(JsBoolean(false))
     } orElse {
       doNothing
     }
   }
 
   private def getPaye: Reads[JsObject] = {
-    val paye = __ \ 'psaSubscriptionDetails \ 'organisationOrPartnerDetails \ 'payeReference
+    val paye = __ \ Symbol("psaSubscriptionDetails") \ Symbol("organisationOrPartnerDetails") \ Symbol("payeReference")
     paye.read[String].flatMap { _ =>
-      (__ \ 'hasPaye).json.put(JsBoolean(true)) and
+      (__ \ Symbol("hasPaye")).json.put(JsBoolean(true)) and
         (__ \ "paye").json.copyFrom(paye.json.pick) reduce
     } orElse {
-      (__ \ 'hasPaye).json.put(JsBoolean(false))
+      (__ \ Symbol("hasPaye")).json.put(JsBoolean(false))
     } orElse {
       doNothing
     }

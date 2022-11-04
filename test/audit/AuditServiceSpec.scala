@@ -17,9 +17,9 @@
 package audit
 
 import org.scalatest.Inside
-import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AsyncFlatSpec
-import org.mockito.MockitoSugar
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
@@ -46,7 +46,7 @@ class AuditServiceSpec extends AsyncFlatSpec with Matchers with Inside with Mock
     val sentEvent = FakeAuditConnector.lastSentEvent
 
     inside(sentEvent) {
-      case DataEvent(auditSource, auditType, _, _, detail, _) =>
+      case DataEvent(auditSource, auditType, _, _, detail, _, _, _) =>
         auditSource shouldBe appName
         auditType shouldBe "TestAuditEvent"
         detail should contain("payload" -> "test-audit-payload")

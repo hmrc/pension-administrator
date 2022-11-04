@@ -23,12 +23,13 @@ import connectors.DesConnectorSpec.{psaId, pstr, removalDate}
 import connectors.helper.{ConnectorBehaviours, PSASubscriptionFixture}
 import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
 import org.joda.time.LocalDate
-import org.mockito.MockitoSugar
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.{EitherValues, OptionValues, RecoverMethods}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status._
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
+import play.api.libs.json.JodaWrites._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
@@ -36,7 +37,6 @@ import play.api.test.Helpers.NOT_FOUND
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.{FakeDesConnector, WireMockHelper}
-import play.api.libs.json.JodaWrites._
 
 
 class DesConnectorSpec extends AsyncFlatSpec
@@ -53,6 +53,7 @@ class DesConnectorSpec extends AsyncFlatSpec
     auditService.reset()
     super.beforeEach()
   }
+
   private def errorResponse(code: String): String =
     Json.stringify(
       Json.obj(
@@ -60,6 +61,7 @@ class DesConnectorSpec extends AsyncFlatSpec
         "reason" -> "test-reason"
       )
     )
+
   private val ceasePsaData: JsValue = Json.obj(
     "ceaseIDType" -> "PSAID",
     "ceaseNumber" -> psaId.id,
@@ -102,11 +104,13 @@ class DesConnectorSpec extends AsyncFlatSpec
             .withHeader("Content-Type", "application/json")
         )
     )
-    connector.registerPSA(PSASubscriptionFixture.registerPSAValidPayload).map{_.right.value shouldBe registerPsaResponseJson}
+    connector.registerPSA(PSASubscriptionFixture.registerPSAValidPayload).map {
+      _.value shouldBe registerPsaResponseJson
+    }
   }
 
   it should "throw exception when trying to registerPSA with invalid payload" in {
-    val thrown =  intercept[PSAValidationFailureException] {
+    val thrown = intercept[PSAValidationFailureException] {
       connector.registerPSA(PSASubscriptionFixture.registerPSAInValidPayload)
     }
     assert(thrown.getMessage === "Invalid payload when registerPSA :-\nValidationFailure(pattern,$.individualDetail.dateOfBirth:" +
@@ -121,13 +125,14 @@ class DesConnectorSpec extends AsyncFlatSpec
       post(urlEqualTo(psaVariationURL)).
         withHeader("Content-Type", equalTo("application/json")).
         withRequestBody(equalToJson(Json.stringify(PSASubscriptionFixture.psaVariation))).
-        willReturn(ok(Json.stringify(updatePSAResponse))
-          withHeader("Content-Type", "application/Json")))
-    connector.updatePSA(psaId.id,PSASubscriptionFixture.psaVariation).map{_.right.value shouldBe updatePSAResponse}
+        willReturn(ok(Json.stringify(updatePSAResponse)).withHeader("Content-Type", "application/Json")))
+    connector.updatePSA(psaId.id, PSASubscriptionFixture.psaVariation).map {
+      _.value shouldBe updatePSAResponse
+    }
   }
 
   it should "throw schema error when trying to updatePSA with invalid payload" in {
-    val thrown =  intercept[PSAValidationFailureException] {
+    val thrown = intercept[PSAValidationFailureException] {
       connector.updatePSA(psaId.id, PSASubscriptionFixture.psaVariationInvalid)
     }
     assert(thrown.getMessage === "Invalid payload when updatePSA :-\nValidationFailure(pattern,$.individualDetails.dateOfBirth: " +
@@ -149,7 +154,7 @@ class DesConnectorSpec extends AsyncFlatSpec
         )
     )
     connector.removePSA(removePsaDataModel).map { response =>
-      response.right.value shouldBe successResponse
+      response.value shouldBe successResponse
 
       val expectedAuditEvent = PSARemovalFromSchemeAuditEvent(PsaToBeRemovedFromScheme(
         removePsaDataModel.psaId, removePsaDataModel.pstr, removePsaDataModel.removalDate))

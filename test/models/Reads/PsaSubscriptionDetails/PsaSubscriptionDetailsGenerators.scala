@@ -23,8 +23,8 @@ import play.api.libs.json.JodaWrites._
 import play.api.libs.json.{JsArray, JsObject, Json}
 
 trait PsaSubscriptionDetailsGenerators {
-  val legalStatus: Gen[String] = Gen.oneOf("Individual","Partnership","Limited Company")
-  val idType: Gen[Option[String]] = Gen.option(Gen.oneOf("NINO","UTR"))
+  val legalStatus: Gen[String] = Gen.oneOf("Individual", "Partnership", "Limited Company")
+  val idType: Gen[Option[String]] = Gen.option(Gen.oneOf("NINO", "UTR"))
 
   val customerIdentificationDetailsGenerator: Gen[JsObject] = for {
     legalStatus <- legalStatus
@@ -54,7 +54,7 @@ trait PsaSubscriptionDetailsGenerators {
     )
   }
 
-  val psaContactDetailsGenerator : Gen[JsObject] = for {
+  val psaContactDetailsGenerator: Gen[JsObject] = for {
     telephone <- Gen.numStr
     email <- Gen.option(Gen.alphaStr)
   } yield {
@@ -64,7 +64,7 @@ trait PsaSubscriptionDetailsGenerators {
     )
   }
 
-  val addressGenerator : Gen[JsObject] = for {
+  val addressGenerator: Gen[JsObject] = for {
     nonUkAddress <- arbitrary[Boolean]
     line1 <- Gen.alphaStr
     line2 <- Gen.alphaStr
@@ -99,22 +99,22 @@ trait PsaSubscriptionDetailsGenerators {
     randomNumberFromRange(1, 3) match {
       case 1 => utrRange
       case 2 => "k" + utrRange
-      case 3 => utrRange + "k"
+      case 3 => utrRange.toString + "k"
     }
   }
 
   private def randomNumberFromRange(min: Int, max: Int): Int = Gen.chooseNum(min, max).sample.fold(min)(c => c)
 
   val dateGenerator: Gen[LocalDate] = for {
-    day <- Gen.choose(1,28)
-    month <-Gen.choose(1,12)
-    year <-Gen.choose(2000,2018)
-  } yield new LocalDate(year,month,day)
+    day <- Gen.choose(1, 28)
+    month <- Gen.choose(1, 12)
+    year <- Gen.choose(2000, 2018)
+  } yield new LocalDate(year, month, day)
 
 
-  val titlesGenerator: Gen[String] = Gen.oneOf("Mr","Mrs","Miss","Ms","Dr","Sir","Professor","Lord")
+  val titlesGenerator: Gen[String] = Gen.oneOf("Mr", "Mrs", "Miss", "Ms", "Dr", "Sir", "Professor", "Lord")
 
-  val individualGenerator : Gen[JsObject] = for {
+  val individualGenerator: Gen[JsObject] = for {
     title <- Gen.option(titlesGenerator)
     firstName <- Gen.alphaStr
     middleName <- Gen.option(Gen.alphaStr)
@@ -131,15 +131,15 @@ trait PsaSubscriptionDetailsGenerators {
   }
 
 
-  val previousAddressGenerator : Gen[JsObject] = for {
+  val previousAddressGenerator: Gen[JsObject] = for {
     isPreviousAddressLast12Month <- arbitrary[Boolean]
     previousAddress <- Gen.option(addressGenerator)
   } yield {
     Json.obj("isPreviousAddressLast12Month" -> isPreviousAddressLast12Month,
-    "previousAddress" -> previousAddress)
+      "previousAddress" -> previousAddress)
   }
 
-  val correspondenceCommonDetailsGenerator : Gen[JsObject] = for {
+  val correspondenceCommonDetailsGenerator: Gen[JsObject] = for {
     addressDetails <- addressGenerator
     contactDetails <- Gen.option(psaContactDetailsGenerator)
   } yield {
@@ -150,8 +150,8 @@ trait PsaSubscriptionDetailsGenerators {
   }
 
 
-  val psaDirectorOrPartnerDetailsGenerator : Gen[JsObject] = for {
-    entityType <- Gen.oneOf("Director","Partner")
+  val psaDirectorOrPartnerDetailsGenerator: Gen[JsObject] = for {
+    entityType <- Gen.oneOf("Director", "Partner")
     title <- Gen.option(titlesGenerator)
     firstName <- Gen.alphaStr
     middleName <- Gen.option(Gen.alphaStr)
@@ -163,16 +163,16 @@ trait PsaSubscriptionDetailsGenerators {
     correspondenceCommonDetails <- Gen.option(correspondenceCommonDetailsGenerator)
   } yield {
     Json.obj(
-    "entityType" -> entityType,
-    "title" -> title,
-    "firstName" -> firstName,
-    "middleName" -> middleName,
-    "lastName" -> lastName,
-    "dateOfBirth" -> dateOfBirth,
-    "nino" -> nino,
-    "utr" -> utr,
-    "previousAddressDetails" -> previousAddressDetails,
-    "correspondenceCommonDetails" -> correspondenceCommonDetails)
+      "entityType" -> entityType,
+      "title" -> title,
+      "firstName" -> firstName,
+      "middleName" -> middleName,
+      "lastName" -> lastName,
+      "dateOfBirth" -> dateOfBirth,
+      "nino" -> nino,
+      "utr" -> utr,
+      "previousAddressDetails" -> previousAddressDetails,
+      "correspondenceCommonDetails" -> correspondenceCommonDetails)
   }
 
   val pensionAdvisorGenerator: Gen[JsObject] = for {

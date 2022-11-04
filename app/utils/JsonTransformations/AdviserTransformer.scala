@@ -19,31 +19,36 @@ package utils.JsonTransformations
 import com.google.inject.Inject
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
-import play.api.libs.json.{__, _}
+import play.api.libs.json._
 
-class AdviserTransformer @Inject()(addressTransformer: AddressTransformer) extends  JsonTransformer {
+import scala.language.postfixOps
+
+class AdviserTransformer @Inject()(addressTransformer: AddressTransformer) extends JsonTransformer {
   val getAdviser: Reads[JsObject] = {
-    (((__ \ 'adviserName).json
-      .copyFrom((__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'name).json.pick)
+    (((__ \ Symbol("adviserName")).json
+      .copyFrom((__ \ Symbol("psaSubscriptionDetails") \ Symbol("declarationDetails") \ Symbol("pensionAdvisorDetails") \ Symbol("name")).json.pick)
       orElse doNothing) and
-      ((__ \ 'adviserEmail).json
+      ((__ \ Symbol("adviserEmail")).json
         .copyFrom(
-        (__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'contactDetails \ 'email).json.pick)
+          (__ \ Symbol("psaSubscriptionDetails") \ Symbol("declarationDetails") \ Symbol("pensionAdvisorDetails") \ Symbol("contactDetails")
+            \ Symbol("email")).json.pick)
         orElse doNothing) and
-      ((__ \ 'adviserPhone).json
+      ((__ \ Symbol("adviserPhone")).json
         .copyFrom(
-        (__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'contactDetails \ 'telephone).json.pick)
+          (__ \ Symbol("psaSubscriptionDetails") \ Symbol("declarationDetails") \ Symbol("pensionAdvisorDetails") \ Symbol("contactDetails")
+            \ Symbol("telephone")).json.pick)
         orElse doNothing) and
-      (addressTransformer.getDifferentAddress(__ \ 'adviserAddress, __ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'addressDetails)
+      (addressTransformer.getDifferentAddress(__ \ Symbol("adviserAddress"), __ \ Symbol("psaSubscriptionDetails") \ Symbol("declarationDetails")
+        \ Symbol("pensionAdvisorDetails") \ Symbol("addressDetails"))
         orElse doNothing)) reduce
   }
 
   val getWorkingKnowledge: Reads[JsObject] = {
-    (__ \ 'psaSubscriptionDetails \ 'declarationDetails \ 'pensionAdvisorDetails \ 'name).read[String].flatMap {
-          _ =>
-              (__ \ "declarationWorkingKnowledge").json.put(JsBoolean(false))
-        } orElse {
-            (__ \ "declarationWorkingKnowledge").json.put(JsBoolean(true))
-        }
-      }
+    (__ \ Symbol("psaSubscriptionDetails") \ Symbol("declarationDetails") \ Symbol("pensionAdvisorDetails") \ Symbol("name")).read[String].flatMap {
+      _ =>
+        (__ \ "declarationWorkingKnowledge").json.put(JsBoolean(false))
+    } orElse {
+      (__ \ "declarationWorkingKnowledge").json.put(JsBoolean(true))
+    }
+  }
 }

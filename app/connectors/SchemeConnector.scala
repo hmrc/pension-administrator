@@ -16,12 +16,12 @@
 
 package connectors
 
-import com.google.inject.{Inject, ImplementedBy}
+import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import models.SchemeReferenceNumber
 import play.api.Logger
 import play.api.http.Status._
-import play.api.libs.json.{Json, JsValue}
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{HttpClient, _}
@@ -78,14 +78,13 @@ class SchemeConnectorImpl @Inject()(
                    (implicit headerCarrier: HeaderCarrier,
                     ec: ExecutionContext,
                     request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-      val headers = Seq(("idType", "psaid"), ("idValue", psaId), ("Content-Type", "application/json"))
-      callListOfSchemes(config.listOfSchemesUrl, headers)
+    val headers = Seq(("idType", "psaid"), ("idValue", psaId), ("Content-Type", "application/json"))
+    callListOfSchemes(config.listOfSchemesUrl, headers)
   }
 
   private def callListOfSchemes(url: String, headers: Seq[(String, String)])
                                (implicit headerCarrier: HeaderCarrier,
-                                ec: ExecutionContext,
-                                request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                ec: ExecutionContext): Future[Either[HttpException, JsValue]] = {
     implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headers: _*)
 
     http.GET[HttpResponse](url)(implicitly, hc, implicitly) map { response =>

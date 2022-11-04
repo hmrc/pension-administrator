@@ -73,7 +73,7 @@ class EmailResponseControllerSpec extends SpecBase {
       val result = controller.retrieveStatus(JourneyType.PSA, encrypted)(fakeRequest.withBody(validJson))
 
       status(result) mustBe BAD_REQUEST
-      fakeAuditService.verifyNothingSent mustBe true
+      fakeAuditService.verifyNothingSent() mustBe true
 
     }
 
@@ -96,7 +96,7 @@ class EmailResponseControllerSpec extends SpecBase {
 
         status(result) mustBe FORBIDDEN
         contentAsString(result) mustBe "Malformed PSAID"
-        fakeAuditService.verifyNothingSent mustBe true
+        fakeAuditService.verifyNothingSent() mustBe true
 
       }
     }

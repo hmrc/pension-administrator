@@ -19,9 +19,11 @@ package controllers
 import akka.stream.Materializer
 import base.{JsonFileReader, SpecBase}
 import connectors.SchemeConnector
+import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
-import org.mockito.{ArgumentMatchers, MockitoSugar}
+import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json._
 import play.api.test.Helpers._
@@ -117,13 +119,13 @@ object DeregistrationControllerSpec extends JsonFileReader {
       |  "totalSchemesRegistered": "0"
       |}""".stripMargin)
   private val psaId = "A123456"
-  
+
   private def getSchemeDetails(psaArray: JsArray): JsObject =
-    Json.obj("psaDetails"  -> psaArray)
+    Json.obj("psaDetails" -> psaArray)
 
   private def psaObject(psaId: String) = Json.obj(
     "id" -> psaId,
-    "organisationOrPartnershipName" ->  "partnership name"
+    "organisationOrPartnershipName" -> "partnership name"
   )
 
 }

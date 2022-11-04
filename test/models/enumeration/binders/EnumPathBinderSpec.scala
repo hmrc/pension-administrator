@@ -27,7 +27,7 @@ class EnumPathBinderSpec extends AnyWordSpec with Matchers with EitherValues {
 
     "bind to correct Enumeration" in {
       val actualResult = EnumPathBinder.pathBinder(DummyEnum).bind("test1", "test1")
-      actualResult.right.value mustEqual DummyEnum.test1
+      actualResult.value mustEqual DummyEnum.test1
     }
 
     "not bind for incorrect Enumumeration Value" in {

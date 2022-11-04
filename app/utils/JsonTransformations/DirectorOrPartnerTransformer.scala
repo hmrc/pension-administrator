@@ -19,44 +19,46 @@ package utils.JsonTransformations
 import com.google.inject.Inject
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
-import play.api.libs.json.{__, _}
+import play.api.libs.json._
+
+import scala.language.postfixOps
 
 class DirectorOrPartnerTransformer @Inject()(addressTransformer: AddressTransformer) extends JsonTransformer {
 
   private def getDirectorOrPartnerContactDetails(directorOrPartner: String): Reads[JsObject] = {
-    (__ \ s"${directorOrPartner}ContactDetails" \ 'phone).json
-      .copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'telephone).json.pick) and
-      (__ \ s"${directorOrPartner}ContactDetails" \ 'email).json
-        .copyFrom((__ \ 'correspondenceCommonDetails \ 'contactDetails \ 'email).json.pick) reduce
+    (__ \ s"${directorOrPartner}ContactDetails" \ Symbol("phone")).json
+      .copyFrom((__ \ Symbol("correspondenceCommonDetails") \ Symbol("contactDetails") \ Symbol("telephone")).json.pick) and
+      (__ \ s"${directorOrPartner}ContactDetails" \ Symbol("email")).json
+        .copyFrom((__ \ Symbol("correspondenceCommonDetails") \ Symbol("contactDetails") \ Symbol("email")).json.pick) reduce
   }
 
   private def getNino: Reads[JsObject] =
     (__ \ "nino").read[String].flatMap { _ =>
-      (__ \ 'hasNino).json.put(JsBoolean(true)) and
-        (__ \ "nino" \ 'value).json.copyFrom((__ \ 'nino).json.pick) reduce
+      (__ \ Symbol("hasNino")).json.put(JsBoolean(true)) and
+        (__ \ "nino" \ Symbol("value")).json.copyFrom((__ \ Symbol("nino")).json.pick) reduce
     } orElse {
-      (__ \ 'hasNino).json.put(JsBoolean(false)) and
-        (__ \ 'noNinoReason).json.copyFrom((__ \ 'noNinoReason).json.pick) reduce
+      (__ \ Symbol("hasNino")).json.put(JsBoolean(false)) and
+        (__ \ Symbol("noNinoReason")).json.copyFrom((__ \ Symbol("noNinoReason")).json.pick) reduce
     } orElse {
       doNothing
     }
 
   private def getUtr: Reads[JsObject] =
     (__ \ "utr").read[String].flatMap { _ =>
-      (__ \ 'hasUtr).json.put(JsBoolean(true)) and
-        (__ \ "utr" \ 'value).json.copyFrom((__ \ 'utr).json.pick) reduce
+      (__ \ Symbol("hasUtr")).json.put(JsBoolean(true)) and
+        (__ \ "utr" \ Symbol("value")).json.copyFrom((__ \ Symbol("utr")).json.pick) reduce
     } orElse {
-      (__ \ 'hasUtr).json.put(JsBoolean(false)) and
-        (__ \ 'noUtrReason).json.copyFrom((__ \ 'noUtrReason).json.pick) reduce
+      (__ \ Symbol("hasUtr")).json.put(JsBoolean(false)) and
+        (__ \ Symbol("noUtrReason")).json.copyFrom((__ \ Symbol("noUtrReason")).json.pick) reduce
     } orElse {
       doNothing
     }
 
-  def getDirectorOrPartner(directorOrPartner: String): Reads[JsObject] = (__ \ s"${directorOrPartner}Details" \ 'firstName).json
-    .copyFrom((__ \ 'firstName).json.pick) and
-    ((__ \ s"${directorOrPartner}Details" \ 'middleName).json.copyFrom((__ \ 'middleName).json.pick) orElse doNothing) and
-    (__ \ s"${directorOrPartner}Details" \ 'lastName).json.copyFrom((__ \ 'lastName).json.pick) and
-    (__ \ 'dateOfBirth).json.copyFrom((__ \ 'dateOfBirth).json.pick) and
+  def getDirectorOrPartner(directorOrPartner: String): Reads[JsObject] = (__ \ s"${directorOrPartner}Details" \ Symbol("firstName")).json
+    .copyFrom((__ \ Symbol("firstName")).json.pick) and
+    ((__ \ s"${directorOrPartner}Details" \ Symbol("middleName")).json.copyFrom((__ \ Symbol("middleName")).json.pick) orElse doNothing) and
+    (__ \ s"${directorOrPartner}Details" \ Symbol("lastName")).json.copyFrom((__ \ Symbol("lastName")).json.pick) and
+    (__ \ Symbol("dateOfBirth")).json.copyFrom((__ \ Symbol("dateOfBirth")).json.pick) and
     getNino and
     getUtr and
     addressTransformer.getDifferentAddress(__ \ s"${directorOrPartner}Address", __ \ "correspondenceCommonDetails" \ "addressDetails") and
@@ -68,14 +70,14 @@ class DirectorOrPartnerTransformer @Inject()(addressTransformer: AddressTransfor
 
   val getDirectorsOrPartners: Reads[JsObject] = {
     (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
-      case "Limited Company" => (__ \ 'directors).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails)
+      case "Limited Company" => (__ \ Symbol("directors")).json.copyFrom((__ \ Symbol("psaSubscriptionDetails") \ Symbol("directorOrPartnerDetails"))
         .read(getDirectorsOrPartners("director"))) and
-        ((__ \ 'moreThanTenDirectors).json
-          .copyFrom((__ \ 'psaSubscriptionDetails \ 'numberOfDirectorsOrPartnersDetails \ 'isMorethanTenDirectors).json.pick) orElse doNothing) reduce
-      case "Partnership" => (__ \ 'partners).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'directorOrPartnerDetails)
+        ((__ \ Symbol("moreThanTenDirectors")).json
+          .copyFrom((__ \ Symbol("psaSubscriptionDetails") \ Symbol("numberOfDirectorsOrPartnersDetails") \ Symbol("isMorethanTenDirectors")).json.pick) orElse doNothing) reduce
+      case "Partnership" => (__ \ Symbol("partners")).json.copyFrom((__ \ Symbol("psaSubscriptionDetails") \ Symbol("directorOrPartnerDetails"))
         .read(getDirectorsOrPartners("partner"))) and
-        ((__ \ 'moreThanTenPartners).json
-          .copyFrom((__ \ 'psaSubscriptionDetails \ 'numberOfDirectorsOrPartnersDetails \ 'isMorethanTenPartners).json.pick) orElse doNothing) reduce
+        ((__ \ Symbol("moreThanTenPartners")).json
+          .copyFrom((__ \ Symbol("psaSubscriptionDetails") \ Symbol("numberOfDirectorsOrPartnersDetails") \ Symbol("isMorethanTenPartners")).json.pick) orElse doNothing) reduce
       case _ => doNothing
     }
   }

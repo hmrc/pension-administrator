@@ -21,9 +21,10 @@ import akka.util.ByteString
 import org.apache.commons.lang3.RandomUtils
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
-import org.mockito.MockitoSugar
-import org.scalatest.wordspec.AnyWordSpec
+import org.mockito.Mockito._
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json.Json
