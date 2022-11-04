@@ -113,7 +113,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         _ <- sessionDataCacheRepository.collection.drop().toFuture()
         _ <- sessionDataCacheRepository.upsert(record1._1, record1._2)
         _ <- sessionDataCacheRepository.upsert(record2._1, record2._2)
-        documentsInDB <- sessionDataCacheRepository.collection.find[JsonDataEntry].toFuture()
+        documentsInDB <- sessionDataCacheRepository.collection.find[JsonDataEntry]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB) {
@@ -170,7 +170,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         _ <- sessionDataCacheRepository.collection.drop().toFuture()
         _ <- sessionDataCacheRepository.upsert(record1._1, record1._2)
         _ <- sessionDataCacheRepository.upsert(record2._1, record2._2)
-        documentsInDB <- sessionDataCacheRepository.collection.find[DataEntry].toFuture()
+        documentsInDB <- sessionDataCacheRepository.collection.find[DataEntry]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB) {

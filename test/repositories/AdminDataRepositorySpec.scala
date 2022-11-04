@@ -92,7 +92,7 @@ class AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matcher
       val documentsInDB = for {
         _ <- adminDataRepository.collection.drop().toFuture()
         _ <- adminDataRepository.setFeatureToggles(Seq.empty)
-        documentsInDB <- adminDataRepository.collection.find[FeatureToggles].toFuture()
+        documentsInDB <- adminDataRepository.collection.find[FeatureToggles]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>

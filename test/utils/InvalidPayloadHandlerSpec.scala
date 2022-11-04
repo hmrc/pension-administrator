@@ -21,6 +21,7 @@ import com.networknt.schema.{ErrorMessageType, ValidationMessage}
 import play.api.libs.json.{JsNull, JsNumber, Json}
 
 import java.text.MessageFormat
+import java.util
 
 class InvalidPayloadHandlerSpec extends SpecBase {
   private val emt = new ErrorMessageType {
@@ -28,7 +29,7 @@ class InvalidPayloadHandlerSpec extends SpecBase {
     override def getMessageFormat: MessageFormat = new MessageFormat("")
   }
 
-  private val vm = ValidationMessage.of("enum", emt, "abc")
+  private val vm = ValidationMessage.of("enum", emt, "abc", null, new util.HashMap[String, Object]())
 
   "valueFromJson" should {
     "return the correct value for a jsnull" in {
@@ -43,7 +44,7 @@ class InvalidPayloadHandlerSpec extends SpecBase {
     }
 
     "return none for a non-valid type" in {
-      val vm = ValidationMessage.of("blah", emt, "abc")
+      val vm = ValidationMessage.of("blah", emt, "abc", null, new util.HashMap[String, Object]())
       val testJson = Json.obj("abc" -> JsNumber(22))
       val result = InvalidPayloadHandlerImpl.valueFromJson(message = vm , json = testJson)
       result mustBe None

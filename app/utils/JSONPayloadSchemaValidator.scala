@@ -17,7 +17,7 @@
 package utils
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.networknt.schema.{JsonSchemaFactory, ValidationMessage}
+import com.networknt.schema.{JsonSchemaFactory, SpecVersion, ValidationMessage}
 import play.api.libs.json._
 
 import scala.jdk.CollectionConverters.CollectionHasAsScala
@@ -27,8 +27,8 @@ class JSONPayloadSchemaValidator {
 
   def validateJsonPayload(jsonSchemaPath: String, data: JsValue): Set[ValidationFailure] = {
     val schemaUrl = getClass.getResource(jsonSchemaPath)
-    val factory = JsonSchemaFactory.getInstance()
-    val schema = factory.getSchema(schemaUrl)
+    val factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V4)
+    val schema = factory.getSchema(schemaUrl.toURI)
 
     val mapper = new ObjectMapper()
     val jsonNode = mapper.readTree(data.toString())

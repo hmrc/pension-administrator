@@ -116,7 +116,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record1)
         _ <- invitationsCacheRepository.upsert(record2)
-        documentsInDB <- invitationsCacheRepository.collection.find[JsonDataEntry].toFuture()
+        documentsInDB <- invitationsCacheRepository.collection.find[JsonDataEntry]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
@@ -137,7 +137,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record1)
         _ <- invitationsCacheRepository.upsert(record2)
-        documentsInDB <- invitationsCacheRepository.collection.find[JsonDataEntry].toFuture()
+        documentsInDB <- invitationsCacheRepository.collection.find[JsonDataEntry]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
@@ -200,7 +200,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record1)
         _ <- invitationsCacheRepository.upsert(record2)
-        documentsInDB <- invitationsCacheRepository.collection.find[DataEntry].toFuture()
+        documentsInDB <- invitationsCacheRepository.collection.find[DataEntry]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {
@@ -221,7 +221,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
         _ <- invitationsCacheRepository.collection.drop().toFuture()
         _ <- invitationsCacheRepository.upsert(record1)
         _ <- invitationsCacheRepository.upsert(record2)
-        documentsInDB <- invitationsCacheRepository.collection.find[DataEntry].toFuture()
+        documentsInDB <- invitationsCacheRepository.collection.find[DataEntry]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB, timeout = Timeout(Span(500L, Milliseconds))) {

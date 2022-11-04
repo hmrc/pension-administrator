@@ -114,7 +114,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         _ <- managePensionsDataCacheRepository.collection.drop().toFuture()
         _ <- managePensionsDataCacheRepository.upsert(record1._1, record1._2)
         _ <- managePensionsDataCacheRepository.upsert(record2._1, record2._2)
-        documentsInDB <- managePensionsDataCacheRepository.collection.find[JsonDataEntry].toFuture()
+        documentsInDB <- managePensionsDataCacheRepository.collection.find[JsonDataEntry]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB) {
@@ -171,7 +171,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
         _ <- managePensionsDataCacheRepository.collection.drop().toFuture()
         _ <- managePensionsDataCacheRepository.upsert(record1._1, record1._2)
         _ <- managePensionsDataCacheRepository.upsert(record2._1, record2._2)
-        documentsInDB <- managePensionsDataCacheRepository.collection.find[DataEntry].toFuture()
+        documentsInDB <- managePensionsDataCacheRepository.collection.find[DataEntry]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB) {

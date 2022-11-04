@@ -18,7 +18,7 @@ package utils
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.ImplementedBy
-import com.networknt.schema.{JsonSchema, JsonSchemaFactory, ValidationMessage}
+import com.networknt.schema.{JsonSchema, JsonSchemaFactory, SpecVersion, ValidationMessage}
 import play.api.Logger
 import play.api.libs.json._
 
@@ -40,8 +40,8 @@ class InvalidPayloadHandlerImpl @Inject() extends InvalidPayloadHandler {
 
   private[utils] def loadSchema(schemaFileName: String): JsonSchema = {
     val schemaUrl = getClass.getResource(schemaFileName)
-    val factory = JsonSchemaFactory.getInstance()
-    factory.getSchema(schemaUrl)
+    val factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V4)
+    factory.getSchema(schemaUrl.toURI)
   }
 
   override def getFailures(schemaFileName: String)(json: JsValue): Set[ValidationFailure] = {

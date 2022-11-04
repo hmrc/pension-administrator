@@ -113,7 +113,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record1._1, record1._2)
         _ <- minimalDetailsCacheRepository.upsert(record2._1, record2._2)
-        documentsInDB <- minimalDetailsCacheRepository.collection.find[JsonDataEntry].toFuture()
+        documentsInDB <- minimalDetailsCacheRepository.collection.find[JsonDataEntry]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB) {
@@ -170,7 +170,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
         _ <- minimalDetailsCacheRepository.collection.drop().toFuture()
         _ <- minimalDetailsCacheRepository.upsert(record1._1, record1._2)
         _ <- minimalDetailsCacheRepository.upsert(record2._1, record2._2)
-        documentsInDB <- minimalDetailsCacheRepository.collection.find[DataEntry].toFuture()
+        documentsInDB <- minimalDetailsCacheRepository.collection.find[DataEntry]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB) {

@@ -111,7 +111,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
         _ <- psaDataCacheRepository.collection.drop().toFuture()
         _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
         _ <- psaDataCacheRepository.upsert(record2._1, record1._2)
-        documentsInDB <- psaDataCacheRepository.collection.find[DataEntryWithoutEncryption].toFuture()
+        documentsInDB <- psaDataCacheRepository.collection.find[DataEntryWithoutEncryption]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB) {
@@ -168,7 +168,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
         _ <- psaDataCacheRepository.collection.drop().toFuture()
         _ <- psaDataCacheRepository.upsert(record1._1, record1._2)
         _ <- psaDataCacheRepository.upsert(record2._1, record2._2)
-        documentsInDB <- psaDataCacheRepository.collection.find[EncryptedDataEntry].toFuture()
+        documentsInDB <- psaDataCacheRepository.collection.find[EncryptedDataEntry]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB) {
