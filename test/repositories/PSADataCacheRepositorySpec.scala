@@ -39,22 +39,15 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
   import PSADataCacheRepositorySpec._
 
-  var psaDataCacheRepository: PSADataCacheRepository = _
-
   private val idField: String = "id"
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
+  override def beforeAll(): Unit = {
     when(mockAppConfig.underlying).thenReturn(mockConfig)
     when(mockAppConfig.get[String]("mongodb.pension-administrator-cache.psa-data.name")).thenReturn("pension-administrator-psa-data")
     when(mockAppConfig.get[Int]("mongodb.pension-administrator-cache.psa-data.timeToLiveInDays")).thenReturn(3600)
     when(mockConfig.getString("psa.json.encryption.key")).thenReturn("gvBoGdgzqG1AarzF1LY0zQ==")
-  }
-
-  override def beforeAll(): Unit = {
     initMongoDExecutable()
     startMongoD()
-    psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
     super.beforeAll()
   }
 
@@ -64,6 +57,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
   "upsert" must {
     "save a new session data cache as DataEntryWithoutEncryption in Mongo collection when encrypted false and collection is empty" in {
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
       val filters = Filters.eq(idField, record._1)
@@ -81,6 +75,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
     "update an existing session data cache as DataEntryWithoutEncryption in Mongo collection when encrypted false" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true}"""))
       val record2 = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
@@ -103,6 +98,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
     "save a new session data cache as DataEntryWithoutEncryption in Mongo collection when encrypted false and id is not same" in {
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
@@ -122,6 +118,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
     "save a new session data cache as EncryptedDataEntry in Mongo collection when encrypted true and collection is empty" in {
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
       val filters = Filters.eq(idField, "id-1")
@@ -140,6 +137,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
     "update an existing session data cache as EncryptedDataEntry in Mongo collection when encrypted true" in {
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
@@ -160,6 +158,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
     "save a new session data cache as EncryptedDataEntry in Mongo collection when encrypted true and id is not same" in {
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
@@ -180,8 +179,8 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
   "get" must {
     "get a session data cache record as DataEntryWithoutEncryption by id in Mongo collection when encrypted false" in {
-
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
       val documentsInDB = for {
@@ -196,8 +195,8 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
     }
 
     "get a session data cache record as EncryptedDataEntry by id in Mongo collection when encrypted true" in {
-
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
       val documentsInDB = for {
@@ -214,8 +213,8 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
   "remove" must {
     "delete an existing DataEntryWithoutEncryption session data cache record by id in Mongo collection when encrypted false" in {
-
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -240,8 +239,8 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
     }
 
     "not delete an existing DataEntryWithoutEncryption session data cache record by id in Mongo collection when encrypted false and id incorrect" in {
-
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -266,8 +265,8 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
     }
 
     "delete an existing EncryptedDataEntry session data cache record by id in Mongo collection when encrypted true" in {
-
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -293,8 +292,8 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
     }
 
     "not delete an existing EncryptedDataEntry session data cache record by id in Mongo collection when encrypted true" in {
-
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(true)
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -321,8 +320,6 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 }
 
 object PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar {
-
-  import scala.concurrent.ExecutionContext.Implicits._
 
   private val mockAppConfig = mock[Configuration]
   private val mockConfig = mock[Config]

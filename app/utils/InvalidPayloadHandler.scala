@@ -39,9 +39,9 @@ class InvalidPayloadHandlerImpl @Inject() extends InvalidPayloadHandler {
   private val logger = Logger(classOf[InvalidPayloadHandler])
 
   private[utils] def loadSchema(schemaFileName: String): JsonSchema = {
-    val schemaUrl = getClass.getResource(schemaFileName)
+    val schemaUrl = getClass.getResourceAsStream(schemaFileName)
     val factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V4)
-    factory.getSchema(schemaUrl.toURI)
+    factory.getSchema(schemaUrl)
   }
 
   override def getFailures(schemaFileName: String)(json: JsValue): Set[ValidationFailure] = {

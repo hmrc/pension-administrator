@@ -40,22 +40,15 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
   import MinimalDetailsCacheRepositorySpec._
 
-  var minimalDetailsCacheRepository: MinimalDetailsCacheRepository = _
-
   private val idField: String = "id"
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
+  override def beforeAll(): Unit = {
     when(mockAppConfig.underlying).thenReturn(mockConfig)
     when(mockAppConfig.get[String](path = "mongodb.pension-administrator-cache.minimal-detail.name")).thenReturn("minimal-detail")
     when(mockAppConfig.get[Int]("mongodb.pension-administrator-cache.minimal-detail.timeToLiveInSeconds")).thenReturn(3600)
     when(mockConfig.getString("manage.json.encryption.key")).thenReturn("gvBoGdgzqG1AarzF1LY0zQ==")
-  }
-
-  override def beforeAll(): Unit = {
     initMongoDExecutable()
     startMongoD()
-    minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
     super.beforeAll()
   }
 
@@ -65,6 +58,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
   "upsert" must {
     "save a new minimal details cache as JsonDataEntry in Mongo collection when encrypted false and collection is empty" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
       val filters = Filters.eq(idField, record._1)
@@ -83,6 +77,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
     "update an existing minimal details cache as JsonDataEntry in Mongo collection when encrypted false" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
@@ -105,6 +100,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
     "save a new minimal details cache as JsonDataEntry in Mongo collection when encrypted false and id is not same" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
@@ -124,6 +120,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
     "save a new minimal details cache as DataEntry in Mongo collection when encrypted true and collection is empty" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
       val filters = Filters.eq(idField, record._1)
@@ -142,6 +139,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
     "update an existing minimal details cache as DataEntry in Mongo collection when encrypted true" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
@@ -162,6 +160,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
     "insert a new minimal details cache as DataEntry in Mongo collection when encrypted true and id is not same" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
@@ -182,8 +181,8 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
   "get" must {
     "get a minimal details cache record as JsonDataEntry by id in Mongo collection when encrypted false" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -199,8 +198,8 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     }
 
     "get a minimal details cache record as DataEntry by id in Mongo collection when encrypted true" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -218,8 +217,8 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
   "getLastUpdated" must {
     "get a minimal details cache data's lastUpdated field by id in Mongo collection when encrypted false" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -235,8 +234,8 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     }
 
     "get a minimal details cache data's lastUpdated field by id in Mongo collection when encrypted true" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -255,8 +254,8 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
   "remove" must {
     "delete an existing JsonDataEntry minimal details cache record by id in Mongo collection when encrypted false" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -280,8 +279,8 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     }
 
     "not delete an existing JsonDataEntry minimal details cache record by id in Mongo collection when encrypted false and id incorrect" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -306,8 +305,8 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     }
 
     "delete an existing DataEntry minimal details cache record by id in Mongo collection when encrypted true" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -332,8 +331,8 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
     }
 
     "not delete an existing DataEntry minimal details cache record by id in Mongo collection when encrypted true" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -361,8 +360,6 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
 
 
 object MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar {
-
-  import scala.concurrent.ExecutionContext.Implicits._
 
   private val mockAppConfig = mock[Configuration]
   private val mockConfig = mock[Config]

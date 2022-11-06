@@ -26,8 +26,6 @@ import play.api.inject.guice.GuiceApplicationBuilder
 class JSONPayloadSchemaValidatorSpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter {
 
   private val app = new GuiceApplicationBuilder()
-    .overrides(
-    )
     .build()
 
   private lazy val jsonPayloadSchemaValidator: JSONPayloadSchemaValidator = app.injector.instanceOf[JSONPayloadSchemaValidator]
@@ -48,7 +46,7 @@ class JSONPayloadSchemaValidatorSpec extends AnyWordSpec with MockitoSugar with 
     "Validate invalid payload - register PSA with multiple errors" in {
       val result = jsonPayloadSchemaValidator.validateJsonPayload(psaSchema, PSASubscriptionFixture.registerPSAInValidPayloadWithMultipleErrors)
       result.nonEmpty mustBe true
-      result.mkString mustBe "ValidationFailure(pattern,$.individualDetail.dateOfBirth: does not match the regex pattern ^(((19|20)([2468][048]|[13579][26]|0[48])|2000)[-]02[-]29|((19|20)[0-9]{2}[-](0[469]|11)[-](0[1-9]|1[0-9]|2[0-9]|30)|(19|20)[0-9]{2}[-](0[13578]|1[02])[-](0[1-9]|[12][0-9]|3[01])|(19|20)[0-9]{2}[-]02[-](0[1-9]|1[0-9]|2[0-8])))$,None)ValidationFailure(required,$.individualDetail.lastName: is missing but it is required,None)"
+      result.mkString mustBe "ValidationFailure(required,$.individualDetail.lastName: is missing but it is required,None)ValidationFailure(pattern,$.individualDetail.dateOfBirth: does not match the regex pattern ^(((19|20)([2468][048]|[13579][26]|0[48])|2000)[-]02[-]29|((19|20)[0-9]{2}[-](0[469]|11)[-](0[1-9]|1[0-9]|2[0-9]|30)|(19|20)[0-9]{2}[-](0[13578]|1[02])[-](0[1-9]|[12][0-9]|3[01])|(19|20)[0-9]{2}[-]02[-](0[1-9]|1[0-9]|2[0-8])))$,None)"
     }
 
   }

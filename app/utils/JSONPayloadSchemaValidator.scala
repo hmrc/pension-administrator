@@ -23,13 +23,11 @@ import play.api.libs.json._
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 class JSONPayloadSchemaValidator {
-  val basePath = System.getProperty("user.dir")
 
   def validateJsonPayload(jsonSchemaPath: String, data: JsValue): Set[ValidationFailure] = {
-    val schemaUrl = getClass.getResource(jsonSchemaPath)
+    val schemaUrl = getClass.getResourceAsStream(jsonSchemaPath)
     val factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V4)
-    val schema = factory.getSchema(schemaUrl.toURI)
-
+    val schema = factory.getSchema(schemaUrl)
     val mapper = new ObjectMapper()
     val jsonNode = mapper.readTree(data.toString())
 

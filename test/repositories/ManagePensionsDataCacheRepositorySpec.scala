@@ -40,22 +40,15 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
   import ManagePensionsDataCacheRepositorySpec._
 
-  var managePensionsDataCacheRepository: ManagePensionsDataCacheRepository = _
-
   private val idField: String = "id"
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
+  override def beforeAll(): Unit = {
     when(mockAppConfig.underlying).thenReturn(mockConfig)
     when(mockConfig.getString("mongodb.pension-administrator-cache.manage-pensions.name")).thenReturn("manage-pensions")
     when(mockConfig.getInt("mongodb.pension-administrator-cache.manage-pensions.timeToLiveInSeconds")).thenReturn(3600)
     when(mockConfig.getString("manage.json.encryption.key")).thenReturn("gvBoGdgzqG1AarzF1LY0zQ==")
-  }
-
-  override def beforeAll(): Unit = {
     initMongoDExecutable()
     startMongoD()
-    managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
     super.beforeAll()
   }
 
@@ -65,6 +58,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
   "upsert" must {
     "save a new manage pensions data cache as JsonDataEntry in Mongo collection when encrypted false and collection is empty" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
       val filters = Filters.eq(idField, record._1)
@@ -84,6 +78,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
     "update an existing manage pensions data cache as JsonDataEntry in Mongo collection when encrypted false" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
@@ -106,6 +101,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
     "insert a new manage pensions data cache as JsonDataEntry in Mongo collection when encrypted false and id is not same" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
@@ -125,6 +121,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
     "insert a new manage pensions data cache as DataEntry in Mongo collection when encrypted true and collection is empty" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
       val filters = Filters.eq(idField, record._1)
@@ -143,6 +140,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
     "update an existing manage pensions data cache as DataEntry in Mongo collection when encrypted true" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-1", Json.parse("""{"data":"2"}"""))
@@ -163,6 +161,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
     "insert a new manage pensions data cache as DataEntry in Mongo collection when encrypted true and id is not same" in {
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = ("id-1", Json.parse("""{"data":"1"}"""))
       val record2 = ("id-2", Json.parse("""{"data":"2"}"""))
@@ -183,8 +182,8 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
   "get" must {
     "get a manage pensions data cache record as JsonDataEntry by id in Mongo collection when encrypted false" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -200,8 +199,8 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
     }
 
     "get a manage pensions data cache record as DataEntry by id in Mongo collection when encrypted true" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -219,8 +218,8 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
   "getLastUpdated" must {
     "get a manage pensions cache data's lastUpdated field by id in Mongo collection when encrypted false" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -236,8 +235,8 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
     }
 
     "get a manage pensions cache data's lastUpdated field by id in Mongo collection when encrypted true" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -256,8 +255,8 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
   "remove" must {
     "delete an existing JsonDataEntry manage pensions data cache record by id in Mongo collection when encrypted false" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
       val documentsInDB = for {
@@ -281,8 +280,8 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
     }
 
     "not delete an existing JsonDataEntry manage pensions data cache record by id in Mongo collection when encrypted false and id incorrect" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(false))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -307,8 +306,8 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
     }
 
     "delete an existing DataEntry manage pensions data cache record by id in Mongo collection when encrypted true" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -333,8 +332,8 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
     }
 
     "not delete an existing DataEntry manage pensions data cache record by id in Mongo collection when encrypted true" in {
-
       when(mockAppConfig.getOptional[Boolean](path = "encrypted")).thenReturn(Some(true))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = ("id-1", Json.parse("""{"data":"1"}"""))
 
@@ -361,8 +360,6 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 }
 
 object ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar {
-
-  import scala.concurrent.ExecutionContext.Implicits._
 
   private val mockAppConfig = mock[Configuration]
   private val mockConfig = mock[Config]

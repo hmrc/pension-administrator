@@ -103,9 +103,9 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
       connector.updateClientReference(testUpdateClientReferenceInvalid, None)
     }
     assert(x.getMessage === "Invalid payload when updateClientReference :-\nValidationFailure(pattern,$.identifierDetails.pstr: " +
-      "does not match the regex pattern ^[0-9]{8}[A-Z]{2}$,None)ValidationFailure(pattern,$.identifierDetails.pspId: " +
-      "does not match the regex pattern ^[0-2]{1}[0-9]{7}$,None)ValidationFailure(pattern,$.identifierDetails.psaId: " +
-      "does not match the regex pattern ^A[0-9]{7}$,None)")
+      "does not match the regex pattern ^[0-9]{8}[A-Z]{2}$,None)ValidationFailure(pattern,$.identifierDetails.psaId: " +
+      "does not match the regex pattern ^A[0-9]{7}$,None)ValidationFailure(pattern,$.identifierDetails.pspId: " +
+      "does not match the regex pattern ^[0-2]{1}[0-9]{7}$,None)")
   }
 
   it should "handle BAD_REQUEST (400)" in {

@@ -42,15 +42,11 @@ class AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matcher
   var adminDataRepository: AdminDataRepository = _
 
   override def beforeAll(): Unit = {
+    when(mockAppConfig.get[String](path = "mongodb.pension-administrator-cache.admin-data.name")).thenReturn("admin-data")
     initMongoDExecutable()
     startMongoD()
     adminDataRepository = buildFormRepository(mongoHost, mongoPort)
     super.beforeAll()
-  }
-
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    when(mockAppConfig.get[String](path = "mongodb.pension-administrator-cache.admin-data.name")).thenReturn("admin-data")
   }
 
   override def afterAll(): Unit =
@@ -103,8 +99,6 @@ class AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matcher
 }
 
 object AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar {
-
-  import scala.concurrent.ExecutionContext.Implicits._
 
   private val mockAppConfig = mock[Configuration]
 
