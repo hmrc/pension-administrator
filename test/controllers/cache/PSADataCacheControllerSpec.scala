@@ -24,25 +24,35 @@ import org.mockito.Mockito._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.mvc.ControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import repositories.PSADataCacheRepository
+import repositories._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
 
 import scala.concurrent.Future
 
 class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with MockitoSugar {
-  private val app = new GuiceApplicationBuilder().configure("run.mode" -> "Test").build()
-  implicit lazy val mat: Materializer = app.materializer
-  private val cc = app.injector.instanceOf[ControllerComponents]
+
   private val repo = mock[PSADataCacheRepository]
   private val authConnector: AuthConnector = mock[AuthConnector]
 
-  def controller: PSADataCacheController = new PSADataCacheController(repo, authConnector, cc)
+  private val app = new GuiceApplicationBuilder().configure("run.mode" -> "Test").overrides(Seq(
+    bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+    bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+    bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+    bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+    bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
+    bind[PSADataCacheRepository].toInstance(repo),
+    bind[AuthConnector].toInstance(authConnector)
+  )).build()
+
+  implicit lazy val mat: Materializer = app.materializer
+
+  def controller: PSADataCacheController = app.injector.instanceOf[PSADataCacheController]
 
   "PSADataCacheController" when {
     s"on .get " must {

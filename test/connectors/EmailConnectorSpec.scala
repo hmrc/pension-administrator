@@ -20,15 +20,28 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import models.SendEmailRequest
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
-import play.api.inject.Injector
+import play.api.inject.guice.GuiceableModule
+import play.api.inject.{Injector, bind}
 import play.api.libs.json.Json
+import repositories._
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.WireMockHelper
 
-class EmailConnectorSpec extends AsyncFlatSpec with Matchers with WireMockHelper {
+class EmailConnectorSpec extends AsyncFlatSpec with Matchers with WireMockHelper with MockitoSugar {
 
   import EmailConnectorSpec._
+
+  override protected def bindings: Seq[GuiceableModule] =
+    Seq(
+      bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+      bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+      bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+      bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
+    )
 
   override protected def portConfigKeys: String = "microservice.services.email.port"
 
@@ -43,7 +56,7 @@ class EmailConnectorSpec extends AsyncFlatSpec with Matchers with WireMockHelper
         )
     )
 
-    connector(injector).sendEmail(email) map {
+    connector(app.injector).sendEmail(email) map {
       response =>
         response mustBe EmailSent
     }
@@ -61,7 +74,7 @@ class EmailConnectorSpec extends AsyncFlatSpec with Matchers with WireMockHelper
         )
     )
 
-    connector(injector).sendEmail(email) map {
+    connector(app.injector).sendEmail(email) map {
       response =>
         response mustBe EmailNotSent
     }
@@ -79,7 +92,7 @@ class EmailConnectorSpec extends AsyncFlatSpec with Matchers with WireMockHelper
         )
     )
 
-    connector(injector).sendEmail(email) map {
+    connector(app.injector).sendEmail(email) map {
       response =>
         response mustBe EmailNotSent
     }

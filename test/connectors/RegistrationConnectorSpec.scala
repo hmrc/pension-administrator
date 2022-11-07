@@ -34,6 +34,7 @@ import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import repositories._
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl, WireMockHelper}
@@ -65,7 +66,13 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
   override protected def bindings: Seq[GuiceableModule] = Seq[GuiceableModule](
     bind(classOf[AuditService]).toInstance(auditService),
     bind(classOf[HeaderUtils]).toInstance(mockHeaderUtils),
-    bind(classOf[InvalidPayloadHandler]).toInstance(invalidPayloadHandler)
+    bind(classOf[InvalidPayloadHandler]).toInstance(invalidPayloadHandler),
+    bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+    bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+    bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+    bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+    bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+    bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
   )
 
   def connector: RegistrationConnector = app.injector.instanceOf[RegistrationConnector]

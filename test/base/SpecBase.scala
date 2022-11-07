@@ -19,13 +19,26 @@ package base
 import config.AppConfig
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Environment
 import play.api.inject.Injector
+import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
 import play.api.mvc.{AnyContentAsEmpty, ControllerComponents}
 import play.api.test.FakeRequest
+import play.api.{Application, Environment}
 
 trait SpecBase extends PlaySpec with GuiceOneAppPerSuite with JsonFileReader {
-  def injector: Injector = app.injector
+
+  override def fakeApplication(): Application = GuiceApplicationBuilder()
+    .configure(
+      //turn off metrics
+      "metrics.jvm" -> false,
+      "metrics.enabled" -> false
+    )
+    .overrides(bindings: _*)
+    .build()
+
+  protected def bindings: Seq[GuiceableModule] = Seq.empty[GuiceableModule]
+
+  protected def injector: Injector = fakeApplication().injector
 
   def environment: Environment = injector.instanceOf[Environment]
 

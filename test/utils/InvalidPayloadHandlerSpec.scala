@@ -16,16 +16,18 @@
 
 package utils
 
-import base.SpecBase
 import com.networknt.schema.{ErrorMessageType, ValidationMessage}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.{JsNull, JsNumber, Json}
 
 import java.text.MessageFormat
 import java.util
 
-class InvalidPayloadHandlerSpec extends SpecBase {
+class InvalidPayloadHandlerSpec extends AnyWordSpec with Matchers {
   private val emt = new ErrorMessageType {
     override def getErrorCode: String = ""
+
     override def getMessageFormat: MessageFormat = new MessageFormat("")
   }
 
@@ -34,19 +36,19 @@ class InvalidPayloadHandlerSpec extends SpecBase {
   "valueFromJson" should {
     "return the correct value for a jsnull" in {
       val testJson = Json.obj("abc" -> JsNull)
-      val result = InvalidPayloadHandlerImpl.valueFromJson(message = vm , json = testJson)
+      val result = InvalidPayloadHandlerImpl.valueFromJson(message = vm, json = testJson)
       result mustBe Some("null")
     }
     "return the correct value for a jsnumber" in {
       val testJson = Json.obj("abc" -> JsNumber(22))
-      val result = InvalidPayloadHandlerImpl.valueFromJson(message = vm , json = testJson)
+      val result = InvalidPayloadHandlerImpl.valueFromJson(message = vm, json = testJson)
       result mustBe Some("99")
     }
 
     "return none for a non-valid type" in {
       val vm = ValidationMessage.of("blah", emt, "abc", null, new util.HashMap[String, Object]())
       val testJson = Json.obj("abc" -> JsNumber(22))
-      val result = InvalidPayloadHandlerImpl.valueFromJson(message = vm , json = testJson)
+      val result = InvalidPayloadHandlerImpl.valueFromJson(message = vm, json = testJson)
       result mustBe None
     }
   }

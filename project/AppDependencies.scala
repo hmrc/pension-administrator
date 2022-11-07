@@ -14,7 +14,7 @@ object AppDependencies {
     "uk.gov.hmrc"                   %% "bootstrap-backend-play-28"  % "7.11.0",
     "com.networknt"                 % "json-schema-validator"       % "1.0.73",
     "uk.gov.hmrc"                   %% "domain"                     % "8.1.0-play-28",
-    ehcache,
+    ehcache
   )
 
   def test(scope: String = "test, it"): Seq[ModuleID] = Seq(

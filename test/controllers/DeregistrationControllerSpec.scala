@@ -25,11 +25,13 @@ import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.inject.bind
+import play.api.inject.guice.GuiceableModule
 import play.api.libs.json._
 import play.api.test.Helpers._
+import repositories._
 import uk.gov.hmrc.http.BadRequestException
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class DeregistrationControllerSpec
@@ -42,10 +44,20 @@ class DeregistrationControllerSpec
 
   private val mockSchemeConnector = mock[SchemeConnector]
 
+  override protected def bindings: Seq[GuiceableModule] =
+    Seq(
+      bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+      bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+      bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+      bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
+      bind[SchemeConnector].toInstance(mockSchemeConnector)
+    )
+
   implicit val mat: Materializer = app.materializer
 
-  private def deregistrationController: DeregistrationController =
-    new DeregistrationController(mockSchemeConnector, stubControllerComponents())
+  def deregistrationController: DeregistrationController = app.injector.instanceOf[DeregistrationController]
 
   before(reset(mockSchemeConnector))
 

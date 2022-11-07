@@ -16,10 +16,11 @@
 
 package models
 
-import base.SpecBase
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
-class OrganisationSpec extends SpecBase {
+class OrganisationSpec extends AnyWordSpec with Matchers {
 
   "Reads Organisation" must {
     "return Organisation" in {

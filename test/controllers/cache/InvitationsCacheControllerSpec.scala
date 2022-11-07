@@ -26,12 +26,13 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Application
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import repositories.InvitationsCacheRepository
+import repositories._
 import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{BadRequestException, UnauthorizedException}
@@ -40,14 +41,25 @@ import utils.testhelpers.InvitationBuilder._
 import scala.concurrent.Future
 
 class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with MockitoSugar {
-  val app: Application = new GuiceApplicationBuilder().configure("run.mode" -> "Test").build()
-  implicit lazy val mat: Materializer = app.materializer
-  private val cc = app.injector.instanceOf[ControllerComponents]
-
   private val repo = mock[InvitationsCacheRepository]
   private val authConnector: AuthConnector = mock[AuthConnector]
 
-  def controller: InvitationsCacheController = new InvitationsCacheController(repo, authConnector, cc)
+  val app: Application = new GuiceApplicationBuilder()
+    .configure("run.mode" -> "Test")
+    .overrides(Seq(
+      bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+      bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+      bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+      bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+      bind[InvitationsCacheRepository].toInstance(repo),
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
+      bind[AuthConnector].toInstance(authConnector)
+    ))
+    .build()
+
+  implicit lazy val mat: Materializer = app.materializer
+
+  def controller: InvitationsCacheController = app.injector.instanceOf[InvitationsCacheController]
 
   // scalastyle:off method.length
   def validCacheControllerWithInsert(): Unit = {

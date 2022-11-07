@@ -32,6 +32,7 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import repositories._
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import utils.WireMockHelper
@@ -50,6 +51,18 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
 
   private val mockHeaderUtils = mock[HeaderUtils]
 
+  override protected def bindings: Seq[GuiceableModule] =
+    Seq(
+      bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+      bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+      bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+      bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
+      bind(classOf[HeaderUtils]).toInstance(mockHeaderUtils),
+      bind[AuditService].toInstance(auditService)
+    )
+
   override def beforeEach(): Unit = {
     when(mockHeaderUtils.desHeaderWithoutCorrelationId).thenReturn(Nil)
     when(mockHeaderUtils.integrationFrameworkHeader).thenReturn(Nil)
@@ -60,11 +73,6 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
   }
 
   override protected def portConfigKeys: String = "microservice.services.if-hod.port"
-
-  override protected def bindings: Seq[GuiceableModule] = Seq[GuiceableModule](
-    bind(classOf[HeaderUtils]).toInstance(mockHeaderUtils),
-    bind[AuditService].toInstance(auditService)
-  )
 
   def connector: UpdateClientReferenceConnector = app.injector.instanceOf[UpdateClientReferenceConnector]
 

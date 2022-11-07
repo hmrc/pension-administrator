@@ -21,19 +21,15 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.inject.guice.GuiceApplicationBuilder
 
 class JSONPayloadSchemaValidatorSpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter {
 
-  private val app = new GuiceApplicationBuilder()
-    .build()
-
-  private lazy val jsonPayloadSchemaValidator: JSONPayloadSchemaValidator = app.injector.instanceOf[JSONPayloadSchemaValidator]
+  private lazy val jsonPayloadSchemaValidator: JSONPayloadSchemaValidator = new JSONPayloadSchemaValidator()
   val psaSchema = "/resources/schemas/psaSubscription.json"
+
   "validateJson" must {
 
     "Validate valid payload - register PSA" in {
-
       val result = jsonPayloadSchemaValidator.validateJsonPayload(psaSchema, PSASubscriptionFixture.registerPSAValidPayload)
       result.isEmpty mustBe true
     }
@@ -48,6 +44,5 @@ class JSONPayloadSchemaValidatorSpec extends AnyWordSpec with MockitoSugar with 
       result.nonEmpty mustBe true
       result.mkString mustBe "ValidationFailure(required,$.individualDetail.lastName: is missing but it is required,None)ValidationFailure(pattern,$.individualDetail.dateOfBirth: does not match the regex pattern ^(((19|20)([2468][048]|[13579][26]|0[48])|2000)[-]02[-]29|((19|20)[0-9]{2}[-](0[469]|11)[-](0[1-9]|1[0-9]|2[0-9]|30)|(19|20)[0-9]{2}[-](0[13578]|1[02])[-](0[1-9]|[12][0-9]|3[01])|(19|20)[0-9]{2}[-]02[-](0[1-9]|1[0-9]|2[0-8])))$,None)"
     }
-
   }
 }

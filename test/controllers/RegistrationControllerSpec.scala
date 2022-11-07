@@ -30,10 +30,13 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.inject.bind
+import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import repositories._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
@@ -45,6 +48,16 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
   import RegistrationControllerSpec._
 
+  override protected def bindings: Seq[GuiceableModule] =
+    Seq(
+      bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+      bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+      bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+      bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
+    )
+
   private val dataFromFrontend = readJsonFromFile("/data/validRegistrationNoIDOrganisationFE.json")
   private val dataToEmtp = readJsonFromFile("/data/validRegistrationNoIDOrganisationToEMTP.json").as[OrganisationRegistrant]
 
@@ -53,7 +66,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
   private val mockRegistrationConnector = mock[RegistrationConnector]
 
-  implicit val mat: Materializer = app.materializer
+  implicit val mat: Materializer = fakeApplication().materializer
 
   private def registrationController(retrievals: Future[_]): RegistrationController =
     new RegistrationController(

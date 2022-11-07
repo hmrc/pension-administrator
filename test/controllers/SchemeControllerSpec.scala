@@ -22,12 +22,16 @@ import models.PsaToBeRemovedFromScheme
 import org.joda.time.LocalDate
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status.BAD_GATEWAY
+import play.api.inject.bind
+import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json.{JsResultException, JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import repositories._
 import service.SchemeService
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
@@ -388,9 +392,20 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
 }
 
-object SchemeControllerSpec extends SpecBase {
+object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val mat: Materializer = app.materializer
+
+  override protected def bindings: Seq[GuiceableModule] =
+    Seq(
+      bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+      bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+      bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+      bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
+    )
+
   override def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
   class FakeSchemeService extends SchemeService {
@@ -399,6 +414,7 @@ object SchemeControllerSpec extends SpecBase {
     private var updatePsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
 
     def setRegisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.registerPsaResponse = response
+
     def setUpdatePsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.updatePsaResponse = response
 
     override def registerPSA(json: JsValue)(implicit headerCarrier: HeaderCarrier,
@@ -416,7 +432,7 @@ object SchemeControllerSpec extends SpecBase {
       "psaId" -> "A21999999"
     )
 
-  private val psaVariationData : JsValue = readJsonFromFile("/data/validPsaVariationRequest.json")
+  private val psaVariationData: JsValue = readJsonFromFile("/data/validPsaVariationRequest.json")
 
   private val fakeSchemeService = new FakeSchemeService
   private val fakeDesConnector: FakeDesConnector = new FakeDesConnector()

@@ -16,10 +16,8 @@
 
 package connectors
 
-import audit.{AuditService, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
-import config.AppConfig
 import connectors.helper.ConnectorBehaviours
 import models.SchemeReferenceNumber
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -31,7 +29,7 @@ import play.api.inject.guice.GuiceableModule
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
-import service.FeatureToggleService
+import repositories._
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, UpstreamErrorResponse}
 import utils.WireMockHelper
@@ -49,16 +47,17 @@ class SchemeConnectorSpec extends AsyncFlatSpec
 
   override protected def portConfigKeys: String = "microservice.services.pensions-scheme.port"
 
-  val mockFeatureToggleService: FeatureToggleService = mock[FeatureToggleService]
-
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
-      bind[AuditService].toInstance(auditService),
-      bind[FeatureToggleService].toInstance(mockFeatureToggleService)
+      bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+      bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+      bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+      bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
     )
 
   lazy val connector: SchemeConnector = injector.instanceOf[SchemeConnector]
-  lazy val appConfig: AppConfig = injector.instanceOf[AppConfig]
 
   "SchemeConnector checkForAssociation" should "handle OK (200)" in {
 
@@ -145,7 +144,6 @@ object SchemeConnectorSpec extends JsonFileReader {
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val rh: RequestHeader = FakeRequest("", "")
 
-  val auditService = new StubSuccessfulAuditService()
   val checkForAssociationUrl = "/pensions-scheme/is-psa-associated"
   val listSchemesUrl = "/pensions-scheme/list-of-schemes"
   val srn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")

@@ -34,6 +34,7 @@ import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import play.api.test.Helpers.NOT_FOUND
+import repositories._
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.{FakeDesConnector, WireMockHelper}
@@ -45,6 +46,19 @@ class DesConnectorSpec extends AsyncFlatSpec
   with RecoverMethods
   with EitherValues
   with ConnectorBehaviours with MockitoSugar {
+
+  val auditService = new StubSuccessfulAuditService()
+
+  override protected def bindings: Seq[GuiceableModule] =
+    Seq(
+      bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+      bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+      bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+      bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
+      bind[AuditService].toInstance(auditService)
+    )
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val rh: RequestHeader = FakeRequest("", "")
@@ -77,14 +91,8 @@ class DesConnectorSpec extends AsyncFlatSpec
 
   val psaVariationURL = s"/pension-online/psa-variation/psaid/$psaId"
 
-  val auditService = new StubSuccessfulAuditService()
 
   override protected def portConfigKeys: String = "microservice.services.if-hod.port,microservice.services.des-hod.port"
-
-  override protected def bindings: Seq[GuiceableModule] =
-    Seq(
-      bind[AuditService].toInstance(auditService)
-    )
 
   lazy val connector: DesConnector = injector.instanceOf[DesConnector]
 
