@@ -195,9 +195,9 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
   }
 
   "InvitationsCacheController" should behave like validCacheControllerWithInsert()
-  (it should behave).like(validCacheControllerWithGet("get", mapBothKeys, _: () => Action[AnyContent], Map()))
-  (it should behave).like(validCacheControllerWithGet("getForScheme", mapPstr, _: () => Action[AnyContent], mapInviteePsaId))
-  (it should behave).like(validCacheControllerWithGet("getForInvitee", mapInviteePsaId, _: () => Action[AnyContent], mapPstr))
-  (it should behave).like(validCacheControllerWithRemove("remove"))
+  it should behave like validCacheControllerWithGet("get", mapBothKeys, () => controller.get, Map())
+  it should behave like validCacheControllerWithGet("getForScheme", mapPstr, () => controller.getForScheme, mapInviteePsaId)
+  it should behave like validCacheControllerWithGet("getForInvitee", mapInviteePsaId, () => controller.getForInvitee, mapPstr)
+  it should behave like validCacheControllerWithRemove("remove")
 }
 
