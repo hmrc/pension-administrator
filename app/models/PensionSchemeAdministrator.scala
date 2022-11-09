@@ -16,12 +16,12 @@
 
 package models
 
-import java.time.LocalDate
-
 import models.enumeration.RegistrationLegalStatus
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, JsValue, Json, OFormat, Reads, Writes}
+import play.api.libs.json._
 import utils.UtrHelper.stripUtr
+
+import java.time.LocalDate
 
 trait PSADetail
 
@@ -268,7 +268,8 @@ object PensionSchemeAdministrator {
       noIdentifier = registrationInfo._3,
       idType = registrationInfo._5,
       idNumber = stripUtr(registrationInfo._5, registrationInfo._6),
-      numberOfDirectorOrPartners = numberOfDirectorsOrPartners(isThereMoreThanTenDirectors, isThereMoreThanTenPartners, isMoreThanTenDirectorsOrPartnersChanged),
+      numberOfDirectorOrPartners = numberOfDirectorsOrPartners(isThereMoreThanTenDirectors,
+        isThereMoreThanTenPartners, isMoreThanTenDirectorsOrPartnersChanged),
       pensionSchemeAdministratorIdentifierStatus = isExistingPSA,
       correspondenceAddressDetail = correspondenceAddress,
       correspondenceContactDetail = contactDetails,
