@@ -16,11 +16,12 @@
 
 package audit
 
-import base.SpecBase
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
 
-class SchemeAuditServiceSpec extends SpecBase {
+class SchemeAuditServiceSpec extends AnyWordSpec with Matchers {
 
   "getName" should {
     "work for partnerships" in {

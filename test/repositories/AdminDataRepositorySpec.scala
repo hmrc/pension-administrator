@@ -16,44 +16,47 @@
 
 package repositories
 
-import com.github.simplyscala.MongoEmbedDatabase
 import models.FeatureToggle
 import models.FeatureToggleName.{PsaFromIvToPdv, PsaRegistration}
-import org.mockito.MockitoSugar
+import org.mockito.Mockito._
 import org.mongodb.scala.model.Filters
-import org.scalatest.concurrent.ScalaFutures.whenReady
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import repositories.FeatureToggleMongoFormatter.{FeatureToggles, featureToggles, id}
 import uk.gov.hmrc.mongo.MongoComponent
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
 
+class AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport with BeforeAndAfter with
+  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
 
-class AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with MongoEmbedDatabase with BeforeAndAfter with
-  BeforeAndAfterEach with BeforeAndAfterAll { // scalastyle:off magic.number
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
   import AdminDataRepositorySpec._
 
+  var adminDataRepository: AdminDataRepository = _
+
   override def beforeAll(): Unit = {
-    mongoStart(port = databasePort)
+    when(mockAppConfig.get[String](path = "mongodb.pension-administrator-cache.admin-data.name")).thenReturn("admin-data")
+    initMongoDExecutable()
+    startMongoD()
+    adminDataRepository = buildFormRepository(mongoHost, mongoPort)
     super.beforeAll()
   }
 
-  override def beforeEach: Unit = {
-    super.beforeEach
-    when(mockAppConfig.get[String](path = "mongodb.pension-administrator-cache.admin-data.name")).thenReturn("admin-data")
-  }
+  override def afterAll(): Unit =
+    stopMongoD()
 
   "getFeatureToggle" must {
     "get FeatureToggles from Mongo collection" in {
-      mongoCollectionDrop()
 
       val documentsInDB = for {
+        _ <- adminDataRepository.collection.drop().toFuture()
         _ <- adminDataRepository.collection.insertOne(
           FeatureToggles("toggles", Seq(FeatureToggle(PsaRegistration, enabled = true), FeatureToggle(PsaFromIvToPdv, enabled = false)))).headOption()
         documentsInDB <- adminDataRepository.getFeatureToggles
@@ -67,8 +70,9 @@ class AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matcher
 
   "setFeatureToggle" must {
     "set new FeatureToggles in Mongo collection" in {
-      mongoCollectionDrop()
+
       val documentsInDB = for {
+        _ <- adminDataRepository.collection.drop().toFuture()
         _ <- adminDataRepository.setFeatureToggles(Seq(FeatureToggle(PsaRegistration, enabled = true),
           FeatureToggle(PsaFromIvToPdv, enabled = false)))
         documentsInDB <- adminDataRepository.collection.find[FeatureToggles](Filters.eq(id, featureToggles)).headOption()
@@ -80,10 +84,11 @@ class AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matcher
     }
 
     "set empty FeatureToggles in Mongo collection" in {
-      mongoCollectionDrop()
+
       val documentsInDB = for {
+        _ <- adminDataRepository.collection.drop().toFuture()
         _ <- adminDataRepository.setFeatureToggles(Seq.empty)
-        documentsInDB <- adminDataRepository.collection.find[FeatureToggles].toFuture()
+        documentsInDB <- adminDataRepository.collection.find[FeatureToggles]().toFuture()
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
@@ -95,16 +100,11 @@ class AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matcher
 
 object AdminDataRepositorySpec extends AnyWordSpec with MockitoSugar {
 
-  import scala.concurrent.ExecutionContext.Implicits._
-
   private val mockAppConfig = mock[Configuration]
-  private val databaseName = "pension-administrator"
-  private val databasePort = 12346
-  private val mongoUri: String = s"mongodb://127.0.0.1:$databasePort/$databaseName?heartbeatFrequencyMS=1000&rm.failover=default"
-  private val mongoComponent = MongoComponent(mongoUri)
 
-  private def mongoCollectionDrop(): Void = Await
-    .result(adminDataRepository.collection.drop().toFuture(), Duration.Inf)
-
-  def adminDataRepository = new AdminDataRepository(mongoComponent, mockAppConfig)
+  private def buildFormRepository(mongoHost: String, mongoPort: Int) = {
+    val databaseName = "pension-administrator"
+    val mongoUri = s"mongodb://$mongoHost:$mongoPort/$databaseName?heartbeatFrequencyMS=1000&rm.failover=default"
+    new AdminDataRepository(MongoComponent(mongoUri), mockAppConfig)
+  }
 }

@@ -21,10 +21,8 @@ import models.{PensionSchemeAdministrator, PsaToBeRemovedFromScheme}
 import play.api.Logger
 import play.api.http.Status
 import play.api.libs.json.JsValue
-import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HttpException
 
-import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 class SchemeAuditService @Inject()() {
@@ -32,9 +30,7 @@ class SchemeAuditService @Inject()() {
   private val logger = Logger(classOf[SchemeAuditService])
 
   def sendPSASubscriptionEvent(psa: PensionSchemeAdministrator, request: JsValue)
-                              (sendEvent: PSASubscription => Unit)
-                              (implicit rh: RequestHeader,
-                               ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+                              (sendEvent: PSASubscription => Unit): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
     case Success(Right(json)) =>
       sendEvent(
         PSASubscription(
@@ -60,9 +56,7 @@ class SchemeAuditService @Inject()() {
   }
 
   def sendPSAChangeEvent(psa: PensionSchemeAdministrator, request: JsValue)
-                        (sendEvent: PSAChanges => Unit)
-                        (implicit rh: RequestHeader,
-                         ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+                        (sendEvent: PSAChanges => Unit): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
     case Success(Right(json)) =>
       sendEvent(
         PSAChanges(
@@ -86,10 +80,7 @@ class SchemeAuditService @Inject()() {
   }
 
   def sendPSADetailsEvent(psaId: String)
-                         (sendEvent: PSADetails => Unit)
-                         (implicit rh: RequestHeader,
-                          ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
-
+                         (sendEvent: PSADetails => Unit): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
 
     case Success(Right(psaSubscription)) =>
       sendEvent(
@@ -116,8 +107,7 @@ class SchemeAuditService @Inject()() {
 
   def sendPSARemovalAuditEvent(psaToBeRemovedFromScheme: PsaToBeRemovedFromScheme)
                               (sendEvent: PSARemovalFromSchemeAuditEvent => Unit)
-                              (implicit rh: RequestHeader,
-                               ec: ExecutionContext): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+  : PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
     case Success(Right(_)) =>
       sendEvent(PSARemovalFromSchemeAuditEvent(psaToBeRemovedFromScheme))
     case Failure(t) =>

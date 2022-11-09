@@ -16,22 +16,20 @@
 
 package connectors
 
-import audit.{AuditService, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
-import config.AppConfig
 import connectors.helper.ConnectorBehaviours
 import models.SchemeReferenceNumber
-import org.mockito.MockitoSugar
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{EitherValues, OptionValues, RecoverMethods}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
-import service.FeatureToggleService
+import repositories._
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, UpstreamErrorResponse}
 import utils.WireMockHelper
@@ -48,16 +46,18 @@ class SchemeConnectorSpec extends AsyncFlatSpec
   import SchemeConnectorSpec._
 
   override protected def portConfigKeys: String = "microservice.services.pensions-scheme.port"
-  val mockFeatureToggleService: FeatureToggleService = mock[FeatureToggleService]
 
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
-      bind[AuditService].toInstance(auditService),
-      bind[FeatureToggleService].toInstance(mockFeatureToggleService)
+      bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+      bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+      bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+      bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
     )
 
   lazy val connector: SchemeConnector = injector.instanceOf[SchemeConnector]
-  lazy val appConfig: AppConfig = injector.instanceOf[AppConfig]
 
   "SchemeConnector checkForAssociation" should "handle OK (200)" in {
 
@@ -73,7 +73,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     )
 
     connector.checkForAssociation(psaId, srn) map { response =>
-      response.right.value shouldBe JsBoolean(true)
+      response.value shouldBe JsBoolean(true)
     }
 
   }
@@ -108,7 +108,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     )
 
     connector.listOfSchemes(psaId.id) map { response =>
-      response.right.value shouldBe validListOfSchemeResponse
+      response.value shouldBe validListOfSchemeResponse
     }
   }
 
@@ -144,7 +144,6 @@ object SchemeConnectorSpec extends JsonFileReader {
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val rh: RequestHeader = FakeRequest("", "")
 
-  val auditService = new StubSuccessfulAuditService()
   val checkForAssociationUrl = "/pensions-scheme/is-psa-associated"
   val listSchemesUrl = "/pensions-scheme/list-of-schemes"
   val srn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")

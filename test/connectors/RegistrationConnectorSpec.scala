@@ -23,17 +23,18 @@ import connectors.helper.{ConnectorBehaviours, HeaderUtils}
 import models.registrationnoid._
 import models.{SuccessResponse, User}
 import org.joda.time.LocalDate
-import org.mockito.ArgumentMatchers.any
-import org.mockito.MockitoSugar
+import org.mockito.Mockito.when
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import repositories._
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl, WireMockHelper}
@@ -53,8 +54,8 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
   override def beforeEach(): Unit = {
     auditService.reset()
     when(mockHeaderUtils.desHeaderWithoutCorrelationId).thenReturn(Nil)
-    when(mockHeaderUtils.integrationFrameworkHeader(any())).thenReturn(Nil)
-    when(mockHeaderUtils.desHeader(any())).thenReturn(Nil)
+    when(mockHeaderUtils.integrationFrameworkHeader).thenReturn(Nil)
+    when(mockHeaderUtils.desHeader).thenReturn(Nil)
     when(mockHeaderUtils.getCorrelationId).thenReturn(testCorrelationId)
     when(mockHeaderUtils.getCorrelationIdIF).thenReturn(testCorrelationId)
     super.beforeEach()
@@ -65,7 +66,13 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
   override protected def bindings: Seq[GuiceableModule] = Seq[GuiceableModule](
     bind(classOf[AuditService]).toInstance(auditService),
     bind(classOf[HeaderUtils]).toInstance(mockHeaderUtils),
-    bind(classOf[InvalidPayloadHandler]).toInstance(invalidPayloadHandler)
+    bind(classOf[InvalidPayloadHandler]).toInstance(invalidPayloadHandler),
+    bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+    bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+    bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+    bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+    bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+    bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
   )
 
   def connector: RegistrationConnector = app.injector.instanceOf[RegistrationConnector]
@@ -83,7 +90,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual).map {
       response =>
-        response.right.value shouldBe registerIndividualResponse.as[SuccessResponse]
+        response.value shouldBe registerIndividualResponse.as[SuccessResponse]
     }
 
   }
@@ -200,7 +207,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdIndividual(testNino, testIndividual, invalidData)) map {
       _ =>
-        auditService.verifyNothingSent shouldBe true
+        auditService.verifyNothingSent() shouldBe true
     }
 
   }
@@ -218,7 +225,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation).map {
       response =>
-        response.right.value shouldBe registerOrganisationResponse.as[SuccessResponse]
+        response.value shouldBe registerOrganisationResponse.as[SuccessResponse]
     }
 
   }
@@ -315,7 +322,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdOrganisation(testUtr, testOrganisation, invalidData)) map {
       _ =>
-        auditService.verifyNothingSent shouldBe true
+        auditService.verifyNothingSent() shouldBe true
     }
 
   }
@@ -333,7 +340,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant).map {
       response =>
-        response.right.value shouldBe registerWithoutIdResponse
+        response.value shouldBe registerWithoutIdResponse
     }
   }
 
@@ -356,7 +363,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant) map {
       _ =>
-       auditService.verifySent(
+        auditService.verifySent(
           PSARegistration(
             withId = false,
             externalId = testOrganisation.externalId,
@@ -408,7 +415,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant)) map {
       _ =>
-        auditService.verifyNothingSent shouldBe true
+        auditService.verifyNothingSent() shouldBe true
     }
   }
 
@@ -429,7 +436,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
       response =>
-        response.right.value shouldBe registerWithoutIdResponse
+        response.value shouldBe registerWithoutIdResponse
     }
 
   }
@@ -487,7 +494,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
       response =>
         response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include ("INVALID_PAYLOAD")
+        response.left.value.message should include("INVALID_PAYLOAD")
     }
 
   }
@@ -507,7 +514,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
       response =>
         response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include ("INVALID_SUBMISSION")
+        response.left.value.message should include("INVALID_SUBMISSION")
     }
 
   }
@@ -582,7 +589,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
   it should "send a PSARegWithoutId audit event on not found" in {
 
-   server
+    server
       .stubFor(
         post(urlEqualTo(registerIndividualWithoutIdUrl))
           .willReturn(
@@ -623,7 +630,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
       ex =>
         ex.reportAs shouldBe BAD_GATEWAY
-        auditService.verifyNothingSent shouldBe true
+        auditService.verifyNothingSent() shouldBe true
     }
   }
 
@@ -674,11 +681,11 @@ object RegistrationConnectorSpec {
     "address" -> Json.obj(
       "addressLine1" -> "addressLine1",
       "addressLine2" -> "addressLine2",
-      "countryCode"-> "US"
-  ),
+      "countryCode" -> "US"
+    ),
     "contactDetails" -> Json.obj(
-      "phoneNumber" -> JsNull,"mobileNumber" -> JsNull,"faxNumber" -> JsNull,"emailAddress" ->JsNull
-  ))
+      "phoneNumber" -> JsNull, "mobileNumber" -> JsNull, "faxNumber" -> JsNull, "emailAddress" -> JsNull
+    ))
 
   val organisationRegistrant: OrganisationRegistrant = OrganisationRegistrant(
     OrganisationName("Name"),

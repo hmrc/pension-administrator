@@ -55,11 +55,11 @@ class UpdateClientReferenceConnectorImpl @Inject()(
     val schema = "/resources/schemas/updateClientReference1857.json"
     val jsValue = Json.toJson(new IdentifierDetails(updateClientReferenceRequest))
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-      headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
+      headerUtils.integrationFrameworkHeader)
     val validationResult = jsonPayloadSchemaValidator.validateJsonPayload(schema, jsValue)
-    if(validationResult.nonEmpty)
+    if (validationResult.nonEmpty)
       throw UpdateClientRefValidationFailureException(s"Invalid payload when updateClientReference :-\n${validationResult.mkString}")
-      else
+    else
       http.PUT[JsValue, HttpResponse](updateClientReferenceUrl, jsValue)(implicitly, implicitly[HttpReads[HttpResponse]], hc, implicitly) map {
         handlePostResponse(_, updateClientReferenceUrl)
       } andThen sendClientReferenceEvent(updateClientReferenceRequest, userAction)(auditService.sendEvent)

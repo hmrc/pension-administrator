@@ -20,25 +20,16 @@ import models.UpdateClientReferenceRequest
 import play.api.Logger
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{HttpException, UpstreamErrorResponse}
 
-import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 trait UpdateClientReferenceAuditService {
 
   private val logger = Logger(classOf[UpdateClientReferenceAuditService])
 
-  def sendClientReferenceEvent(
-                                updateClientReferenceRequest: UpdateClientReferenceRequest,
-                                userAction: Option[String]
-                              )(
-                                sendEvent: UpdateClientReferenceAuditEvent => Unit
-                              )(
-                                implicit request: RequestHeader,
-                                ec: ExecutionContext
-                              ): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
+  def sendClientReferenceEvent(updateClientReferenceRequest: UpdateClientReferenceRequest, userAction: Option[String])
+                              (sendEvent: UpdateClientReferenceAuditEvent => Unit): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
 
     case Success(Right(json)) =>
       sendAuditEvent(

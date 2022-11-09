@@ -16,23 +16,20 @@
 
 package audit
 
-import models.{MinimalDetails, AcceptedInvitation}
+import models.{AcceptedInvitation, MinimalDetails}
 import play.api.Logger
 import play.api.http.Status
-import play.api.libs.json.{Json, JsValue}
-import play.api.mvc.RequestHeader
+import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.http.HttpException
 
-import scala.concurrent.ExecutionContext
-import scala.util.{Try, Success, Failure}
+import scala.util.{Failure, Success, Try}
 
 trait AssociationAuditService {
 
   private val logger = Logger(classOf[AssociationAuditService])
 
-  def sendGetMinimalDetailsEvent(idType: String, idValue: String)(sendEvent: MinimalDetailsEvent => Unit)
-    (implicit rh: RequestHeader, ec: ExecutionContext):
-  PartialFunction[Try[Either[HttpException, MinimalDetails]], Unit] = {
+  def sendGetMinimalDetailsEvent(idType: String, idValue: String)
+                                (sendEvent: MinimalDetailsEvent => Unit): PartialFunction[Try[Either[HttpException, MinimalDetails]], Unit] = {
 
     case Success(Right(psaMinimalDetails)) =>
       sendEvent(
@@ -65,8 +62,7 @@ trait AssociationAuditService {
   }
 
   def sendAcceptInvitationAuditEvent(acceptedInvitation: AcceptedInvitation, status: Int,
-                                     response: Option[JsValue])(sendEvent: InvitationAcceptanceAuditEvent => Unit)
-                                   (implicit rh: RequestHeader, ec: ExecutionContext): Unit = {
+                                     response: Option[JsValue])(sendEvent: InvitationAcceptanceAuditEvent => Unit): Unit = {
 
     sendEvent(InvitationAcceptanceAuditEvent(acceptedInvitation, status, response))
 

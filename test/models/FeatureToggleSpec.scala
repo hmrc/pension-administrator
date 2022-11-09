@@ -34,7 +34,7 @@ class FeatureToggleSpec
   implicit private val arbitraryFeatureToggleName: Arbitrary[FeatureToggleName] = Arbitrary {
     Gen.oneOf(FeatureToggleName.toggles)
   }
-  
+
   val toggleGen: Gen[FeatureToggle] = for {
     name <- arbitrary[FeatureToggleName]
     enabled <- arbitrary[Boolean]
@@ -63,7 +63,7 @@ class FeatureToggleSpec
 
       forAll(arbitrary[FeatureToggleName]) {
         name =>
-          pathBindable.bind("key", name.asString).right.value mustEqual name
+          pathBindable.bind("key", name.asString).value mustEqual name
 
       }
     }

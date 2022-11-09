@@ -42,7 +42,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
     fixture.schemeService.registerPSA(psaJson).map {
       httpResponse =>
-        httpResponse.right.value shouldBe registerPsaResponseJson
+        httpResponse.value shouldBe registerPsaResponseJson
     }
 
   }
@@ -71,7 +71,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
               legalStatus = "test-legal-status",
               status = Status.OK,
               request = requestJson,
-              response = Some(httpResponse.right.value)
+              response = Some(httpResponse.value)
             )
           )
     }
@@ -107,7 +107,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
     fixture.schemeService.updatePSA(psaId, psaJson).map {
       httpResponse =>
-        httpResponse.right.value shouldBe updatePsaResponseJson
+        httpResponse.value shouldBe updatePsaResponseJson
     }
 
   }
@@ -136,7 +136,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
               legalStatus = "test-legal-status",
               status = Status.OK,
               request = requestJson,
-              response = Some(httpResponse.right.value)
+              response = Some(httpResponse.value)
             )
           )
     }

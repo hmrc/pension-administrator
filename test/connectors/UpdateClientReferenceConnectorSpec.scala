@@ -21,17 +21,18 @@ import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.{ConnectorBehaviours, HeaderUtils}
 import models.{UpdateClientReferenceRequest, User}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.MockitoSugar
+import org.mockito.Mockito._
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import repositories._
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import utils.WireMockHelper
@@ -50,21 +51,28 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
 
   private val mockHeaderUtils = mock[HeaderUtils]
 
+  override protected def bindings: Seq[GuiceableModule] =
+    Seq(
+      bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+      bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+      bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+      bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
+      bind(classOf[HeaderUtils]).toInstance(mockHeaderUtils),
+      bind[AuditService].toInstance(auditService)
+    )
+
   override def beforeEach(): Unit = {
     when(mockHeaderUtils.desHeaderWithoutCorrelationId).thenReturn(Nil)
-    when(mockHeaderUtils.integrationFrameworkHeader(any())).thenReturn(Nil)
-    when(mockHeaderUtils.desHeader(any())).thenReturn(Nil)
+    when(mockHeaderUtils.integrationFrameworkHeader).thenReturn(Nil)
+    when(mockHeaderUtils.desHeader).thenReturn(Nil)
     when(mockHeaderUtils.getCorrelationId).thenReturn(testCorrelationId)
     when(mockHeaderUtils.getCorrelationIdIF).thenReturn(testCorrelationId)
     super.beforeEach()
   }
 
   override protected def portConfigKeys: String = "microservice.services.if-hod.port"
-
-  override protected def bindings: Seq[GuiceableModule] = Seq[GuiceableModule](
-    bind(classOf[HeaderUtils]).toInstance(mockHeaderUtils),
-    bind[AuditService].toInstance(auditService)
-  )
 
   def connector: UpdateClientReferenceConnector = app.injector.instanceOf[UpdateClientReferenceConnector]
 
@@ -79,10 +87,10 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.updateClientReference(testUpdateClientReference,None).map {
+    connector.updateClientReference(testUpdateClientReference, None).map {
       response =>
-        response.right.value shouldBe successResponse
-        val expectedAuditEvent = UpdateClientReferenceAuditEvent(testUpdateClientReference,Some(successResponse),OK,None)
+        response.value shouldBe successResponse
+        val expectedAuditEvent = UpdateClientReferenceAuditEvent(testUpdateClientReference, Some(successResponse), OK, None)
         auditService.verifySent(expectedAuditEvent) shouldBe true
     }
 
@@ -100,12 +108,12 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
     )
 
     val x = intercept[UpdateClientRefValidationFailureException] {
-      connector.updateClientReference(testUpdateClientReferenceInvalid,None)
+      connector.updateClientReference(testUpdateClientReferenceInvalid, None)
     }
     assert(x.getMessage === "Invalid payload when updateClientReference :-\nValidationFailure(pattern,$.identifierDetails.pstr: " +
-      "does not match the regex pattern ^[0-9]{8}[A-Z]{2}$,None)ValidationFailure(pattern,$.identifierDetails.pspId: " +
-      "does not match the regex pattern ^[0-2]{1}[0-9]{7}$,None)ValidationFailure(pattern,$.identifierDetails.psaId: " +
-      "does not match the regex pattern ^A[0-9]{7}$,None)")
+      "does not match the regex pattern ^[0-9]{8}[A-Z]{2}$,None)ValidationFailure(pattern,$.identifierDetails.psaId: " +
+      "does not match the regex pattern ^A[0-9]{7}$,None)ValidationFailure(pattern,$.identifierDetails.pspId: " +
+      "does not match the regex pattern ^[0-2]{1}[0-9]{7}$,None)")
   }
 
   it should "handle BAD_REQUEST (400)" in {
@@ -120,7 +128,7 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
     )
 
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.updateClientReference(testUpdateClientReference,None)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.updateClientReference(testUpdateClientReference, None)) map {
       ex =>
         ex.statusCode shouldBe BAD_REQUEST
         ex.message should include("INVALID_PSTR")
@@ -129,7 +137,7 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
 
 
   it should behave like errorHandlerForPutApiFailures(
-    connector.updateClientReference(testUpdateClientReference,None),
+    connector.updateClientReference(testUpdateClientReference, None),
     updateClientReferenceUrl
   )
 
@@ -144,10 +152,10 @@ object UpdateClientReferenceConnectorSpec {
   val testIndividual: User = User("test-external-id", AffinityGroup.Individual)
   val testCorrelationId = "testCorrelationId"
   val testUpdateClientReference: UpdateClientReferenceRequest = UpdateClientReferenceRequest(
-    pstr= "45554528AV", psaId= "A3869826", pspId= "11542640", clientReference =Some("as1234aasda"))
+    pstr = "45554528AV", psaId = "A3869826", pspId = "11542640", clientReference = Some("as1234aasda"))
 
   val testUpdateClientReferenceInvalid: UpdateClientReferenceRequest = UpdateClientReferenceRequest(
-      pstr= "45554528A", psaId= "A38698", pspId= "115426", clientReference =Some("as1234aasdaaaaaaaaaaaa"))
+    pstr = "45554528A", psaId = "A38698", pspId = "115426", clientReference = Some("as1234aasdaaaaaaaaaaaa"))
 
 
   implicit val hc: HeaderCarrier = HeaderCarrier()

@@ -26,10 +26,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class FakeEmailConnector extends EmailConnector {
 
-  private val sent: mutable.MutableList[SendEmailRequest] = mutable.MutableList[SendEmailRequest]()
+  private val sent: mutable.ArrayDeque[SendEmailRequest] = mutable.ArrayDeque[SendEmailRequest]()
 
   override def sendEmail(email: SendEmailRequest)
-    (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EmailStatus] = {
+                        (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EmailStatus] = {
 
     sent += email
     Future.successful(EmailSent)

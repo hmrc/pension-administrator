@@ -21,10 +21,8 @@ import models.{SuccessResponse, UkAddress, User}
 import play.api.Logger
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HttpException
 
-import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 trait RegistrationAuditService {
@@ -54,9 +52,6 @@ trait RegistrationAuditService {
                                 isUk: SuccessResponse => Option[Boolean]
                               )(
                                 sendEvent: PSARegistration => Unit
-                              )(
-                                implicit request: RequestHeader,
-                                ec: ExecutionContext
                               ): PartialFunction[Try[Either[HttpException, SuccessResponse]], Unit] = {
 
     case Success(Right(successResponse)) =>
@@ -97,8 +92,6 @@ trait RegistrationAuditService {
                                 isUk: JsValue => Option[Boolean]
                               )(
                                 sendEvent: PSARegistration => Unit
-                              )(
-                                implicit request: RequestHeader, ec: ExecutionContext
                               ): PartialFunction[Try[Either[HttpException, RegisterWithoutIdResponse]], Unit] = {
 
     case Success(Right(registerWithoutIdResponse)) =>

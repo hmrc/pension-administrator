@@ -17,13 +17,14 @@
 package audit
 
 import org.scalatest.Inside
-import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AsyncFlatSpec
-import org.mockito.MockitoSugar
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
+import repositories._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.config.AuditingConfig
 import uk.gov.hmrc.play.audit.http.connector.{AuditChannel, AuditConnector, AuditResult, DatastreamMetrics}
@@ -46,7 +47,7 @@ class AuditServiceSpec extends AsyncFlatSpec with Matchers with Inside with Mock
     val sentEvent = FakeAuditConnector.lastSentEvent
 
     inside(sentEvent) {
-      case DataEvent(auditSource, auditType, _, _, detail, _) =>
+      case DataEvent(auditSource, auditType, _, _, detail, _, _, _) =>
         auditSource shouldBe appName
         auditType shouldBe "TestAuditEvent"
         detail should contain("payload" -> "test-audit-payload")
@@ -56,11 +57,17 @@ class AuditServiceSpec extends AsyncFlatSpec with Matchers with Inside with Mock
 
 }
 
-object AuditServiceSpec {
+object AuditServiceSpec extends MockitoSugar {
 
   private val app = new GuiceApplicationBuilder()
     .overrides(
-      bind[AuditConnector].toInstance(FakeAuditConnector)
+      bind[AuditConnector].toInstance(FakeAuditConnector),
+      bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+      bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+      bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+      bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
     )
     .build()
 

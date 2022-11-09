@@ -67,14 +67,14 @@ class InvitationServiceImpl @Inject()(
       },
       {
         invitation =>
-          handle(associationConnector.getMinimalDetails(invitation.inviteePsaId.id, "psaid", "poda")){ psaDetails =>
-            handle(isAssociated(invitation.inviteePsaId, SchemeReferenceNumber(invitation.srn))){
+          handle(associationConnector.getMinimalDetails(invitation.inviteePsaId.id, "psaid", "poda")) { psaDetails =>
+            handle(isAssociated(invitation.inviteePsaId, SchemeReferenceNumber(invitation.srn))) {
               case false if doNamesMatch(invitation.inviteeName, psaDetails) =>
-                handle(insertInvitation(invitation)){ _ =>
+                handle(insertInvitation(invitation)) { _ =>
                   auditService.sendEvent(InvitationAuditEvent(invitation))
                   sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
                 }
-              case true if doNamesMatch(invitation.inviteeName, psaDetails)  =>
+              case true if doNamesMatch(invitation.inviteeName, psaDetails) =>
                 Future.successful(Left(new ForbiddenException("The invitation is to a PSA already associated with this scheme")))
               case _ => Future.successful(Left(new NotFoundException("The name and PSA Id do not match")))
             }

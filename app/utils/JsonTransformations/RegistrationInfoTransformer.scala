@@ -19,18 +19,23 @@ package utils.JsonTransformations
 import com.google.inject.Inject
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
-import play.api.libs.json.{__, _}
+import play.api.libs.json._
+
+import scala.language.postfixOps
 
 class RegistrationInfoTransformer @Inject()() extends JsonTransformer {
   val getRegistrationInfo: Reads[JsObject] = {
     (__ \ "psaSubscriptionDetails" \ "correspondenceAddressDetails" \ "nonUKAddress").read[Boolean].flatMap { flag =>
-      (__ \ 'registrationInfo \ 'legalStatus).json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").json.pick) and
-        (__ \ 'registrationInfo \ 'sapNumber).json.put(JsString("")) and
-        (__ \ 'registrationInfo \ 'noIdentifier).json.put(JsBoolean(false)) and
-        (__ \ 'registrationInfo \ 'customerType).json.put(if (flag) JsString("NON-UK") else JsString("UK")) and
-        ((__ \ 'registrationInfo \ 'idType).json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").json.pick)
+      (__ \ Symbol("registrationInfo") \ Symbol("legalStatus"))
+        .json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").json.pick) and
+        (__ \ Symbol("registrationInfo") \ Symbol("sapNumber")).json.put(JsString("")) and
+        (__ \ Symbol("registrationInfo") \ Symbol("noIdentifier")).json.put(JsBoolean(false)) and
+        (__ \ Symbol("registrationInfo") \ Symbol("customerType")).json.put(if (flag) JsString("NON-UK") else JsString("UK")) and
+        ((__ \ Symbol("registrationInfo") \ Symbol("idType"))
+          .json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").json.pick)
           orElse doNothing) and
-        ((__ \ 'registrationInfo \ 'idNumber).json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idNumber").json.pick)
+        ((__ \ Symbol("registrationInfo") \ Symbol("idNumber"))
+          .json.copyFrom((__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idNumber").json.pick)
           orElse doNothing) reduce
     }
   }

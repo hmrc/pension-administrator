@@ -18,10 +18,14 @@ package connectors.helper
 
 import config.AppConfig
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar.mock
 import org.scalatestplus.play.PlaySpec
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import repositories._
 
-class HeaderUtilsSpec extends PlaySpec with Matchers {
+class HeaderUtilsSpec extends PlaySpec with Matchers with MockitoSugar {
 
   import HeaderUtilsSpec._
 
@@ -56,7 +60,14 @@ object HeaderUtilsSpec {
   private val app = new GuiceApplicationBuilder().configure(
     "microservice.services.des-hod.env" -> "local",
     "microservice.services.des-hod.authorizationToken" -> "test-token"
-  ).build()
+  ).overrides(Seq(
+    bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+    bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+    bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+    bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+    bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+    bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
+  )).build()
   private val injector = app.injector
   val appConfig: AppConfig = injector.instanceOf[AppConfig]
   val headerUtils = new HeaderUtils(appConfig)

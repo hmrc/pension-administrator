@@ -19,31 +19,33 @@ package utils.JsonTransformations
 import com.google.inject.Inject
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
-import play.api.libs.json.{__, _}
+import play.api.libs.json._
+
+import scala.language.postfixOps
 
 class AddressTransformer @Inject()(legalStatusTransformer: LegalStatusTransformer) extends JsonTransformer {
 
   private def getCommonAddressElements(userAnswersPath: JsPath, desAddressPath: JsPath): Reads[JsObject] = {
-    (userAnswersPath \ 'addressLine1).json.copyFrom((desAddressPath \ 'line1).json.pick) and
-      (userAnswersPath \ 'addressLine2).json.copyFrom((desAddressPath \ 'line2).json.pick) and
-      ((userAnswersPath \ 'addressLine3).json.copyFrom((desAddressPath \ 'line3).json.pick)
+    (userAnswersPath \ Symbol("addressLine1")).json.copyFrom((desAddressPath \ Symbol("line1")).json.pick) and
+      (userAnswersPath \ Symbol("addressLine2")).json.copyFrom((desAddressPath \ Symbol("line2")).json.pick) and
+      ((userAnswersPath \ Symbol("addressLine3")).json.copyFrom((desAddressPath \ Symbol("line3")).json.pick)
         orElse doNothing) and
-      ((userAnswersPath \ 'addressLine4).json.copyFrom((desAddressPath \ 'line4).json.pick)
+      ((userAnswersPath \ Symbol("addressLine4")).json.copyFrom((desAddressPath \ Symbol("line4")).json.pick)
         orElse doNothing) reduce
   }
 
   def getAddress(userAnswersPath: JsPath, desAddressPath: JsPath): Reads[JsObject] = {
     getCommonAddressElements(userAnswersPath, desAddressPath) and
-      ((userAnswersPath \ 'postalCode).json.copyFrom((desAddressPath \ 'postalCode).json.pick)
+      ((userAnswersPath \ Symbol("postalCode")).json.copyFrom((desAddressPath \ Symbol("postalCode")).json.pick)
         orElse doNothing) and
-      (userAnswersPath \ 'countryCode).json.copyFrom((desAddressPath \ 'countryCode).json.pick) reduce
+      (userAnswersPath \ Symbol("countryCode")).json.copyFrom((desAddressPath \ Symbol("countryCode")).json.pick) reduce
   }
 
   def getDifferentAddress(userAnswersPath: JsPath, desAddressPath: JsPath): Reads[JsObject] = {
     getCommonAddressElements(userAnswersPath, desAddressPath) and
-      ((userAnswersPath \ 'postcode).json.copyFrom((desAddressPath \ 'postalCode).json.pick)
+      ((userAnswersPath \ Symbol("postcode")).json.copyFrom((desAddressPath \ Symbol("postalCode")).json.pick)
         orElse doNothing) and
-      (userAnswersPath \ 'country).json.copyFrom((desAddressPath \ 'countryCode).json.pick) reduce
+      (userAnswersPath \ Symbol("country")).json.copyFrom((desAddressPath \ Symbol("countryCode")).json.pick) reduce
   }
 
   def getAddressYears(path: JsPath = __, addressYearsPath: JsPath = __): Reads[JsObject] = {
@@ -58,33 +60,34 @@ class AddressTransformer @Inject()(legalStatusTransformer: LegalStatusTransforme
   }
 
   def getPreviousAddress(path: JsPath): Reads[JsObject] = {
-    (__ \ 'previousAddressDetails \ 'previousAddress).read[JsObject].flatMap { _ =>
-      getDifferentAddress(path, __ \ 'previousAddressDetails \ 'previousAddress)
+    (__ \ Symbol("previousAddressDetails") \ Symbol("previousAddress")).read[JsObject].flatMap { _ =>
+      getDifferentAddress(path, __ \ Symbol("previousAddressDetails") \ Symbol("previousAddress"))
     } orElse doNothing
   }
 
   val getAddressYearsBasedOnLegalStatus: Reads[JsObject] = {
     legalStatusTransformer
-      .returnPathBasedOnLegalStatus(__ \ 'individualAddressYears, __ \ 'companyAddressYears, __ \ 'partnershipAddressYears)
+      .returnPathBasedOnLegalStatus(__ \ Symbol("individualAddressYears"), __ \ Symbol("companyAddressYears"), __ \ Symbol("partnershipAddressYears"))
       .flatMap { addressYearsPath =>
-      getAddressYears(__ \ "psaSubscriptionDetails", addressYearsPath)
-    }
+        getAddressYears(__ \ "psaSubscriptionDetails", addressYearsPath)
+      }
   }
 
   val getPreviousAddressBasedOnLegalStatus: Reads[JsObject] = {
     legalStatusTransformer
-      .returnPathBasedOnLegalStatus(__ \ 'individualPreviousAddress, __ \ 'companyPreviousAddress, __ \ 'partnershipPreviousAddress)
-      .flatMap {getDifferentAddress(_, __ \ 'psaSubscriptionDetails \ 'previousAddressDetails \ 'previousAddress)
-    } orElse doNothing
+      .returnPathBasedOnLegalStatus(__ \ Symbol("individualPreviousAddress"), __ \ Symbol("companyPreviousAddress"), __ \ Symbol("partnershipPreviousAddress"))
+      .flatMap {
+        getDifferentAddress(_, __ \ Symbol("psaSubscriptionDetails") \ Symbol("previousAddressDetails") \ Symbol("previousAddress"))
+      } orElse doNothing
   }
 
   val getCorrespondenceAddress: Reads[JsObject] = {
-    val inputAddressPath = __ \ 'psaSubscriptionDetails \ 'correspondenceAddressDetails
+    val inputAddressPath = __ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceAddressDetails")
 
     (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
-      case "Individual" => getDifferentAddress(__ \ 'individualContactAddress, inputAddressPath)
-      case "Limited Company" => getDifferentAddress(__ \ 'companyContactAddress, inputAddressPath)
-      case "Partnership" => getDifferentAddress(__ \ 'partnershipContactAddress, inputAddressPath)
+      case "Individual" => getDifferentAddress(__ \ Symbol("individualContactAddress"), inputAddressPath)
+      case "Limited Company" => getDifferentAddress(__ \ Symbol("companyContactAddress"), inputAddressPath)
+      case "Partnership" => getDifferentAddress(__ \ Symbol("partnershipContactAddress"), inputAddressPath)
     }
   }
 }

@@ -17,7 +17,7 @@
 package connectors
 
 import audit.{AssociationAuditService, AuditService}
-import com.google.inject.{Inject, Singleton, ImplementedBy}
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models._
@@ -25,8 +25,8 @@ import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.{HttpClient, BadRequestException, _}
-import utils.{ErrorHandler, InvalidPayloadHandler, HttpResponseHelper}
+import uk.gov.hmrc.http.{BadRequestException, HttpClient, _}
+import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -72,17 +72,15 @@ class AssociationConnectorImpl @Inject()(
     retrieveMinimalDetails(idValue, idType, regime) andThen logWarning("IF PSA minimal details")
 
   private def retrieveMinimalDetails(idValue: String, idType: String, regime: String)
-    (implicit
-      headerCarrier: HeaderCarrier,
-      ec: ExecutionContext,
-      request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
-      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-        headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
-      val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(regime, idType, idValue)
-      httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
-        implicitly) map {
-        handleResponseIF(_, minimalDetailsUrl)
-      } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent)
+                                    (implicit ec: ExecutionContext,
+                                     request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
+    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
+      headerUtils.integrationFrameworkHeader)
+    val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(regime, idType, idValue)
+    httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
+      implicitly) map {
+      handleResponseIF(_, minimalDetailsUrl)
+    } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent)
   }
 
   private def handleResponseIF(response: HttpResponse, url: String): Either[HttpException, MinimalDetails] = {
@@ -137,13 +135,13 @@ class AssociationConnectorImpl @Inject()(
 
   def acceptInvitation(acceptedInvitation: AcceptedInvitation)
                       (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] = {
-      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-        headerUtils.integrationFrameworkHeader(implicitly[HeaderCarrier](headerCarrier)))
-      val url = appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)
+    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
+      headerUtils.integrationFrameworkHeader)
+    val url = appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)
 
-      val data = Json.toJson(acceptedInvitation)(writesIFAcceptedInvitation)
-      association(url, data, acceptedInvitation, "createAssociationRequest1445.json")(hc, implicitly, implicitly)
-    }
+    val data = Json.toJson(acceptedInvitation)(writesIFAcceptedInvitation)
+    association(url, data, acceptedInvitation, "createAssociationRequest1445.json")(hc, implicitly, implicitly)
+  }
 
   private def association(url: String, data: JsValue, acceptedInvitation: AcceptedInvitation, schemaFile: String)
                          (implicit hc: HeaderCarrier, ec: ExecutionContext,

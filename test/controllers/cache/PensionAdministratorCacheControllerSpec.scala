@@ -18,49 +18,50 @@ package controllers.cache
 
 import akka.stream.Materializer
 import akka.util.ByteString
+import base.SpecBase
 import org.apache.commons.lang3.RandomUtils
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
-import org.mockito.MockitoSugar
-import org.scalatest.wordspec.AnyWordSpec
+import org.mockito.Mockito._
 import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.inject.bind
+import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json.Json
-import play.api.mvc.ControllerComponents
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Injecting}
-import repositories.ManageCacheRepository
+import repositories._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
 
 import scala.concurrent.Future
 
 class PensionAdministratorCacheControllerSpec
-  extends AnyWordSpec
+  extends SpecBase
     with Matchers
     with MockitoSugar
-    with Injecting
-    with GuiceOneAppPerSuite {
+    with Injecting {
 
   implicit lazy val mat: Materializer = app.materializer
 
   private val repo = mock[ManageCacheRepository]
   private val authConnector: AuthConnector = mock[AuthConnector]
 
-  private class PensionAdministratorCacheControllerImpl(
-                                                         repo: ManageCacheRepository,
-                                                         authConnector: AuthConnector
-                                                       )
-    extends PensionAdministratorCacheController(
-      repository = repo,
-      authConnector = authConnector,
-      cc = inject[ControllerComponents]
+  override protected def bindings: Seq[GuiceableModule] =
+    Seq(
+      bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
+      bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
+      bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
+      bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
+      bind[AuthConnector].toInstance(authConnector),
+      bind[ManageCacheRepository].toInstance(repo)
     )
 
-  def controller(repo: ManageCacheRepository, authConnector: AuthConnector): PensionAdministratorCacheController = {
-    new PensionAdministratorCacheControllerImpl(repo, authConnector)
-  }
+  def controller: PensionAdministratorCacheController = app.injector.instanceOf[PensionAdministratorCacheControllerImpl]
+
 
   // scalastyle:off method.length
   "PensionAdministratorCacheController" must {
@@ -71,7 +72,7 @@ class PensionAdministratorCacheControllerSpec
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector).get("foo")(FakeRequest())
+        val result = controller.get("foo")(FakeRequest())
 
         status(result) mustEqual OK
         contentAsString(result) mustEqual "{}"
@@ -83,7 +84,7 @@ class PensionAdministratorCacheControllerSpec
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector).get("foo")(FakeRequest())
+        val result = controller.get("foo")(FakeRequest())
 
         status(result) mustEqual NOT_FOUND
       }
@@ -94,7 +95,7 @@ class PensionAdministratorCacheControllerSpec
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector).get("foo")(FakeRequest())
+        val result = controller.get("foo")(FakeRequest())
 
         an[Exception] must be thrownBy {
           status(result)
@@ -106,7 +107,7 @@ class PensionAdministratorCacheControllerSpec
           new UnauthorizedException("")
         }
 
-        val result = controller(repo, authConnector).get("foo")(FakeRequest())
+        val result = controller.get("foo")(FakeRequest())
 
         an[UnauthorizedException] must be thrownBy {
           status(result)
@@ -121,7 +122,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = call(controller(repo, authConnector).save("foo"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
+        val result = call(controller.save("foo"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
 
         status(result) mustEqual OK
       }
@@ -130,7 +131,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = call(controller(repo, authConnector).save("foo"), FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
+        val result = call(controller.save("foo"), FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
         status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
       }
@@ -140,7 +141,7 @@ class PensionAdministratorCacheControllerSpec
           new UnauthorizedException("")
         }
 
-        val result = call(controller(repo, authConnector).save("foo"), FakeRequest().withRawBody(ByteString("foo")))
+        val result = call(controller.save("foo"), FakeRequest().withRawBody(ByteString("foo")))
 
         an[UnauthorizedException] must be thrownBy {
           status(result)
@@ -153,7 +154,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.remove(eqTo("foo"))(any())) thenReturn Future.successful(true)
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector).remove("foo")(FakeRequest())
+        val result = controller.remove("foo")(FakeRequest())
 
         status(result) mustEqual OK
       }
@@ -163,7 +164,7 @@ class PensionAdministratorCacheControllerSpec
           new UnauthorizedException("")
         }
 
-        val result = controller(repo, authConnector).remove("foo")(FakeRequest())
+        val result = controller.remove("foo")(FakeRequest())
 
         an[UnauthorizedException] must be thrownBy {
           status(result)
@@ -180,7 +181,7 @@ class PensionAdministratorCacheControllerSpec
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
+        val result = controller.lastUpdated("foo")(FakeRequest())
 
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.toJson(date)
@@ -192,7 +193,7 @@ class PensionAdministratorCacheControllerSpec
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
+        val result = controller.lastUpdated("foo")(FakeRequest())
 
         status(result) mustEqual NOT_FOUND
       }
@@ -203,7 +204,7 @@ class PensionAdministratorCacheControllerSpec
         }
         when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
 
-        val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
+        val result = controller.lastUpdated("foo")(FakeRequest())
 
         an[Exception] must be thrownBy {
           status(result)
@@ -215,7 +216,7 @@ class PensionAdministratorCacheControllerSpec
           new UnauthorizedException("")
         }
 
-        val result = controller(repo, authConnector).lastUpdated("foo")(FakeRequest())
+        val result = controller.lastUpdated("foo")(FakeRequest())
 
         an[UnauthorizedException] must be thrownBy {
           status(result)

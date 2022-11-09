@@ -19,39 +19,42 @@ package utils.JsonTransformations
 import com.google.inject.Inject
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
-import play.api.libs.json.{__, _}
+import play.api.libs.json._
+
+import scala.language.postfixOps
 
 class IndividualTransformer @Inject()(legalStatusTransformer: LegalStatusTransformer) extends JsonTransformer {
   val getNinoOrUtr: Reads[JsObject] =
-      (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").readNullable[String].flatMap { value =>
-        if (value.contains("UTR"))
-            ( (__ \ 'utr).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
-              orElse doNothing)
-        else
-            ((__ \ 'individualNino).json.copyFrom((__ \ 'psaSubscriptionDetails \ 'customerIdentificationDetails \ 'idNumber).json.pick)
-              orElse doNothing)
-      }
+    (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "idType").readNullable[String].flatMap { value =>
+      if (value.contains("UTR"))
+        ((__ \ Symbol("utr")).json.copyFrom((__ \ Symbol("psaSubscriptionDetails") \ Symbol("customerIdentificationDetails") \ Symbol("idNumber")).json.pick)
+          orElse doNothing)
+      else
+        ((__ \ Symbol("individualNino")).json.copyFrom((__ \ Symbol("psaSubscriptionDetails") \ Symbol("customerIdentificationDetails")
+          \ Symbol("idNumber")).json.pick)
+          orElse doNothing)
+    }
 
   val getIndividualDetails: Reads[JsObject] = {
-    val individualDetailsPath = __ \ 'psaSubscriptionDetails \ 'individualDetails
-    (__ \ 'individualDetails \ 'firstName).json.copyFrom((individualDetailsPath \ 'firstName).json.pick) and
-      ((__ \ 'individualDetails \ 'middleName).json.copyFrom((individualDetailsPath \ 'middleName).json.pick)
+    val individualDetailsPath = __ \ Symbol("psaSubscriptionDetails") \ Symbol("individualDetails")
+    (__ \ Symbol("individualDetails") \ Symbol("firstName")).json.copyFrom((individualDetailsPath \ Symbol("firstName")).json.pick) and
+      ((__ \ Symbol("individualDetails") \ Symbol("middleName")).json.copyFrom((individualDetailsPath \ Symbol("middleName")).json.pick)
         orElse doNothing) and
-      (__ \ 'individualDetails \ 'lastName).json.copyFrom((individualDetailsPath \ 'lastName).json.pick) and
-      (__ \ 'individualDateOfBirth).json.copyFrom((individualDetailsPath \ 'dateOfBirth).json.pick) reduce
+      (__ \ Symbol("individualDetails") \ Symbol("lastName")).json.copyFrom((individualDetailsPath \ Symbol("lastName")).json.pick) and
+      (__ \ Symbol("individualDateOfBirth")).json.copyFrom((individualDetailsPath \ Symbol("dateOfBirth")).json.pick) reduce
   }
 
   private def getContact(userAnswersPath: JsPath): Reads[JsObject] = {
-    val contactAddressPath = __ \ 'psaSubscriptionDetails \ 'correspondenceContactDetails
-    (userAnswersPath \ 'phone).json.copyFrom((contactAddressPath \ 'telephone).json.pick) and
-      ((userAnswersPath \ 'email).json.copyFrom((contactAddressPath \ 'email).json.pick) //TODO: Mandatory in frontend but optional in DES
+    val contactAddressPath = __ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceContactDetails")
+    (userAnswersPath \ Symbol("phone")).json.copyFrom((contactAddressPath \ Symbol("telephone")).json.pick) and
+      ((userAnswersPath \ Symbol("email")).json.copyFrom((contactAddressPath \ Symbol("email")).json.pick) //TODO: Mandatory in frontend but optional in DES
         orElse doNothing) reduce
   }
 
   val getContactDetails: Reads[JsObject] =
     legalStatusTransformer.returnPathBasedOnLegalStatus(
-      individualPath = __ \ 'individualContactDetails,
-      companyPath = __ \ 'contactDetails,
-      partnershipPath = __ \ 'partnershipContactDetails
+      individualPath = __ \ Symbol("individualContactDetails"),
+      companyPath = __ \ Symbol("contactDetails"),
+      partnershipPath = __ \ Symbol("partnershipContactDetails")
     ).flatMap(getContact)
 }
