@@ -15,8 +15,8 @@ object CodeCoverageSettings {
     "target.*"
   )
 
-  private val coverageExcludedFiles = "<empty>;Reverse.*;.*filters.*;.*handlers.*; +" +
-    ".*components.*;.*models.*;.*repositories.*;.*AuthRetrievals;.*MongoDiagnosticsController;" +
+  private val coverageExcludedFiles = "<empty>;Reverse.*;.*filters.*;.*handlers.*;" +
+    ".*components.*;.*models.*;.*repositories.*;.*AuthRetrievals;" +
     ".*BuildInfo.*;.*javascript.*;.*Routes.*;.*GuiceInjector;"
 
   val settings: Seq[Setting[_]] = Seq(
