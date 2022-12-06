@@ -117,7 +117,7 @@
       "properties": {
         "organisationName": {
           "type": "string",
-          "pattern": "^[a-zA-Z0-9 '&\\/]{1,105}$"
+          "pattern": "^[a-zA-Z0-9 '&()\\/]{1,105}$"
         },
         "organisationType": {
           "type": "string",

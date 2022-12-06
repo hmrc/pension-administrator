@@ -241,7 +241,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         "requiresNameMatch" -> true,
         "isAnAgent" -> false,
         "organisation" -> Json.obj(
-          "organisationName" -> "Test Ltd",
+          "organisationName" -> "(Test) Ltd",
           "organisationType" -> "LLP"
         )
       )
