@@ -15,9 +15,9 @@
       "type": "object",
       "properties": {
         "regime": {
-          "description": "The type of Tax Regime. Values for regime: ATED, AWRS, AMLS, CDS, DDS, TAVC, ITSA, FHDDS, ZSDL (Soft Drinks Industry Levy), PODA",
+          "description": "The type of Tax Regime. Values for regime: ATED, AWRS, AMLS, CDS, DDS, TAVC, ITSA, FHDDS, ZSDL (Soft Drinks Industry Levy), PODA, AGL, LFT, APD, IPT, BD, GD, LD, BFP, GRF, FD, VTR, AIR, CGT, DST, DAC, PODP",
           "type": "string",
-          "pattern": "^[A-Z]{3,10}$"
+          "pattern": "^[A-Z]{2,10}$"
         },
         "requiresNameMatch": {
           "description": "Boolean value to indicate whether or not matching by name is required",
@@ -63,9 +63,9 @@
       "type": "object",
       "properties": {
         "regime": {
-          "description": "The type of Tax Regime. Values for regime: ATED, AWRS, AMLS, CDS, DDS, TAVC, ITSA, FHDDS, ZSDL (Soft Drinks Industry Levy), PODA",
+          "description": "The type of Tax Regime. Values for regime: ATED, AWRS, AMLS, CDS, DDS, TAVC, ITSA, FHDDS, ZSDL (Soft Drinks Industry Levy), PODA, AGL, LFT, APD, IPT, BD, GD, LD, BFP, GRF, FD, VTR, AIR, CGT, DST, PODP",
           "type": "string",
-          "pattern": "^[A-Z]{3,10}$"
+          "pattern": "^[A-Z]{2,10}$"
         },
         "requiresNameMatch": {
           "description": "Boolean value to indicate whether or not matching by name is required",
@@ -117,7 +117,7 @@
       "properties": {
         "organisationName": {
           "type": "string",
-          "pattern": "^[a-zA-Z0-9 '&\\/]{1,105}$"
+          "pattern": "^[a-zA-Z0-9 '¬`!”\\\"£$%^&*()_\\-=+{};:@’~#<,>.?\\\\/*|\\[\\]]{1,105}$"
         },
         "organisationType": {
           "type": "string",
