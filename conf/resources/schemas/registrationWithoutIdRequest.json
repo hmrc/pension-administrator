@@ -23,7 +23,7 @@
       "type": "object",
       "properties": {
         "regime": {
-          "description": "The type of Tax Regime. Values for regime: ATED, AWRS, AMLS, CDS, DDS, TAVC, ITSA, FHDDS, PODA",
+          "description": "The type of Tax Regime. Values for regime: ATED, AWRS, AMLS, CDS, DDS, TAVC, ITSA, FHDDS, PODA, AGSV, CGT, DST, PODP, PPT",
           "type": "string",
           "pattern": "^[A-Z]{3,10}$"
         },
@@ -62,8 +62,7 @@
           "additionalProperties": false,
           "required": [
             "firstName",
-            "lastName",
-            "dateOfBirth"
+            "lastName"
           ]
         },
         "address": {
@@ -95,7 +94,7 @@
       "type": "object",
       "properties": {
         "regime": {
-          "description": "The type of Tax Regime. Values for regime: ATED, AWRS, AMLS, CDS, DDS, TAVC, ITSA, FHDDS, PODA",
+          "description": "The type of Tax Regime. Values for regime: ATED, AWRS, AMLS, CDS, DDS, TAVC, ITSA, FHDDS, PODA, CGT,DST, PODP, PPT",
           "type": "string",
           "pattern": "^[A-Z]{3,10}$"
         },
@@ -117,7 +116,7 @@
           "properties": {
             "organisationName": {
               "type": "string",
-              "pattern": "^[a-zA-Z0-9 '&\\/]{1,105}$"
+              "pattern": "^[a-zA-Z0-9 '¬`!”\\\"£$%^&*()_\\-=+{};:@’~#<,>.?\\\\/*|\\[\\]]{1,105}$"
             }
           },
           "required": [
@@ -185,7 +184,7 @@
             "string",
             "null"
           ],
-          "pattern": "^[A-Z0-9 )/(\\-*#]+$",
+          "pattern": "^[A-Z0-9 )/(\\-*#+]+$",
           "minLength": 1,
           "maxLength": 24
         },
@@ -194,7 +193,7 @@
             "string",
             "null"
           ],
-          "pattern": "^[A-Z0-9 )/(\\-*#]+$",
+          "pattern": "^[A-Z0-9 )/(\\-*#+]+$",
           "minLength": 1,
           "maxLength": 24
         },
@@ -203,7 +202,7 @@
             "string",
             "null"
           ],
-          "pattern": "^[A-Z0-9 )/(\\-*#]+$",
+          "pattern": "^[A-Z0-9 )/(\\-*#+]+$",
           "minLength": 1,
           "maxLength": 24
         },
@@ -223,18 +222,18 @@
       "properties": {
         "addressLine1": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9 \\-,.&']{1,35}$"
+          "pattern": "^[A-Za-z0-9 \\-,.&'\/]{1,35}$"
         },
         "addressLine2": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9 \\-,.&']{1,35}$"
+          "pattern": "^[A-Za-z0-9 \\-,.&'\/]{1,35}$"
         },
         "addressLine3": {
           "type": [
             "string",
             "null"
           ],
-          "pattern": "^[A-Za-z0-9 \\-,.&']{1,35}$",
+          "pattern": "^[A-Za-z0-9 \\-,.&'\/]{1,35}$",
           "minLength": 0,
           "maxLength": 35
         },
@@ -243,7 +242,7 @@
             "string",
             "null"
           ],
-          "pattern": "^[A-Za-z0-9 \\-,.&']{1,35}$",
+          "pattern": "^[A-Za-z0-9 \\-,.&'\/]{1,35}$",
           "minLength": 0,
           "maxLength": 35
         },
@@ -265,7 +264,6 @@
       },
       "required": [
         "addressLine1",
-        "addressLine2",
         "postalCode",
         "countryCode"
       ],
@@ -276,18 +274,18 @@
       "properties": {
         "addressLine1": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9 \\-,.&']{1,35}$"
+          "pattern": "^[A-Za-z0-9 \\-,.&'\/]{1,35}$"
         },
         "addressLine2": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9 \\-,.&']{1,35}$"
+          "pattern": "^[A-Za-z0-9 \\-,.&'\/]{1,35}$"
         },
         "addressLine3": {
           "type": [
             "string",
             "null"
           ],
-          "pattern": "^[A-Za-z0-9 \\-,.&']{1,35}$",
+          "pattern": "^[A-Za-z0-9 \\-,.&'\/]{1,35}$",
           "minLength": 0,
           "maxLength": 35
         },
@@ -296,7 +294,7 @@
             "string",
             "null"
           ],
-          "pattern": "^[A-Za-z0-9 \\-,.&']{1,35}$",
+          "pattern": "^[A-Za-z0-9 \\-,.&'\/]{1,35}$",
           "minLength": 0,
           "maxLength": 35
         },
@@ -570,7 +568,6 @@
       },
       "required": [
         "addressLine1",
-        "addressLine2",
         "countryCode"
       ],
       "additionalProperties": false

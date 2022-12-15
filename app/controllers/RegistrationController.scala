@@ -31,7 +31,7 @@ import utils.ErrorHandler
 import utils.UtrHelper.stripUtr
 import utils.ValidationUtils._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
@@ -39,7 +39,7 @@ class RegistrationController @Inject()(
                                         override val authConnector: AuthConnector,
                                         registerConnector: RegistrationConnector,
                                         cc: ControllerComponents
-                                      ) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
+                                      )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 
   private val logger = Logger(classOf[RegistrationController])
 
@@ -70,7 +70,7 @@ class RegistrationController @Inject()(
             Try((stripUtr(Some("UTR"), Some((jsBody \ "utr").convertTo[String])), jsBody.convertTo[Organisation])) match {
               case Success((Some(utr), org)) =>
                 val orgWithInvalidCharactersRemoved = org.copy( organisationName =
-                  org.organisationName.replaceAll("""[^a-zA-Z0-9- '&\/]+""", ""))
+                  org.organisationName.replaceAll("""[^a-zA-Z0-9- '&()\/]+""", ""))
                 val registerWithIdData = mandatoryPODSData(true).as[JsObject] ++
                   Json.obj("organisation" -> Json.toJson(orgWithInvalidCharactersRemoved))
                 registerConnector.registerWithIdOrganisation(utr, user, registerWithIdData) map handleResponse

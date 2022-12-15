@@ -23,12 +23,12 @@ import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class InvitationController @Inject()(invitationService: InvitationService,
                                      cc: ControllerComponents
-                                    )extends BackendController(cc) with ErrorHandler {
+                                    )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler {
 
   def invite(): Action[AnyContent] = Action.async {
     implicit request =>

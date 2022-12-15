@@ -21,8 +21,10 @@ import play.api.mvc.ControllerComponents
 import repositories.ManagePensionsDataCacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
 
+import scala.concurrent.ExecutionContext
+
 class ManagePensionsCacheController @Inject()(
                                                repository: ManagePensionsDataCacheRepository,
                                                authConnector: AuthConnector,
                                                cc: ControllerComponents
-                                             ) extends PensionAdministratorCacheController(repository, authConnector, cc)
+                                             )(implicit ec: ExecutionContext) extends PensionAdministratorCacheController(repository, authConnector, cc)

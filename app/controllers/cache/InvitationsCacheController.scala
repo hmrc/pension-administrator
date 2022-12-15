@@ -26,14 +26,14 @@ import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class InvitationsCacheController @Inject()(
                                             repository: InvitationsCacheRepository,
                                             val authConnector: AuthConnector,
                                             cc: ControllerComponents
-                                          ) extends BackendController(cc) with AuthorisedFunctions {
+                                          )(implicit val ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   def add: Action[AnyContent] = Action.async {
     implicit request =>

@@ -27,6 +27,7 @@ import repositories.FeatureToggleMongoFormatter.{FeatureToggles, featureToggles,
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
+import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
 
 object FeatureToggleMongoFormatter {
@@ -38,6 +39,7 @@ object FeatureToggleMongoFormatter {
   val featureToggles = "toggles"
 }
 
+@Singleton
 class AdminDataRepository @Inject()(
                                      mongoComponent: MongoComponent,
                                      configuration: Configuration

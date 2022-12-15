@@ -24,14 +24,14 @@ import repositories.ManageCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 abstract class PensionAdministratorCacheController(
                                                     repository: ManageCacheRepository,
                                                     val authConnector: AuthConnector,
                                                     cc: ControllerComponents
-                                                  ) extends BackendController(cc) with AuthorisedFunctions {
+                                                  )(implicit val ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   private val logger = Logger(classOf[PensionAdministratorCacheController])
 

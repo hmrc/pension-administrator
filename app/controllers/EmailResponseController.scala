@@ -26,14 +26,14 @@ import play.api.mvc._
 import uk.gov.hmrc.crypto.{ApplicationCrypto, Crypted}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
 class EmailResponseController @Inject()(
                                          auditService: AuditService,
                                          crypto: ApplicationCrypto,
                                          cc: ControllerComponents,
                                          parser: PlayBodyParsers
-                                       ) extends BackendController(cc) {
+                                       )(implicit val ec: ExecutionContext) extends BackendController(cc) {
 
   private val logger = Logger(classOf[EmailResponseController])
 
