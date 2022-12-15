@@ -31,7 +31,7 @@ import utils.ErrorHandler
 import utils.UtrHelper.stripUtr
 import utils.ValidationUtils._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
@@ -39,7 +39,7 @@ class RegistrationController @Inject()(
                                         override val authConnector: AuthConnector,
                                         registerConnector: RegistrationConnector,
                                         cc: ControllerComponents
-                                      ) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
+                                      )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 
   private val logger = Logger(classOf[RegistrationController])
 

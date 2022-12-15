@@ -27,13 +27,13 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class SchemeController @Inject()(schemeService: SchemeService,
                                  schemeConnector: DesConnector,
                                  cc: ControllerComponents
-                                ) extends BackendController(cc) with ErrorHandler {
+                                )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler {
 
   private val logger = Logger(classOf[SchemeController])
 

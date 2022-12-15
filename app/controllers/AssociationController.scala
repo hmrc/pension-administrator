@@ -28,7 +28,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.{AuthRetrievals, ErrorHandler}
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class AssociationController @Inject()(
@@ -36,7 +36,7 @@ class AssociationController @Inject()(
                                        minimalDetailsCacheRepository: MinimalDetailsCacheRepository,
                                        retrievals: AuthRetrievals,
                                        cc: ControllerComponents
-                                     ) extends BackendController(cc) with ErrorHandler {
+                                     )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler {
 
   private val logger = Logger(classOf[AssociationController])
 

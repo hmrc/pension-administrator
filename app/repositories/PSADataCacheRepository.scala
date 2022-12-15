@@ -32,6 +32,7 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
+import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
 
 object PSADataCacheEntry {
@@ -70,6 +71,7 @@ object PSADataCacheEntry {
   }
 }
 
+@Singleton
 class PSADataCacheRepository @Inject()(
                                         mongoComponent: MongoComponent,
                                         configuration: Configuration

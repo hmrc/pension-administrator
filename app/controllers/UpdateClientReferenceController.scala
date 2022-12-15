@@ -27,14 +27,14 @@ import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, Upst
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class UpdateClientReferenceController @Inject()(
                                         override val authConnector: AuthConnector,
                                         updateClientReferenceConnector: UpdateClientReferenceConnector,
                                         cc: ControllerComponents
-                                      ) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
+                                      )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 
   def updateClientReference: Action[AnyContent] = Action.async {
     implicit request => {
