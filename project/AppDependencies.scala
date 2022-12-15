@@ -7,7 +7,7 @@ object AppDependencies {
 
   val compile: Seq[ModuleID] = Seq(
     ws,
-    "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.13.4",
+    "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.14.1",
     "uk.gov.hmrc.mongo"             %% "hmrc-mongo-play-28"         % "0.73.0",
     "com.typesafe.play"             %% "play-json"                  % "2.9.3",
     "com.typesafe.play"             %% "play-json-joda"             % "2.9.3",
@@ -20,7 +20,7 @@ object AppDependencies {
   def test(scope: String = "test, it"): Seq[ModuleID] = Seq(
     "uk.gov.hmrc"             %% "bootstrap-test-play-28"     % "7.11.0"    % Test,
     "uk.gov.hmrc.mongo"       %% "hmrc-mongo-test-play-28"    % "0.73.0"    % Test,
-    "de.flapdoodle.embed"     %  "de.flapdoodle.embed.mongo"  % "3.5.1"     % Test,
+    "de.flapdoodle.embed"     %  "de.flapdoodle.embed.mongo"  % "3.5.3"     % Test,
     "org.scalatest"           %% "scalatest"                  % "3.2.14"    % Test,
     "org.scalatestplus"       %% "scalacheck-1-17"            % "3.2.14.0"  % Test,
     "org.scalatestplus"       %% "mockito-4-6"                % "3.2.14.0"  % Test,
