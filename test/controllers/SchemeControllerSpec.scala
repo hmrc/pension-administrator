@@ -394,6 +394,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
 object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
+  implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+
   implicit val mat: Materializer = app.materializer
 
   override protected def bindings: Seq[GuiceableModule] =

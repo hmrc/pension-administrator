@@ -93,6 +93,8 @@ class InvitationControllerSpec extends AsyncFlatSpec with Matchers {
 
 object InvitationControllerSpec extends JsonFileReader with MockitoSugar {
 
+  implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+
   private val invitation = readJsonFromFile("/data/validInvitation.json")
 
   val response = MinimalDetails("aaa@email.com", true, None, Some(IndividualDetails("John", Some("Doe"), "Doe")),

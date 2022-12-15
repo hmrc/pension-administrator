@@ -556,6 +556,8 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
 object RegistrationControllerSpec {
 
+  implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+
   private val nino = "test-nino"
   private val externalId = "test-external-id"
 

@@ -257,6 +257,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
 object AssociationControllerSpec extends MockitoSugar {
 
+  implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
   val individual: IndividualDetails =
@@ -314,7 +316,8 @@ object AssociationControllerSpec extends MockitoSugar {
 
 
   def controller(psaId: Option[PsaId] = Some(PsaId("A2123456")),
-                 affinityGroup: Option[AffinityGroup] = Some(AffinityGroup.Individual), isEnabledFeatureToggle: Boolean = false): AssociationController = {
+                 affinityGroup: Option[AffinityGroup] = Some(AffinityGroup.Individual),
+                 isEnabledFeatureToggle: Boolean = false): AssociationController = {
     when(mockAuthRetrievals.getPsaId(any(), any()))
       .thenReturn(Future.successful(psaId))
     new AssociationController(fakeAssociationConnector, mockMinimalDetailsCacheRepository,
