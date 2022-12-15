@@ -102,6 +102,8 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
 
 object EmailResponseControllerSpec {
 
+  implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+
   val psa = PsaId("A7654321")
 
   val emailEvents = EmailEvents(Seq(EmailEvent(Sent, DateTime.now()), EmailEvent(Delivered, DateTime.now()), EmailEvent(Opened, DateTime.now())))
