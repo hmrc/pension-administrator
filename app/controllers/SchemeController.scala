@@ -55,6 +55,10 @@ class SchemeController @Inject()(schemeService: SchemeService,
 
   def getPsaDetails: Action[AnyContent] = Action.async {
     implicit request =>
+      logger.error("ERROR-LOGTEST")
+      logger.warn("WARN-LOGTEST")
+      logger.info("INFO-LOGTEST")
+      logger.debug("DEBUG-LOGTEST")
       val psaId = request.headers.get("psaId")
       psaId match {
         case Some(id) =>
