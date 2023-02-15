@@ -18,9 +18,9 @@ package repositories
 
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import models.FeatureToggle
+import models.{FeatureToggle, ToggleDetails}
 import org.mongodb.scala.model.Updates.set
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes, Updates}
 import play.api.libs.json._
 import play.api.{Configuration, Logging}
 import repositories.TestToggleMongoFormatter.{FeatureToggles, featureToggles, id}
@@ -55,22 +55,11 @@ class ToggleDataRepository @Inject()(
     )
   ) with Logging {
 
-
-  def getFeatureToggles: Future[Seq[FeatureToggle]] = {
-    collection.find[FeatureToggles](
-      Filters.eq(id, featureToggles)
-    ).headOption().map(_.map(ft =>
-      ft.toggles
-    ).getOrElse(Seq.empty[FeatureToggle])
-    )
-  }
-
-  def setFeatureToggles(toggles: Seq[FeatureToggle]): Future[Unit] = {
-
+  def upsertFeatureToggle(toggleDetails: ToggleDetails): Future[Unit] = {
     val upsertOptions = new FindOneAndUpdateOptions().upsert(true)
     collection.findOneAndUpdate(
-      filter = Filters.eq(id, featureToggles),
-      update = set(featureToggles, Codecs.toBson(toggles)), upsertOptions)
+      filter = Filters.eq("toggleName", toggleDetails.toggleName),
+      update = set("toggleProperty", Codecs.toBson(toggleDetails)), upsertOptions)
       .toFuture().map(_ => ())
   }
 }

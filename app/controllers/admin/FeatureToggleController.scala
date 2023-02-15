@@ -17,7 +17,7 @@
 package controllers.admin
 
 import javax.inject.Inject
-import models.FeatureToggleName
+import models.{FeatureToggleName, ToggleDetails}
 import play.api.libs.json.{JsBoolean, Json}
 import play.api.mvc.{AbstractController, Action, AnyContent, ControllerComponents}
 import service.FeatureToggleService
@@ -63,11 +63,9 @@ class FeatureToggleController @Inject()(
 
      request.body.asJson match {
        case Some(body) =>
-         val toggleName = (body \ "toggleName").as[String]
-         val toggleDescription = (body \ "toggleDescription").as[String]
-         val isEnabled = (body \ "isEnabled").as[Boolean]
+         val toggleData = body.as[ToggleDetails]
 
-       //featureToggleService.createToggle(toggleName, toggleDescription, isEnabled).map(_ => NoContent)
+       featureToggleService.createToggle(toggleData).map(_ => NoContent)
 
        case None =>
          Future.successful(NotFound)

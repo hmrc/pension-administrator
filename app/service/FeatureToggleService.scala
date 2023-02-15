@@ -20,14 +20,16 @@ import models.FeatureToggle._
 import models.FeatureToggleName.{EnrolmentRecovery, PsaFromIvToPdv, PsaRegistration, UpdateClientReference}
 import models._
 import play.api.cache.AsyncCacheApi
-import repositories.AdminDataRepository
+import repositories.{AdminDataRepository, ToggleDataRepository}
+
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.{Duration, FiniteDuration, SECONDS => Seconds}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class FeatureToggleService @Inject()(
-                                      toggleDataRepository: AdminDataRepository,
+                                      toggleDataRepository: ToggleDataRepository,
+                                      adminDataRepository: AdminDataRepository,
                                       cacheApi: AsyncCacheApi
                                     )(implicit ec: ExecutionContext) {
   private val cacheValidFor: FiniteDuration = Duration(2, Seconds)
@@ -46,7 +48,7 @@ class FeatureToggleService @Inject()(
 
   def getAll: Future[Seq[FeatureToggle]] =
     cacheApi.getOrElseUpdate[Seq[FeatureToggle]]("toggles", cacheValidFor) {
-      toggleDataRepository
+      adminDataRepository
         .getFeatureToggles
         .map(addDefaults)
     }
@@ -57,17 +59,12 @@ class FeatureToggleService @Inject()(
         val newToggles = currentToggles
           .filterNot(toggle => toggle.name == toggleName) :+ FeatureToggle(toggleName, enabled)
 
-        toggleDataRepository.setFeatureToggles(newToggles)
+        adminDataRepository.setFeatureToggles(newToggles)
     }
 
-//  def createToggle(toggleName: String, toggleDescription: String, isEnabled: Boolean): Future[Unit] =
-//    getAll.flatMap {
-//      currentToggles =>
-//        val newToggles = currentToggles
-//          .filterNot(toggle => toggle.name == toggleName) :+ FeatureToggle(FeatureToggleName(toggleName), isEnabled)
-//
-//        toggleDataRepository.setFeatureToggles(newToggles)
-//    }
+  def createToggle(toggleDetails: ToggleDetails): Future[Unit] = {
+        toggleDataRepository.upsertFeatureToggle(toggleDetails)
+  }
 
   def get(name: FeatureToggleName): Future[FeatureToggle] =
     getAll.map {
