@@ -20,15 +20,14 @@ import models.FeatureToggle._
 import models.FeatureToggleName.{EnrolmentRecovery, PsaFromIvToPdv, PsaRegistration, UpdateClientReference}
 import models._
 import play.api.cache.AsyncCacheApi
-import repositories.AdminDataRepository
-
+import repositories.ToggleDataRepository
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.{Duration, FiniteDuration, SECONDS => Seconds}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class FeatureToggleService @Inject()(
-                                      adminDataRepository: AdminDataRepository,
+                                      toggleDataRepository: ToggleDataRepository,
                                       cacheApi: AsyncCacheApi
                                     )(implicit ec: ExecutionContext) {
   private val cacheValidFor: FiniteDuration = Duration(2, Seconds)
@@ -47,7 +46,7 @@ class FeatureToggleService @Inject()(
 
   def getAll: Future[Seq[FeatureToggle]] =
     cacheApi.getOrElseUpdate[Seq[FeatureToggle]]("toggles", cacheValidFor) {
-      adminDataRepository
+      toggleDataRepository
         .getFeatureToggles
         .map(addDefaults)
     }
@@ -58,7 +57,16 @@ class FeatureToggleService @Inject()(
         val newToggles = currentToggles
           .filterNot(toggle => toggle.name == toggleName) :+ FeatureToggle(toggleName, enabled)
 
-        adminDataRepository.setFeatureToggles(newToggles)
+        toggleDataRepository.setFeatureToggles(newToggles)
+    }
+
+  def createToggle(toggleName: String, enabled: Boolean): Future[Unit] =
+    getAll.flatMap {
+      currentToggles =>
+        val newToggles = currentToggles
+          .filterNot(toggle => toggle.name == toggleName) :+ FeatureToggle(FeatureToggleName(toggleName), enabled)
+
+        toggleDataRepository.setFeatureToggles(newToggles)
     }
 
   def get(name: FeatureToggleName): Future[FeatureToggle] =

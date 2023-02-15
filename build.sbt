@@ -36,7 +36,8 @@ lazy val microservice = Project(AppDependencies.appName, file("."))
   .settings(
     RoutesKeys.routesImport ++= Seq(
       "models.enumeration.JourneyType",
-      "models.FeatureToggleName"
+      "models.FeatureToggleName",
+      "models.ToggleDetails"
     ),
     scalacOptions += "-Wconf:src=routes/.*:s"
   )

@@ -57,4 +57,15 @@ class FeatureToggleController @Inject()(
       }
     }
   }
+
+  def createToggle(toggleName: String, toggleDesc: String, isEnabled: Boolean): Action[AnyContent] = Action.async {
+    request => {
+      request.body.asJson match {
+        case Some(JsBoolean(enabled)) =>
+          featureToggleService.createToggle(toggleName, isEnabled).map(_ => NoContent)
+        case _ =>
+          Future.successful(BadRequest)
+      }
+    }
+  }
 }
