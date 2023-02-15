@@ -73,4 +73,13 @@ class AdminDataRepository @Inject()(
       update = set(featureToggles, Codecs.toBson(toggles)), upsertOptions)
       .toFuture().map(_ => ())
   }
+
+//  def setFeatureToggle(toggle: FeatureToggle): Future[Unit] = {
+//
+//    val upsertOptions = new FindOneAndUpdateOptions().upsert(true)
+//    collection.findOneAndUpdate(
+//      filter = Filters.eq(name, featureToggle),
+//      update = set(featureToggles, Codecs.toBson(toggle)), upsertOptions)
+//      .toFuture().map(_ => ())
+//  }
 }

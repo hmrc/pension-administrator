@@ -23,14 +23,14 @@ import org.mongodb.scala.model.Updates.set
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
 import play.api.libs.json._
 import play.api.{Configuration, Logging}
-import repositories.FeatureToggleMongoFormatter.{FeatureToggles, featureToggles, id}
+import repositories.TestToggleMongoFormatter.{FeatureToggles, featureToggles, id}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
 
-object FeatureToggleMongoFormatter {
+object TestToggleMongoFormatter {
   case class FeatureToggles(_id: String, toggles: Seq[FeatureToggle])
 
   implicit val featureToggleMongoFormatter: Format[FeatureToggles] = Json.format[FeatureToggles]
@@ -47,7 +47,7 @@ class ToggleDataRepository @Inject()(
   extends PlayMongoRepository[FeatureToggles](
     collectionName = configuration.get[String](path = "mongodb.pension-administrator-cache.toggle-data.name"),
     mongoComponent = mongoComponent,
-    domainFormat = FeatureToggleMongoFormatter.featureToggleMongoFormatter,
+    domainFormat = TestToggleMongoFormatter.featureToggleMongoFormatter,
     indexes = Seq(
       IndexModel(
         Indexes.ascending(featureToggles),

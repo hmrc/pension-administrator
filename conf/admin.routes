@@ -9,4 +9,4 @@ GET        /feature-toggles/:toggleName        controllers.admin.FeatureToggleCo
 +nocsrf
 PUT        /feature-toggles/:toggleName        controllers.admin.FeatureToggleController.put(toggleName: FeatureToggleName)
 +nocsrf
-PUT        /create-toggle/:toggleName/:toggleDesc/:isEnabled         controllers.admin.FeatureToggleController.createToggle(toggleName: String, toggleDesc: String, isEnabled: Boolean)
+PUT        /create-toggle                      controllers.admin.FeatureToggleController.createToggle
