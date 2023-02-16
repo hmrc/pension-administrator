@@ -23,20 +23,19 @@ import org.mongodb.scala.model.Updates.set
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes, Updates}
 import play.api.libs.json._
 import play.api.{Configuration, Logging}
-import repositories.TestToggleMongoFormatter.{FeatureToggles, featureToggles, id}
+import repositories.ToggleMongoFormatter.{FeatureToggles, id}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
 
-object TestToggleMongoFormatter {
-  case class FeatureToggles(_id: String, toggles: Seq[FeatureToggle])
+object ToggleMongoFormatter {
+  case class FeatureToggles(_id: String, toggleDetails: ToggleDetails)
 
   implicit val featureToggleMongoFormatter: Format[FeatureToggles] = Json.format[FeatureToggles]
 
   val id = "_id"
-  val featureToggles = "toggles"
 }
 
 @Singleton
@@ -47,18 +46,18 @@ class ToggleDataRepository @Inject()(
   extends PlayMongoRepository[FeatureToggles](
     collectionName = configuration.get[String](path = "mongodb.pension-administrator-cache.toggle-data.name"),
     mongoComponent = mongoComponent,
-    domainFormat = TestToggleMongoFormatter.featureToggleMongoFormatter,
+    domainFormat = ToggleMongoFormatter.featureToggleMongoFormatter,
     indexes = Seq(
       IndexModel(
-        Indexes.ascending(featureToggles),
-        IndexOptions().name(featureToggles).unique(true).background(true))
+        Indexes.ascending("toggleName"),
+        IndexOptions().name("toggleName").unique(true).background(true))
     )
   ) with Logging {
 
   def upsertFeatureToggle(toggleDetails: ToggleDetails): Future[Unit] = {
     val upsertOptions = new FindOneAndUpdateOptions().upsert(true)
     collection.findOneAndUpdate(
-      filter = Filters.eq("toggleName", toggleDetails.toggleName),
+      filter = Filters.eq(id, toggleDetails.toggleName),
       update = set("toggleProperty", Codecs.toBson(toggleDetails)), upsertOptions)
       .toFuture().map(_ => ())
   }
