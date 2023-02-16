@@ -62,7 +62,7 @@ class FeatureToggleService @Inject()(
         adminDataRepository.setFeatureToggles(newToggles)
     }
 
-  def createToggle(toggleDetails: ToggleDetails): Future[Unit] = {
+  def upsertFeatureToggle(toggleDetails: ToggleDetails): Future[Unit] = {
         toggleDataRepository.upsertFeatureToggle(toggleDetails)
   }
 

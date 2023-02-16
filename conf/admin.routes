@@ -9,7 +9,7 @@ GET        /feature-toggles/:toggleName        controllers.admin.FeatureToggleCo
 +nocsrf
 PUT        /feature-toggles/:toggleName        controllers.admin.FeatureToggleController.put(toggleName: FeatureToggleName)
 +nocsrf
-PUT        /create-toggle                      controllers.admin.FeatureToggleController.createToggle
+PUT        /upsert-toggle                      controllers.admin.FeatureToggleController.upsertFeatureToggle
 +nocsrf
 DELETE     /delete-toggle/:toggleName          controllers.admin.FeatureToggleController.deleteToggle(toggleName: String)
 +nocsrf
