@@ -69,4 +69,17 @@ class FeatureToggleController @Inject()(
      }
     }
   }
+
+  def deleteToggle(toggleName: String): Action[AnyContent] = Action.async { _ => {
+      featureToggleService.deleteToggle(toggleName).map(_ => NoContent)
+    }
+  }
+
+  def getAllFeatureToggles: Action[AnyContent] = Action.async { _ =>
+   featureToggleService.getAllFeatureToggles map {
+     seqToggles => {
+       Ok(Json.toJson(seqToggles))
+     }
+   }
+  }
 }

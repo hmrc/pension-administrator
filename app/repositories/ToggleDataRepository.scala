@@ -62,4 +62,18 @@ class ToggleDataRepository @Inject()(
       filter = Filters.eq(toggleNameFieldName, toggleDetails.toggleName),
       update = Updates.combine(seqUpdates: _*), upsertOptions).toFuture().map(_ => ())
   }
+
+  def deleteFeatureToggle(toggleName: String): Future[Unit] = {
+    collection.deleteOne(
+      filter = Filters.eq(toggleNameFieldName, toggleName)
+    ).toFuture().map(_ => ())
+  }
+
+  def getAllFeatureToggles: Future[Seq[ToggleDetails]] = {
+    collection.find[JsValue].toFuture().map {
+      seqJsValue => seqJsValue map {
+        jsVal => (jsVal \ "data").asOpt[ToggleDetails]
+      }
+    }.map {_.flatMap { _.toSeq}}
+  }
 }
