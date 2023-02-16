@@ -18,47 +18,48 @@ package repositories
 
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import models.{FeatureToggle, ToggleDetails}
+import models.ToggleDetails
 import org.mongodb.scala.model.Updates.set
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes, Updates}
+import org.mongodb.scala.model._
 import play.api.libs.json._
 import play.api.{Configuration, Logging}
-import repositories.ToggleMongoFormatter.{FeatureToggles, id}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
+import ToggleDataRepository._
 
-object ToggleMongoFormatter {
-  case class FeatureToggles(_id: String, toggleDetails: ToggleDetails)
-
-  implicit val featureToggleMongoFormatter: Format[FeatureToggles] = Json.format[FeatureToggles]
-
-  val id = "_id"
+object ToggleDataRepository {
+  private val toggleNameFieldName = "toggleName"
+  private val dataFieldName = "data"
 }
 
 @Singleton
 class ToggleDataRepository @Inject()(
-                                     mongoComponent: MongoComponent,
-                                     configuration: Configuration
-                                   )(implicit val ec: ExecutionContext)
-  extends PlayMongoRepository[FeatureToggles](
+                                      mongoComponent: MongoComponent,
+                                      configuration: Configuration
+                                    )(implicit val ec: ExecutionContext)
+  extends PlayMongoRepository[JsValue](
     collectionName = configuration.get[String](path = "mongodb.pension-administrator-cache.toggle-data.name"),
     mongoComponent = mongoComponent,
-    domainFormat = ToggleMongoFormatter.featureToggleMongoFormatter,
+    domainFormat = implicitly,
     indexes = Seq(
       IndexModel(
-        Indexes.ascending("toggleName"),
-        IndexOptions().name("toggleName").unique(true).background(true))
+        Indexes.ascending(toggleNameFieldName),
+        IndexOptions().name(toggleNameFieldName).unique(true).background(true))
     )
   ) with Logging {
 
   def upsertFeatureToggle(toggleDetails: ToggleDetails): Future[Unit] = {
+    val seqUpdates = Seq(
+      set(toggleNameFieldName, toggleDetails.toggleName),
+      set(dataFieldName, Codecs.toBson(toggleDetails))
+    )
+
     val upsertOptions = new FindOneAndUpdateOptions().upsert(true)
     collection.findOneAndUpdate(
-      filter = Filters.eq(id, toggleDetails.toggleName),
-      update = set("toggleProperty", Codecs.toBson(toggleDetails)), upsertOptions)
-      .toFuture().map(_ => ())
+      filter = Filters.eq(toggleNameFieldName, toggleDetails.toggleName),
+      update = Updates.combine(seqUpdates: _*), upsertOptions).toFuture().map(_ => ())
   }
 }
