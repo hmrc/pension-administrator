@@ -23,12 +23,12 @@ import org.mongodb.scala.model.Updates.set
 import org.mongodb.scala.model._
 import play.api.libs.json._
 import play.api.{Configuration, Logging}
+import repositories.ToggleDataRepository._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
-import ToggleDataRepository._
 
 object ToggleDataRepository {
   private val toggleNameFieldName = "toggleName"
@@ -52,15 +52,24 @@ class ToggleDataRepository @Inject()(
   ) with Logging {
 
   def upsertFeatureToggle(toggleDetails: ToggleDetails): Future[Unit] = {
-    val seqUpdates = Seq(
-      set(toggleNameFieldName, toggleDetails.toggleName),
-      set(dataFieldName, Codecs.toBson(toggleDetails))
-    )
-
-    val upsertOptions = new FindOneAndUpdateOptions().upsert(true)
-    collection.findOneAndUpdate(
-      filter = Filters.eq(toggleNameFieldName, toggleDetails.toggleName),
-      update = Updates.combine(seqUpdates: _*), upsertOptions).toFuture().map(_ => ())
+    collection.find(
+      filter = Filters.eq(toggleNameFieldName, toggleDetails.toggleName)
+    ).toFuture().map { seqDbToggles =>
+      val dbToggleDesc = seqDbToggles.headOption.flatMap { dbToggle => (dbToggle \ "data" \ "toggleDescription").asOpt[String] }
+      val toggleDescription = toggleDetails.toggleDescription match {
+        case toggleDesc@Some(_) => toggleDesc
+        case None => dbToggleDesc
+      }
+      val updatedToggleDetails = ToggleDetails(toggleDetails.toggleName, toggleDescription, toggleDetails.isEnabled)
+      val seqUpdates = Seq(
+        set(toggleNameFieldName, toggleDetails.toggleName),
+        set(dataFieldName, Codecs.toBson(updatedToggleDetails))
+      )
+      val upsertOptions = new FindOneAndUpdateOptions().upsert(true)
+      collection.findOneAndUpdate(
+        filter = Filters.eq(toggleNameFieldName, toggleDetails.toggleName),
+        update = Updates.combine(seqUpdates: _*), upsertOptions).toFuture().map(_ => ())
+    }.flatten
   }
 
   def deleteFeatureToggle(toggleName: String): Future[Unit] = {
@@ -71,9 +80,14 @@ class ToggleDataRepository @Inject()(
 
   def getAllFeatureToggles: Future[Seq[ToggleDetails]] = {
     collection.find[JsValue].toFuture().map {
-      seqJsValue => seqJsValue map {
-        jsVal => (jsVal \ "data").asOpt[ToggleDetails]
+      seqJsValue =>
+        seqJsValue map {
+          jsVal => (jsVal \ "data").asOpt[ToggleDetails]
+        }
+    }.map {
+      _.flatMap {
+        _.toSeq
       }
-    }.map {_.flatMap { _.toSeq}}
+    }
   }
 }

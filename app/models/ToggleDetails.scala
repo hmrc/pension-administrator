@@ -18,7 +18,8 @@ package models
 
 import play.api.libs.json._
 
-case class ToggleDetails (toggleName: String, toggleDescription: String, isEnabled: Boolean)
+case class ToggleDetails(toggleName: String, toggleDescription: Option[String], isEnabled: Boolean)
+
 object ToggleDetails {
-  implicit val format = Json.format[ToggleDetails]
+  implicit val format: OFormat[ToggleDetails] = Json.format[ToggleDetails]
 }
