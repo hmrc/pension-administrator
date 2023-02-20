@@ -14,3 +14,5 @@ PUT        /upsert-toggle                      controllers.admin.FeatureToggleCo
 DELETE     /delete-toggle/:toggleName          controllers.admin.FeatureToggleController.deleteToggle(toggleName: String)
 +nocsrf
 GET        /all-feature-toggles                controllers.admin.FeatureToggleController.getAllFeatureToggles
++nocsrf
+GET        /get-toggle/:toggleName             controllers.admin.FeatureToggleController.getToggle(toggleName: String)

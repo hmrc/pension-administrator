@@ -70,6 +70,13 @@ class FeatureToggleService @Inject()(
     toggleDataRepository.deleteFeatureToggle(toggleName)
   }
 
+  def getToggle(toggleName: String): Future[Option[ToggleDetails]] = {
+    toggleDataRepository.getAllFeatureToggles.map {
+      toggles =>
+        toggles.find(_.toggleName == toggleName)
+    }
+  }
+
   def getAllFeatureToggles: Future[Seq[ToggleDetails]] = {
     toggleDataRepository.getAllFeatureToggles
   }

@@ -75,6 +75,14 @@ class FeatureToggleController @Inject()(
     }
   }
 
+  def getToggle(toggleName: String): Action[AnyContent] = Action.async { _ => {
+    featureToggleService.getToggle(toggleName) map {
+      case Some(toggle) => Ok(Json.toJson(toggle))
+      case _ => NoContent
+    }
+  }
+  }
+
   def getAllFeatureToggles: Action[AnyContent] = Action.async { _ =>
    featureToggleService.getAllFeatureToggles map {
      seqToggles => {
