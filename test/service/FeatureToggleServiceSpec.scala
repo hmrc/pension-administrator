@@ -20,7 +20,7 @@ import akka.Done
 import base.SpecBase
 import models.FeatureToggle.{Disabled, Enabled}
 import models.FeatureToggleName.{EnrolmentRecovery, PsaFromIvToPdv, PsaRegistration, UpdateClientReference}
-import models.{FeatureToggle, FeatureToggleName}
+import models.{FeatureToggle, FeatureToggleName, ToggleDetails}
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -45,6 +45,9 @@ class FeatureToggleServiceSpec
     with Matchers {
 
   val adminDataRepository: AdminDataRepository = mock[AdminDataRepository]
+  val toggleDataRepository: ToggleDataRepository = mock[ToggleDataRepository]
+
+  private val toggleDetails = ToggleDetails("Toggle-name", Some("Toggle description"), true)
 
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
@@ -54,6 +57,7 @@ class FeatureToggleServiceSpec
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
       bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
       bind[AdminDataRepository].toInstance(adminDataRepository),
+      bind[ToggleDataRepository].toInstance(toggleDataRepository),
       bind[AsyncCacheApi].toInstance(new FakeCache())
     )
 
@@ -94,6 +98,21 @@ class FeatureToggleServiceSpec
     }
   }
 
+//  "When set works in the repo returns a success result for the toggle data" in {
+//    when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(Seq.empty))
+//    when(toggleDataRepository.upsertFeatureToggle(any())).thenReturn(Future.successful(()))
+//
+//    val OUT = app.injector.instanceOf[FeatureToggleService]
+//
+//    whenReady(OUT.upsertFeatureToggle(toggleDetails)) {
+//      result =>
+//        result mustBe()
+//        val captor = ArgumentCaptor.forClass(classOf[ToggleDetails])
+//        verify(toggleDataRepository, times(1)).upsertFeatureToggle(captor.capture())
+//        captor.getValue must contain(toggleDetails)
+//    }
+//  }
+
   "When getAll is called returns all of the toggles from the repo" in {
     val OUT = app.injector.instanceOf[FeatureToggleService]
     OUT.getAll.futureValue mustBe Seq(
@@ -110,9 +129,21 @@ class FeatureToggleServiceSpec
     OUT.get(UpdateClientReference).futureValue mustBe Disabled(UpdateClientReference)
   }
 
+  "When a toggle doesn't exist in the repo, return empty Seq for toggle data repository" in {
+    when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(Seq.empty))
+    val OUT = app.injector.instanceOf[FeatureToggleService]
+    OUT.getAllFeatureToggles.futureValue mustBe Seq.empty
+  }
+
   "When a toggle exists in the repo, override default" in {
     when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq(Enabled(UpdateClientReference))))
     val OUT = app.injector.instanceOf[FeatureToggleService]
     OUT.get(UpdateClientReference).futureValue mustBe Enabled(UpdateClientReference)
+  }
+
+  "When a toggle exists in the repo, get it" in {
+    when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(Seq(toggleDetails)))
+    val OUT = app.injector.instanceOf[FeatureToggleService]
+    OUT.getAllFeatureToggles.futureValue mustBe toggleDetails
   }
 }
