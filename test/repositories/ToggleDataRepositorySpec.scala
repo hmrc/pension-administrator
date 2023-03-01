@@ -17,29 +17,22 @@
 package repositories
 
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import models.ToggleDetails
 import org.mockito.Mockito._
+import org.mongodb.scala.model.Updates.set
+import org.mongodb.scala.model.{Filters, Updates}
 import org.scalatest.concurrent.ScalaFutures
-import uk.gov.hmrc.mongo.play.json.Codecs
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
-import play.api.libs.json.{JsObject, JsValue, Json}
-import uk.gov.hmrc.mongo.MongoComponent
-import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model.Updates.set
-import org.mongodb.scala.model.{Filters, Updates}
-
-import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
+import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 
 class ToggleDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport with BeforeAndAfter with
@@ -51,22 +44,6 @@ class ToggleDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matche
 
   var toggleDataRepository: ToggleDataRepository = _
 
-  private val toggleDetails1 = ToggleDetails("Toggle-first", Some("Toggle Description 1 "), isEnabled = true)
-  private val toggleDetails2 = ToggleDetails("Toggle-second", Some("Toggle Description 2 "), isEnabled = false)
-
-
-  /*
-  override def beforeAll(): Unit = {
-    when(mockAppConfig.mongoDBAFTBatchesMaxTTL).thenReturn(43200)
-    when(mockAppConfig.mongoDBAFTBatchesTTL).thenReturn(999999)
-    when(mockAppConfig.mongoDBAFTBatchesCollectionName).thenReturn(collectionName)
-    initMongoDExecutable()
-    startMongoD()
-    aftBatchedDataCacheRepository = buildRepository(mongoHost, mongoPort)
-    super.beforeAll()
-  }
-   */
-
   override def beforeAll(): Unit = {
     when(mockAppConfig.get[String](path = "mongodb.pension-administrator-cache.toggle-data.name")).thenReturn("toggle-data")
     initMongoDExecutable()
@@ -75,45 +52,14 @@ class ToggleDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matche
     super.beforeAll()
   }
 
-
-  //  private def mongoCollectionInsert(aftBatchedDataCacheRepository2: AftBatchedDataCacheRepository, id: String,
-  //                                           sessionId: String, seqBatchInfo: Seq[BatchInfo]): Future[Unit] = {
-  //
-  //    def selector(batchType: BatchType, batchNo: Int): Bson = {
-  //      Filters.and(
-  //        Filters.eq(uniqueAftIdKey, id + sessionId),
-  //        Filters.eq(batchTypeKey, batchType.toString),
-  //        Filters.eq(batchNoKey, batchNo)
-  //      )
-  //    }
-  //
-  //    val seqFutureUpdateWriteResult = seqBatchInfo.map { bi =>
-  //      val modifier = Updates.combine(
-  //        set(idKey, id),
-  //        set("id", sessionId),
-  //        set("data", Codecs.toBson(bi.jsValue))
-  //      )
-  //
-  //      val upsertOptions = new FindOneAndUpdateOptions().upsert(true)
-  //      aftBatchedDataCacheRepository2.collection.findOneAndUpdate(
-  //        filter = selector(bi.batchType, bi.batchNo),
-  //        update = modifier,
-  //        upsertOptions
-  //      ).toFuture().map(_ => (): Unit)
-  //
-  //    }
-  //    Future.sequence(seqFutureUpdateWriteResult).map(_ => (): Unit)
-  //  }
-
-
   override def afterAll(): Unit =
     stopMongoD()
 
-  private def upsertJsObject(jsonObjectToInsert: JsObject): Future[Unit] = {
+  private def upsertJsObject(jsonObjectToInsert: JsObject, toggleName: String): Future[Unit] = {
     toggleDataRepository.collection.findOneAndUpdate(
-      filter = Filters.eq("toggleName", "Test-toggle"),
+      filter = Filters.eq("toggleName", toggleName),
       update = Updates.combine(
-        set("toggleName", "Test-toggle"),
+        set("toggleName", toggleName),
         set("toggleDescription", "Test description"),
         set("data", Codecs.toBson(jsonObjectToInsert))
       ), new FindOneAndUpdateOptions().upsert(true)
@@ -128,48 +74,45 @@ class ToggleDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matche
           "toggleName" -> "Test-toggle",
           "toggleDescription" -> "Test description",
           "isEnabled" -> true
-        ))
+        ), "Test-toggle")
+        _ <- upsertJsObject(Json.obj(
+          "toggleName" -> "Test-toggle 2",
+          "toggleDescription" -> "Test description 2",
+          "isEnabled" -> true
+        ), "Test-toggle 2")
         documentsInDB <- toggleDataRepository.getAllFeatureToggles
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.size mustBe 1
+        documentsInDB.size mustBe 2
       }
     }
   }
 
-  //  "upsertFeatureToggle" must {
-  //    "set new FeatureToggles in Mongo collection" in {
-  //
-  //      val documentsInDB = for {
-  //        _ <- toggleDataRepository.collection.drop().toFuture()
-  //        _ <- toggleDataRepository.upsertFeatureToggle(toggleDetails1)
-  //        _ <- toggleDataRepository.upsertFeatureToggle(toggleDetails2)
-  //        documentsInDB <- toggleDataRepository.collection.find[ToggleDetails](Filters.eq("toggleName", "data")).toFuture()
-  //      } yield documentsInDB
-  //
-  //      whenReady(documentsInDB) { documentsInDB =>
-  //        documentsInDB.size mustBe 2
-  //      }
-  //    }
-  //  }
-  //
-  //  "deleteFeatureToggle" must {
-  //    "delete a feature toggle in the Mongo collection" in {
-  //
-  //      val documentsInDB = for {
-  //        _ <- toggleDataRepository.collection.drop().toFuture()
-  //        _ <- toggleDataRepository.upsertFeatureToggle(toggleDetails1)
-  //        _ <- toggleDataRepository.upsertFeatureToggle(toggleDetails2)
-  //        _ <- toggleDataRepository.deleteFeatureToggle(toggleDetails2.toggleName)
-  //        documentsInDB <- toggleDataRepository.collection.find[ToggleDetails](Filters.eq("toggleName", "data")).toFuture()
-  //      } yield documentsInDB
-  //
-  //      whenReady(documentsInDB) { documentsInDB =>
-  //        documentsInDB.size mustBe 1
-  //      }
-  //    }
-  //  }
+  "deleteFeatureToggle" must {
+    "delete a feature toggle in the Mongo collection" in {
+
+      val documentsInDB = for {
+        _ <- toggleDataRepository.collection.drop().toFuture()
+        _ <- upsertJsObject(Json.obj(
+          "toggleName" -> "Test-toggle 1",
+          "toggleDescription" -> "Test description 1",
+          "isEnabled" -> true
+        ), "Test-toggle 1")
+        _ <- upsertJsObject(Json.obj(
+          "toggleName" -> "Test-toggle 2",
+          "toggleDescription" -> "Test description 2",
+          "isEnabled" -> false
+        ), "Test-toggle 2")
+        _ <- toggleDataRepository.deleteFeatureToggle("Test-toggle 2")
+        documentsInDB <- toggleDataRepository.collection.countDocuments().toFuture()
+      } yield documentsInDB
+
+      whenReady(documentsInDB) { documentsInDB =>
+        documentsInDB mustBe 1L
+      }
+    }
+  }
 }
 
 object ToggleDataRepositorySpec extends AnyWordSpec with MockitoSugar {
