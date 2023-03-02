@@ -17,6 +17,7 @@
 package repositories
 
 import com.mongodb.client.model.FindOneAndUpdateOptions
+import models.ToggleDetails
 import org.mockito.Mockito._
 import org.mongodb.scala.model.Updates.set
 import org.mongodb.scala.model.{Filters, Updates}
@@ -43,6 +44,8 @@ class ToggleDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matche
   import ToggleDataRepositorySpec._
 
   var toggleDataRepository: ToggleDataRepository = _
+
+  private val toggleDetails = ToggleDetails("Test-feature-toggle", Some("Test description"), true)
 
   override def beforeAll(): Unit = {
     when(mockAppConfig.get[String](path = "mongodb.pension-administrator-cache.toggle-data.name")).thenReturn("toggle-data")
@@ -85,6 +88,20 @@ class ToggleDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matche
 
       whenReady(documentsInDB) { documentsInDB =>
         documentsInDB.size mustBe 2
+      }
+    }
+  }
+
+  "upsertFeatureToggle" must {
+    "create a new FeatureToggle in the Mongo collection" in {
+      val documentsInDB = for {
+        _ <- toggleDataRepository.collection.drop().toFuture()
+        _ <- toggleDataRepository.upsertFeatureToggle(toggleDetails)
+        documentsInDB <- toggleDataRepository.collection.find().toFuture()
+      } yield documentsInDB
+
+      whenReady(documentsInDB) { documentsInDB =>
+        documentsInDB.size mustBe 1
       }
     }
   }

@@ -18,7 +18,6 @@ package repositories
 
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import org.mongodb.scala.bson.conversions.Bson
 import models.ToggleDetails
 import org.mongodb.scala.model.Updates.set
 import org.mongodb.scala.model._
@@ -80,19 +79,10 @@ class ToggleDataRepository @Inject()(
   }
 
   def getAllFeatureToggles: Future[Seq[ToggleDetails]] = {
-    println("\nOOOO")
     collection.find[JsValue].toFuture().map {
       seqJsValue =>
-        println("\nOOOOdsdsd")
         seqJsValue map {
-
-          jsVal =>
-
-            println( "\n>>>" + jsVal)
-
-            val rr = (jsVal \ "data").asOpt[ToggleDetails]
-            println( "\n>>222>" + rr)
-            rr
+          jsVal => (jsVal \ "data").asOpt[ToggleDetails]
         }
     }.map {
       _.flatMap {
