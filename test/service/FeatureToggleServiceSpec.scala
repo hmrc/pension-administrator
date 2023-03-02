@@ -47,7 +47,12 @@ class FeatureToggleServiceSpec
   val adminDataRepository: AdminDataRepository = mock[AdminDataRepository]
   val toggleDataRepository: ToggleDataRepository = mock[ToggleDataRepository]
 
-  private val toggleDetails = ToggleDetails("Toggle-name", Some("Toggle description"), true)
+  private val toggleDetails1 = ToggleDetails("Toggle-name1", Some("Toggle description1"), isEnabled = true)
+  private val toggleDetails2 = ToggleDetails("Toggle-name2", Some("Toggle description2"), isEnabled = false)
+  private val toggleDetails3 = ToggleDetails("Toggle-name3", Some("Toggle description3"), isEnabled = true)
+  private val toggleDetails4 = ToggleDetails("Toggle-name4", Some("Toggle description4"), isEnabled = false)
+
+  private val seqToggleDetails = Seq(toggleDetails1, toggleDetails2, toggleDetails3, toggleDetails4)
 
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
@@ -98,21 +103,6 @@ class FeatureToggleServiceSpec
     }
   }
 
-//  "When set works in the repo returns a success result for the toggle data" in {
-//    when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(Seq.empty))
-//    when(toggleDataRepository.upsertFeatureToggle(any())).thenReturn(Future.successful(()))
-//
-//    val OUT = app.injector.instanceOf[FeatureToggleService]
-//
-//    whenReady(OUT.upsertFeatureToggle(toggleDetails)) {
-//      result =>
-//        result mustBe()
-//        val captor = ArgumentCaptor.forClass(classOf[ToggleDetails])
-//        verify(toggleDataRepository, times(1)).upsertFeatureToggle(captor.capture())
-//        captor.getValue must contain(toggleDetails)
-//    }
-//  }
-
   "When getAll is called returns all of the toggles from the repo" in {
     val OUT = app.injector.instanceOf[FeatureToggleService]
     OUT.getAll.futureValue mustBe Seq(
@@ -129,21 +119,52 @@ class FeatureToggleServiceSpec
     OUT.get(UpdateClientReference).futureValue mustBe Disabled(UpdateClientReference)
   }
 
-  "When a toggle doesn't exist in the repo, return empty Seq for toggle data repository" in {
-    when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(Seq.empty))
-    val OUT = app.injector.instanceOf[FeatureToggleService]
-    OUT.getAllFeatureToggles.futureValue mustBe Seq.empty
-  }
-
   "When a toggle exists in the repo, override default" in {
     when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq(Enabled(UpdateClientReference))))
     val OUT = app.injector.instanceOf[FeatureToggleService]
     OUT.get(UpdateClientReference).futureValue mustBe Enabled(UpdateClientReference)
   }
 
-  "When a toggle exists in the repo, get it" in {
-    when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(Seq(toggleDetails)))
+  "When upsertFeatureToggle works in the repo, it returns a success result for the toggle data" in {
+    when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(Seq.empty))
+    when(toggleDataRepository.upsertFeatureToggle(any())).thenReturn(Future.successful(()))
+
     val OUT = app.injector.instanceOf[FeatureToggleService]
-    OUT.getAllFeatureToggles.futureValue mustBe toggleDetails
+
+    whenReady(OUT.upsertFeatureToggle(toggleDetails1)) {
+      result =>
+        result mustBe()
+        val captor = ArgumentCaptor.forClass(classOf[ToggleDetails])
+        verify(toggleDataRepository, times(1)).upsertFeatureToggle(captor.capture())
+        captor.getValue mustBe toggleDetails1
+    }
+  }
+
+  "When deleteToggle works in the repo, it returns a success result for the toggle data" in {
+    when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(Seq.empty))
+    when(toggleDataRepository.upsertFeatureToggle(any())).thenReturn(Future.successful(()))
+    when(toggleDataRepository.deleteFeatureToggle(any())).thenReturn(Future.successful(()))
+
+    val OUT = app.injector.instanceOf[FeatureToggleService]
+
+    whenReady(OUT.deleteToggle(toggleDetails1.toggleName)) {
+      result =>
+        result mustBe()
+        val captor = ArgumentCaptor.forClass(classOf[String])
+        verify(toggleDataRepository, times(1)).deleteFeatureToggle(captor.capture())
+        captor.getValue mustBe toggleDetails1.toggleName
+    }
+  }
+
+  "When getAllFeatureToggles is called returns all of the toggles from the repo" in {
+    when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(seqToggleDetails))
+    val OUT = app.injector.instanceOf[FeatureToggleService]
+    OUT.getAllFeatureToggles.futureValue mustBe seqToggleDetails
+  }
+
+  "When a toggle doesn't exist in the repo, return empty Seq for toggle data repository" in {
+    when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(Seq.empty))
+    val OUT = app.injector.instanceOf[FeatureToggleService]
+    OUT.getAllFeatureToggles.futureValue mustBe Seq.empty
   }
 }
