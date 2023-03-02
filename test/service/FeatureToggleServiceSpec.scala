@@ -46,6 +46,7 @@ class FeatureToggleServiceSpec
 
   val adminDataRepository: AdminDataRepository = mock[AdminDataRepository]
   val toggleDataRepository: ToggleDataRepository = mock[ToggleDataRepository]
+  val OUT = app.injector.instanceOf[FeatureToggleService]
 
   private val toggleDetails1 = ToggleDetails("Toggle-name1", Some("Toggle description1"), isEnabled = true)
   private val toggleDetails2 = ToggleDetails("Toggle-name2", Some("Toggle description2"), isEnabled = false)
@@ -91,7 +92,6 @@ class FeatureToggleServiceSpec
     when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
     when(adminDataRepository.setFeatureToggles(any())).thenReturn(Future.successful(()))
 
-    val OUT = app.injector.instanceOf[FeatureToggleService]
     val toggleName = arbitrary[FeatureToggleName].sample.value
 
     whenReady(OUT.set(toggleName = toggleName, enabled = true)) {
@@ -104,7 +104,6 @@ class FeatureToggleServiceSpec
   }
 
   "When getAll is called returns all of the toggles from the repo" in {
-    val OUT = app.injector.instanceOf[FeatureToggleService]
     OUT.getAll.futureValue mustBe Seq(
       Disabled(UpdateClientReference),
       Disabled(PsaFromIvToPdv),
@@ -115,21 +114,17 @@ class FeatureToggleServiceSpec
 
   "When a toggle doesn't exist in the repo, return default" in {
     when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq.empty))
-    val OUT = app.injector.instanceOf[FeatureToggleService]
     OUT.get(UpdateClientReference).futureValue mustBe Disabled(UpdateClientReference)
   }
 
   "When a toggle exists in the repo, override default" in {
     when(adminDataRepository.getFeatureToggles).thenReturn(Future.successful(Seq(Enabled(UpdateClientReference))))
-    val OUT = app.injector.instanceOf[FeatureToggleService]
     OUT.get(UpdateClientReference).futureValue mustBe Enabled(UpdateClientReference)
   }
 
   "When upsertFeatureToggle works in the repo, it returns a success result for the toggle data" in {
     when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(Seq.empty))
     when(toggleDataRepository.upsertFeatureToggle(any())).thenReturn(Future.successful(()))
-
-    val OUT = app.injector.instanceOf[FeatureToggleService]
 
     whenReady(OUT.upsertFeatureToggle(toggleDetails1)) {
       result =>
@@ -145,8 +140,6 @@ class FeatureToggleServiceSpec
     when(toggleDataRepository.upsertFeatureToggle(any())).thenReturn(Future.successful(()))
     when(toggleDataRepository.deleteFeatureToggle(any())).thenReturn(Future.successful(()))
 
-    val OUT = app.injector.instanceOf[FeatureToggleService]
-
     whenReady(OUT.deleteToggle(toggleDetails1.toggleName)) {
       result =>
         result mustBe()
@@ -158,13 +151,11 @@ class FeatureToggleServiceSpec
 
   "When getAllFeatureToggles is called returns all of the toggles from the repo" in {
     when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(seqToggleDetails))
-    val OUT = app.injector.instanceOf[FeatureToggleService]
     OUT.getAllFeatureToggles.futureValue mustBe seqToggleDetails
   }
 
   "When a toggle doesn't exist in the repo, return empty Seq for toggle data repository" in {
     when(toggleDataRepository.getAllFeatureToggles).thenReturn(Future.successful(Seq.empty))
-    val OUT = app.injector.instanceOf[FeatureToggleService]
     OUT.getAllFeatureToggles.futureValue mustBe Seq.empty
   }
 }
