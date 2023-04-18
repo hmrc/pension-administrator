@@ -39,6 +39,12 @@ object PensionSchemeAdministratorDeclarationType {
     val declarationOutput = PensionSchemeAdministratorDeclarationType(declarationSectionOneToFour, declarationSectionOneToFour,
       declarationSectionOneToFour, declarationSectionOneToFour, None, None, declarationSectionSeven, None, isChanged)
 
+    /*
+      If the scheme registration toggle has been switched on then the possible values here are as follows:-
+        "taskList" means "I have working knowledge"
+        "whatyouWillNeed" means "I do not have working knowledge"
+      When the toggle is removed then these values can also be removed.
+     */
     if (workingKnowledge == "workingKnowledge" || workingKnowledge == "taskList") {
       declarationOutput.copy(box5 = Some(true))
     }
