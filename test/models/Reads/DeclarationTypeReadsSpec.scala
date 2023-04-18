@@ -69,7 +69,17 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
         "set as 'workingKnowledge'" in {
           val result = declaration.as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
 
-          result.box5.value mustBe true
+          result.box5 mustBe Some(true)
+          result.box6 mustBe None
+        }
+
+        "set as 'taskList' (have working knowledge when psa registration toggle is on)" in {
+          val declaration = Json.obj("declaration" -> JsBoolean(true), "declarationFitAndProper" -> JsBoolean(true),
+            "declarationWorkingKnowledge" -> JsString("taskList"))
+          val result = declaration.as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+
+          result.box5 mustBe Some(true)
+          result.box6 mustBe None
         }
 
         "set as 'adviser'" in {
@@ -77,7 +87,17 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
 
           val result = (declaration + adviserDeclaration).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
 
-          result.box6.value mustBe true
+          result.box5 mustBe None
+          result.box6 mustBe Some(true)
+        }
+
+        "set as 'whatyouWillNeed' (I don't have working knowledge when psa registration toggle is on)" in {
+          val adviserDeclaration = "declarationWorkingKnowledge" -> JsString("whatyouWillNeed")
+
+          val result = (declaration + adviserDeclaration).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+
+          result.box5 mustBe None
+          result.box6 mustBe Some(true)
         }
 
         "set as 'adviser' containing adviser details" in {
@@ -93,7 +113,26 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
           val result = (declaration + workingKnowledge + adviserName + adviserEmail + adviserPhone + adviserAddress).as[PensionSchemeAdministratorDeclarationType](
             PensionSchemeAdministratorDeclarationType.apiReads)
 
-          result.box6.value mustBe true
+          result.box5 mustBe None
+          result.box6 mustBe Some(true)
+          result.pensionAdvisorDetail.value mustBe pensionAdviserSample
+        }
+
+        "set as 'whatyouWillNeed' (I don't have working knowledge when psa registration toggle is on) containing adviser details" in {
+          val adviserName = "adviserName" -> JsString("John")
+          val adviserPhone = "adviserPhone" -> JsString("07592113")
+          val adviserEmail = "adviserEmail" -> JsString("test@test.com")
+
+          val adviserAddress = "adviserAddress" -> Json.obj("addressLine1" -> JsString("line1"),
+            "addressLine2" -> JsString("line2"), "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"),
+            "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))
+
+          val workingKnowledge = "declarationWorkingKnowledge" -> JsString("whatyouWillNeed")
+          val result = (declaration + workingKnowledge + adviserName + adviserEmail + adviserPhone + adviserAddress).as[PensionSchemeAdministratorDeclarationType](
+            PensionSchemeAdministratorDeclarationType.apiReads)
+
+          result.box5 mustBe None
+          result.box6 mustBe Some(true)
           result.pensionAdvisorDetail.value mustBe pensionAdviserSample
         }
       }

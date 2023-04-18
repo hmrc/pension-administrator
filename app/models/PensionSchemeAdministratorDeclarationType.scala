@@ -39,7 +39,7 @@ object PensionSchemeAdministratorDeclarationType {
     val declarationOutput = PensionSchemeAdministratorDeclarationType(declarationSectionOneToFour, declarationSectionOneToFour,
       declarationSectionOneToFour, declarationSectionOneToFour, None, None, declarationSectionSeven, None, isChanged)
 
-    if (workingKnowledge == "workingKnowledge") {
+    if (workingKnowledge == "workingKnowledge" || workingKnowledge == "taskList") {
       declarationOutput.copy(box5 = Some(true))
     }
     else {
