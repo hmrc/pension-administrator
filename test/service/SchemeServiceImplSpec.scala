@@ -16,31 +16,42 @@
 
 package service
 
-import audit.{PSAChanges, PSASubscription, SchemeAuditService, StubSuccessfulAuditService}
-import base.SpecBase
+import audit._
+import connectors.DesConnector
 import models.PensionSchemeAdministrator
-import org.scalatest.EitherValues
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito._
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.{BeforeAndAfterEach, EitherValues}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
+import repositories.MinimalDetailsCacheRepository
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 import utils.FakeDesConnector
 
 import scala.concurrent.Future
 
-class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues {
+class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with MockitoSugar with BeforeAndAfterEach {
 
   import SchemeServiceImplSpec._
   import utils.FakeDesConnector._
 
+  override def beforeEach(): Unit = {
+    reset(minimalDetailsCacheRepository)
+  }
+
   "registerPSA" should "return the result from the connector" in {
 
-    val fixture = testFixture()
+    val schemeService: SchemeService = app.injector.instanceOf[SchemeServiceImpl]
 
-    fixture.schemeService.registerPSA(psaJson).map {
+    schemeService.registerPSA(psaJson).map {
       httpResponse =>
         httpResponse.value shouldBe registerPsaResponseJson
     }
@@ -49,22 +60,22 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
   it should "throw BadRequestException if the JSON cannot be parsed as PensionSchemeAdministrator" in {
 
-    val fixture = testFixture()
+    val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
 
     recoverToSucceededIf[BadRequestException] {
-      fixture.schemeService.registerPSA(Json.obj())
+      schemeService.registerPSA(Json.obj())
     }
 
   }
 
   it should "send an audit event on success" in {
 
-    val fixture = testFixture()
+    val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
     val requestJson = registerPsaRequestJson(psaJson)
 
-    fixture.schemeService.registerPSA(psaJson).map {
+    schemeService.registerPSA(psaJson).map {
       httpResponse =>
-        fixture.auditService.lastEvent shouldBe
+        fakeAuditService.lastEvent shouldBe
           Some(
             PSASubscription(
               existingUser = false,
@@ -80,14 +91,14 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
   it should "send an audit event on failure" in {
 
-    val fixture = testFixture()
+    val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
     val requestJson = registerPsaRequestJson(psaJson)
 
-    fixture.schemeConnector.setRegisterPsaResponse(Future.successful(Left(new BadRequestException("bad request"))))
+    fakeSchemeConnector.setRegisterPsaResponse(Future.successful(Left(new BadRequestException("bad request"))))
 
-    fixture.schemeService.registerPSA(psaJson).map {
+    schemeService.registerPSA(psaJson).map {
       _ =>
-        fixture.auditService.lastEvent shouldBe
+        fakeAuditService.lastEvent shouldBe
           Some(
             PSASubscription(
               existingUser = false,
@@ -102,11 +113,13 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
   }
 
   "updatePSA" should "return the result from the connector" in {
+    when(minimalDetailsCacheRepository.remove(ArgumentMatchers.eq(psaId))(any())).thenReturn(Future.successful(true))
 
-    val fixture = testFixture()
+    val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
 
-    fixture.schemeService.updatePSA(psaId, psaJson).map {
+    schemeService.updatePSA(psaId, psaJson).map {
       httpResponse =>
+        verify(minimalDetailsCacheRepository, times(1)).remove(ArgumentMatchers.eq(psaId))(any())
         httpResponse.value shouldBe updatePsaResponseJson
     }
 
@@ -114,23 +127,28 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
   it should "throw BadRequestException if the JSON cannot be parsed as PensionSchemeAdministrator" in {
 
-    val fixture = testFixture()
-
-    recoverToSucceededIf[BadRequestException] {
-      fixture.schemeService.updatePSA(psaId, Json.obj())
+    val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
+    recoverToExceptionIf[BadRequestException] {
+      schemeService.updatePSA(psaId, Json.obj())
+    }.map { _ =>
+      verify(minimalDetailsCacheRepository, never()).remove(any())(any())
+      assert(true)
     }
 
   }
 
   it should "send an audit event on success" in {
 
-    val fixture = testFixture()
+    when(minimalDetailsCacheRepository.remove(ArgumentMatchers.eq(psaId))(any())).thenReturn(Future.successful(true))
+
+    val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
 
     val requestJson = updatePsaRequestJson(psaJson)
 
-    fixture.schemeService.updatePSA(psaId, psaJson).map {
+    schemeService.updatePSA(psaId, psaJson).map {
       httpResponse =>
-        fixture.auditService.lastEvent shouldBe
+        verify(minimalDetailsCacheRepository, times(1)).remove(ArgumentMatchers.eq(psaId))(any())
+        fakeAuditService.lastEvent shouldBe
           Some(
             PSAChanges(
               legalStatus = "test-legal-status",
@@ -145,14 +163,15 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
   it should "send an audit event on failure" in {
 
-    val fixture = testFixture()
+    val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
     val requestJson = updatePsaRequestJson(psaJson)
 
-    fixture.schemeConnector.setUpdatePsaResponse(Future.successful(Left(new BadRequestException("bad request"))))
+    fakeSchemeConnector.setUpdatePsaResponse(Future.successful(Left(new BadRequestException("bad request"))))
 
-    fixture.schemeService.updatePSA(psaId, psaJson).map {
+    schemeService.updatePSA(psaId, psaJson).map {
       _ =>
-        fixture.auditService.lastEvent shouldBe
+        verify(minimalDetailsCacheRepository, never()).remove(any())(any())
+        fakeAuditService.lastEvent shouldBe
           Some(
             PSAChanges(
               legalStatus = "test-legal-status",
@@ -167,17 +186,19 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
 }
 
-object SchemeServiceImplSpec extends SpecBase {
+object SchemeServiceImplSpec extends MockitoSugar {
 
-  trait TestFixture {
-    val schemeConnector: FakeDesConnector = new FakeDesConnector()
-    val auditService: StubSuccessfulAuditService = new StubSuccessfulAuditService()
-    val schemeAuditService: SchemeAuditService = new SchemeAuditService()
-    val schemeService: SchemeServiceImpl = new SchemeServiceImpl(schemeConnector, auditService, schemeAuditService) {
-    }
-  }
+  val fakeSchemeConnector: FakeDesConnector = new FakeDesConnector()
+  val minimalDetailsCacheRepository: MinimalDetailsCacheRepository = mock[MinimalDetailsCacheRepository]
+  val fakeAuditService: StubSuccessfulAuditService = new StubSuccessfulAuditService()
 
-  def testFixture(): TestFixture = new TestFixture {}
+  private val app = new GuiceApplicationBuilder()
+    .overrides(
+      bind[MinimalDetailsCacheRepository].toInstance(minimalDetailsCacheRepository),
+      bind[DesConnector].toInstance(fakeSchemeConnector),
+      bind[AuditService].toInstance(fakeAuditService)
+    )
+    .build()
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
