@@ -23,6 +23,7 @@ import models.PensionSchemeAdministrator
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
+import repositories.MinimalDetailsCacheRepository
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException}
 import utils.ValidationUtils._
 
@@ -31,7 +32,8 @@ import scala.util.{Failure, Success, Try}
 
 class SchemeServiceImpl @Inject()(desConnector: DesConnector,
                                   auditService: AuditService,
-                                  schemeAuditService: SchemeAuditService) extends SchemeService {
+                                  schemeAuditService: SchemeAuditService,
+                                  minimalDetailsCacheRepository: MinimalDetailsCacheRepository) extends SchemeService {
 
   private val logger = Logger(classOf[SchemeServiceImpl])
 
@@ -54,8 +56,14 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
     convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
       val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaUpdateWrites)
       logger.debug(s"[PSA-Variation-Outgoing-Payload]$psaJsValue")
-      desConnector.updatePSA(psaId, psaJsValue) andThen
-        schemeAuditService.sendPSAChangeEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
+      val result = for {
+        apiCallResult <- desConnector.updatePSA(psaId, psaJsValue)
+        internalResult <- apiCallResult match {
+          case Right(_) => minimalDetailsCacheRepository.remove(psaId).map(_ => apiCallResult)
+          case _ => Future.successful(apiCallResult)
+        }
+      } yield internalResult
+      result andThen schemeAuditService.sendPSAChangeEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
     }
   }
 
