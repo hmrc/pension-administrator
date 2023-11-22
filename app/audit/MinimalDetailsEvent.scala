@@ -34,7 +34,7 @@ case class MinimalDetailsEvent(
   override def details: Map[String, String] =
     Map(
       "idType" -> idType,
-      "idType" -> idValue,
+      "idValue" -> idValue,
       "name" -> name.getOrElse(""),
       "isPsaSuspended" -> isSuspended.fold("")(_.toString),
       "rlsFlag" -> rlsFlag.fold("")(_.toString),
