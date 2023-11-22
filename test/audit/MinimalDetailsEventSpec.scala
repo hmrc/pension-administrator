@@ -39,7 +39,7 @@ class MinimalDetailsEventSpec extends AnyFlatSpec with Matchers {
 
     val expected: Map[String, String] = Map(
       "idType" -> "PSAID",
-      "idType" -> "A2500001",
+      "idValue" -> "A2500001",
       "name" -> "John Doe",
       "isPsaSuspended" -> "false",
       "rlsFlag" -> "false",
