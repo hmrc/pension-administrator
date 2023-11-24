@@ -17,7 +17,7 @@
 package connectors
 
 import audit._
-import com.google.inject.{Inject, ImplementedBy}
+import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.registrationnoid._
@@ -27,9 +27,10 @@ import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{HttpClient, _}
-import utils.{ErrorHandler, InvalidPayloadHandler, HttpResponseHelper}
+import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 @ImplementedBy(classOf[RegistrationConnectorImpl])
 trait RegistrationConnector {
@@ -89,8 +90,16 @@ class RegistrationConnectorImpl @Inject()(
       handleResponse[SuccessResponse](_, registerWithIdUrl,schema, registerData,  "Business Partner Matching")
     } andThen sendPSARegistrationEvent(
       withId = true, user, psaType, registerData, withIdIsUk
-    )(auditService.sendEvent) andThen logWarning("registerWithIdOrganisation")
+    )(auditService.sendEvent) andThen logWarningWithoutNotFound("registerWithIdOrganisation")
 
+  }
+
+  def logWarningWithoutNotFound[A](endpoint: String): PartialFunction[Try[Either[HttpException, A]], Unit] = {
+    case Success(Left(_: NotFoundException)) => () //Don't log 404 responses as warnings.
+    case Success(Left(e: HttpException)) =>
+      logger.warn(s"$endpoint received error response from DES", e)
+    case Failure(e) =>
+      logger.error(s"$endpoint received error response from DES", e)
   }
 
   override def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)
