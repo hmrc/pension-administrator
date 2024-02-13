@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,19 +68,14 @@ class AssociationConnectorImpl @Inject()(
                                 (implicit
                                  headerCarrier: HeaderCarrier,
                                  ec: ExecutionContext,
-                                 request: RequestHeader): Future[Either[HttpException, MinimalDetails]] =
-    retrieveMinimalDetails(idValue, idType, regime) andThen logWarning("IF PSA minimal details")
-
-  private def retrieveMinimalDetails(idValue: String, idType: String, regime: String)
-                                    (implicit ec: ExecutionContext,
-                                     request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
+                                 request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
       headerUtils.integrationFrameworkHeader)
     val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(regime, idType, idValue)
     httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
       implicitly) map {
       handleResponseIF(_, minimalDetailsUrl)
-    } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent)
+    } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
   }
 
   private def handleResponseIF(response: HttpResponse, url: String): Either[HttpException, MinimalDetails] = {
@@ -97,6 +92,10 @@ class AssociationConnectorImpl @Inject()(
             logger.debug(s"Get minimal details from IF transformed model: $value")
             Right(value)
           }
+        )
+      case FORBIDDEN if response.body.contains("DELIMITED_PSPID") || response.body.contains("DELIMITED_PSAID") =>
+        Left(
+          new HttpException(response.body, FORBIDDEN)
         )
       case _ =>
         Left(handleErrorResponse("Minimal details", url, response, badResponseSeq))
