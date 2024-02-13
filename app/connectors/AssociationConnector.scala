@@ -29,6 +29,7 @@ import uk.gov.hmrc.http.{BadRequestException, HttpClient, _}
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Try}
 
 @ImplementedBy(classOf[AssociationConnectorImpl])
 trait AssociationConnector {
@@ -78,6 +79,11 @@ class AssociationConnectorImpl @Inject()(
     } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
   }
 
+  override def logWarning[A](endpoint: String): PartialFunction[Try[Either[Throwable, A]], Unit] = {
+    case Failure(e) =>
+      logger.error(s"$endpoint received error response from DES", e)
+  }
+
   private def handleResponseIF(response: HttpResponse, url: String): Either[HttpException, MinimalDetails] = {
     val badResponseSeq = Seq("INVALID_IDTYPE", "INVALID_PAYLOAD", "INVALID_CORRELATIONID", "INVALID_REGIME")
     response.status match {
@@ -86,7 +92,7 @@ class AssociationConnectorImpl @Inject()(
         response.json.validate[MinimalDetails](MinimalDetails.minimalDetailsIFReads).fold(
           _ => {
             invalidPayloadHandler.logFailures("/resources/schemas/getMinDetails1442.json")(response.json)
-            Left(new BadRequestException("INVALID PAYLOAD"))
+            throw new BadRequestException("INVALID PAYLOAD")
           },
           value => {
             logger.debug(s"Get minimal details from IF transformed model: $value")
