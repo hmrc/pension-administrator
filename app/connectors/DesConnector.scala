@@ -236,7 +236,7 @@ class DesConnectorImpl @Inject()(
 
     val temporaryMappingTest = json.transform(psaSubscriptionDetailsTransformer.transformToUserAnswers)
     if (temporaryMappingTest.isSuccess)
-      logger.warn("PensionAdministratorSuccessfulMapToUserAnswers")
+      logger.info("PensionAdministratorSuccessfulMapToUserAnswers")
     else {
       logger.warn(s"PensionAdministratorFailedMapToUserAnswers - [$temporaryMappingTest]")
     }
