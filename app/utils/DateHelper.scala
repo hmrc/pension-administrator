@@ -16,13 +16,13 @@
 
 package utils
 
-import org.joda.time.LocalDate
-import org.joda.time.format.DateTimeFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 object DateHelper {
 
   def formatDate(date: LocalDate): String = {
-    val dateFormat = DateTimeFormat.forPattern("d MMMM yyyy")
-    dateFormat.print(date)
+    val dateFormat = DateTimeFormatter.ofPattern("d MMMM yyyy")
+    dateFormat.format(date)
   }
 }

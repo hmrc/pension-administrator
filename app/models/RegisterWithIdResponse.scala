@@ -17,14 +17,14 @@
 package models
 
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, Json, Writes}
+import play.api.libs.json.{JsPath, Json, OFormat, Reads, Writes}
 
 case class OrganisationType(organisationName: String,
                             isAGroup: Option[Boolean] = None,
                             organisationType: Option[OrganisationTypeEnum.OrganisationType] = None)
 
 object OrganisationType {
-  implicit val formats = Json.format[OrganisationType]
+  implicit val formats: OFormat[OrganisationType] = Json.format[OrganisationType]
 }
 
 case class IndividualType(firstName: String,
@@ -33,7 +33,7 @@ case class IndividualType(firstName: String,
                           dateOfBirth: Option[String] = None)
 
 object IndividualType {
-  implicit val formats = Json.format[IndividualType]
+  implicit val formats: OFormat[IndividualType] = Json.format[IndividualType]
 }
 
 case class ContactCommDetailsType(primaryPhoneNumber: Option[String] = None,
@@ -42,7 +42,7 @@ case class ContactCommDetailsType(primaryPhoneNumber: Option[String] = None,
                                   emailAddress: Option[String] = None)
 
 object ContactCommDetailsType {
-  implicit val formats = Json.format[ContactCommDetailsType]
+  implicit val formats: OFormat[ContactCommDetailsType] = Json.format[ContactCommDetailsType]
 }
 
 case class SuccessResponse(safeId: String,
@@ -54,7 +54,7 @@ case class SuccessResponse(safeId: String,
                            contactDetails: ContactCommDetailsType)
 
 object SuccessResponse {
-  implicit val reads = Json.reads[SuccessResponse]
+  implicit val reads: Reads[SuccessResponse] = Json.reads[SuccessResponse]
   implicit val writes: Writes[SuccessResponse] = (
     (JsPath \ "safeId").write[String] and
       (JsPath \ "sapNumber").write[String] and

@@ -16,7 +16,7 @@
 
 package models
 
-import org.joda.time.DateTime
+import java.time.LocalDateTime
 import play.api.libs.json.{JsPath, Json, Reads}
 import utils.{Enumerable, WithName}
 import play.api.libs.json._
@@ -39,18 +39,16 @@ case object PermanentBounce extends WithName("PermanentBounce") with Event
 case object Opened extends WithName("Opened") with Event
 case object Complained extends WithName("Complained") with Event
 
-case class EmailEvent(event: Event, detected: DateTime)
+case class EmailEvent(event: Event, detected: LocalDateTime)
 
 object EmailEvent {
 
-  import uk.gov.hmrc.http.controllers.RestFormats.dateTimeWrite
-
   implicit val read: Reads[EmailEvent] = {
-    ((JsPath \ "event").read[Event] and ((JsPath \ "detected").read[String] map DateTime.parse))(EmailEvent.apply _)
+    ((JsPath \ "event").read[Event] and ((JsPath \ "detected").read[String] map LocalDateTime.parse))(EmailEvent.apply _)
   }
 
   implicit val write: Writes[EmailEvent] = (
-    (JsPath \ "event").write[Event] and (JsPath \ "detected").write[DateTime]
+    (JsPath \ "event").write[Event] and (JsPath \ "detected").write[LocalDateTime]
   ) ( emailEvent => (emailEvent.event, emailEvent.detected) )
 
 }
@@ -58,5 +56,5 @@ object EmailEvent {
 case class EmailEvents(events: Seq[EmailEvent])
 
 object EmailEvents {
-  implicit val format = Json.format[EmailEvents]
+  implicit val format: OFormat[EmailEvents] = Json.format[EmailEvents]
 }

@@ -17,7 +17,6 @@
 package repositories
 
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import org.joda.time.{DateTime, DateTimeZone}
 import org.mongodb.scala.bson.BsonBinary
 import org.mongodb.scala.model._
 import play.api.libs.json._
@@ -27,10 +26,10 @@ import repositories.ManageCacheEntry.{DataEntry, JsonDataEntry, ManageCacheEntry
 import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, PlainText, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
-import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.nio.charset.StandardCharsets
+import java.time.{LocalDateTime, ZoneId}
 import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -38,29 +37,26 @@ object ManageCacheEntry {
 
   sealed trait ManageCacheEntry
 
-  case class DataEntry(id: String, data: BsonBinary, lastUpdated: DateTime) extends ManageCacheEntry
+  case class DataEntry(id: String, data: BsonBinary, lastUpdated: LocalDateTime) extends ManageCacheEntry
 
-  case class JsonDataEntry(id: String, data: JsValue, lastUpdated: DateTime) extends ManageCacheEntry
+  case class JsonDataEntry(id: String, data: JsValue, lastUpdated: LocalDateTime) extends ManageCacheEntry
 
   object DataEntry {
-    def apply(id: String, data: Array[Byte], lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)): DataEntry =
+    def apply(id: String, data: Array[Byte], lastUpdated: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC"))): DataEntry =
       DataEntry(id, BsonBinary(data), lastUpdated)
 
     final val bsonBinaryReads: Reads[BsonBinary] = byteArrayReads.map(t => BsonBinary(t))
     final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(t => t.getData)
     implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
 
-    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
     implicit val format: Format[DataEntry] = Json.format[DataEntry]
   }
 
   object JsonDataEntry {
-    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
     implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 
   object ManageCacheEntryFormats {
-    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
     implicit val format: Format[ManageCacheEntry] = Json.format[ManageCacheEntry]
 
     val dataKey: String = "data"
@@ -115,7 +111,7 @@ abstract class ManageCacheRepository(
       val setOperation = Updates.combine(
         Updates.set(idField, id),
         Updates.set(dataKey, Codecs.toBson(data)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(DateTime.now(DateTimeZone.UTC)))
+        Updates.set(lastUpdatedKey, Codecs.toBson(LocalDateTime.now(ZoneId.of("UTC"))))
       )
       collection.withDocumentClass[JsonDataEntry]().findOneAndUpdate(
         filter = Filters.eq(idField, id),
@@ -143,7 +139,7 @@ abstract class ManageCacheRepository(
     }
   }
 
-  def getLastUpdated(id: String)(implicit ec: ExecutionContext): Future[Option[DateTime]] = {
+  def getLastUpdated(id: String)(implicit ec: ExecutionContext): Future[Option[LocalDateTime]] = {
     if (encrypted) {
       collection.find[DataEntry](Filters.equal(idField, id)).headOption().map {
         _.map {

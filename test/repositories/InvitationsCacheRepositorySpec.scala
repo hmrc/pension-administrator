@@ -18,7 +18,6 @@ package repositories
 
 import com.typesafe.config.Config
 import models.{Invitation, SchemeReferenceNumber}
-import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Mockito._
 import org.mongodb.scala.model.Filters
 import org.scalatest.BeforeAndAfterAll
@@ -33,6 +32,7 @@ import repositories.InvitationsCacheEntry.{DataEntry, JsonDataEntry}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.mongo.MongoComponent
 
+import java.time.{LocalDateTime, ZoneId}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport
@@ -57,7 +57,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
 
       val filters = Filters.and(Filters.eq("inviteePsaId", "A2500002"), Filters.eq("pstr", "pstr"))
       val documentsInDB = for {
@@ -77,9 +77,9 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
       val record2 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")).plusDays(1))
       val filters = Filters.and(Filters.eq("inviteePsaId", "A2500002"), Filters.eq("pstr", "pstr"))
 
       val documentsInDB = for {
@@ -102,9 +102,9 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
       val record2 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A9876543"), PsaId("A9876544"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
+        PsaId("A9876543"), PsaId("A9876544"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")).plusDays(1))
 
       val documentsInDB = for {
         _ <- invitationsCacheRepository.collection.drop().toFuture()
@@ -124,9 +124,9 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr1", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
       val record2 = Invitation(SchemeReferenceNumber("id"), "pstr2", "schemeName",
-        PsaId("A9876543"), PsaId("A9876544"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
+        PsaId("A9876543"), PsaId("A9876544"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")).plusDays(1))
 
       val documentsInDB = for {
         _ <- invitationsCacheRepository.collection.drop().toFuture()
@@ -146,7 +146,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
       val filters = Filters.and(Filters.eq("inviteePsaId", "qPiTIC6PennxowJl8O5lqw=="), Filters.eq("pstr", "U87ezLMl9HOlyHOsEGXrNg=="))
 
       val documentsInDB = for {
@@ -166,9 +166,9 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
       val record2 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")).plusDays(1))
       val filters = Filters.and(Filters.eq("inviteePsaId", "qPiTIC6PennxowJl8O5lqw=="), Filters.eq("pstr", "U87ezLMl9HOlyHOsEGXrNg=="))
 
       val documentsInDB = for {
@@ -190,9 +190,9 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
       val record2 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A9876543"), PsaId("A9876544"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
+        PsaId("A9876543"), PsaId("A9876544"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")).plusDays(1))
 
       val documentsInDB = for {
         _ <- invitationsCacheRepository.collection.drop().toFuture()
@@ -212,9 +212,9 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr1", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
       val record2 = Invitation(SchemeReferenceNumber("id"), "pstr2", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC).plusDays(1))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")).plusDays(1))
 
       val documentsInDB = for {
         _ <- invitationsCacheRepository.collection.drop().toFuture()
@@ -236,7 +236,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
 
       val documentsInDB = for {
         _ <- invitationsCacheRepository.collection.drop().toFuture()
@@ -254,7 +254,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
 
       val documentsInDB = for {
         _ <- invitationsCacheRepository.collection.drop().toFuture()
@@ -274,7 +274,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
       val filters = Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr")
 
       val documentsInDB = for {
@@ -302,7 +302,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
       val filters = Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr")
 
       val documentsInDB = for {
@@ -330,7 +330,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
       val filters = Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr")
 
       val documentsInDB = for {
@@ -358,7 +358,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
       val record = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", DateTime.now(DateTimeZone.UTC))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", LocalDateTime.now(ZoneId.of("UTC")))
       val filters = Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr")
 
       val documentsInDB = for {

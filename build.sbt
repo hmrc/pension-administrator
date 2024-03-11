@@ -17,7 +17,6 @@
 import AppDependencies.{compile, test}
 import play.sbt.routes.RoutesKeys
 import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
 lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 
@@ -26,8 +25,7 @@ lazy val microservice = Project(AppDependencies.appName, file("."))
   .enablePlugins(PlayScala, SbtDistributablesPlugin)
   .settings(majorVersion := 0)
   .settings(scalaSettings: _*)
-  .settings(scalaVersion := "2.13.8")
-  .settings(publishingSettings: _*)
+  .settings(scalaVersion := "2.13.12")
   .settings(defaultSettings(): _*)
   .settings(libraryDependencies ++= appDependencies)
   .settings(retrieveManaged := true)

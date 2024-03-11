@@ -18,7 +18,7 @@ package models
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json
-import play.api.libs.json.{JsPath, Json, Reads, Writes}
+import play.api.libs.json.{JsPath, Json, OFormat, Reads, Writes}
 
 
 case class PensionSchemeAdministratorDeclarationType(box1: Boolean, box2: Boolean, box3: Boolean, box4: Boolean,
@@ -27,7 +27,7 @@ case class PensionSchemeAdministratorDeclarationType(box1: Boolean, box2: Boolea
                                                      isChanged: Option[Boolean] = None)
 
 object PensionSchemeAdministratorDeclarationType {
-  implicit val formats = Json.format[PensionSchemeAdministratorDeclarationType]
+  implicit val formats: OFormat[PensionSchemeAdministratorDeclarationType] = Json.format[PensionSchemeAdministratorDeclarationType]
 
   val apiReads: Reads[PensionSchemeAdministratorDeclarationType] = (
     (JsPath \ "declaration").read[Boolean] and

@@ -16,7 +16,7 @@
 
 package utils
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import play.api.Logger
 import play.api.http.HttpEntity
 import play.api.libs.json.JsResultException

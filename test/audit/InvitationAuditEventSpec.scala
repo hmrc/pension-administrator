@@ -17,10 +17,11 @@
 package audit
 
 import models._
-import org.joda.time.DateTime
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import uk.gov.hmrc.domain.PsaId
+
+import java.time.LocalDateTime
 
 class InvitationAuditEventSpec extends AnyFlatSpec with Matchers {
 
@@ -31,7 +32,7 @@ class InvitationAuditEventSpec extends AnyFlatSpec with Matchers {
     val pstr = "scheme"
     val schemeName = "ssss"
     val inviteeName = "www"
-    val expireAt = DateTime.now
+    val expireAt = LocalDateTime.now
     val srn = "srn"
     val invitation = Invitation(
       srn = SchemeReferenceNumber(srn),
@@ -40,7 +41,7 @@ class InvitationAuditEventSpec extends AnyFlatSpec with Matchers {
       inviterPsaId = psaId,
       inviteePsaId = psaIdInvitee,
       inviteeName = inviteeName,
-      expireAt: DateTime)
+      expireAt: LocalDateTime)
 
 
     val event = InvitationAuditEvent(
