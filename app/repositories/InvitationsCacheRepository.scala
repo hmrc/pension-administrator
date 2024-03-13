@@ -19,7 +19,6 @@ package repositories
 import com.google.inject.{Inject, Singleton}
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import models.Invitation
-import org.joda.time.{DateTime, DateTimeZone}
 import org.mongodb.scala.bson.BsonBinary
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
@@ -30,10 +29,10 @@ import repositories.InvitationsCacheEntry._
 import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, PlainText, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
-import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.nio.charset.StandardCharsets
+import java.time.{LocalDateTime, ZoneId}
 import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,16 +41,16 @@ object InvitationsCacheEntry {
 
   sealed trait InvitationsCacheEntry
 
-  case class DataEntry(inviteePsaId: String, pstr: String, data: BsonBinary, lastUpdated: DateTime, expireAt: DateTime) extends InvitationsCacheEntry
+  case class DataEntry(inviteePsaId: String, pstr: String, data: BsonBinary, lastUpdated: LocalDateTime, expireAt: LocalDateTime) extends InvitationsCacheEntry
 
-  case class JsonDataEntry(inviteePsaId: String, pstr: String, data: JsValue, lastUpdated: DateTime, expireAt: DateTime) extends InvitationsCacheEntry
+  case class JsonDataEntry(inviteePsaId: String, pstr: String, data: JsValue, lastUpdated: LocalDateTime, expireAt: LocalDateTime) extends InvitationsCacheEntry
 
   object DataEntry {
     def apply(inviteePsaId: String,
               pstr: String,
               data: Array[Byte],
-              lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
-              expireAt: DateTime): DataEntry = {
+              lastUpdated: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC")),
+              expireAt: LocalDateTime): DataEntry = {
 
       DataEntry(inviteePsaId, pstr, BsonBinary(data), lastUpdated, expireAt)
     }
@@ -60,7 +59,6 @@ object InvitationsCacheEntry {
     final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(_.getData)
     implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
 
-    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
     implicit val format: Format[DataEntry] = Json.format[DataEntry]
   }
 
@@ -68,18 +66,16 @@ object InvitationsCacheEntry {
     def applyJsonDataEntry(inviteePsaId: String,
                            pstr: String,
                            data: JsValue,
-                           lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC),
-                           expireAt: DateTime): JsonDataEntry = {
+                           lastUpdated: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC")),
+                           expireAt: LocalDateTime): JsonDataEntry = {
 
       JsonDataEntry(inviteePsaId, pstr, data, lastUpdated, expireAt)
     }
 
-    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
     implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 
   object InvitationsCacheEntryFormats {
-    implicit val dateFormat: Format[DateTime] = MongoJodaFormats.dateTimeFormat
     implicit val format: Format[InvitationsCacheEntry] = Json.format[InvitationsCacheEntry]
 
     val pstrKey = "pstr"

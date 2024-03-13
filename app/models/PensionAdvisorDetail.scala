@@ -22,7 +22,7 @@ import play.api.libs.json._
 case class PensionAdvisorDetail(name: String, addressDetail: Address, contactDetail: ContactDetails)
 
 object PensionAdvisorDetail {
-  implicit val formats = Json.format[PensionAdvisorDetail]
+  implicit val formats: OFormat[PensionAdvisorDetail] = Json.format[PensionAdvisorDetail]
 
   val apiReads: Reads[Option[PensionAdvisorDetail]] = (
     (JsPath \ "adviserName").readNullable[String] and

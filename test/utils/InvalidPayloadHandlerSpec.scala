@@ -16,40 +16,73 @@
 
 package utils
 
-import com.networknt.schema.{ErrorMessageType, ValidationMessage}
+import com.networknt.schema._
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.{JsNull, JsNumber, Json}
 
 import java.text.MessageFormat
 import java.util
+import java.util.function.Supplier
 
 class InvalidPayloadHandlerSpec extends AnyWordSpec with Matchers {
-  private val emt = new ErrorMessageType {
-    override def getErrorCode: String = ""
-
-    override def getMessageFormat: MessageFormat = new MessageFormat("")
+  def mockValidationMessage(messageType: String,
+                            code: String,
+                            evaluationPath: JsonNodePath,
+                            schemaLocation: SchemaLocation,
+                            instanceLocation: JsonNodePath,
+                            property: String,
+                            arguments: Array[Object],
+                            details: util.Map[String, Object],
+                            format: MessageFormat,
+                            message: String,
+                            messageSupplier: Supplier[String],
+                            messageKey: String
+                           ): ValidationMessage = {
+    val vmBuilder = new ValidationMessage.Builder()
+    vmBuilder
+      .`type`(messageType)
+      .code(code)
+      .evaluationPath(evaluationPath)
+      .schemaLocation(schemaLocation)
+      .instanceLocation(instanceLocation)
+      .property(property)
+      .arguments(arguments)
+      .details(details)
+      .format(format)
+      .message(message)
+      .messageSupplier(messageSupplier)
+      .messageKey(messageKey)
+      .build()
   }
-
-  private val vm = ValidationMessage.of("enum", emt, "abc", null, new util.HashMap[String, Object]())
+  def myFormatter(arg: String): String = {
+    val format = arg.toLowerCase()
+    format
+  }
+  val mockMessage = mockValidationMessage("enum",
+    "", new JsonNodePath(PathType.JSON_PATH), new SchemaLocation(new AbsoluteIri("abc")), new JsonNodePath(PathType.JSON_PATH),
+    "abcde", Array(Json.obj()), new util.HashMap[String, Object](), new MessageFormat("abc"), "abc", () => "", "abc")
 
   "valueFromJson" should {
-    "return the correct value for a jsnull" in {
-      val testJson = Json.obj("abc" -> JsNull)
-      val result = InvalidPayloadHandlerImpl.valueFromJson(message = vm, json = testJson)
-      result mustBe Some("null")
-    }
-    "return the correct value for a jsnumber" in {
-      val testJson = Json.obj("abc" -> JsNumber(22))
-      val result = InvalidPayloadHandlerImpl.valueFromJson(message = vm, json = testJson)
-      result mustBe Some("99")
-    }
+        "return the correct value for a jsnull" in {
+          val testJson = Json.obj("abc" -> JsNull)
+          val result = InvalidPayloadHandlerImpl.valueFromJson(message = mockMessage, json = testJson)
+          result mustBe Some("null")
+        }
+        "return the correct value for a jsnumber" in {
+          val testJson = Json.obj("abc" -> JsNumber(22))
+          val result = InvalidPayloadHandlerImpl.valueFromJson(message = mockMessage, json = testJson)
+          result mustBe Some("99")
+        }
 
-    "return none for a non-valid type" in {
-      val vm = ValidationMessage.of("blah", emt, "abc", null, new util.HashMap[String, Object]())
-      val testJson = Json.obj("abc" -> JsNumber(22))
-      val result = InvalidPayloadHandlerImpl.valueFromJson(message = vm, json = testJson)
-      result mustBe None
-    }
+        "return none for a non-valid type" in {
+          val mockMessage = mockValidationMessage("blah",
+            "", new JsonNodePath(PathType.JSON_PATH), new SchemaLocation(new AbsoluteIri("abc")), new JsonNodePath(PathType.JSON_PATH),
+            "abcde", Array(Json.obj()), new util.HashMap[String, Object](), new MessageFormat("abc"), "abc", () => "", "abc")
+          val testJson = Json.obj("abc" -> JsNumber(22))
+          val result = InvalidPayloadHandlerImpl.valueFromJson(message = mockMessage, json = testJson)
+          result mustBe None
+        }
   }
 }
+

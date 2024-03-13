@@ -17,7 +17,7 @@
 package models
 
 import models.PSTR.stringToPstr
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 import scala.language.implicitConversions
 import scala.util.matching.Regex
@@ -42,6 +42,6 @@ object PSTR {
 
   case class InvalidPstrNumberException() extends Exception
 
-  implicit val format = Json.format[PSTR]
+  implicit val format: OFormat[PSTR] = Json.format[PSTR]
 
 }

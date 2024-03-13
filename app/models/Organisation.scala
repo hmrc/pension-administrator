@@ -33,5 +33,5 @@ object OrganisationTypeEnum extends Enumeration {
 case class Organisation(organisationName: String, organisationType: OrganisationTypeEnum.OrganisationType)
 
 object Organisation {
-  implicit val formats = Json.format[Organisation]
+  implicit val formats: OFormat[Organisation] = Json.format[Organisation]
 }

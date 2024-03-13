@@ -16,7 +16,7 @@
 
 package service
 
-import akka.Done
+import org.apache.pekko.Done
 import base.SpecBase
 import models.FeatureToggle.{Disabled, Enabled}
 import models.FeatureToggleName.{EnrolmentRecovery, PsaFromIvToPdv, PsaRegistration, UpdateClientReference}

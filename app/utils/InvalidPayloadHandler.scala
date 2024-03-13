@@ -99,7 +99,7 @@ object InvalidPayloadHandlerImpl {
   private[utils] def valueFromJson(message: ValidationMessage, json: JsValue): Option[String] = {
     message.getType match {
       case "enum" | "format" | "maximum" | "maxLength" | "minimum" | "minLength" | "pattern" | "type" =>
-        (json \ message.getPath).toEither match {
+        (json \ message.getMessageKey).toEither match {
           case Right(jsValue) =>
             jsValue match {
               case JsBoolean(bool) => Some(bool.toString)

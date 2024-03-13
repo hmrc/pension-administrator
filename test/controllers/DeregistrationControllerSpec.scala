@@ -16,7 +16,7 @@
 
 package controllers
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import base.{JsonFileReader, SpecBase}
 import connectors.SchemeConnector
 import org.mockito.ArgumentMatchers

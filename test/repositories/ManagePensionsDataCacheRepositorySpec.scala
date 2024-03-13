@@ -17,7 +17,6 @@
 package repositories
 
 import com.typesafe.config.Config
-import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Mockito.when
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.ScalaFutures
@@ -31,6 +30,7 @@ import play.api.libs.json.Json
 import repositories.ManageCacheEntry.{DataEntry, JsonDataEntry}
 import uk.gov.hmrc.mongo.MongoComponent
 
+import java.time.{LocalDateTime, ZoneId}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport with BeforeAndAfter with
@@ -230,7 +230,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.get.compareTo(DateTime.now(DateTimeZone.UTC)) mustBe -1
+        documentsInDB.get.compareTo(LocalDateTime.now(ZoneId.of("UTC"))) mustBe -1
       }
     }
 
@@ -247,7 +247,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.get.compareTo(DateTime.now(DateTimeZone.UTC)) mustBe -1
+        documentsInDB.get.compareTo(LocalDateTime.now(ZoneId.of("UTC"))) mustBe -1
 
       }
     }

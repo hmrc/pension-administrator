@@ -1,7 +1,5 @@
 #admin
 
-GET        /metrics                            @com.kenshoo.play.metrics.MetricsController.metrics
-
 +nocsrf
 GET        /feature-toggles                    controllers.admin.FeatureToggleController.getAll()
 +nocsrf

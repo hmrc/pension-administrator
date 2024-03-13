@@ -16,18 +16,16 @@
 
 package controllers.cache
 
-import akka.stream.Materializer
-import akka.util.ByteString
 import base.SpecBase
 import org.apache.commons.lang3.RandomUtils
-import org.joda.time.DateTime
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json.JodaWrites._
 import play.api.libs.json.Json
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Injecting}
@@ -35,6 +33,7 @@ import repositories._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
 
+import java.time.LocalDateTime
 import scala.concurrent.Future
 
 class PensionAdministratorCacheControllerSpec
@@ -175,7 +174,7 @@ class PensionAdministratorCacheControllerSpec
     s".lastUpdated" must {
 
       "return 200 and the relevant data when it exists" in {
-        val date = DateTime.now
+        val date = LocalDateTime.now
         when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
           Some(date)
         }

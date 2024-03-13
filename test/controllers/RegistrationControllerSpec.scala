@@ -16,11 +16,11 @@
 
 package controllers
 
-import akka.stream.Materializer
 import base.SpecBase
 import connectors.RegistrationConnector
 import models._
 import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
+import org.apache.pekko.stream.Materializer
 import org.joda.time.LocalDate
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}

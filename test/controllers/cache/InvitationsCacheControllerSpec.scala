@@ -16,8 +16,8 @@
 
 package controllers.cache
 
-import akka.stream.Materializer
-import akka.util.ByteString
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.util.ByteString
 import com.mongodb.MongoException
 import org.apache.commons.lang3.RandomUtils
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}

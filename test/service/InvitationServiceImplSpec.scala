@@ -21,7 +21,6 @@ import config.AppConfig
 import connectors.{AssociationConnector, EmailConnector, SchemeConnector}
 import models._
 import models.enumeration.JourneyType
-import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -40,6 +39,7 @@ import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotF
 import utils.FakeEmailConnector.containEmail
 import utils.{DateHelper, FakeEmailConnector}
 
+import java.time.LocalDateTime
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues
@@ -277,7 +277,7 @@ object InvitationServiceImplSpec extends MockitoSugar {
   val johnDoe: MinimalDetails = MinimalDetails(johnDoeEmail, isPsaSuspended = false, organisationName = None,
     individualDetails = Some(IndividualDetails("John", None, "Doe")), rlsFlag = true, deceasedFlag = true)
 
-  val expiryDate: DateTime = new DateTime("2018-10-10")
+  val expiryDate: LocalDateTime = LocalDateTime.of(2018, 10, 10, 0, 0)
 
   val joeBloggsPsaId: PsaId = PsaId("A2000002")
   val joeBloggs: MinimalDetails = MinimalDetails("joe.bloggs@email.com", isPsaSuspended = false, None,

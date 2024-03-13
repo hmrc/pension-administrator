@@ -16,9 +16,9 @@
 
 package controllers
 
-import akka.stream.Materializer
 import base.{JsonFileReader, SpecBase}
 import models.PsaToBeRemovedFromScheme
+import org.apache.pekko.stream.Materializer
 import org.joda.time.LocalDate
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
