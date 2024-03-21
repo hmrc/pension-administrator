@@ -26,10 +26,11 @@ import repositories.ManageCacheEntry.{DataEntry, JsonDataEntry, ManageCacheEntry
 import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, PlainText, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.nio.charset.StandardCharsets
-import java.time.{LocalDateTime, ZoneId}
+import java.time.{Instant, LocalDateTime, ZoneId}
 import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,26 +38,29 @@ object ManageCacheEntry {
 
   sealed trait ManageCacheEntry
 
-  case class DataEntry(id: String, data: BsonBinary, lastUpdated: LocalDateTime) extends ManageCacheEntry
+  case class DataEntry(id: String, data: BsonBinary, lastUpdated: Instant) extends ManageCacheEntry
 
-  case class JsonDataEntry(id: String, data: JsValue, lastUpdated: LocalDateTime) extends ManageCacheEntry
+  case class JsonDataEntry(id: String, data: JsValue, lastUpdated: Instant) extends ManageCacheEntry
 
   object DataEntry {
-    def apply(id: String, data: Array[Byte], lastUpdated: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC"))): DataEntry =
+    def apply(id: String, data: Array[Byte], lastUpdated: Instant = Instant.now()): DataEntry =
       DataEntry(id, BsonBinary(data), lastUpdated)
 
     final val bsonBinaryReads: Reads[BsonBinary] = byteArrayReads.map(t => BsonBinary(t))
     final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(t => t.getData)
     implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
-
+    implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
     implicit val format: Format[DataEntry] = Json.format[DataEntry]
   }
 
   object JsonDataEntry {
+    implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
     implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
+
   }
 
   object ManageCacheEntryFormats {
+    implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
     implicit val format: Format[ManageCacheEntry] = Json.format[ManageCacheEntry]
 
     val dataKey: String = "data"
@@ -78,7 +82,8 @@ abstract class ManageCacheRepository(
     domainFormat = ManageCacheEntryFormats.format,
     extraCodecs = Seq(
       Codecs.playFormatCodec(JsonDataEntry.format),
-      Codecs.playFormatCodec(DataEntry.format)
+      Codecs.playFormatCodec(DataEntry.format),
+      Codecs.playFormatCodec(MongoJavatimeFormats.instantFormat)
     ),
     indexes = Seq(
       IndexModel(
@@ -139,7 +144,7 @@ abstract class ManageCacheRepository(
     }
   }
 
-  def getLastUpdated(id: String)(implicit ec: ExecutionContext): Future[Option[LocalDateTime]] = {
+  def getLastUpdated(id: String)(implicit ec: ExecutionContext): Future[Option[Instant]] = {
     if (encrypted) {
       collection.find[DataEntry](Filters.equal(idField, id)).headOption().map {
         _.map {

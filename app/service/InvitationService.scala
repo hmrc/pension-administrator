@@ -186,7 +186,7 @@ class InvitationServiceImpl @Inject()(
                               (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
 
     val name = psaDetails.individualDetails.map(_.fullName).getOrElse(psaDetails.organisationName.getOrElse(""))
-    val expiryDate = DateHelper.formatDate(invitation.expireAt.toLocalDate)
+    val expiryDate = DateHelper.formatDate(invitation.expireAt)
     val inviteePsaId = invitation.inviteePsaId
 
     val email = SendEmailRequest(

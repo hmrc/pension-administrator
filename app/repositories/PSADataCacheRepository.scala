@@ -26,10 +26,12 @@ import repositories.PSADataCacheEntry.{DataEntryWithoutEncryption, EncryptedData
 import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, PlainText, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.nio.charset.StandardCharsets
-import java.time.{LocalDateTime, ZoneId, ZoneOffset}
+import java.time.temporal.{ChronoUnit, TemporalUnit}
+import java.time.{Instant, LocalDateTime, ZoneId, ZoneOffset}
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,22 +40,22 @@ object PSADataCacheEntry {
 
   sealed trait PSADataCacheEntry
 
-  case class EncryptedDataEntry(id: String, data: BsonBinary, lastUpdated: LocalDateTime, expireAt: LocalDateTime) extends PSADataCacheEntry
+  case class EncryptedDataEntry(id: String, data: BsonBinary, lastUpdated: Instant, expireAt: Instant) extends PSADataCacheEntry
 
-  case class DataEntryWithoutEncryption(id: String, data: JsValue, lastUpdated: LocalDateTime, expireAt: LocalDateTime) extends PSADataCacheEntry
+  case class DataEntryWithoutEncryption(id: String, data: JsValue, lastUpdated: Instant, expireAt: Instant) extends PSADataCacheEntry
 
   object EncryptedDataEntry {
 
     def apply(id: String,
               data: Array[Byte],
-              lastUpdated: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC")),
-              expireAt: LocalDateTime): EncryptedDataEntry =
+              lastUpdated: Instant = Instant.now(),
+              expireAt: Instant): EncryptedDataEntry =
       EncryptedDataEntry(id, BsonBinary(data), lastUpdated, expireAt)
 
     final val bsonBinaryReads: Reads[BsonBinary] = byteArrayReads.map(t => BsonBinary(t))
     final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(t => t.getData)
     implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
-
+    implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
     implicit val format: Format[EncryptedDataEntry] = Json.format[EncryptedDataEntry]
   }
 
@@ -61,14 +63,16 @@ object PSADataCacheEntry {
 
     def applyDataEntry(id: String,
                        data: JsValue,
-                       lastUpdated: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC")),
-                       expireAt: LocalDateTime): DataEntryWithoutEncryption =
+                       lastUpdated: Instant = Instant.now(),
+                       expireAt: Instant): DataEntryWithoutEncryption =
       DataEntryWithoutEncryption(id, data, lastUpdated, expireAt)
 
+    implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
     implicit val format: Format[DataEntryWithoutEncryption] = Json.format[DataEntryWithoutEncryption]
   }
 
   object PSADataCacheEntryFormats {
+    implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
     implicit val format: Format[PSADataCacheEntry] = Json.format[PSADataCacheEntry]
   }
 }
@@ -84,7 +88,8 @@ class PSADataCacheRepository @Inject()(
     domainFormat = PSADataCacheEntryFormats.format,
     extraCodecs = Seq(
       Codecs.playFormatCodec(DataEntryWithoutEncryption.format),
-      Codecs.playFormatCodec(EncryptedDataEntry.format)
+      Codecs.playFormatCodec(EncryptedDataEntry.format),
+      Codecs.playFormatCodec(MongoJavatimeFormats.instantFormat)
     ),
     indexes = Seq(
       IndexModel(
@@ -104,7 +109,7 @@ class PSADataCacheRepository @Inject()(
   private val expireInDays = configuration.get[Int](path = "mongodb.pension-administrator-cache.psa-data.timeToLiveInDays")
   private val idField: String = "id"
 
-  private def evaluatedExpireAt: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC")).toLocalDate.plusDays(expireInDays + 1).atStartOfDay()
+  private def evaluatedExpireAt: Instant = LocalDateTime.now(ZoneId.of("UTC")).toLocalDate.plusDays(expireInDays + 1).atStartOfDay(ZoneId.of("UTC")).toInstant
 
   def upsert(credId: String, userData: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
     if (encrypted) {
@@ -144,7 +149,7 @@ class PSADataCacheRepository @Inject()(
           dataEntry =>
             val dataAsString = new String(dataEntry.data.getData, StandardCharsets.UTF_8)
             val decrypted: PlainText = jsonCrypto.decrypt(Crypted(dataAsString))
-            Json.parse(decrypted.value).as[JsObject] ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.toInstant(ZoneOffset.UTC).toEpochMilli))
+            Json.parse(decrypted.value).as[JsObject] ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.toEpochMilli))
         }
       }
     } else {
@@ -152,7 +157,7 @@ class PSADataCacheRepository @Inject()(
         _.map {
           dataEntry =>
             val jsObject = dataEntry.data.as[JsObject]
-            jsObject ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.getSecond))
+            jsObject ++ Json.obj("expireAt" -> JsNumber(dataEntry.expireAt.getEpochSecond))
         }
       }
     }

@@ -21,7 +21,7 @@ import play.api.libs.json.JodaWrites._
 import play.api.libs.json._
 import uk.gov.hmrc.domain.PsaId
 
-import java.time.LocalDateTime
+import java.time.{Instant, LocalDateTime}
 
 case class Invitation(srn: SchemeReferenceNumber,
                       pstr: String,
@@ -29,7 +29,7 @@ case class Invitation(srn: SchemeReferenceNumber,
                       inviterPsaId: PsaId,
                       inviteePsaId: PsaId,
                       inviteeName: String,
-                      expireAt: LocalDateTime
+                      expireAt: Instant
                      )
 
 object Invitation {

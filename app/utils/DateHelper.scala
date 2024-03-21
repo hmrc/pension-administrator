@@ -16,12 +16,12 @@
 
 package utils
 
-import java.time.LocalDate
+import java.time.Instant
 import java.time.format.DateTimeFormatter
 
 object DateHelper {
 
-  def formatDate(date: LocalDate): String = {
+  def formatDate(date: Instant): String = {
     val dateFormat = DateTimeFormatter.ofPattern("d MMMM yyyy")
     dateFormat.format(date)
   }
