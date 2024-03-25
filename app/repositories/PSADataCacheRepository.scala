@@ -30,8 +30,8 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.nio.charset.StandardCharsets
-import java.time.temporal.{ChronoUnit, TemporalUnit}
-import java.time.{Instant, LocalDateTime, ZoneId, ZoneOffset}
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
@@ -109,7 +109,7 @@ class PSADataCacheRepository @Inject()(
   private val expireInDays = configuration.get[Int](path = "mongodb.pension-administrator-cache.psa-data.timeToLiveInDays")
   private val idField: String = "id"
 
-  private def evaluatedExpireAt: Instant = LocalDateTime.now(ZoneId.of("UTC")).toLocalDate.plusDays(expireInDays + 1).atStartOfDay(ZoneId.of("UTC")).toInstant
+  private def evaluatedExpireAt: Instant = Instant.now().plus(expireInDays + 1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS)
 
   def upsert(credId: String, userData: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
     if (encrypted) {

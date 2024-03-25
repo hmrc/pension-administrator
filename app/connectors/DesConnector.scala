@@ -21,7 +21,6 @@ import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.{PsaSubscription, PsaToBeRemovedFromScheme}
-import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
@@ -30,6 +29,7 @@ import uk.gov.hmrc.http.{HttpClient, _}
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler, JSONPayloadSchemaValidator}
 
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
 
@@ -162,7 +162,7 @@ class DesConnectorImpl @Inject()(
                              headerCarrier: HeaderCarrier,
                              ec: ExecutionContext,
                              request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-    val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
+    val data: JsValue = Json.obj("deregistrationDate" -> Instant.now().toString, "reason" -> "1")
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
       headerUtils.integrationFrameworkHeader)
     deregisterAdministrator(

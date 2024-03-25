@@ -19,13 +19,17 @@ package audit
 import models.PsaToBeRemovedFromScheme
 import org.joda.time.format.DateTimeFormat
 
+import java.time.format.DateTimeFormatter
+
 case class PSARemovalFromSchemeAuditEvent(psaToBeRemovedFromScheme: PsaToBeRemovedFromScheme) extends AuditEvent {
   override def auditType: String = "PSARemoveFromScheme"
+
+  def formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMMM YYYY")
 
   override def details: Map[String, String] =
     Map(
       "psaId" -> psaToBeRemovedFromScheme.psaId,
       "pstr" -> psaToBeRemovedFromScheme.pstr,
-      "removalDate" -> psaToBeRemovedFromScheme.removalDate.toString(DateTimeFormat.forPattern("dd MMMM YYYY"))
+      "removalDate" -> formatter.format(psaToBeRemovedFromScheme.removalDate)
     )
 }

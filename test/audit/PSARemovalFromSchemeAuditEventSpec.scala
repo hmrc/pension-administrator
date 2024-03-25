@@ -17,16 +17,17 @@
 package audit
 
 import models.PsaToBeRemovedFromScheme
-import org.joda.time.LocalDate
 import org.joda.time.format.DateTimeFormat
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import java.time.Instant
 
 class PSARemovalFromSchemeAuditEventSpec extends AnyFlatSpec with Matchers {
 
   private val psaId: String = "psa-id"
   private val pstr = "scheme"
-  private val removalDate = LocalDate.now()
+  private val removalDate = Instant.now()
 
   private val psaToBeRemoved = PsaToBeRemovedFromScheme(psaId = psaId,
     pstr = pstr, removalDate = removalDate)

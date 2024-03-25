@@ -21,7 +21,7 @@ import play.api.libs.json.JodaWrites._
 import play.api.libs.json._
 import uk.gov.hmrc.domain.PsaId
 
-import java.time.{Instant, LocalDateTime}
+import java.time.Instant
 
 case class Invitation(srn: SchemeReferenceNumber,
                       pstr: String,
