@@ -22,6 +22,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.time.Instant
+import java.time.format.DateTimeFormatter
 
 class PSARemovalFromSchemeAuditEventSpec extends AnyFlatSpec with Matchers {
 
@@ -36,10 +37,12 @@ class PSARemovalFromSchemeAuditEventSpec extends AnyFlatSpec with Matchers {
     psaToBeRemovedFromScheme = psaToBeRemoved
   )
 
+  def formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMMM YYYY")
+
   private val expected = Map(
     "psaId" -> psaToBeRemoved.psaId,
     "pstr" -> psaToBeRemoved.pstr,
-    "removalDate" -> psaToBeRemoved.removalDate.toString(DateTimeFormat.forPattern("dd MMMM YYYY"))
+    "removalDate" -> formatter.format(psaToBeRemoved.removalDate)
   )
 
   "PSARemovalFromSchemeAuditEvent" should "return the correct audit data" in {

@@ -39,6 +39,8 @@ import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.{FakeDesConnector, WireMockHelper}
 
+import java.time.Instant
+
 
 class DesConnectorSpec extends AsyncFlatSpec
   with WireMockHelper
@@ -343,7 +345,7 @@ object DesConnectorSpec extends JsonFileReader {
   val srn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")
   val psaId: PsaId = PsaId("A7654321")
   val pstr: String = PSTR("123456789AB")
-  val removalDate: LocalDate = LocalDate.now()
+  val removalDate: Instant = Instant.now()
 
   val registerPsaUrl = "/pension-online/subscription"
   val psaSubscriptionDetailsUrl = s"/pension-online/psa-subscription-details/$psaId"

@@ -17,7 +17,6 @@
 package audit
 
 import models.PsaToBeRemovedFromScheme
-import org.joda.time.format.DateTimeFormat
 
 import java.time.format.DateTimeFormatter
 
