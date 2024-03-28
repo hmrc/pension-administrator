@@ -36,7 +36,7 @@ import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.FakeDesConnector
 import utils.testhelpers.PsaSubscriptionBuilder._
 
-import java.time.{Instant, LocalDate, ZoneId}
+import java.time.{LocalDate, ZoneId}
 import scala.concurrent.{ExecutionContext, Future}
 
 class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers {
@@ -441,7 +441,7 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"
-  private val removeDate: Instant = LocalDate.parse("2018-02-01").atStartOfDay(ZoneId.of("UTC")).toInstant
+  private val removeDate: LocalDate = LocalDate.parse("2018-02-01").atStartOfDay(ZoneId.of("UTC")).toLocalDate
   private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removeDate)
   private val removePsaJson: JsValue = Json.toJson(removePsaDataModel)
 

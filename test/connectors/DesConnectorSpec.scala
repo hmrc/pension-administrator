@@ -22,14 +22,12 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.DesConnectorSpec.{psaId, pstr, removalDate}
 import connectors.helper.{ConnectorBehaviours, PSASubscriptionFixture}
 import models.{PSTR, PsaToBeRemovedFromScheme, SchemeReferenceNumber}
-import org.joda.time.LocalDate
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.{EitherValues, OptionValues, RecoverMethods}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status._
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json.JodaWrites._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
@@ -39,7 +37,7 @@ import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.{FakeDesConnector, WireMockHelper}
 
-import java.time.Instant
+import java.time.LocalDate
 
 
 class DesConnectorSpec extends AsyncFlatSpec
@@ -345,7 +343,7 @@ object DesConnectorSpec extends JsonFileReader {
   val srn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")
   val psaId: PsaId = PsaId("A7654321")
   val pstr: String = PSTR("123456789AB")
-  val removalDate: Instant = Instant.now()
+  val removalDate: LocalDate = LocalDate.now()
 
   val registerPsaUrl = "/pension-online/subscription"
   val psaSubscriptionDetailsUrl = s"/pension-online/psa-subscription-details/$psaId"

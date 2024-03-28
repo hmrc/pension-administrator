@@ -20,14 +20,14 @@ import models.PsaToBeRemovedFromScheme
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.{Instant, ZoneId}
 
 class PSARemovalFromSchemeAuditEventSpec extends AnyFlatSpec with Matchers {
 
   private val psaId: String = "psa-id"
   private val pstr = "scheme"
-  private val removalDate = Instant.now()
+  private val removalDate = LocalDate.now()
 
   private val psaToBeRemoved = PsaToBeRemovedFromScheme(psaId = psaId,
     pstr = pstr, removalDate = removalDate)
@@ -36,8 +36,8 @@ class PSARemovalFromSchemeAuditEventSpec extends AnyFlatSpec with Matchers {
     psaToBeRemovedFromScheme = psaToBeRemoved
   )
 
-  def formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMMM YYYY")
-  val formattedDate = formatter.format(psaToBeRemoved.removalDate.atZone(ZoneId.of("UTC")))
+  private def formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMMM YYYY")
+  private val formattedDate = formatter.format(psaToBeRemoved.removalDate)
 
   private val expected = Map(
     "psaId" -> psaToBeRemoved.psaId,

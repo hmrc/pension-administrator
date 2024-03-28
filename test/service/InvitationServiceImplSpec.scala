@@ -39,7 +39,7 @@ import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotF
 import utils.FakeEmailConnector.containEmail
 import utils.{DateHelper, FakeEmailConnector}
 
-import java.time.{Instant, LocalDate, LocalDateTime, ZoneId}
+import java.time.{Instant, LocalDate, ZoneId}
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues
