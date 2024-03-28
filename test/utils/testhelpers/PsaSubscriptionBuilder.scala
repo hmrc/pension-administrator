@@ -42,9 +42,9 @@ object PsaSubscriptionBuilder {
   private val psaContactDetails = PsaContactDetails("0044-0987654232", Some("aaa@yahoo.com"))
   private val pensionsAdvisor = PensionAdvisor("sgfdgssd", psaAddress, Some(psaContactDetails))
 
-  private val director1 = DirectorOrPartner("Director", Some("Mr"), "abcdef", Some("dfgdsfff"), "dfgfdgfdg", new org.joda.time.LocalDate("1950-03-29"),
+  private val director1 = DirectorOrPartner("Director", Some("Mr"), "abcdef", Some("dfgdsfff"), "dfgfdgfdg", LocalDate.of(1950, 3, 29),
     Some("AA999999A"), Some("1234567892"), true, Some(director1PrevAddress), Some(CorrespondenceDetails(director1Address, Some(director1Contact))))
-  private val director2 = DirectorOrPartner("Director", Some("Mr"), "sdfdff", Some("sdfdsfsdf"), "dfdsfsf", new org.joda.time.LocalDate("1950-07-29"),
+  private val director2 = DirectorOrPartner("Director", Some("Mr"), "sdfdff", Some("sdfdsfsdf"), "dfdsfsf", LocalDate.of(1950, 7, 29),
     Some("AA999999A"), Some("7897700000"), true, Some(director2PrevAddress), Some(CorrespondenceDetails(director2Address, Some(director2Contact))))
 
   val psaSubscription = PsaSubscription(false, customerId, None, Some(individual), address, contactDetails,

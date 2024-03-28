@@ -21,7 +21,6 @@ import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.{PsaSubscription, PsaToBeRemovedFromScheme}
-import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
@@ -30,6 +29,7 @@ import uk.gov.hmrc.http.{HttpClient, _}
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler, JSONPayloadSchemaValidator}
 
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
 

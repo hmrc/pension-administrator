@@ -33,7 +33,7 @@ import repositories._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
 
-import java.time.LocalDateTime
+import java.time.Instant
 import scala.concurrent.Future
 
 class PensionAdministratorCacheControllerSpec
@@ -174,7 +174,7 @@ class PensionAdministratorCacheControllerSpec
     s".lastUpdated" must {
 
       "return 200 and the relevant data when it exists" in {
-        val date = LocalDateTime.now
+        val date = Instant.now
         when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
           Some(date)
         }
