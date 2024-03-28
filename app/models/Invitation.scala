@@ -64,8 +64,6 @@ object Invitation {
       Invitation(srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt)
   )
 
-  implicit val defaultWrites : Writes[Invitation] = Json.writes[Invitation]
-  implicit val defaultReads :  Reads[Invitation] = Json.reads[Invitation]
   implicit val dateFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
   implicit val formats: Format[Invitation] = Json.format[Invitation]
 }

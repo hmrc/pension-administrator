@@ -32,7 +32,6 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.nio.charset.StandardCharsets
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import java.time.{Instant, LocalDateTime, ZoneId}
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
@@ -45,13 +44,13 @@ object PSADataCacheEntry {
   case class EncryptedDataEntry(
                                  id: String,
                                  data: BsonBinary,
-                                 lastUpdated: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
+                                 lastUpdated: Instant = Instant.now(),
                                  expireAt: Instant) extends PSADataCacheEntry
 
   case class DataEntryWithoutEncryption(
                                          id: String,
                                          data: JsValue,
-                                         lastUpdated: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
+                                         lastUpdated: Instant = Instant.now(),
                                          expireAt: Instant) extends PSADataCacheEntry
 
   object EncryptedDataEntry {

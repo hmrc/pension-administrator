@@ -34,7 +34,6 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.nio.charset.StandardCharsets
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -51,7 +50,7 @@ object InvitationsCacheEntry {
     def apply(inviteePsaId: String,
               pstr: String,
               data: Array[Byte],
-              lastUpdated: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
+              lastUpdated: Instant = Instant.now(),
               expireAt: Instant): DataEntry = {
 
       DataEntry(inviteePsaId, pstr, BsonBinary(data), lastUpdated, expireAt)
@@ -68,7 +67,7 @@ object InvitationsCacheEntry {
     def applyJsonDataEntry(inviteePsaId: String,
                            pstr: String,
                            data: JsValue,
-                           lastUpdated: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
+                           lastUpdated: Instant = Instant.now(),
                            expireAt: Instant): JsonDataEntry = {
 
       JsonDataEntry(inviteePsaId, pstr, data, lastUpdated, expireAt)

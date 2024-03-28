@@ -80,7 +80,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", Instant.now())
       val record2 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", Instant.now().plus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", Instant.now().plus(1, ChronoUnit.DAYS))
       val filters = Filters.and(Filters.eq("inviteePsaId", "A2500002"), Filters.eq("pstr", "pstr"))
 
       val documentsInDB = for {
@@ -169,7 +169,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       val record1 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
         PsaId("A2500001"), PsaId("A2500002"), "inviteeName", Instant.now())
       val record2 = Invitation(SchemeReferenceNumber("id"), "pstr", "schemeName",
-        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", Instant.now().plus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS))
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", Instant.now().plus(1, ChronoUnit.DAYS))
       val filters = Filters.and(Filters.eq("inviteePsaId", "qPiTIC6PennxowJl8O5lqw=="), Filters.eq("pstr", "U87ezLMl9HOlyHOsEGXrNg=="))
 
       val documentsInDB = for {
