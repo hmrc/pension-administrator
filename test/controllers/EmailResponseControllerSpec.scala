@@ -29,7 +29,7 @@ import repositories._
 import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
 import uk.gov.hmrc.domain.PsaId
 
-import java.time.{Instant, LocalDateTime}
+import java.time.Instant
 
 class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
 

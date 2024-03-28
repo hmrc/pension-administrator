@@ -16,7 +16,7 @@
 
 import AppDependencies.{compile, test}
 import play.sbt.routes.RoutesKeys
-import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
+import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings, targetJvm}
 
 lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 
@@ -51,3 +51,4 @@ lazy val microservice = Project(AppDependencies.appName, file("."))
   .settings(resolvers ++= Seq(
     Resolver.jcenterRepo
   ))
+  .settings(targetJvm := "jvm-11")

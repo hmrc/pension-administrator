@@ -31,6 +31,7 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.nio.charset.StandardCharsets
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,7 +44,7 @@ object ManageCacheEntry {
   case class JsonDataEntry(id: String, data: JsValue, lastUpdated: Instant) extends ManageCacheEntry
 
   object DataEntry {
-    def apply(id: String, data: Array[Byte], lastUpdated: Instant = Instant.now()): DataEntry =
+    def apply(id: String, data: Array[Byte], lastUpdated: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS)): DataEntry =
       DataEntry(id, BsonBinary(data), lastUpdated)
 
     final val bsonBinaryReads: Reads[BsonBinary] = byteArrayReads.map(t => BsonBinary(t))
@@ -116,7 +117,7 @@ abstract class ManageCacheRepository(
       val setOperation = Updates.combine(
         Updates.set(idField, id),
         Updates.set(dataKey, Codecs.toBson(data)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(Instant.now()))
+        Updates.set(lastUpdatedKey, Codecs.toBson(Instant.now().truncatedTo(ChronoUnit.MILLIS))(MongoJavatimeFormats.instantFormat))
       )
       collection.withDocumentClass[JsonDataEntry]().findOneAndUpdate(
         filter = Filters.eq(idField, id),

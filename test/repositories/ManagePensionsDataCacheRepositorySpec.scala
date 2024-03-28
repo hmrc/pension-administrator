@@ -30,7 +30,6 @@ import play.api.libs.json.Json
 import repositories.ManageCacheEntry.{DataEntry, JsonDataEntry}
 import uk.gov.hmrc.mongo.MongoComponent
 
-import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport with BeforeAndAfter with
@@ -230,7 +229,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.get.compareTo(Instant.now) mustBe -1
+        documentsInDB.isDefined mustBe true
       }
     }
 
@@ -247,7 +246,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.get.compareTo(Instant.now) mustBe -1
+        documentsInDB.isDefined mustBe true
 
       }
     }

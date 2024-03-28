@@ -190,6 +190,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
+        println(s"\n\n\n\n\n documents in db: ${documentsInDB}")
         documentsInDB.isDefined mustBe true
       }
     }

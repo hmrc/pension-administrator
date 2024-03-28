@@ -30,6 +30,7 @@ import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler, JSONPayloadSchemaValidator}
 
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
 
@@ -139,7 +140,7 @@ class DesConnectorImpl @Inject()(
       "ceaseNumber" -> psaToBeRemoved.psaId,
       "initiatedIDType" -> "PSAID",
       "initiatedIDNumber" -> psaToBeRemoved.psaId,
-      "ceaseDate" -> psaToBeRemoved.removalDate.toString
+      "ceaseDate" -> psaToBeRemoved.removalDate
     )
     removePSAFromScheme(url, data, "/resources/schemas/ceaseFromScheme1461.json", psaToBeRemoved)(hc, implicitly, implicitly)
   }
@@ -162,7 +163,7 @@ class DesConnectorImpl @Inject()(
                              headerCarrier: HeaderCarrier,
                              ec: ExecutionContext,
                              request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-    val data: JsValue = Json.obj("deregistrationDate" -> Instant.now().toString, "reason" -> "1")
+    val data: JsValue = Json.obj("deregistrationDate" -> Instant.now().truncatedTo(ChronoUnit.MILLIS).toString, "reason" -> "1")
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
       headerUtils.integrationFrameworkHeader)
     deregisterAdministrator(

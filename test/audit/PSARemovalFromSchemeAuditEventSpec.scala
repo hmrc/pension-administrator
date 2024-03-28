@@ -17,12 +17,11 @@
 package audit
 
 import models.PsaToBeRemovedFromScheme
-import org.joda.time.format.DateTimeFormat
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.time.Instant
 import java.time.format.DateTimeFormatter
+import java.time.{Instant, ZoneId}
 
 class PSARemovalFromSchemeAuditEventSpec extends AnyFlatSpec with Matchers {
 
@@ -38,11 +37,12 @@ class PSARemovalFromSchemeAuditEventSpec extends AnyFlatSpec with Matchers {
   )
 
   def formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMMM YYYY")
+  val formattedDate = formatter.format(psaToBeRemoved.removalDate.atZone(ZoneId.of("UTC")))
 
   private val expected = Map(
     "psaId" -> psaToBeRemoved.psaId,
     "pstr" -> psaToBeRemoved.pstr,
-    "removalDate" -> formatter.format(psaToBeRemoved.removalDate)
+    "removalDate" -> formattedDate
   )
 
   "PSARemovalFromSchemeAuditEvent" should "return the correct audit data" in {

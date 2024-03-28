@@ -19,14 +19,12 @@ package controllers
 import base.{JsonFileReader, SpecBase}
 import models.PsaToBeRemovedFromScheme
 import org.apache.pekko.stream.Materializer
-import org.joda.time.LocalDate
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status.BAD_GATEWAY
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json.JodaWrites._
 import play.api.libs.json.{JsResultException, JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
@@ -38,7 +36,7 @@ import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.FakeDesConnector
 import utils.testhelpers.PsaSubscriptionBuilder._
 
-import java.time.Instant
+import java.time.{Instant, LocalDate, ZoneId}
 import scala.concurrent.{ExecutionContext, Future}
 
 class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers {
@@ -443,7 +441,7 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"
-  private val removeDate: Instant = Instant.parse("2018-02-01")
+  private val removeDate: Instant = LocalDate.parse("2018-02-01").atStartOfDay(ZoneId.of("UTC")).toInstant
   private val removePsaDataModel: PsaToBeRemovedFromScheme = PsaToBeRemovedFromScheme(psaId.id, pstr, removeDate)
   private val removePsaJson: JsValue = Json.toJson(removePsaDataModel)
 

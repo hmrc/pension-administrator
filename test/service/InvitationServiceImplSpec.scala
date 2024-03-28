@@ -39,7 +39,7 @@ import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotF
 import utils.FakeEmailConnector.containEmail
 import utils.{DateHelper, FakeEmailConnector}
 
-import java.time.{Instant, LocalDateTime, ZoneId}
+import java.time.{Instant, LocalDate, LocalDateTime, ZoneId}
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues
@@ -277,7 +277,9 @@ object InvitationServiceImplSpec extends MockitoSugar {
   val johnDoe: MinimalDetails = MinimalDetails(johnDoeEmail, isPsaSuspended = false, organisationName = None,
     individualDetails = Some(IndividualDetails("John", None, "Doe")), rlsFlag = true, deceasedFlag = true)
 
-  val expiryDate: Instant = LocalDateTime.of(2018, 10, 10, 0, 0).atZone(ZoneId.of("UTC")).toInstant
+  val date: LocalDate = LocalDate.parse("2018-10-10")
+//  val expiryDate: Instant = LocalDateTime.of(2018, 10, 10, 0, 0).atZone(ZoneId.of("UTC")).toInstant
+  val expiryDate: Instant = date.atStartOfDay(ZoneId.of("UTC")).toInstant
 
   val joeBloggsPsaId: PsaId = PsaId("A2000002")
   val joeBloggs: MinimalDetails = MinimalDetails("joe.bloggs@email.com", isPsaSuspended = false, None,

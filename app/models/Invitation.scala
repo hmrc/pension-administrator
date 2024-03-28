@@ -16,12 +16,13 @@
 
 package models
 
-import org.joda.time.DateTime
-import play.api.libs.json.JodaWrites._
+import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import uk.gov.hmrc.domain.PsaId
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
-import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, LocalDateTime, ZoneId}
 
 case class Invitation(srn: SchemeReferenceNumber,
                       pstr: String,
@@ -33,9 +34,38 @@ case class Invitation(srn: SchemeReferenceNumber,
                      )
 
 object Invitation {
-  implicit val jodaDateFormat: Format[DateTime] = new Format[DateTime] {
-    override def reads(json: JsValue): JsResult[DateTime] = JodaReads.DefaultJodaDateTimeReads.reads(json)
-    override def writes(o: DateTime): JsValue = JodaDateTimeNumberWrites.writes(o)
+  private val dateReads = new Reads[Instant] {
+    def reads(json: JsValue): JsResult[Instant] = {
+      val result = json.asOpt[String].map { date =>
+        LocalDateTime.parse(
+            date ,
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+          )
+          .atZone(
+            ZoneId.of("UTC")
+          )
+          .toInstant
+      }.getOrElse(json.as[Instant](MongoJavatimeFormats.instantReads))
+      JsSuccess(result)
+    }
   }
+
+
+
+  implicit val invitationReads: Reads[Invitation] = (
+    (JsPath \ "srn").read[SchemeReferenceNumber] and
+      (JsPath \ "pstr").read[String] and
+      (JsPath \ "schemeName").read[String] and
+      (JsPath \ "inviterPsaId").read[PsaId] and
+      (JsPath \ "inviteePsaId").read[PsaId] and
+      (JsPath \ "inviteeName").read[String] and
+      (JsPath \ "expireAt").read[Instant](dateReads)
+    )((srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt) =>
+      Invitation(srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt)
+  )
+
+  implicit val defaultWrites : Writes[Invitation] = Json.writes[Invitation]
+  implicit val defaultReads :  Reads[Invitation] = Json.reads[Invitation]
+  implicit val dateFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
   implicit val formats: Format[Invitation] = Json.format[Invitation]
 }
