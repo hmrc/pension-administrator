@@ -31,8 +31,7 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.nio.charset.StandardCharsets
-import java.time.format.DateTimeFormatter
-import java.time.{Instant, LocalDateTime, ZoneId, ZoneOffset}
+import java.time.{Instant, LocalDateTime, ZoneId}
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
@@ -54,17 +53,6 @@ object PSADataCacheEntry {
                                          expireAt: Instant) extends PSADataCacheEntry
 
   object EncryptedDataEntry {
-    private val instantDateTimeReads = MongoJavatimeFormats.localDateReads.map(_.atStartOfDay().toInstant(ZoneOffset.UTC))
-
-    def reads(json: JsValue): JsResult[EncryptedDataEntry] = (
-      (JsPath \ "id").read[String] and
-        (JsPath \ "data").read[Array[Byte]] and
-        (JsPath \ "lastUpdated").read(instantDateTimeReads).orElse(Reads.pure(Instant.now())) and
-        (JsPath \ "expireAt").read(instantDateTimeReads).orElse(Reads.pure(Instant.now()))
-      )((id, data, lastUpdated , expireAt) =>
-      EncryptedDataEntry(id, BsonBinary(data), lastUpdated, expireAt)
-    ).reads(json)
-
     def apply(id: String,
               data: Array[Byte],
               lastUpdated: Instant = Instant.now(),
@@ -75,21 +63,23 @@ object PSADataCacheEntry {
     final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(t => t.getData)
     implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
     implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
-    implicit val format: Format[EncryptedDataEntry] = Json.format[EncryptedDataEntry]
+    implicit val format: Format[EncryptedDataEntry] = new Format[EncryptedDataEntry] {
+      override def writes(o: EncryptedDataEntry): JsValue = Json.writes[EncryptedDataEntry].writes(o)
+
+      private val instantReads = MongoJavatimeFormats.instantReads
+
+      override def reads(json: JsValue): JsResult[EncryptedDataEntry] = (
+        (JsPath \ "id").read[String] and
+          (JsPath \ "data").read[BsonBinary] and
+          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now())) and
+          (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+        )((id, data, lastUpdated, expireAt) =>
+        EncryptedDataEntry(id, data, lastUpdated, expireAt)
+      ).reads(json)
+    }
   }
 
   object DataEntryWithoutEncryption {
-    private val instantDateTimeReads = MongoJavatimeFormats.localDateReads.map(_.atStartOfDay().toInstant(ZoneOffset.UTC))
-
-    def reads(json: JsValue): JsResult[DataEntryWithoutEncryption] = (
-      (JsPath \ "id").read[String] and
-        (JsPath \ "data").read[JsValue] and
-        (JsPath \ "lastUpdated").read(instantDateTimeReads).orElse(Reads.pure(Instant.now())) and
-        (JsPath \ "expireAt").read(instantDateTimeReads).orElse(Reads.pure(Instant.now()))
-      )((id, data, lastUpdated , expireAt) =>
-      DataEntryWithoutEncryption(id, data, lastUpdated, expireAt)
-    ).reads(json)
-
     def applyDataEntry(id: String,
                        data: JsValue,
                        lastUpdated: Instant = Instant.now(),
@@ -97,7 +87,20 @@ object PSADataCacheEntry {
       DataEntryWithoutEncryption(id, data, lastUpdated, expireAt)
 
     implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
-    implicit val format: Format[DataEntryWithoutEncryption] = Json.format[DataEntryWithoutEncryption]
+    implicit val format: Format[DataEntryWithoutEncryption] = new Format[DataEntryWithoutEncryption] {
+      override def writes(o: DataEntryWithoutEncryption): JsValue = Json.writes[DataEntryWithoutEncryption].writes(o)
+
+      private val instantReads = MongoJavatimeFormats.instantReads
+
+      override def reads(json: JsValue): JsResult[DataEntryWithoutEncryption] = (
+        (JsPath \ "id").read[String] and
+          (JsPath \ "data").read[JsValue] and
+          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now())) and
+          (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+        )((id, data, lastUpdated, expireAt) =>
+        DataEntryWithoutEncryption(id, data, lastUpdated, expireAt)
+      ).reads(json)
+    }
   }
 
   object PSADataCacheEntryFormats {
