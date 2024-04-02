@@ -26,10 +26,12 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
-import play.api.libs.json.Json
+import play.api.libs.json.{Format, Json, OFormat}
 import repositories.PSADataCacheEntry.{DataEntryWithoutEncryption, EncryptedDataEntry}
 import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
+import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport with BeforeAndAfter with
@@ -179,10 +181,11 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
   "get" must {
     "get a session data cache record as DataEntryWithoutEncryption by id in Mongo collection when encrypted false" in {
+
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
       val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
-      val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.parse("""{"registerAsBusiness":true,"expireAt":1658530800000,"areYouInUK":true}"""))
+      val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.toJson(TestCacheData(true, Instant.now(), true, Instant.now())))
       val documentsInDB = for {
         _ <- psaDataCacheRepository.collection.drop().toFuture()
         _ <- psaDataCacheRepository.upsert(record._1, record._2)
@@ -330,4 +333,11 @@ object PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar {
     val mongoUri = s"mongodb://$mongoHost:$mongoPort/$databaseName?heartbeatFrequencyMS=1000&rm.failover=default"
     new PSADataCacheRepository(MongoComponent(mongoUri), mockAppConfig)
   }
+}
+
+case class TestCacheData(registerAsBusiness: Boolean, expireAt: Instant, areYouInUK: Boolean, lastUpdated: Instant)
+
+object TestCacheData {
+  implicit val dateTimeFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
+  implicit val format: OFormat[TestCacheData] = Json.format[TestCacheData]
 }

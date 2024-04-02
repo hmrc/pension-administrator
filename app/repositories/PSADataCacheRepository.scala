@@ -44,45 +44,21 @@ object PSADataCacheEntry {
   case class EncryptedDataEntry(
                                  id: String,
                                  data: BsonBinary,
-                                 lastUpdated: Instant = Instant.now(),
+                                 lastUpdated: Instant,
                                  expireAt: Instant) extends PSADataCacheEntry
 
   case class DataEntryWithoutEncryption(
                                          id: String,
                                          data: JsValue,
-                                         lastUpdated: Instant = Instant.now(),
+                                         lastUpdated: Instant,
                                          expireAt: Instant) extends PSADataCacheEntry
 
   object EncryptedDataEntry {
-    private val dateReads = new Reads[Instant] {
-      def reads(json: JsValue): JsResult[Instant] = {
-        val result = json.asOpt[String].map { date =>
-          LocalDateTime.parse(
-              date ,
-              DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
-            )
-            .atZone(
-              ZoneId.of("UTC")
-            )
-            .toInstant
-        }.getOrElse(json.as[Instant](MongoJavatimeFormats.instantReads))
-        JsSuccess(result)
-      }
-    }
-
-    implicit val invitationReads: Reads[EncryptedDataEntry] = (
-      (JsPath \ "id").read[String] and
-        (JsPath \ "data").read[Array[Byte]] and
-        (JsPath \ "lastUpdated").read[Instant](dateReads) and
-        (JsPath \ "expireAt").read[Instant](dateReads)
-      )((id, data, lastUpdated , expireAt) =>
+    def apply(id: String,
+              data: Array[Byte],
+              lastUpdated: Instant = Instant.now(),
+              expireAt: Instant): EncryptedDataEntry =
       EncryptedDataEntry(id, BsonBinary(data), lastUpdated, expireAt)
-    )
-//    def apply(id: String,
-//              data: Array[Byte],
-//              lastUpdated: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
-//              expireAt: Instant): EncryptedDataEntry =
-//      EncryptedDataEntry(id, BsonBinary(data), lastUpdated, expireAt)
 
     final val bsonBinaryReads: Reads[BsonBinary] = byteArrayReads.map(t => BsonBinary(t))
     final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(t => t.getData)
@@ -92,35 +68,11 @@ object PSADataCacheEntry {
   }
 
   object DataEntryWithoutEncryption {
-    private val dateReads = new Reads[Instant] {
-      def reads(json: JsValue): JsResult[Instant] = {
-        val result = json.asOpt[String].map { date =>
-          LocalDateTime.parse(
-              date ,
-              DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
-            )
-            .atZone(
-              ZoneId.of("UTC")
-            )
-            .toInstant
-        }.getOrElse(json.as[Instant](MongoJavatimeFormats.instantReads))
-        JsSuccess(result)
-      }
-    }
-
-    implicit val invitationReads: Reads[DataEntryWithoutEncryption] = (
-      (JsPath \ "id").read[String] and
-        (JsPath \ "data").read[JsValue] and
-        (JsPath \ "lastUpdated").read[Instant](dateReads) and
-        (JsPath \ "expireAt").read[Instant](dateReads)
-      )((id, data, lastUpdated, expireAt) =>
+    def applyDataEntry(id: String,
+                       data: JsValue,
+                       lastUpdated: Instant = Instant.now(),
+                       expireAt: Instant): DataEntryWithoutEncryption =
       DataEntryWithoutEncryption(id, data, lastUpdated, expireAt)
-    )
-//    def applyDataEntry(id: String,
-//                       data: JsValue,
-//                       lastUpdated: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
-//                       expireAt: Instant): DataEntryWithoutEncryption =
-//      DataEntryWithoutEncryption(id, data, lastUpdated, expireAt)
 
     implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
     implicit val format: Format[DataEntryWithoutEncryption] = Json.format[DataEntryWithoutEncryption]
@@ -171,7 +123,7 @@ class PSADataCacheRepository @Inject()(
       val unencrypted = PlainText(Json.stringify(userData))
       val encryptedData = jsonCrypto.encrypt(unencrypted).value
       val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
-      val encryptedDataEntry = EncryptedDataEntry(id = credId, data = BsonBinary(dataAsByteArray), expireAt = evaluatedExpireAt)
+      val encryptedDataEntry = EncryptedDataEntry(id = credId, data = dataAsByteArray, expireAt = evaluatedExpireAt)
       val setOperation = Updates.combine(
         Updates.set(idField, encryptedDataEntry.id),
         Updates.set("data", encryptedDataEntry.data),
@@ -183,7 +135,7 @@ class PSADataCacheRepository @Inject()(
         update = setOperation, new FindOneAndUpdateOptions().upsert(true))
         .toFuture().map(_ => ())
     } else {
-      val dataEntryWithoutEncryption = DataEntryWithoutEncryption(id = credId, data = userData, expireAt = evaluatedExpireAt)
+      val dataEntryWithoutEncryption = DataEntryWithoutEncryption.applyDataEntry(id = credId, data = userData, expireAt = evaluatedExpireAt)
       val setOperation = Updates.combine(
         Updates.set(idField, dataEntryWithoutEncryption.id),
         Updates.set("data", Codecs.toBson(dataEntryWithoutEncryption.data)),

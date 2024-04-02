@@ -20,7 +20,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import utils.{Enumerable, WithName}
 
-import java.time.{Instant, LocalDateTime}
+import java.time.LocalDateTime
 
 sealed trait Event
 
