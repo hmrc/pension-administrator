@@ -193,7 +193,6 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        println(s"\n\n\n\n\n documents in db: ${documentsInDB}")
         documentsInDB.isDefined mustBe true
       }
     }
@@ -210,6 +209,36 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
+        documentsInDB.isDefined mustBe true
+      }
+    }
+
+    "get data if expiry is in String format" in {
+      when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
+      val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
+
+      val testCacheData = Json.parse(
+        """
+          |   "registerAsBusiness":'true',
+          |   "expireAt": {
+          |     "$date": {
+          |       "$numberLong": "1712065268251"
+          |     }
+          |   },
+          |   "areYouInUK":'true',
+          |   "lastUpdated": "2024-05-01T00:00:00.000+00:00"
+          |""".stripMargin
+      )
+      val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", testCacheData)
+
+      val documentsInDB = for {
+        _ <- psaDataCacheRepository.collection.drop().toFuture()
+        _ <- psaDataCacheRepository.upsert(record._1, record._2)
+        documentsInDB <- psaDataCacheRepository.get(record._1)
+      } yield documentsInDB
+
+      whenReady(documentsInDB) { documentsInDB =>
+        println(s"\n\n\n\n\n documents in db: ${record}")
         documentsInDB.isDefined mustBe true
       }
     }

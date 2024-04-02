@@ -32,7 +32,7 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.nio.charset.StandardCharsets
 import java.time.format.DateTimeFormatter
-import java.time.{Instant, LocalDateTime, ZoneId}
+import java.time.{Instant, LocalDateTime, ZoneId, ZoneOffset}
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
@@ -54,6 +54,17 @@ object PSADataCacheEntry {
                                          expireAt: Instant) extends PSADataCacheEntry
 
   object EncryptedDataEntry {
+    private val instantDateTimeReads = MongoJavatimeFormats.localDateReads.map(_.atStartOfDay().toInstant(ZoneOffset.UTC))
+
+    def reads(json: JsValue): JsResult[EncryptedDataEntry] = (
+      (JsPath \ "id").read[String] and
+        (JsPath \ "data").read[Array[Byte]] and
+        (JsPath \ "lastUpdated").read(instantDateTimeReads).orElse(Reads.pure(Instant.now())) and
+        (JsPath \ "expireAt").read(instantDateTimeReads).orElse(Reads.pure(Instant.now()))
+      )((id, data, lastUpdated , expireAt) =>
+      EncryptedDataEntry(id, BsonBinary(data), lastUpdated, expireAt)
+    ).reads(json)
+
     def apply(id: String,
               data: Array[Byte],
               lastUpdated: Instant = Instant.now(),
@@ -68,6 +79,17 @@ object PSADataCacheEntry {
   }
 
   object DataEntryWithoutEncryption {
+    private val instantDateTimeReads = MongoJavatimeFormats.localDateReads.map(_.atStartOfDay().toInstant(ZoneOffset.UTC))
+
+    def reads(json: JsValue): JsResult[DataEntryWithoutEncryption] = (
+      (JsPath \ "id").read[String] and
+        (JsPath \ "data").read[JsValue] and
+        (JsPath \ "lastUpdated").read(instantDateTimeReads).orElse(Reads.pure(Instant.now())) and
+        (JsPath \ "expireAt").read(instantDateTimeReads).orElse(Reads.pure(Instant.now()))
+      )((id, data, lastUpdated , expireAt) =>
+      DataEntryWithoutEncryption(id, data, lastUpdated, expireAt)
+    ).reads(json)
+
     def applyDataEntry(id: String,
                        data: JsValue,
                        lastUpdated: Instant = Instant.now(),
@@ -127,8 +149,8 @@ class PSADataCacheRepository @Inject()(
       val setOperation = Updates.combine(
         Updates.set(idField, encryptedDataEntry.id),
         Updates.set("data", encryptedDataEntry.data),
-        Updates.set("lastUpdated", Codecs.toBson(encryptedDataEntry.lastUpdated)),
-        Updates.set("expireAt", Codecs.toBson(encryptedDataEntry.expireAt))
+        Updates.set("lastUpdated", encryptedDataEntry.lastUpdated),
+        Updates.set("expireAt", encryptedDataEntry.expireAt)
       )
       collection.withDocumentClass[EncryptedDataEntry]().findOneAndUpdate(
         filter = Filters.eq(idField, credId),
@@ -139,8 +161,8 @@ class PSADataCacheRepository @Inject()(
       val setOperation = Updates.combine(
         Updates.set(idField, dataEntryWithoutEncryption.id),
         Updates.set("data", Codecs.toBson(dataEntryWithoutEncryption.data)),
-        Updates.set("lastUpdated", Codecs.toBson(dataEntryWithoutEncryption.lastUpdated)),
-        Updates.set("expireAt", Codecs.toBson(dataEntryWithoutEncryption.expireAt))
+        Updates.set("lastUpdated", dataEntryWithoutEncryption.lastUpdated),
+        Updates.set("expireAt", dataEntryWithoutEncryption.expireAt)
       )
       collection.withDocumentClass[DataEntryWithoutEncryption]().findOneAndUpdate(
         filter = Filters.eq(idField, credId),
