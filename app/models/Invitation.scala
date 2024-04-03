@@ -34,36 +34,21 @@ case class Invitation(srn: SchemeReferenceNumber,
                      )
 
 object Invitation {
-  private val dateReads = new Reads[Instant] {
-    def reads(json: JsValue): JsResult[Instant] = {
-      val result = json.asOpt[String].map { date =>
-        LocalDateTime.parse(
-            date ,
-            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
-          )
-          .atZone(
-            ZoneId.of("UTC")
-          )
-          .toInstant
-      }.getOrElse(json.as[Instant](MongoJavatimeFormats.instantReads))
-      JsSuccess(result)
-    }
-  }
+  implicit val formats: Format[Invitation] = new Format[Invitation] {
+    override def writes(o: Invitation): JsValue = Json.writes[Invitation].writes(o)
 
+    private val instantReads = MongoJavatimeFormats.instantReads
 
-
-  implicit val invitationReads: Reads[Invitation] = (
-    (JsPath \ "srn").read[SchemeReferenceNumber] and
-      (JsPath \ "pstr").read[String] and
-      (JsPath \ "schemeName").read[String] and
-      (JsPath \ "inviterPsaId").read[PsaId] and
-      (JsPath \ "inviteePsaId").read[PsaId] and
-      (JsPath \ "inviteeName").read[String] and
-      (JsPath \ "expireAt").read[Instant](dateReads)
-    )((srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt) =>
+    override def reads(json: JsValue): JsResult[Invitation] = (
+      (JsPath \ "srn").read[SchemeReferenceNumber] and
+        (JsPath \ "pstr").read[String] and
+        (JsPath \ "schemeName").read[String] and
+        (JsPath \ "inviterPsaId").read[PsaId] and
+        (JsPath \ "inviteePsaId").read[PsaId] and
+        (JsPath \ "inviteeName").read[String] and
+        (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+      )((srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt) =>
       Invitation(srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt)
-  )
-
-  implicit val dateFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
-  implicit val formats: Format[Invitation] = Json.format[Invitation]
+    ).reads(json)
+  }
 }

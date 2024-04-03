@@ -19,6 +19,7 @@ package repositories
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import org.mongodb.scala.bson.BsonBinary
 import org.mongodb.scala.model._
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import play.api.{Configuration, Logging}
 import repositories.ManageCacheEntry.ManageCacheEntryFormats.lastUpdatedKey
@@ -50,13 +51,39 @@ object ManageCacheEntry {
     final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(t => t.getData)
     implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
     implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
-    implicit val format: Format[DataEntry] = Json.format[DataEntry]
+    implicit val format: Format[DataEntry] = new Format[DataEntry] {
+      override def writes(o: DataEntry): JsValue = Json.writes[DataEntry].writes(o)
+
+      private val instantReads = MongoJavatimeFormats.instantReads
+
+      override def reads(json: JsValue): JsResult[DataEntry] = (
+        (JsPath \ "id").read[String] and
+          (JsPath \ "data").read[BsonBinary] and
+          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now()))
+        )((id, data, lastUpdated) =>
+        DataEntry(id, data, lastUpdated)
+      ).reads(json)
+    }
   }
 
   object JsonDataEntry {
+    final val bsonBinaryReads: Reads[BsonBinary] = byteArrayReads.map(t => BsonBinary(t))
+    final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(t => t.getData)
+    implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
     implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
-    implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
+    implicit val format: Format[JsonDataEntry] = new Format[JsonDataEntry] {
+      override def writes(o: JsonDataEntry): JsValue = Json.writes[JsonDataEntry].writes(o)
 
+      private val instantReads = MongoJavatimeFormats.instantReads
+
+      override def reads(json: JsValue): JsResult[JsonDataEntry] = (
+        (JsPath \ "id").read[String] and
+          (JsPath \ "data").read[JsValue] and
+          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now()))
+        )((id, data, lastUpdated) =>
+        JsonDataEntry(id, data, lastUpdated)
+      ).reads(json)
+    }
   }
 
   object ManageCacheEntryFormats {

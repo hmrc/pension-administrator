@@ -22,6 +22,7 @@ import models.Invitation
 import org.mongodb.scala.bson.BsonBinary
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import play.api.{Configuration, Logging}
 import repositories.InvitationsCacheEntry.InvitationsCacheEntryFormats.{expireAtKey, inviteePsaIdKey, pstrKey}
@@ -60,7 +61,22 @@ object InvitationsCacheEntry {
     final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(_.getData)
     implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
     implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
-    implicit val format: Format[DataEntry] = Json.format[DataEntry]
+    implicit val format: Format[DataEntry] = new Format[DataEntry] {
+      override def writes(o: DataEntry): JsValue = Json.writes[DataEntry].writes(o)
+
+      private val instantReads = MongoJavatimeFormats.instantReads
+
+      override def reads(json: JsValue): JsResult[DataEntry] = (
+        (JsPath \ "inviteePsaId").read[String] and
+          (JsPath \ "pstr").read[String] and
+          (JsPath \ "data").read[BsonBinary] and
+          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now())) and
+          (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+        )((inviteePsaIdKey, pstr, data, lastUpdated, expireAt) =>
+        DataEntry(inviteePsaIdKey, pstr, data, lastUpdated, expireAt)
+      ).reads(json)
+
+    }
   }
 
   object JsonDataEntry {
@@ -74,7 +90,21 @@ object InvitationsCacheEntry {
     }
 
     implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
-    implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
+    implicit val format: Format[JsonDataEntry] = new Format[JsonDataEntry] {
+      override def writes(o: JsonDataEntry): JsValue = Json.writes[JsonDataEntry].writes(o)
+
+      private val instantReads = MongoJavatimeFormats.instantReads
+
+      override def reads(json: JsValue): JsResult[JsonDataEntry] = (
+        (JsPath \ "inviteePsaId").read[String] and
+          (JsPath \ "pstr").read[String] and
+          (JsPath \ "data").read[JsValue] and
+          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now())) and
+          (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+        )((inviteePsaIdKey, pstr, data, lastUpdated, expireAt) =>
+        JsonDataEntry(inviteePsaIdKey, pstr, data, lastUpdated, expireAt)
+      ).reads(json)
+    }
   }
 
   object InvitationsCacheEntryFormats {
@@ -138,8 +168,8 @@ class InvitationsCacheRepository @Inject()(
         Updates.set(inviteePsaIdKey, dataEntry.inviteePsaId),
         Updates.set(pstrKey, dataEntry.pstr),
         Updates.set(dataKey, dataEntry.data),
-        Updates.set(lastUpdatedKey, Codecs.toBson(dataEntry.lastUpdated)(MongoJavatimeFormats.instantFormat)),
-        Updates.set(expireAtKey, Codecs.toBson(dataEntry.expireAt)(MongoJavatimeFormats.instantFormat))
+        Updates.set(lastUpdatedKey, dataEntry.lastUpdated),
+        Updates.set(expireAtKey, dataEntry.expireAt)
       )
       val selector = Filters.and(Filters.equal(inviteePsaIdKey, encryptedInviteePsaId), Filters.equal(pstrKey, encryptedPstr))
       collection.withDocumentClass[DataEntry]().findOneAndUpdate(
@@ -153,8 +183,8 @@ class InvitationsCacheRepository @Inject()(
         Updates.set(inviteePsaIdKey, record.inviteePsaId),
         Updates.set(pstrKey, record.pstr),
         Updates.set(dataKey, Codecs.toBson(record.data)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(record.lastUpdated)(MongoJavatimeFormats.instantFormat)),
-        Updates.set(expireAtKey, Codecs.toBson(record.expireAt)(MongoJavatimeFormats.instantFormat))
+        Updates.set(lastUpdatedKey, record.lastUpdated),
+        Updates.set(expireAtKey, record.expireAt)
       )
       val selector = Filters.and(Filters.equal(inviteePsaIdKey, invitation.inviteePsaId.value), Filters.equal(pstrKey, invitation.pstr))
 
