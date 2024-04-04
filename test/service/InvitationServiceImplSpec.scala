@@ -36,10 +36,11 @@ import repositories._
 import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException, _}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import utils.FakeEmailConnector.containEmail
 import utils.{DateHelper, FakeEmailConnector}
 
-import java.time.{Clock, Instant, LocalDate, ZoneId, ZoneOffset}
+import java.time.{Clock, Instant, LocalDate, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues
@@ -271,8 +272,24 @@ object InvitationServiceImplSpec extends MockitoSugar {
   def invitation(inviteePsaId: PsaId, inviteeName: String): Invitation =
     Invitation(testSrn, "test-pstr", testSchemeName, inviterPsaId, inviteePsaId, inviteeName, expiryDate)
 
+
+
+  case class TestInvitation(srn: SchemeReferenceNumber,
+                        pstr: String,
+                        schemeName: String,
+                        inviterPsaId: PsaId,
+                        inviteePsaId: PsaId,
+                        inviteeName: String,
+                        expireAt: Instant
+                       )
+
+  object TestInvitation {
+    implicit val dateFormat = MongoJavatimeFormats.instantFormat
+    implicit val writes = Json.writes[TestInvitation]
+  }
+
   def invitationJson(inviteePsaId: PsaId, inviteeName: String): JsValue =
-    Json.toJson(Invitation(testSrn, "test-pstr", testSchemeName, inviterPsaId, inviteePsaId, inviteeName, expiryDate))
+    Json.toJson(TestInvitation(testSrn, "test-pstr", testSchemeName, inviterPsaId, inviteePsaId, inviteeName, expiryDate))
 
   val testSrn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")
 

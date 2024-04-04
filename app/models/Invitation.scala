@@ -33,10 +33,11 @@ case class Invitation(srn: SchemeReferenceNumber,
                      )
 
 object Invitation {
-  implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
 
   implicit val formats: Format[Invitation] = new Format[Invitation] {
     override def writes(o: Invitation): JsValue = Json.writes[Invitation].writes(o)
+
+    private val instantReads = MongoJavatimeFormats.instantReads
 
     override def reads(json: JsValue): JsResult[Invitation] = (
       (JsPath \ "srn").read[SchemeReferenceNumber] and
@@ -45,7 +46,7 @@ object Invitation {
         (JsPath \ "inviterPsaId").read[PsaId] and
         (JsPath \ "inviteePsaId").read[PsaId] and
         (JsPath \ "inviteeName").read[String] and
-        (JsPath \ "expireAt").read(instantFormat).orElse(Reads.pure(Instant.now()))
+        (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
       )((srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt) =>
       Invitation(srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt)
     ).reads(json)
