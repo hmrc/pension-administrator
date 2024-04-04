@@ -39,7 +39,7 @@ import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotF
 import utils.FakeEmailConnector.containEmail
 import utils.{DateHelper, FakeEmailConnector}
 
-import java.time.{Instant, LocalDate, ZoneId}
+import java.time.{Clock, Instant, LocalDate, ZoneId, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues
@@ -51,6 +51,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherV
   implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
   override def beforeEach(): Unit = {
+    fakeAuditService.reset()
     reset(invitationsCacheRepository)
     when(invitationsCacheRepository.upsert(any())(any()))
       .thenReturn(Future.successful(()))
@@ -264,6 +265,9 @@ object InvitationServiceImplSpec extends MockitoSugar {
   val testSchemeName = "test-scheme"
   val inviterPsaId: PsaId = PsaId("A7654321")
 
+  val date: LocalDate = LocalDate.parse("2018-10-10")
+  val expiryDate: Instant = Instant.now(Clock.fixed(Instant.parse("2018-10-10T00:00:00Z"), ZoneOffset.UTC))
+
   def invitation(inviteePsaId: PsaId, inviteeName: String): Invitation =
     Invitation(testSrn, "test-pstr", testSchemeName, inviterPsaId, inviteePsaId, inviteeName, expiryDate)
 
@@ -276,10 +280,6 @@ object InvitationServiceImplSpec extends MockitoSugar {
   val johnDoeEmail: String = "john.doe@email.com"
   val johnDoe: MinimalDetails = MinimalDetails(johnDoeEmail, isPsaSuspended = false, organisationName = None,
     individualDetails = Some(IndividualDetails("John", None, "Doe")), rlsFlag = true, deceasedFlag = true)
-
-  val date: LocalDate = LocalDate.parse("2018-10-10")
-//  val expiryDate: Instant = LocalDateTime.of(2018, 10, 10, 0, 0).atZone(ZoneId.of("UTC")).toInstant
-  val expiryDate: Instant = date.atStartOfDay(ZoneId.of("UTC")).toInstant
 
   val joeBloggsPsaId: PsaId = PsaId("A2000002")
   val joeBloggs: MinimalDetails = MinimalDetails("joe.bloggs@email.com", isPsaSuspended = false, None,
