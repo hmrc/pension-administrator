@@ -27,7 +27,7 @@ class ValidationUtilsSpec extends AnyWordSpec with Matchers with OptionValues {
   case class TestDetails(first: String, second: Option[String])
 
   object TestDetails {
-    implicit val formats = Json.format[TestDetails]
+    implicit val formats: OFormat[TestDetails] = Json.format[TestDetails]
   }
 
   case class Test(testFirst: String, testLast: String, testDetails: Option[TestDetails])

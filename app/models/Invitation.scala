@@ -16,12 +16,12 @@
 
 package models
 
-import org.joda.time.DateTime
-import play.api.libs.json.JodaWrites._
+import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import uk.gov.hmrc.domain.PsaId
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
-import java.time.LocalDateTime
+import java.time.Instant
 
 case class Invitation(srn: SchemeReferenceNumber,
                       pstr: String,
@@ -29,13 +29,26 @@ case class Invitation(srn: SchemeReferenceNumber,
                       inviterPsaId: PsaId,
                       inviteePsaId: PsaId,
                       inviteeName: String,
-                      expireAt: LocalDateTime
+                      expireAt: Instant
                      )
 
 object Invitation {
-  implicit val jodaDateFormat: Format[DateTime] = new Format[DateTime] {
-    override def reads(json: JsValue): JsResult[DateTime] = JodaReads.DefaultJodaDateTimeReads.reads(json)
-    override def writes(o: DateTime): JsValue = JodaDateTimeNumberWrites.writes(o)
+
+  implicit val formats: Format[Invitation] = new Format[Invitation] {
+    override def writes(o: Invitation): JsValue = Json.writes[Invitation].writes(o)
+
+    private val instantReads = MongoJavatimeFormats.instantReads
+
+    override def reads(json: JsValue): JsResult[Invitation] = (
+      (JsPath \ "srn").read[SchemeReferenceNumber] and
+        (JsPath \ "pstr").read[String] and
+        (JsPath \ "schemeName").read[String] and
+        (JsPath \ "inviterPsaId").read[PsaId] and
+        (JsPath \ "inviteePsaId").read[PsaId] and
+        (JsPath \ "inviteeName").read[String] and
+        (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+      )((srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt) =>
+      Invitation(srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt)
+    ).reads(json)
   }
-  implicit val formats: Format[Invitation] = Json.format[Invitation]
 }

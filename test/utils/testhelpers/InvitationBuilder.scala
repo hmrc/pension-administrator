@@ -19,7 +19,7 @@ package utils.testhelpers
 import models.{Invitation, SchemeReferenceNumber}
 import uk.gov.hmrc.domain.PsaId
 
-import java.time.LocalDateTime
+import java.time.{LocalDateTime, ZoneId}
 
 object InvitationBuilder {
 
@@ -29,14 +29,14 @@ object InvitationBuilder {
   val inviterPsaId1 = PsaId("I1234567")
   val inviteePsaId1 = PsaId("P1234567")
   val inviteeName1 = "Test Invitee1 Name"
-  val expiryDate1 = LocalDateTime.of(2018, 11, 10, 0, 0)
+  val expiryDate1 = LocalDateTime.of(2018, 11, 10, 0, 0).atZone(ZoneId.of("UTC")).toInstant
 
   val pstr2 = "D1234"
   val schemeName2 = "Test scheme2 name"
   val inviterPsaId2 = PsaId("Q1234567")
   val inviteePsaId2 = PsaId("T1234567")
   val inviteeName2 = "Test Invitee2 Name"
-  val expiryDate2 = LocalDateTime.of(2018, 11, 11, 0, 0)
+  val expiryDate2 = LocalDateTime.of(2018, 11, 11, 0, 0).atZone(ZoneId.of("UTC")).toInstant
 
   val invitation1 = Invitation(
     srn,

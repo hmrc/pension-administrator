@@ -59,7 +59,7 @@ class InvitationServiceImpl @Inject()(
 
   override def invitePSA(jsValue: JsValue)
                         (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
-    jsValue.validate[Invitation].fold(
+    jsValue.validate[Invitation](Invitation.formats).fold(
       {
         errors =>
           logger.warn(s"Json contains bad data $errors")
@@ -186,7 +186,7 @@ class InvitationServiceImpl @Inject()(
                               (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
 
     val name = psaDetails.individualDetails.map(_.fullName).getOrElse(psaDetails.organisationName.getOrElse(""))
-    val expiryDate = DateHelper.formatDate(invitation.expireAt.toLocalDate)
+    val expiryDate = DateHelper.formatDate(invitation.expireAt)
     val inviteePsaId = invitation.inviteePsaId
 
     val email = SendEmailRequest(

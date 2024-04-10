@@ -22,6 +22,7 @@ import models.Invitation
 import org.mongodb.scala.bson.BsonBinary
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import play.api.{Configuration, Logging}
 import repositories.InvitationsCacheEntry.InvitationsCacheEntryFormats.{expireAtKey, inviteePsaIdKey, pstrKey}
@@ -29,10 +30,11 @@ import repositories.InvitationsCacheEntry._
 import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, PlainText, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.nio.charset.StandardCharsets
-import java.time.{LocalDateTime, ZoneId}
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -41,16 +43,16 @@ object InvitationsCacheEntry {
 
   sealed trait InvitationsCacheEntry
 
-  case class DataEntry(inviteePsaId: String, pstr: String, data: BsonBinary, lastUpdated: LocalDateTime, expireAt: LocalDateTime) extends InvitationsCacheEntry
+  case class DataEntry(inviteePsaId: String, pstr: String, data: BsonBinary, lastUpdated: Instant, expireAt: Instant) extends InvitationsCacheEntry
 
-  case class JsonDataEntry(inviteePsaId: String, pstr: String, data: JsValue, lastUpdated: LocalDateTime, expireAt: LocalDateTime) extends InvitationsCacheEntry
+  case class JsonDataEntry(inviteePsaId: String, pstr: String, data: JsValue, lastUpdated: Instant, expireAt: Instant) extends InvitationsCacheEntry
 
   object DataEntry {
     def apply(inviteePsaId: String,
               pstr: String,
               data: Array[Byte],
-              lastUpdated: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC")),
-              expireAt: LocalDateTime): DataEntry = {
+              lastUpdated: Instant = Instant.now(),
+              expireAt: Instant): DataEntry = {
 
       DataEntry(inviteePsaId, pstr, BsonBinary(data), lastUpdated, expireAt)
     }
@@ -58,24 +60,55 @@ object InvitationsCacheEntry {
     final val bsonBinaryReads: Reads[BsonBinary] = byteArrayReads.map(BsonBinary(_))
     final val bsonBinaryWrites: Writes[BsonBinary] = byteArrayWrites.contramap(_.getData)
     implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
+    implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
+    implicit val format: Format[DataEntry] = new Format[DataEntry] {
+      override def writes(o: DataEntry): JsValue = Json.writes[DataEntry].writes(o)
 
-    implicit val format: Format[DataEntry] = Json.format[DataEntry]
+      private val instantReads = MongoJavatimeFormats.instantReads
+
+      override def reads(json: JsValue): JsResult[DataEntry] = (
+        (JsPath \ "inviteePsaId").read[String] and
+          (JsPath \ "pstr").read[String] and
+          (JsPath \ "data").read[BsonBinary] and
+          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now())) and
+          (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+        )((inviteePsaIdKey, pstr, data, lastUpdated, expireAt) =>
+        DataEntry(inviteePsaIdKey, pstr, data, lastUpdated, expireAt)
+      ).reads(json)
+
+    }
   }
 
   object JsonDataEntry {
     def applyJsonDataEntry(inviteePsaId: String,
                            pstr: String,
                            data: JsValue,
-                           lastUpdated: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC")),
-                           expireAt: LocalDateTime): JsonDataEntry = {
+                           lastUpdated: Instant = Instant.now(),
+                           expireAt: Instant): JsonDataEntry = {
 
       JsonDataEntry(inviteePsaId, pstr, data, lastUpdated, expireAt)
     }
 
-    implicit val format: Format[JsonDataEntry] = Json.format[JsonDataEntry]
+    implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
+    implicit val format: Format[JsonDataEntry] = new Format[JsonDataEntry] {
+      override def writes(o: JsonDataEntry): JsValue = Json.writes[JsonDataEntry].writes(o)
+
+      private val instantReads = MongoJavatimeFormats.instantReads
+
+      override def reads(json: JsValue): JsResult[JsonDataEntry] = (
+        (JsPath \ "inviteePsaId").read[String] and
+          (JsPath \ "pstr").read[String] and
+          (JsPath \ "data").read[JsValue] and
+          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now())) and
+          (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+        )((inviteePsaIdKey, pstr, data, lastUpdated, expireAt) =>
+        JsonDataEntry(inviteePsaIdKey, pstr, data, lastUpdated, expireAt)
+      ).reads(json)
+    }
   }
 
   object InvitationsCacheEntryFormats {
+    implicit val dateFormats: Format[Instant] = MongoJavatimeFormats.instantFormat
     implicit val format: Format[InvitationsCacheEntry] = Json.format[InvitationsCacheEntry]
 
     val pstrKey = "pstr"
@@ -97,7 +130,8 @@ class InvitationsCacheRepository @Inject()(
     domainFormat = InvitationsCacheEntryFormats.format,
     extraCodecs = Seq(
       Codecs.playFormatCodec(JsonDataEntry.format),
-      Codecs.playFormatCodec(DataEntry.format)
+      Codecs.playFormatCodec(DataEntry.format),
+      Codecs.playFormatCodec(MongoJavatimeFormats.instantFormat)
     ),
     indexes = Seq(
       IndexModel(
@@ -130,13 +164,12 @@ class InvitationsCacheRepository @Inject()(
       val encryptedData = jsonCrypto.encrypt(unencrypted).value
       val dataAsByteArray: Array[Byte] = encryptedData.getBytes("UTF-8")
       val dataEntry = DataEntry(encryptedInviteePsaId, encryptedPstr, dataAsByteArray, expireAt = invitation.expireAt)
-
       val modifier = Updates.combine(
         Updates.set(inviteePsaIdKey, dataEntry.inviteePsaId),
         Updates.set(pstrKey, dataEntry.pstr),
         Updates.set(dataKey, dataEntry.data),
-        Updates.set(lastUpdatedKey, Codecs.toBson(dataEntry.lastUpdated)),
-        Updates.set(expireAtKey, Codecs.toBson(dataEntry.expireAt))
+        Updates.set(lastUpdatedKey, dataEntry.lastUpdated),
+        Updates.set(expireAtKey, dataEntry.expireAt)
       )
       val selector = Filters.and(Filters.equal(inviteePsaIdKey, encryptedInviteePsaId), Filters.equal(pstrKey, encryptedPstr))
       collection.withDocumentClass[DataEntry]().findOneAndUpdate(
@@ -150,8 +183,8 @@ class InvitationsCacheRepository @Inject()(
         Updates.set(inviteePsaIdKey, record.inviteePsaId),
         Updates.set(pstrKey, record.pstr),
         Updates.set(dataKey, Codecs.toBson(record.data)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(record.lastUpdated)),
-        Updates.set(expireAtKey, Codecs.toBson(record.expireAt))
+        Updates.set(lastUpdatedKey, record.lastUpdated),
+        Updates.set(expireAtKey, record.expireAt)
       )
       val selector = Filters.and(Filters.equal(inviteePsaIdKey, invitation.inviteePsaId.value), Filters.equal(pstrKey, invitation.pstr))
 
