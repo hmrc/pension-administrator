@@ -82,7 +82,7 @@ class AssociationConnectorImpl @Inject()(
   override def logWarning[A](endpoint: String): PartialFunction[Try[Either[Throwable, A]], Unit] = {
     case Success(Left(e: HttpException))
       if !e.getMessage.contains("DELIMITED_PSPID") && !e.getMessage.contains("DELIMITED_PSAID") && !e.getMessage.contains("PSAID_NOT_FOUND") =>
-      logger.warn(s"$endpoint received error response from DES", e)
+        logger.warn(s"$endpoint received error response from DES", e)
     case Failure(e) =>
       logger.error(s"$endpoint received error response from DES", e)
   }
