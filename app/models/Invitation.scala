@@ -19,9 +19,9 @@ package models
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
-import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, OffsetDateTime}
 
 case class Invitation(srn: SchemeReferenceNumber,
                       pstr: String,
@@ -37,7 +37,16 @@ object Invitation {
   implicit val formats: Format[Invitation] = new Format[Invitation] {
     override def writes(o: Invitation): JsValue = Json.writes[Invitation].writes(o)
 
-    private val instantReads = MongoJavatimeFormats.instantReads
+    def parseTimestamp: Reads[Instant] = Reads[Instant] { json =>
+      val timestamp = json.as[String]
+      val instant = try {
+        OffsetDateTime.parse(timestamp, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+      } catch {
+        case _: Exception =>
+          OffsetDateTime.parse(timestamp + "Z", DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+      }
+      JsSuccess(instant.toInstant)
+    }
 
     override def reads(json: JsValue): JsResult[Invitation] = (
       (JsPath \ "srn").read[SchemeReferenceNumber] and
@@ -46,9 +55,10 @@ object Invitation {
         (JsPath \ "inviterPsaId").read[PsaId] and
         (JsPath \ "inviteePsaId").read[PsaId] and
         (JsPath \ "inviteeName").read[String] and
-        (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+        (JsPath \ "expireAt").read[Instant](parseTimestamp)
       )((srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt) =>
       Invitation(srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt)
     ).reads(json)
+
   }
 }
