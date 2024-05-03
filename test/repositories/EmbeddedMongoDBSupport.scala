@@ -26,21 +26,19 @@ import scala.util.Random
 trait EmbeddedMongoDBSupport {
 
   val mongoHost = "localhost"
-  val mongoPort = 10000 + Random.nextInt(10000)
+  val mongoPort = 27017
 
-  var mongodExecutable: MongodExecutable = _
 
-  def startMongoD(): MongodProcess =
-    mongodExecutable.start()
+  def startMongoD(): Unit = {
 
-  def stopMongoD(): Unit =
-    mongodExecutable.stop()
+  }
 
-  def initMongoDExecutable(): Unit =
-    mongodExecutable = MongodStarter.getDefaultInstance
-      .prepare(MongodConfig.builder()
-        .version(Version.Main.V4_2)
-        .net(new Net(mongoHost, mongoPort, Network.localhostIsIPv6()))
-        .build()
-      )
+  def stopMongoD(): Unit = {
+
+  }
+
+  def initMongoDExecutable(): Unit = {
+
+  }
+
 }
