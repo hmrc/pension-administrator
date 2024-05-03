@@ -22,6 +22,7 @@ import uk.gov.hmrc.domain.PsaId
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, OffsetDateTime}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 case class Invitation(srn: SchemeReferenceNumber,
                       pstr: String,
@@ -37,15 +38,23 @@ object Invitation {
   implicit val formats: Format[Invitation] = new Format[Invitation] {
     override def writes(o: Invitation): JsValue = Json.writes[Invitation].writes(o)
 
+    private val instantReads = MongoJavatimeFormats.instantReads
+
     def parseTimestamp: Reads[Instant] = Reads[Instant] { json =>
-      val timestamp = json.as[String]
-      val instant = try {
-        OffsetDateTime.parse(timestamp, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-      } catch {
-        case _: Exception =>
-          OffsetDateTime.parse(timestamp + "Z", DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+      val instantResult = instantReads.reads(json)
+      instantResult match {
+        case JsSuccess(instant, _) =>
+          JsSuccess(instant)
+        case JsError(_) =>
+          val timestamp = json.as[String]
+          val stringInstant = try {
+            OffsetDateTime.parse(timestamp, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+          } catch {
+             case _: Exception =>
+              OffsetDateTime.parse(timestamp + "Z", DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+           }
+          JsSuccess(stringInstant.toInstant)
       }
-      JsSuccess(instant.toInstant)
     }
 
     override def reads(json: JsValue): JsResult[Invitation] = (
@@ -55,7 +64,7 @@ object Invitation {
         (JsPath \ "inviterPsaId").read[PsaId] and
         (JsPath \ "inviteePsaId").read[PsaId] and
         (JsPath \ "inviteeName").read[String] and
-        (JsPath \ "expireAt").read[Instant](parseTimestamp)
+        (JsPath \ "expireAt").read(parseTimestamp)
       )((srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt) =>
       Invitation(srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt)
     ).reads(json)
