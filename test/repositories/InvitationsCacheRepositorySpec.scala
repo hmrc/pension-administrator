@@ -36,10 +36,13 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport
+class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers
   with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(500, Seconds), Span(1, Millis))
+
+  val mongoHost = "localhost"
+  var mongoPort: Int = 27017
 
   import InvitationsCacheRepositorySpec._
 
@@ -47,8 +50,6 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
     when(mockAppConfig.underlying).thenReturn(mockConfig)
     when(mockConfig.getString("mongodb.pension-administrator-cache.invitations.name")).thenReturn("invitations")
     when(mockConfig.getString("manage.json.encryption.key")).thenReturn("gvBoGdgzqG1AarzF1LY0zQ==")
-    initMongoDExecutable()
-    startMongoD()
     super.beforeAll()
   }
 

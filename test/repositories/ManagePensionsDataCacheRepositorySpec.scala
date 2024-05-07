@@ -32,11 +32,13 @@ import uk.gov.hmrc.mongo.MongoComponent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport with BeforeAndAfter with
+class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter with
   BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
+  val mongoHost = "localhost"
+  var mongoPort: Int = 27017
   import ManagePensionsDataCacheRepositorySpec._
 
   private val idField: String = "id"
@@ -46,13 +48,9 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
     when(mockConfig.getString("mongodb.pension-administrator-cache.manage-pensions.name")).thenReturn("manage-pensions")
     when(mockConfig.getInt("mongodb.pension-administrator-cache.manage-pensions.timeToLiveInSeconds")).thenReturn(3600)
     when(mockConfig.getString("manage.json.encryption.key")).thenReturn("gvBoGdgzqG1AarzF1LY0zQ==")
-    initMongoDExecutable()
-    startMongoD()
     super.beforeAll()
   }
 
-  override def afterAll(): Unit =
-    stopMongoD()
 
   "upsert" must {
     "save a new manage pensions data cache as JsonDataEntry in Mongo collection when encrypted false and collection is empty" in {

@@ -34,11 +34,13 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport with BeforeAndAfter with
+class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter with
   BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
+  val mongoHost = "localhost"
+  var mongoPort: Int = 27017
   import PSADataCacheRepositorySpec._
 
   private val idField: String = "id"
@@ -48,13 +50,8 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
     when(mockAppConfig.get[String]("mongodb.pension-administrator-cache.psa-data.name")).thenReturn("pension-administrator-psa-data")
     when(mockAppConfig.get[Int]("mongodb.pension-administrator-cache.psa-data.timeToLiveInDays")).thenReturn(3600)
     when(mockConfig.getString("psa.json.encryption.key")).thenReturn("gvBoGdgzqG1AarzF1LY0zQ==")
-    initMongoDExecutable()
-    startMongoD()
     super.beforeAll()
   }
-
-  override def afterAll(): Unit =
-    stopMongoD()
 
   "upsert" must {
     "save a new session data cache as DataEntryWithoutEncryption in Mongo collection when encrypted false and collection is empty" in {
@@ -185,7 +182,8 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       when(mockAppConfig.get[Boolean](path = "encrypted")).thenReturn(false)
       val psaDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
 
-      val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356", Json.toJson(TestCacheData(true, Instant.now(), true, Instant.now())))
+      val record = ("Ext-b9443dbb-3d88-465d-9696-47d6ef94f356",
+                      Json.toJson(TestCacheData(registerAsBusiness = true, Instant.now(), areYouInUK = true, Instant.now())))
       val documentsInDB = for {
         _ <- psaDataCacheRepository.collection.drop().toFuture()
         _ <- psaDataCacheRepository.upsert(record._1, record._2)
