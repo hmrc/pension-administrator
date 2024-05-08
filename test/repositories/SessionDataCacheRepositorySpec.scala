@@ -32,12 +32,15 @@ import uk.gov.hmrc.mongo.MongoComponent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport with BeforeAndAfter with
+class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter with
   BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
   import SessionDataCacheRepositorySpec._
+
+  val mongoHost = "localhost"
+  var mongoPort: Int = 27017
 
   private val idField: String = "id"
 
@@ -46,13 +49,8 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
     when(mockConfig.getString("mongodb.pension-administrator-cache.session-data.name")).thenReturn("session-data")
     when(mockConfig.getInt("mongodb.pension-administrator-cache.session-data.timeToLiveInSeconds")).thenReturn(3600)
     when(mockConfig.getString("manage.json.encryption.key")).thenReturn("gvBoGdgzqG1AarzF1LY0zQ==")
-    initMongoDExecutable()
-    startMongoD()
     super.beforeAll()
   }
-
-  override def afterAll(): Unit =
-    stopMongoD()
 
   "upsert" must {
     "save a new session data cache as JsonDataEntry in Mongo collection when encrypted false and collection is empty" in {

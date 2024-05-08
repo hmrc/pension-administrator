@@ -36,27 +36,25 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-class ToggleDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with EmbeddedMongoDBSupport with BeforeAndAfter with
+class ToggleDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter with
   BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
   import ToggleDataRepositorySpec._
 
+  val mongoHost = "localhost"
+  var mongoPort: Int = 27017
+
   var toggleDataRepository: ToggleDataRepository = _
 
-  private val toggleDetails = ToggleDetails("Test-feature-toggle", Some("Test description"), true)
+  private val toggleDetails = ToggleDetails("Test-feature-toggle", Some("Test description"), isEnabled = true)
 
   override def beforeAll(): Unit = {
     when(mockAppConfig.get[String](path = "mongodb.pension-administrator-cache.toggle-data.name")).thenReturn("toggle-data")
-    initMongoDExecutable()
-    startMongoD()
     toggleDataRepository = buildFormRepository(mongoHost, mongoPort)
     super.beforeAll()
   }
-
-  override def afterAll(): Unit =
-    stopMongoD()
 
   private def upsertJsObject(jsonObjectToInsert: JsObject, toggleName: String): Future[Unit] = {
     toggleDataRepository.collection.findOneAndUpdate(
