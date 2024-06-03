@@ -19,6 +19,7 @@ package repositories
 import base.MongoConfig
 import com.typesafe.config.Config
 import org.mockito.Mockito.when
+import org.mongodb.scala.bson.{BsonDocument, BsonString}
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
@@ -172,6 +173,27 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       whenReady(documentsInDB) {
         documentsInDB =>
           documentsInDB.size mustBe 2
+      }
+    }
+    "save lastUpdated value as a date" in {
+      when(mockAppConfig.getOptional[Boolean](path= "encrypted")).thenReturn(Some(false))
+      val managePensionsDataCacheRepository = buildFormRepository(mongoHost, mongoPort)
+      val ftr = managePensionsDataCacheRepository.collection.drop().toFuture().flatMap { _ =>
+        managePensionsDataCacheRepository.upsert("id", Json.parse("{}")).flatMap { _ =>
+          for {
+            stringResults <- managePensionsDataCacheRepository.collection.find[JsonDataEntry](
+              BsonDocument("lastUpdated" -> BsonDocument("$type" -> BsonString("string")))
+            ).toFuture()
+            dateResults <- managePensionsDataCacheRepository.collection.find[JsonDataEntry](
+              BsonDocument("lastUpdated" -> BsonDocument("$type" -> BsonString("date")))
+            ).toFuture()
+          } yield stringResults -> dateResults
+        }
+      }
+
+      whenReady(ftr) { case (stringResults, dateResults) =>
+        stringResults.length mustBe 0
+        dateResults.length mustBe 1
       }
     }
   }

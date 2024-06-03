@@ -18,7 +18,6 @@ package repositories
 
 import base.MongoConfig
 import com.typesafe.config.Config
-import org.mockito.Mockito
 import org.mockito.Mockito._
 import org.mongodb.scala.bson.{BsonDocument, BsonString}
 import org.mongodb.scala.model.Filters
@@ -31,13 +30,12 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.libs.json.Json
 import repositories.ManageCacheEntry.{DataEntry, JsonDataEntry}
-import repositories.behaviours.SaveAsDateBehaviour
 import uk.gov.hmrc.mongo.MongoComponent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter with
-  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures with MongoConfig with SaveAsDateBehaviour { // scalastyle:off magic.number
+  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures with MongoConfig { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
