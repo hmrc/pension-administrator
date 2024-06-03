@@ -16,6 +16,7 @@
 
 package repositories
 
+import base.MongoConfig
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import models.ToggleDetails
 import org.mockito.Mockito._
@@ -37,14 +38,11 @@ import scala.concurrent.Future
 
 
 class ToggleDataRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter with
-  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
+  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures with MongoConfig { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
   import ToggleDataRepositorySpec._
-
-  val mongoHost = "localhost"
-  var mongoPort: Int = 27017
 
   var toggleDataRepository: ToggleDataRepository = _
 

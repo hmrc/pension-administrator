@@ -16,6 +16,7 @@
 
 package repositories
 
+import base.MongoConfig
 import com.typesafe.config.Config
 import models.{Invitation, SchemeReferenceNumber}
 import org.mockito.Mockito._
@@ -37,12 +38,9 @@ import java.time.temporal.ChronoUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers
-  with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
+  with BeforeAndAfterAll with ScalaFutures with MongoConfig { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(500, Seconds), Span(1, Millis))
-
-  val mongoHost = "localhost"
-  var mongoPort: Int = 27017
 
   import InvitationsCacheRepositorySpec._
 

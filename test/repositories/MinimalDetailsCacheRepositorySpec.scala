@@ -16,8 +16,11 @@
 
 package repositories
 
+import base.MongoConfig
 import com.typesafe.config.Config
+import org.mockito.Mockito
 import org.mockito.Mockito._
+import org.mongodb.scala.bson.{BsonDocument, BsonString}
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
@@ -28,17 +31,15 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.libs.json.Json
 import repositories.ManageCacheEntry.{DataEntry, JsonDataEntry}
+import repositories.behaviours.SaveAsDateBehaviour
 import uk.gov.hmrc.mongo.MongoComponent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter with
-  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
+  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures with MongoConfig with SaveAsDateBehaviour { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
-
-  val mongoHost = "localhost"
-  var mongoPort: Int = 27017
 
   import MinimalDetailsCacheRepositorySpec._
 
@@ -173,6 +174,27 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar wi
       whenReady(documentsInDB) {
         documentsInDB =>
           documentsInDB.size mustBe 2
+      }
+    }
+    "save lastUpdated value as a date" in {
+      when(mockAppConfig.getOptional[Boolean](path= "encrypted")).thenReturn(Some(false))
+      val minimalDetailsCacheRepository = buildFormRepository(mongoHost, mongoPort)
+      val ftr = minimalDetailsCacheRepository.collection.drop().toFuture().flatMap { _ =>
+        minimalDetailsCacheRepository.upsert("id", Json.parse("{}")).flatMap { _ =>
+          for {
+            stringResults <- minimalDetailsCacheRepository.collection.find[JsonDataEntry](
+              BsonDocument("lastUpdated" -> BsonDocument("$type" -> BsonString("string")))
+            ).toFuture()
+            dateResults <- minimalDetailsCacheRepository.collection.find[JsonDataEntry](
+              BsonDocument("lastUpdated" -> BsonDocument("$type" -> BsonString("date")))
+            ).toFuture()
+          } yield stringResults -> dateResults
+        }
+      }
+
+      whenReady(ftr) { case (stringResults, dateResults) =>
+        stringResults.length mustBe 0
+        dateResults.length mustBe 1
       }
     }
   }

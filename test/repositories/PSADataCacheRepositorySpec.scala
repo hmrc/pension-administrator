@@ -16,6 +16,7 @@
 
 package repositories
 
+import base.MongoConfig
 import com.typesafe.config.Config
 import org.mockito.Mockito._
 import org.mongodb.scala.model.Filters
@@ -35,12 +36,10 @@ import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter with
-  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
+  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures with MongoConfig { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
-  val mongoHost = "localhost"
-  var mongoPort: Int = 27017
   import PSADataCacheRepositorySpec._
 
   private val idField: String = "id"
