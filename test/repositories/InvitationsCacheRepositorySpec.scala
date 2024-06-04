@@ -16,9 +16,11 @@
 
 package repositories
 
+import base.MongoConfig
 import com.typesafe.config.Config
 import models.{Invitation, SchemeReferenceNumber}
 import org.mockito.Mockito._
+import org.mongodb.scala.bson.{BsonDocument, BsonString}
 import org.mongodb.scala.model.Filters
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -37,12 +39,9 @@ import java.time.temporal.ChronoUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers
-  with BeforeAndAfterAll with ScalaFutures { // scalastyle:off magic.number
+  with BeforeAndAfterAll with ScalaFutures with MongoConfig { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(500, Seconds), Span(1, Millis))
-
-  val mongoHost = "localhost"
-  var mongoPort: Int = 27017
 
   import InvitationsCacheRepositorySpec._
 
@@ -228,6 +227,29 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       whenReady(documentsInDB) {
         documentsInDB =>
           documentsInDB.size mustBe 2
+      }
+    }
+    "save expireAt value as a date" in {
+      when(mockAppConfig.getOptional[Boolean](path= "encrypted")).thenReturn(Some(false))
+      val invitationsCacheRepository = buildFormRepository(mongoHost, mongoPort)
+      val record1 = Invitation(SchemeReferenceNumber("id"), "pstr1", "schemeName",
+        PsaId("A2500001"), PsaId("A2500002"), "inviteeName", Instant.now())
+      val ftr = invitationsCacheRepository.collection.drop().toFuture().flatMap { _ =>
+        invitationsCacheRepository.upsert(record1).flatMap { _ =>
+          for {
+            stringResults <- invitationsCacheRepository.collection.find[JsonDataEntry](
+              BsonDocument("expireAt" -> BsonDocument("$type" -> BsonString("string")))
+            ).toFuture()
+            dateResults <- invitationsCacheRepository.collection.find[JsonDataEntry](
+              BsonDocument("expireAt" -> BsonDocument("$type" -> BsonString("date")))
+            ).toFuture()
+          } yield stringResults -> dateResults
+        }
+      }
+
+      whenReady(ftr) { case (stringResults, dateResults) =>
+        stringResults.length mustBe 0
+        dateResults.length mustBe 1
       }
     }
   }

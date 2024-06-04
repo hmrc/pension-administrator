@@ -19,7 +19,7 @@ package base
 import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.{JsDefined, JsValue}
 
-trait CommonHelper extends Matchers{
+trait CommonHelper extends Matchers {
 
   def testElementValue(jsValue: JsValue, elementName: String, expectedValue: String): Unit = {
     jsValue \ elementName match {
