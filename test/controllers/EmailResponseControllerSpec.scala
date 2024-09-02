@@ -98,6 +98,22 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
       fakeAuditService.verifyNothingSent() mustBe true
 
     }
+
+    "URL contains an invalid PSAID id - handling SecurityException" in {
+
+      fakeAuditService.reset()
+
+      val psa = "manipulatedPSAID"
+
+      val controller = app.injector.instanceOf[EmailResponseController]
+
+      val result = controller.retrieveStatus(JourneyType.PSA, psa)(fakeRequest.withBody(Json.toJson(emailEvents)))
+
+      status(result) mustBe FORBIDDEN
+      contentAsString(result) mustBe "Malformed PSAID"
+      fakeAuditService.verifyNothingSent() mustBe true
+
+    }
   }
 }
 
