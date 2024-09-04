@@ -64,6 +64,6 @@ class EmailResponseController @Inject()(
         crypto.QueryParameterCrypto.decrypt(Crypted(id)).value
       })
     } catch {
-      case _: IllegalArgumentException => Left(Forbidden("Malformed PSAID"))
+      case _: IllegalArgumentException | _: SecurityException => Left(Forbidden("Malformed PSAID"))
     }
 }
