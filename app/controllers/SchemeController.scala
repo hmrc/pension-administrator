@@ -46,6 +46,7 @@ class SchemeController @Inject()(schemeService: SchemeService,
         case Some(jsValue) =>
           schemeService.registerPSA(jsValue).map {
             case Right(json) => Ok(json)
+            case Left(e: ForbiddenException) if e.getMessage.contains("INVALID_PSAID") => Forbidden("INVALID_PSAID")
             case Left(e) => result(e)
           }
         case _ => Future.failed(new BadRequestException("Bad Request with no request body returned for register PSA"))

@@ -101,6 +101,18 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     contentAsString(result) mustBe "forbidden"
   }
 
+  it should "return Forbidden when service return invalid PsaId" in {
+
+    fakeSchemeService.setRegisterPsaResponse(
+      Future.successful(Left(new ForbiddenException("INVALID_PSAID : The back end has indicated that PSAID is already de-limited and hence not valid.")))
+    )
+
+    val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
+
+    status(result) mustBe FORBIDDEN
+    contentAsString(result) mustBe "INVALID_PSAID"
+  }
+
   it should "throw BadRequestException when no data recieved in the request" in {
 
     recoverToSucceededIf[BadRequestException] {
