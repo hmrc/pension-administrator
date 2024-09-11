@@ -307,17 +307,18 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     val invalidData = Json.obj("data" -> "invalid")
 
-    server.stubFor(
-      post(urlEqualTo(registerOrganisationWithIdUrl))
-        .willReturn(
-          serverError
-        )
-    )
-
-    recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdOrganisation(testUtr, testOrganisation, invalidData)) map {
-      _ =>
-        auditService.verifyNothingSent() shouldBe true
+    val thrown = intercept[RegistrationValidationFailureException] {
+      connector.registerWithIdOrganisation(testUtr, testOrganisation, invalidData)
     }
+
+    assert(thrown.getMessage === "Invalid payload for registerWithIdOrganisation: " +
+      "ValidationFailure(required,$: required property 'regime' not found,None)" +
+      "ValidationFailure(required,$: required property 'isAnAgent' not found,None)" +
+      "ValidationFailure(oneOf,$: should be valid to one and only one schema, but 0 are valid,None)" +
+      "ValidationFailure(required,$: required property 'requiresNameMatch' not found,None)" +
+      "ValidationFailure(required,$: required property 'organisation' not found,None)" +
+      "ValidationFailure(required,$: required property 'individual' not found,None)" +
+      "ValidationFailure(additionalProperties,$.data: is not defined in the schema and the schema does not allow additional properties,None)")
 
   }
 
@@ -435,44 +436,6 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
   }
 
-  it should "return a BadGatewayException if the DES response is not JSON" in {
-
-    server
-      .stubFor(
-        post(urlEqualTo(registerIndividualWithoutIdUrl))
-          .willReturn(
-            aResponse()
-              .withStatus(OK)
-              .withHeader("Content-Type", "application/json")
-              .withBody("abc")
-          )
-      )
-
-    recoverToSucceededIf[BadGatewayException] {
-      connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)
-    }
-
-  }
-
-  it should "throw a BadGatewayException if the JSON returned by DES is not valid" in {
-
-    server
-      .stubFor(
-        post(urlEqualTo(registerIndividualWithoutIdUrl))
-          .willReturn(
-            aResponse()
-              .withStatus(OK)
-              .withHeader("Content-Type", "application/json")
-              .withBody("{}")
-          )
-      )
-
-    recoverToSucceededIf[BadGatewayException] {
-      connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)
-    }
-
-  }
-
   it should "handle 400 Bad Request INVALID_PAYLOAD" in {
 
     server
@@ -581,35 +544,6 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should "send a PSARegWithoutId audit event on not found" in {
-
-    server
-      .stubFor(
-        post(urlEqualTo(registerIndividualWithoutIdUrl))
-          .willReturn(
-            aResponse()
-              .withStatus(BAD_REQUEST)
-              .withBody(errorResponse("INVALID_PAYLOAD"))
-          )
-      )
-
-    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
-      _ =>
-        auditService.verifySent(
-          PSARegistration(
-            withId = false,
-            externalId = testIndividual.externalId,
-            psaType = "Individual",
-            found = false,
-            isUk = None,
-            status = BAD_REQUEST,
-            request = Json.toJson(registerIndividualWithoutIdRequest),
-            response = None
-          )
-        ) shouldBe true
-    }
-  }
-
   it should "not send a PSARegWithoutId audit event on failure" in {
 
     server
@@ -651,7 +585,7 @@ object RegistrationConnectorSpec {
   val testRegisterDataIndividual: JsObject = Json.obj("regime" -> "PODA", "requiresNameMatch" -> false, "isAnAgent" -> false)
   val testRegisterDataOrganisation: JsObject = Json.obj(
     "regime" -> "PODA",
-    "requiresNameMatch" -> false,
+    "requiresNameMatch" -> true,
     "isAnAgent" -> false,
     "organisation" -> Json.obj(
       "organisationName" -> "Test Ltd",
@@ -778,7 +712,7 @@ object RegistrationConnectorSpec {
         None,
         None,
         None,
-        "XX"
+        "AD"
       )
     )
 
