@@ -17,8 +17,6 @@
 package models.registrationnoid
 
 import play.api.libs.json._
-import play.api.libs.json.JodaWrites._
-import play.api.libs.json.JodaReads._
 
 import java.time.LocalDate
 

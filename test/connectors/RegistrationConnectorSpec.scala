@@ -20,8 +20,8 @@ import audit.{AuditService, PSARegistration, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.{ConnectorBehaviours, HeaderUtils}
-import models.registrationnoid._
 import models.User
+import models.registrationnoid._
 import org.mockito.Mockito.when
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -38,7 +38,7 @@ import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl, WireMockHelper}
 
-import java.time.LocalDate
+import java.time.{LocalDate, LocalDateTime}
 
 class RegistrationConnectorSpec extends AsyncFlatSpec
   with JsonFileReader
@@ -630,7 +630,7 @@ object RegistrationConnectorSpec {
   val registerWithoutIdResponse: RegisterWithoutIdResponse = RegisterWithoutIdResponse(
     "XE0001234567890",
     "1234567890",
-    LocalDate.of(2024, 4, 3)
+    LocalDateTime.of(2024, 4, 3, 0, 0, 0)
   )
 
 

@@ -18,11 +18,11 @@ package models.registrationnoid
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 case class RegisterWithoutIdResponse(safeId: String,
                            sapNumber: String,
-                           processingDate: LocalDate
+                           processingDate: LocalDateTime
                                     )
 
 object RegisterWithoutIdResponse {

@@ -21,7 +21,7 @@ import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.{JsResultException, JsValue, Json}
 import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl}
 
-import java.time.LocalDate
+import java.time.{LocalDate, LocalDateTime}
 
 class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
 
@@ -166,14 +166,14 @@ object RegistrationNoIdIndividualRequestSpec {
   val responseJson: JsValue = Json.parse(
     """
       |{
-      |  "processingDate": "2001-12-17T09:30:472",
+      |  "processingDate": "2001-12-17T09:30:47",
       |  "sapNumber": "1234567890",
       |  "safeId": "XE0001234567890"
       |}
     """.stripMargin
   )
 
-  val expectedResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890", LocalDate.of(2001, 12, 17))
+  val expectedResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890", LocalDateTime.of(2001, 12, 17, 9, 30, 47))
 
   val invalidPayloadHandler: InvalidPayloadHandler = new InvalidPayloadHandlerImpl()
 

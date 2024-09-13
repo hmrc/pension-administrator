@@ -224,7 +224,6 @@ class RegistrationConnectorImpl @Inject()(
     response.status match {
       case OK =>
         val jsonResponse = Json.parse(response.body)
-        println(s"\n\n jsonResponse is: $jsonResponse")
         val responseValidation = validateResponse(jsonResponse)
 
         if (responseValidation.isEmpty) {
