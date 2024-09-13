@@ -192,7 +192,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
   it should "not send a PSARegistration audit event on failure" in {
 
     val invalidData = Json.obj("data" -> "invalid")
-    val thrown = intercept[RegistrationValidationFailureException] {
+    val thrown = intercept[RegistrationRequestValidationFailureException] {
       connector.registerWithIdIndividual(testNino, testIndividual, invalidData)
     }
 
@@ -307,7 +307,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     val invalidData = Json.obj("data" -> "invalid")
 
-    val thrown = intercept[RegistrationValidationFailureException] {
+    val thrown = intercept[RegistrationRequestValidationFailureException] {
       connector.registerWithIdOrganisation(testUtr, testOrganisation, invalidData)
     }
 
@@ -671,6 +671,7 @@ object RegistrationConnectorSpec {
        |  "safeId": "XE0001234567890",
        |  "sapNumber": "1234567890",
        |  "isAnIndividual": false,
+       |  "isAnAgent": false,
        |  "organisation": {
        |    "organisationName": "Test Ltd",
        |    "isAGroup": false,
