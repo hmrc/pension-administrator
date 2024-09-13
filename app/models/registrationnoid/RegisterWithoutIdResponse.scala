@@ -18,8 +18,12 @@ package models.registrationnoid
 
 import play.api.libs.json.{Json, OFormat}
 
+import java.time.LocalDate
+
 case class RegisterWithoutIdResponse(safeId: String,
-                           sapNumber: String)
+                           sapNumber: String,
+                           processingDate: LocalDate
+                                    )
 
 object RegisterWithoutIdResponse {
   implicit val formats: OFormat[RegisterWithoutIdResponse] = Json.format[RegisterWithoutIdResponse]

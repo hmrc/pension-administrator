@@ -18,8 +18,7 @@ package controllers
 
 import base.SpecBase
 import connectors.RegistrationConnector
-import models._
-import models.registrationnoid.{OrganisationRegistrant, RegisterWithoutIdResponse, RegistrationNoIdIndividualRequest}
+import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest}
 import org.apache.pekko.stream.Materializer
 import org.joda.time.LocalDate
 import org.mockito.ArgumentCaptor
@@ -84,17 +83,17 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     "return OK when the registration with id is successful for Individual" in {
 
-      val successResponse: SuccessResponse = readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json").as[SuccessResponse]
+      val jsResponse = readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json")
 
       when(mockRegistrationConnector.registerWithIdIndividual(eqTo(nino), any(), eqTo(mandatoryRequestData))
       (any(), any(), any()))
-        .thenReturn(Future.successful(Right(successResponse)))
+        .thenReturn(Future.successful(Right(jsResponse)))
 
       val result = registrationController(individualRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
 
       ScalaFutures.whenReady(result) { _ =>
         status(result) mustBe OK
-        contentAsJson(result) mustEqual Json.toJson(successResponse)
+        contentAsJson(result) mustEqual jsResponse
       }
     }
 
@@ -234,7 +233,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         "organisationType" -> "LLP"
       )
 
-      val successResponse = readJsonFromFile("/data/validRegisterWithIdOrganisationResponse.json").as[SuccessResponse]
+      val jsResponse = readJsonFromFile("/data/validRegisterWithIdOrganisationResponse.json")
 
       val expectedJsonForConnector = Json.obj(
         "regime" -> "PODA",
@@ -250,13 +249,13 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
       when(mockRegistrationConnector
         .registerWithIdOrganisation(eqTo("1100000000"), any(), jsonCaptor.capture())(any(), any(), any()))
-        .thenReturn(Future.successful(Right(successResponse)))
+        .thenReturn(Future.successful(Right(jsResponse)))
 
       val result = registrationController(organisationRetrievals).registerWithIdOrganisation(fakeRequest.withJsonBody(inputData))
 
       ScalaFutures.whenReady(result) { _ =>
         status(result) mustBe OK
-        contentAsJson(result) mustEqual Json.toJson(successResponse)
+        contentAsJson(result) mustEqual jsResponse
         jsonCaptor.getValue mustEqual expectedJsonForConnector
       }
     }
@@ -381,14 +380,14 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
     "return OK with successful response from connector" in {
 
-      val successResponse: RegisterWithoutIdResponse = Json.obj(
+      val jsResponse = Json.obj(
         "processingDate" -> LocalDate.now,
         "sapNumber" -> "1234567890",
         "safeId" -> "XE0001234567890"
-      ).as[RegisterWithoutIdResponse]
+      )
 
       when(mockRegistrationConnector.registrationNoIdOrganisation(any(), eqTo(dataToEmtp))(any(), any(), any()))
-        .thenReturn(Future.successful(Right(successResponse)))
+        .thenReturn(Future.successful(Right(jsResponse)))
 
       val result = call(registrationController(organisationRetrievals).registrationNoIdOrganisation, fakeRequest(dataFromFrontend))
 
@@ -481,10 +480,10 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
     def fakeRequest(data: JsValue): FakeRequest[JsValue] = FakeRequest("POST", "/").withBody(data)
 
     "return OK with successful response from connector" in {
-      val successResponse: RegisterWithoutIdResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890")
+      val jsResponse = Json.obj("safeId" ->" XE0001234567890", "sapNumber" -> "1234567890")
 
       when(mockRegistrationConnector.registrationNoIdIndividual(any(), eqTo(individualNoIdToConnector))(any(), any(), any()))
-        .thenReturn(Future.successful(Right(successResponse)))
+        .thenReturn(Future.successful(Right(jsResponse)))
 
       val result = call(registrationController(individualRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
 

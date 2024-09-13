@@ -88,8 +88,8 @@ class RegistrationController @Inject()(
     }
   }
 
-  private def handleResponse: PartialFunction[Either[HttpException, SuccessResponse], Result] = {
-    case Right(successResponse) => Ok(Json.toJson(successResponse))
+  private def handleResponse: PartialFunction[Either[HttpException, JsValue], Result] = {
+    case Right(jsValue) => Ok(jsValue)
     case Left(e: HttpException) => result(e)
   }
 

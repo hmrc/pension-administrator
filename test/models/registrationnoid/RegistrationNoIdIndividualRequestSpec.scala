@@ -16,11 +16,12 @@
 
 package models.registrationnoid
 
-import org.joda.time.LocalDate
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.{JsResultException, JsValue, Json}
 import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl}
+
+import java.time.LocalDate
 
 class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
 
@@ -87,7 +88,7 @@ object RegistrationNoIdIndividualRequestSpec {
   val fullAddressRequest = RegistrationNoIdIndividualRequest(
     "John",
     "Smith",
-    new LocalDate(1990, 4, 3),
+    LocalDate.of(1990, 4, 3),
     Address(
       "100, Sutton Street",
       "Wokingham",
@@ -126,7 +127,7 @@ object RegistrationNoIdIndividualRequestSpec {
   val minimalAddressRequest = RegistrationNoIdIndividualRequest(
     "John",
     "Smith",
-    new LocalDate(1990, 4, 3),
+    LocalDate.of(1990, 4, 3),
     Address(
       "100, Sutton Street",
       "Wokingham",
@@ -172,7 +173,7 @@ object RegistrationNoIdIndividualRequestSpec {
     """.stripMargin
   )
 
-  val expectedResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890")
+  val expectedResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890", LocalDate.of(2001, 12, 17))
 
   val invalidPayloadHandler: InvalidPayloadHandler = new InvalidPayloadHandlerImpl()
 

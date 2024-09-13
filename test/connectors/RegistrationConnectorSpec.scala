@@ -21,8 +21,7 @@ import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.{ConnectorBehaviours, HeaderUtils}
 import models.registrationnoid._
-import models.{SuccessResponse, User}
-import org.joda.time.LocalDate
+import models.User
 import org.mockito.Mockito.when
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -38,6 +37,8 @@ import repositories._
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl, WireMockHelper}
+
+import java.time.LocalDate
 
 class RegistrationConnectorSpec extends AsyncFlatSpec
   with JsonFileReader
@@ -90,7 +91,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual).map {
       response =>
-        response.value shouldBe registerIndividualResponse.as[SuccessResponse]
+        response.value shouldBe registerIndividualResponse
     }
 
   }
@@ -129,7 +130,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
-  it should behave like errorHandlerForPostApiFailures[SuccessResponse](
+  it should behave like errorHandlerForPostApiFailures[JsValue](
     connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual),
     registerIndividualWithIdUrl
   )
@@ -157,7 +158,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             isUk = Some(true),
             status = OK,
             request = testRegisterDataIndividual,
-            response = Some(Json.toJson(registerIndividualResponse.as[SuccessResponse]))
+            response = Some(registerIndividualResponse)
           )
         ) shouldBe true
     }
@@ -219,7 +220,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation).map {
       response =>
-        response.value shouldBe registerOrganisationResponse.as[SuccessResponse]
+        response.value shouldBe registerOrganisationResponse
     }
 
   }
@@ -335,7 +336,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant).map {
       response =>
-        response.value shouldBe registerWithoutIdResponse
+        response.value shouldBe registerWithoutIdResponseJson
     }
   }
 
@@ -431,7 +432,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
       response =>
-        response.value shouldBe registerWithoutIdResponse
+        response.value shouldBe registerWithoutIdResponseJson
     }
 
   }
@@ -628,8 +629,19 @@ object RegistrationConnectorSpec {
 
   val registerWithoutIdResponse: RegisterWithoutIdResponse = RegisterWithoutIdResponse(
     "XE0001234567890",
-    "1234567890"
+    "1234567890",
+    LocalDate.of(2024, 4, 3)
   )
+
+
+//  val registerWithoutIdResponse: JsValue = Json.parse(
+//    """
+//      |{
+//      |  "safeId": "XE0001234567890",
+//      |  "sapNumber": "1234567890",
+//      |  "processingDate": "2024-04-03",
+//      |}
+//    """.stripMargin)
 
   val registerWithoutIdResponseJson: JsValue = Json.toJson(registerWithoutIdResponse)
 
@@ -669,6 +681,7 @@ object RegistrationConnectorSpec {
   val registerOrganisationResponse: JsValue = Json.parse(
     s"""{
        |  "safeId": "XE0001234567890",
+       |  "isEditable": false,
        |  "sapNumber": "1234567890",
        |  "isAnIndividual": false,
        |  "isAnAgent": false,
@@ -706,7 +719,7 @@ object RegistrationConnectorSpec {
     RegistrationNoIdIndividualRequest(
       "test-first-name",
       "test-last-name",
-      new LocalDate(2000, 1, 1),
+      LocalDate.of(2000, 1, 1),
       Address(
         "test-address-line-1",
         "test-address-line-2",
