@@ -32,44 +32,26 @@ import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler, JSONPaylo
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-@ImplementedBy(classOf[RegistrationConnectorImpl])
-trait RegistrationConnector {
-  def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)(
-    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]]
-
-  def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)(
-    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]]
-
-  def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)(
-    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]]
-
-  def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)(
-    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]]
-
-}
-
 case class RegistrationRequestValidationFailureException(error: String) extends Exception(error)
 
 case class RegistrationResponseValidationFailureException(error: String) extends Exception(error)
 
 
-class RegistrationConnectorImpl @Inject()(
+class RegistrationConnector @Inject()(
                                            http: HttpClient,
                                            config: AppConfig,
                                            auditService: AuditService,
                                            headerUtils: HeaderUtils,
                                            invalidPayloadHandler: InvalidPayloadHandler,
                                            jsonPayloadSchemaValidator: JSONPayloadSchemaValidator
-                                         ) extends RegistrationConnector with HttpResponseHelper with ErrorHandler with RegistrationAuditService {
+                                         ) extends HttpResponseHelper with ErrorHandler with RegistrationAuditService {
 
   private val logger = Logger(classOf[RegistrationConnector])
 
   private def desHeaderCarrierWithoutCorrelationId: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeaderWithoutCorrelationId)
 
-  override def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)
-                                       (implicit hc: HeaderCarrier,
-                                        ec: ExecutionContext,
-                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)
+                                       (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
     val registerWithIdUrl = config.registerWithIdIndividualUrl.format(nino)
     val requestSchema = "/resources/schemas/1163-registerWithId-RequestSchema-4.3.0.json"
     val responseSchema = "/resources/schemas/1163-registerWithId-ResponseSchema-4.2.1.json"
@@ -95,10 +77,8 @@ class RegistrationConnectorImpl @Inject()(
     }
   }
 
-  override def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)
-                                         (implicit hc: HeaderCarrier,
-                                          ec: ExecutionContext,
-                                          request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)
+                                         (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     val registerWithIdUrl = config.registerWithIdOrganisationUrl.format(utr)
     val psaType: String = organisationPsaType(registerData)
@@ -133,10 +113,8 @@ class RegistrationConnectorImpl @Inject()(
       logger.error(s"$endpoint received error response from DES", e)
   }
 
-  override def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)
-                                           (implicit hc: HeaderCarrier,
-                                            ec: ExecutionContext,
-                                            request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)
+                                           (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     val requestSchema = "/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json"
     val responseSchema = "/resources/schemas/1335_1336-registerWithoutId-ResponseSchema.json"
@@ -174,10 +152,8 @@ class RegistrationConnectorImpl @Inject()(
     }
   }
 
-  override def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
-                                         (implicit hc: HeaderCarrier,
-                                          ec: ExecutionContext,
-                                          request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
+                                         (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
     val requestSchema = "/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json"
     val responseSchema = "/resources/schemas/1335_1336-registerWithoutId-ResponseSchema.json"
     val url = config.registerWithoutIdIndividualUrl
