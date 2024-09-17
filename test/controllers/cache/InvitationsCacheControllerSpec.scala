@@ -52,7 +52,6 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
       bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
       bind[InvitationsCacheRepository].toInstance(repo),
-      bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
       bind[AuthConnector].toInstance(authConnector)
     ))
     .build()

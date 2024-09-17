@@ -54,8 +54,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
       bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
-      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
-      bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository])
     )
 
   private val dataFromFrontend = readJsonFromFile("/data/validRegistrationNoIDOrganisationFE.json")

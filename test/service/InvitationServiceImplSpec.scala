@@ -252,7 +252,6 @@ object InvitationServiceImplSpec extends MockitoSugar {
       bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
       bind[InvitationsCacheRepository].toInstance(invitationsCacheRepository),
-      bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
       bind[SchemeConnector].toInstance(new FakeSchemeConnector()),
       bind[EmailConnector].toInstance(emailConnector),
       bind[AssociationConnector].toInstance(new FakeAssociationConnector()),
