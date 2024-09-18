@@ -78,7 +78,17 @@ trait RegistrationAuditService {
       )(sendEvent)
 
     case Failure(t) =>
-      logger.error("Error in registration connector", t)
+      logger.error("Error sendPSARegistrationEvent", t)
+      sendAuditEvent(
+        withId = withId,
+        externalId = user.externalId,
+        psaType = psaType,
+        found = false,
+        isUk = None,
+        status = 0,
+        request = registerData,
+        response = Some(Json.obj("error" -> "Error sendPSARegistrationEvent", "message" -> t.getMessage))
+      )(sendEvent)
 
   }
 
@@ -118,7 +128,17 @@ trait RegistrationAuditService {
       )(sendEvent)
 
     case Failure(t) =>
-      logger.error("Error in registration connector", t)
+      logger.error("Error sendPSARegWithoutIdEvent", t)
+      sendAuditEvent(
+        withId = withId,
+        externalId = user.externalId,
+        psaType = psaType,
+        found = false,
+        isUk = None,
+        status = 0,
+        request = registerData,
+        response = Some(Json.obj("error" -> "Error sendPSARegWithoutIdEvent", "message" -> t.getMessage))
+      )(sendEvent)
 
   }
 
