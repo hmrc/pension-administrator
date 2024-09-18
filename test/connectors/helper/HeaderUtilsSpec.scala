@@ -65,8 +65,7 @@ object HeaderUtilsSpec {
     bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
     bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
     bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
-    bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
-    bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
+    bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository])
   )).build()
   private val injector = app.injector
   val appConfig: AppConfig = injector.instanceOf[AppConfig]

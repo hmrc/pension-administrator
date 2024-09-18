@@ -45,7 +45,6 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
     bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
     bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
     bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
-    bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
     bind[PSADataCacheRepository].toInstance(repo),
     bind[AuthConnector].toInstance(authConnector)
   )).build()
