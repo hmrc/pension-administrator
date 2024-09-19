@@ -16,7 +16,7 @@
 
 package audit
 
-import com.google.inject.Inject
+import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import play.api.Logging
 import play.api.mvc.RequestHeader
@@ -29,10 +29,18 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 import scala.util.{Failure, Success}
 
-class AuditService @Inject()(
+@ImplementedBy(classOf[AuditServiceImpl])
+trait AuditService {
+
+  def sendEvent[T <: AuditEvent](event: T)
+                                (implicit rh: RequestHeader, ec: ExecutionContext): Unit
+
+}
+
+class AuditServiceImpl @Inject()(
                                   config: AppConfig,
                                   connector: AuditConnector
-                                ) extends Logging {
+                                ) extends AuditService with Logging {
 
   private implicit def toHc(request: RequestHeader): AuditHeaderCarrier =
     auditHeaderCarrier(HeaderCarrierConverter.fromRequestAndSession(request, request.session))

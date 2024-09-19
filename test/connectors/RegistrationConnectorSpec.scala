@@ -164,6 +164,37 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
+  it should "send a PSARegistration audit event on response validation failure" in {
+
+    server.stubFor(
+      post(urlEqualTo(registerIndividualWithIdUrl))
+        .withRequestBody(equalToJson(Json.stringify(testRegisterDataIndividual)))
+        .willReturn(
+          ok
+            .withHeader("Content-Type", "application/json")
+            .withBody(invalidRegisterResponse.toString())
+        )
+    )
+
+
+    recoverToExceptionIf[RegistrationResponseValidationFailureException](connector.registerWithIdIndividual(
+      testNino, testIndividual, testRegisterDataIndividual)) map {
+      ex =>
+        auditService.verifySent(
+          PSARegistration(
+            withId = true,
+            externalId = testIndividual.externalId,
+            psaType = "Individual",
+            found = false,
+            isUk = None,
+            status = 0,
+            request = testRegisterDataIndividual,
+            response = Some(Json.obj("error" -> "Error sendPSARegistrationEvent", "message" -> ex.getMessage))
+          )
+        ) shouldBe true
+    }
+  }
+
   it should "send a PSARegistration audit event on not found" in {
 
     server.stubFor(
@@ -278,6 +309,36 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
+  it should "send a PSARegistration audit event on response validation failure" in {
+
+    server.stubFor(
+      post(urlEqualTo(registerOrganisationWithIdUrl))
+        .withRequestBody(equalToJson(Json.stringify(testRegisterDataOrganisation)))
+        .willReturn(
+          ok
+            .withHeader("Content-Type", "application/json")
+            .withBody(invalidRegisterResponse.toString())
+        )
+    )
+
+    recoverToExceptionIf[RegistrationResponseValidationFailureException](connector.registerWithIdOrganisation(
+      testUtr, testOrganisation, testRegisterDataOrganisation)) map {
+      ex =>
+        auditService.verifySent(
+          PSARegistration(
+            withId = true,
+            externalId = testOrganisation.externalId,
+            psaType = psaType,
+            found = false,
+            isUk = None,
+            status = 0,
+            request = testRegisterDataOrganisation,
+            response = Some(Json.obj("error" -> "Error sendPSARegistrationEvent", "message" -> ex.getMessage))
+          )
+        ) shouldBe true
+    }
+  }
+
   it should "send a PSARegistration audit event on not found" in {
 
     server.stubFor(
@@ -374,6 +435,35 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
+  it should "send a PSARegWithoutId audit event on response validation failure" in {
+
+    server.stubFor(
+      post(urlEqualTo(registerOrganisationWithoutIdUrl))
+        .willReturn(
+          ok
+            .withHeader("Content-Type", "application/json")
+            .withBody(invalidRegisterResponse.toString())
+        )
+    )
+
+    recoverToExceptionIf[RegistrationResponseValidationFailureException](connector.registrationNoIdOrganisation(
+      testOrganisation, organisationRegistrant)) map {
+      ex =>
+        auditService.verifySent(
+          PSARegistration(
+            withId = false,
+            externalId = testOrganisation.externalId,
+            psaType = "Organisation",
+            found = false,
+            isUk = None,
+            status = 0,
+            request = testRegisterWithNoId,
+            response = Some(Json.obj("error" -> "Error sendPSARegWithoutIdEvent", "message" -> ex.getMessage))
+          )
+        ) shouldBe true
+    }
+  }
+
   it should "send a PSARegWithoutId audit event on not found" in {
 
     server.stubFor(
@@ -410,8 +500,19 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     )
 
     recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant)) map {
-      _ =>
-        auditService.verifyNothingSent() shouldBe true
+      ex =>
+        auditService.verifySent(
+          PSARegistration(
+            withId = false,
+            externalId = testOrganisation.externalId,
+            psaType = "Organisation",
+            found = false,
+            isUk = None,
+            status = 0,
+            request = testRegisterWithNoId,
+            response = Some(Json.obj("error" -> "Error sendPSARegWithoutIdEvent", "message" -> ex.getMessage))
+          )
+        ) shouldBe true
     }
   }
 
@@ -545,6 +646,38 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     }
   }
 
+  it should "send a PSARegWithoutId audit event on response validation failure" in {
+
+    server
+      .stubFor(
+        post(urlEqualTo(registerIndividualWithoutIdUrl))
+          .withHeader("Content-Type", equalTo("application/json"))
+          .withRequestBody(equalToJson(Json.stringify(registerIndividualWithoutIdRequestJson)))
+          .willReturn(
+            ok
+              .withHeader("Content-Type", "application/json")
+              .withBody(Json.stringify(invalidRegisterResponse))
+          )
+      )
+
+    recoverToExceptionIf[RegistrationResponseValidationFailureException](connector.registrationNoIdIndividual(
+      testIndividual, registerIndividualWithoutIdRequest)) map {
+      ex =>
+        auditService.verifySent(
+          PSARegistration(
+            withId = false,
+            externalId = testIndividual.externalId,
+            psaType = "Individual",
+            found = false,
+            isUk = None,
+            status = 0,
+            request = Json.toJson(registerIndividualWithoutIdRequest),
+            response = Some(Json.obj("error" -> "Error sendPSARegWithoutIdEvent", "message" -> ex.getMessage))
+          )
+        ) shouldBe true
+    }
+  }
+
   it should "not send a PSARegWithoutId audit event on failure" in {
 
     server
@@ -559,7 +692,18 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
       ex =>
         ex.reportAs shouldBe BAD_GATEWAY
-        auditService.verifyNothingSent() shouldBe true
+        auditService.verifySent(
+          PSARegistration(
+            withId = false,
+            externalId = testIndividual.externalId,
+            psaType = "Individual",
+            found = false,
+            isUk = None,
+            status = 0,
+            request = Json.toJson(registerIndividualWithoutIdRequest),
+            response = Some(Json.obj("error" -> "Error sendPSARegWithoutIdEvent", "message" -> ex.getMessage))
+          )
+        ) shouldBe true
     }
   }
 
@@ -673,6 +817,21 @@ object RegistrationConnectorSpec {
       |    "secondaryPhoneNumber": "07782565326",
       |    "faxNumber": "01332754256",
       |    "emailAddress": "stephen@manncorpone.co.uk"
+      |  }
+      |}
+      |
+    """.stripMargin)
+
+  val invalidRegisterResponse: JsValue = Json.parse(
+    """
+      |{
+      |  "address": {
+      |    "addressLine1": "100 SuttonStreet",
+      |    "addressLine2": "Wokingham",
+      |    "addressLine3": "Surrey",
+      |    "addressLine4": "London",
+      |    "postalCode": "DH14EJ",
+      |    "countryCode": "GB"
       |  }
       |}
       |
