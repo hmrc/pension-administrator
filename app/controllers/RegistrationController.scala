@@ -19,7 +19,7 @@ package controllers
 import com.google.inject.Inject
 import connectors.RegistrationConnector
 import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest}
-import models.{Organisation, SuccessResponse}
+import models.Organisation
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.mvc._
@@ -88,8 +88,8 @@ class RegistrationController @Inject()(
     }
   }
 
-  private def handleResponse: PartialFunction[Either[HttpException, SuccessResponse], Result] = {
-    case Right(successResponse) => Ok(Json.toJson(successResponse))
+  private def handleResponse: PartialFunction[Either[HttpException, JsValue], Result] = {
+    case Right(jsValue) => Ok(jsValue)
     case Left(e: HttpException) => result(e)
   }
 

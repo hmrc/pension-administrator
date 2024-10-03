@@ -18,12 +18,12 @@ package audit
 
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
-import play.api.Logger
+import play.api.Logging
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
@@ -40,9 +40,7 @@ trait AuditService {
 class AuditServiceImpl @Inject()(
                                   config: AppConfig,
                                   connector: AuditConnector
-                                ) extends AuditService {
-
-  private val logger = Logger(classOf[AuditServiceImpl])
+                                ) extends AuditService with Logging {
 
   private implicit def toHc(request: RequestHeader): AuditHeaderCarrier =
     auditHeaderCarrier(HeaderCarrierConverter.fromRequestAndSession(request, request.session))

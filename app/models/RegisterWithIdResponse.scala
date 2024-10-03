@@ -16,8 +16,7 @@
 
 package models
 
-import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, Json, OFormat, Reads, Writes}
+import play.api.libs.json.{Json, OFormat}
 
 case class OrganisationType(organisationName: String,
                             isAGroup: Option[Boolean] = None,
@@ -43,25 +42,4 @@ case class ContactCommDetailsType(primaryPhoneNumber: Option[String] = None,
 
 object ContactCommDetailsType {
   implicit val formats: OFormat[ContactCommDetailsType] = Json.format[ContactCommDetailsType]
-}
-
-case class SuccessResponse(safeId: String,
-                           sapNumber: String,
-                           isAnIndividual: Boolean,
-                           individual: Option[IndividualType] = None,
-                           organisation: Option[OrganisationType] = None,
-                           address: Address,
-                           contactDetails: ContactCommDetailsType)
-
-object SuccessResponse {
-  implicit val reads: Reads[SuccessResponse] = Json.reads[SuccessResponse]
-  implicit val writes: Writes[SuccessResponse] = (
-    (JsPath \ "safeId").write[String] and
-      (JsPath \ "sapNumber").write[String] and
-      (JsPath \ "isAnIndividual").write[Boolean] and
-      (JsPath \ "individual").writeNullable[IndividualType] and
-      (JsPath \ "organisation").writeNullable[OrganisationType] and
-      (JsPath \ "address").write(Address.defaultWrites) and
-      (JsPath \ "contactDetails").write[ContactCommDetailsType]
-    ) (unlift(SuccessResponse.unapply))
 }

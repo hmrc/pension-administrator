@@ -16,8 +16,7 @@
 
 package audit
 
-import models.registrationnoid.RegisterWithoutIdResponse
-import models.{SuccessResponse, UkAddress, User}
+import models.{Address, UkAddress, User}
 import play.api.Logger
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
@@ -36,9 +35,9 @@ trait RegistrationAuditService {
     )
   }
 
-  def withIdIsUk(response: SuccessResponse): Option[Boolean] = {
+  def withIdIsUk(response: JsValue): Option[Boolean] = {
 
-    response.address match {
+    (response \ "address").as[Address] match {
       case _: UkAddress => Some(true)
       case _ => Some(false)
     }
@@ -49,21 +48,21 @@ trait RegistrationAuditService {
                                 user: User,
                                 psaType: String,
                                 registerData: JsValue,
-                                isUk: SuccessResponse => Option[Boolean]
+                                isUk: JsValue => Option[Boolean]
                               )(
                                 sendEvent: PSARegistration => Unit
-                              ): PartialFunction[Try[Either[HttpException, SuccessResponse]], Unit] = {
+                              ): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
 
-    case Success(Right(successResponse)) =>
+    case Success(Right(jsValue)) =>
       sendAuditEvent(
         withId = withId,
         externalId = user.externalId,
         psaType = psaType,
         found = true,
-        isUk = isUk(successResponse),
+        isUk = isUk(jsValue),
         status = Status.OK,
         request = registerData,
-        response = Some(Json.toJson(successResponse))
+        response = Some(jsValue)
       )(sendEvent)
 
     case Success(Left(e)) =>
@@ -79,7 +78,17 @@ trait RegistrationAuditService {
       )(sendEvent)
 
     case Failure(t) =>
-      logger.error("Error in registration connector", t)
+      logger.error("Error sendPSARegistrationEvent", t)
+      sendAuditEvent(
+        withId = withId,
+        externalId = user.externalId,
+        psaType = psaType,
+        found = false,
+        isUk = None,
+        status = 0,
+        request = registerData,
+        response = Some(Json.obj("error" -> "Error sendPSARegistrationEvent", "message" -> t.getMessage))
+      )(sendEvent)
 
   }
 
@@ -92,18 +101,18 @@ trait RegistrationAuditService {
                                 isUk: JsValue => Option[Boolean]
                               )(
                                 sendEvent: PSARegistration => Unit
-                              ): PartialFunction[Try[Either[HttpException, RegisterWithoutIdResponse]], Unit] = {
+                              ): PartialFunction[Try[Either[HttpException, JsValue]], Unit] = {
 
-    case Success(Right(registerWithoutIdResponse)) =>
+    case Success(Right(jsValue)) =>
       sendAuditEvent(
         withId = withId,
         externalId = user.externalId,
         psaType = psaType,
         found = true,
-        isUk = isUk(Json.toJson(registerWithoutIdResponse)),
+        isUk = isUk(jsValue),
         status = Status.OK,
         request = registerData,
-        response = Some(Json.toJson(registerWithoutIdResponse))
+        response = Some(Json.toJson(jsValue))
       )(sendEvent)
 
     case Success(Left(e)) =>
@@ -119,7 +128,17 @@ trait RegistrationAuditService {
       )(sendEvent)
 
     case Failure(t) =>
-      logger.error("Error in registration connector", t)
+      logger.error("Error sendPSARegWithoutIdEvent", t)
+      sendAuditEvent(
+        withId = withId,
+        externalId = user.externalId,
+        psaType = psaType,
+        found = false,
+        isUk = None,
+        status = 0,
+        request = registerData,
+        response = Some(Json.obj("error" -> "Error sendPSARegWithoutIdEvent", "message" -> t.getMessage))
+      )(sendEvent)
 
   }
 

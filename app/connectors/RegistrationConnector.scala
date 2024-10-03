@@ -17,81 +17,92 @@
 package connectors
 
 import audit._
-import com.google.inject.{ImplementedBy, Inject}
+import com.google.inject.Inject
 import config.AppConfig
 import connectors.helper.HeaderUtils
+import models.User
 import models.registrationnoid._
-import models.{SuccessResponse, User}
 import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{HttpClient, _}
-import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
+import utils._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-@ImplementedBy(classOf[RegistrationConnectorImpl])
-trait RegistrationConnector {
-  def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)(
-    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, SuccessResponse]]
+case class RegistrationRequestValidationFailureException(error: String) extends Exception(error)
 
-  def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)(
-    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, SuccessResponse]]
+case class RegistrationResponseValidationFailureException(error: String) extends Exception(error)
 
-  def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)(
-    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]]
 
-  def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)(
-    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]]
-
-}
-
-class RegistrationConnectorImpl @Inject()(
+class RegistrationConnector @Inject()(
                                            http: HttpClient,
                                            config: AppConfig,
                                            auditService: AuditService,
                                            headerUtils: HeaderUtils,
-                                           invalidPayloadHandler: InvalidPayloadHandler
-                                         ) extends RegistrationConnector with HttpResponseHelper with ErrorHandler with RegistrationAuditService {
+                                           invalidPayloadHandler: InvalidPayloadHandler,
+                                           jsonPayloadSchemaValidator: JSONPayloadSchemaValidator
+                                         ) extends HttpResponseHelper with ErrorHandler with RegistrationAuditService {
 
   private val logger = Logger(classOf[RegistrationConnector])
 
   private def desHeaderCarrierWithoutCorrelationId: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeaderWithoutCorrelationId)
 
-  override def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)
-                                       (implicit hc: HeaderCarrier,
-                                        ec: ExecutionContext,
-                                        request: RequestHeader): Future[Either[HttpException, SuccessResponse]] = {
+  def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)
+                                       (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
     val registerWithIdUrl = config.registerWithIdIndividualUrl.format(nino)
-    val schema = "/resources/schemas/registrationWithIdRequest.json"
+    val requestSchema = "/resources/schemas/1163-registerWithId-RequestSchema-4.3.0.json"
+    val responseSchema = "/resources/schemas/1163-registerWithId-ResponseSchema-4.2.1.json"
+    val requestValidationResult = jsonPayloadSchemaValidator.validateJsonPayload(requestSchema, registerData)
+    val responseValidation = jsonPayloadSchemaValidator.validateJsonPayload(responseSchema, _)
 
     logger.debug(s"[Pensions-Scheme-Header-Carrier]-${headerUtils.desHeaderWithoutCorrelationId.toString()}")
 
-    http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrierWithoutCorrelationId, implicitly) map {
-      handleResponse[SuccessResponse](_, registerWithIdUrl, schema,  registerData, "Business Partner Matching")
-    } andThen sendPSARegistrationEvent(
-      withId = true, user, "Individual", registerData, withIdIsUk
-    )(auditService.sendEvent) andThen logWarning("registerWithIdIndividual")
-
+    if (requestValidationResult.nonEmpty) {
+      throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdIndividual: ${requestValidationResult.mkString}")
+    } else {
+      http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrierWithoutCorrelationId, implicitly) map {
+        handleResponse(_,
+          registerWithIdUrl,
+          requestSchema,
+          registerData,
+          "Business Partner Matching",
+          responseValidation
+        )
+      } andThen sendPSARegistrationEvent(
+        withId = true, user, "Individual", registerData, withIdIsUk
+      )(auditService.sendEvent) andThen logWarning("registerWithIdIndividual")
+    }
   }
 
-  override def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)
-                                         (implicit hc: HeaderCarrier,
-                                          ec: ExecutionContext,
-                                          request: RequestHeader): Future[Either[HttpException, SuccessResponse]] = {
+  def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)
+                                         (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     val registerWithIdUrl = config.registerWithIdOrganisationUrl.format(utr)
     val psaType: String = organisationPsaType(registerData)
-    val schema = "/resources/schemas/registrationWithIdRequest.json"
+    val requestSchema = "/resources/schemas/1163-registerWithId-RequestSchema-4.3.0.json"
+    val responseSchema = "/resources/schemas/1163-registerWithId-ResponseSchema-4.2.1.json"
 
-    http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrierWithoutCorrelationId, implicitly) map {
-      handleResponse[SuccessResponse](_, registerWithIdUrl,schema, registerData,  "Business Partner Matching")
-    } andThen sendPSARegistrationEvent(
-      withId = true, user, psaType, registerData, withIdIsUk
-    )(auditService.sendEvent) andThen logWarningWithoutNotFound("registerWithIdOrganisation")
+    val requestValidationResult = jsonPayloadSchemaValidator.validateJsonPayload(requestSchema, registerData)
+    val responseValidation = jsonPayloadSchemaValidator.validateJsonPayload(responseSchema, _)
 
+    if (requestValidationResult.nonEmpty) {
+      throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdOrganisation: ${requestValidationResult.mkString}")
+    } else {
+      http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrierWithoutCorrelationId, implicitly) map {
+        handleResponse(_,
+          registerWithIdUrl,
+          requestSchema,
+          registerData,
+          "Business Partner Matching",
+          responseValidation
+        )
+      } andThen sendPSARegistrationEvent(
+        withId = true, user, psaType, registerData, withIdIsUk
+      )(auditService.sendEvent) andThen logWarningWithoutNotFound("registerWithIdOrganisation")
+    }
   }
 
   def logWarningWithoutNotFound[A](endpoint: String): PartialFunction[Try[Either[HttpException, A]], Unit] = {
@@ -102,12 +113,12 @@ class RegistrationConnectorImpl @Inject()(
       logger.error(s"$endpoint received error response from DES", e)
   }
 
-  override def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)
-                                           (implicit hc: HeaderCarrier,
-                                            ec: ExecutionContext,
-                                            request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = {
+  def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)
+                                           (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
-    val schema = "/resources/schemas/registrationWithoutIdRequest.json"
+    val requestSchema = "/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json"
+    val responseSchema = "/resources/schemas/1335_1336-registerWithoutId-ResponseSchema.json"
+
     val url = config.registerWithoutIdOrganisationUrl
     val correlationId = headerUtils.getCorrelationId
 
@@ -116,22 +127,35 @@ class RegistrationConnectorImpl @Inject()(
     logger.debug(s"Registration Without Id Organisation request body:" +
       s"${Json.prettyPrint(registerWithNoIdData)}) headers: ${headerUtils.desHeaderWithoutCorrelationId.toString()}")
 
-    http.POST(url, registerWithNoIdData)(implicitly, httpResponseReads, desHeaderCarrierWithoutCorrelationId, implicitly) map {
-      response =>
-        logger.debug(s"Registration Without Id Organisation response. Status=${response.status}\n${response.body}")
+    val requestValidationResult = jsonPayloadSchemaValidator.validateJsonPayload(requestSchema, registerWithNoIdData)
 
-        handleResponse[RegisterWithoutIdResponse](response, url, schema, registerWithNoIdData, "Register without Id Organisation")
+    val responseValidation = jsonPayloadSchemaValidator.validateJsonPayload(responseSchema, _)
 
-    } andThen sendPSARegWithoutIdEvent(
-      withId = false, user, "Organisation", Json.toJson(registerWithNoIdData), _ => Some(false)
-    )(auditService.sendEvent) andThen logWarning("registrationNoIdOrganisation")
+    if (requestValidationResult.nonEmpty) {
+      throw RegistrationRequestValidationFailureException(s"Invalid payload for registrationNoIdOrganisation: ${requestValidationResult.mkString}")
+    } else {
+      http.POST(url, registerWithNoIdData)(implicitly, httpResponseReads, desHeaderCarrierWithoutCorrelationId, implicitly) map {
+        response =>
+          logger.debug(s"Registration Without Id Organisation response. Status=${response.status}\n${response.body}")
+
+          handleResponse(response,
+            url,
+            requestSchema,
+            registerWithNoIdData,
+            "Register without Id Organisation",
+            responseValidation
+          )
+
+      } andThen sendPSARegWithoutIdEvent(
+        withId = false, user, "Organisation", Json.toJson(registerWithNoIdData), _ => Some(false)
+      )(auditService.sendEvent) andThen logWarning("registrationNoIdOrganisation")
+    }
   }
 
-  override def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
-                                         (implicit hc: HeaderCarrier,
-                                          ec: ExecutionContext,
-                                          request: RequestHeader): Future[Either[HttpException, RegisterWithoutIdResponse]] = {
-    val schema = "/resources/schemas/registrationWithoutIdRequest.json"
+  def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
+                                         (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+    val requestSchema = "/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json"
+    val responseSchema = "/resources/schemas/1335_1336-registerWithoutId-ResponseSchema.json"
     val url = config.registerWithoutIdIndividualUrl
     val correlationId = headerUtils.getCorrelationId
 
@@ -140,31 +164,53 @@ class RegistrationConnectorImpl @Inject()(
     logger.debug(s"Registration Without Id Individual request body:" +
       s"${Json.prettyPrint(body)}) headers: ${headerUtils.desHeaderWithoutCorrelationId.toString()}")
 
-    http.POST(url, body)(implicitly, httpResponseReads, desHeaderCarrierWithoutCorrelationId, implicitly) map {
-      response =>
-        logger.debug(s"Registration Without Id Individual response. Status=${response.status}\n${response.body}")
+    val requestValidationResult = jsonPayloadSchemaValidator.validateJsonPayload(requestSchema, body)
 
-        handleResponse[RegisterWithoutIdResponse](response, url, schema, body, "Register without Id Individual")
+    val responseValidation = jsonPayloadSchemaValidator.validateJsonPayload(responseSchema, _)
 
-    } andThen sendPSARegWithoutIdEvent(
-      withId = false, user, "Individual", Json.toJson(registrationRequest), _ => Some(false)
-    )(auditService.sendEvent) andThen logWarning("registrationNoIdIndividual")
+    if (requestValidationResult.nonEmpty) {
+      throw RegistrationRequestValidationFailureException(s"Invalid payload for registrationNoIdIndividual: ${requestValidationResult.mkString}")
+    } else {
+      http.POST(url, body)(implicitly, httpResponseReads, desHeaderCarrierWithoutCorrelationId, implicitly) map {
+        response =>
+          logger.debug(s"Registration Without Id Individual response. Status=${response.status}\n${response.body}")
+
+          handleResponse(response,
+            url,
+            requestSchema,
+            body,
+            "Register without Id Individual",
+            responseValidation)
+
+      } andThen sendPSARegWithoutIdEvent(
+        withId = false, user, "Individual", Json.toJson(registrationRequest), _ => Some(false)
+      )(auditService.sendEvent) andThen logWarning("registrationNoIdIndividual")
+    }
   }
 
 
-  private def handleResponse[A](response: HttpResponse, url: String, schema: String, requestBody: JsValue, methodContext: String)(
-    implicit reads: Reads[A]): Either[HttpException, A] = {
+  private def handleResponse(response: HttpResponse,
+                                url: String,
+                                schema: String,
+                                requestBody: JsValue,
+                                methodContext: String,
+                                validateResponse: JsValue => Set[ValidationFailure]): Either[HttpException, JsValue] = {
 
     val method = "POST"
     response.status match {
       case OK =>
-        val onInvalid = invalidPayloadHandler.logFailures(schema) _
-        Right(parseAndValidateJson[A](response.body, method, url, onInvalid))
+        val jsonResponse = Json.parse(response.body)
+        val responseValidation = validateResponse(jsonResponse)
+
+        if (responseValidation.isEmpty) {
+          Right(jsonResponse)
+        } else {
+          throw RegistrationResponseValidationFailureException(s"Invalid response to registration: ${responseValidation.mkString}")
+        }
 
       case BAD_REQUEST if response.body.contains("INVALID_PAYLOAD") =>
         invalidPayloadHandler.logFailures(schema)(requestBody)
         Left(new BadRequestException(upstreamResponseMessage(method, url, BAD_REQUEST, response.body)))
-
       case FORBIDDEN if response.body.contains("INVALID_SUBMISSION") =>
         Left(new BadRequestException(upstreamResponseMessage(method, url, BAD_REQUEST, response.body)))
 
