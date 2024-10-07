@@ -34,7 +34,7 @@ class MigrationService @Inject()(mongoLockRepository: MongoLockRepository,
 
   private def fixExpireAt(collectionName: String) = {
     val collection = mongoComponent.database.getCollection(collectionName)
-    logger.warn("[PODS-9319] Started minimal detail data migration for " + collectionName + " collection")
+    logger.info("[PODS-9319] Started minimal detail data migration for " + collectionName + " collection")
     collection.find(BsonDocument("lastUpdated" -> BsonDocument("$type" -> BsonString("string")))).toFuture().flatMap { seq =>
       val ftr = Future.sequence(seq.map(item => {
         val id = item.getObjectId("_id")
@@ -43,7 +43,7 @@ class MigrationService @Inject()(mongoLockRepository: MongoLockRepository,
         collection.findOneAndUpdate(selector, modifier).toFuture()
       }))
       val numberOfChanges = ftr.map(_.size)
-      numberOfChanges.foreach(count => logger.warn(s"[PODS-9319] Updated number of field $count from collection $collectionName"))
+      numberOfChanges.foreach(count => logger.info(s"[PODS-9319] Updated number of field $count from collection $collectionName"))
       numberOfChanges
     }
   }
@@ -55,9 +55,9 @@ class MigrationService @Inject()(mongoLockRepository: MongoLockRepository,
     } yield res
   } map {
     case Some(result) =>
-      logger.warn(s"[PODS-9319] data migration completed, $result rows were migrated successfully")
-    case None => logger.warn(s"[PODS-9319] data migration locked by other instance")
+      logger.debug(s"[PODS-9319] data migration completed, $result rows were migrated successfully")
+    case None => logger.debug(s"[PODS-9319] data migration locked by other instance")
   } recover {
-    case e => logger.error("Locking finished with error", e)
+    case e => logger.warn("Locking finished with error", e)
   }
 }
