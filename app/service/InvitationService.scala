@@ -204,7 +204,7 @@ class InvitationServiceImpl @Inject()(
     emailConnector.sendEmail(email).map {
       case EmailSent => ()
       case _ =>
-        logger.error("Unable to send email to invited PSA. Support intervention possibly required.")
+        logger.warn("Unable to send email to invited PSA. Support intervention possibly required.")
         ()
     }
 
