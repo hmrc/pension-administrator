@@ -316,10 +316,6 @@ object InvitationServiceImplSpec extends MockitoSugar {
   val invalidResponsePsaId: PsaId = PsaId("A2000006")
   val exceptionResponsePsaId: PsaId = PsaId("A2000007")
 
-  object FakeConfig {
-    val invitationExpiryDays: Int = 30
-  }
-
 }
 
 class FakeAssociationConnector extends AssociationConnector {
