@@ -58,6 +58,6 @@ class MigrationService @Inject()(mongoLockRepository: MongoLockRepository,
       logger.debug(s"[PODS-9319] data migration completed, $result rows were migrated successfully")
     case None => logger.debug(s"[PODS-9319] data migration locked by other instance")
   } recover {
-    case e => logger.warn("Locking finished with error", e)
+    case e => logger.error("Locking finished with error", e)
   }
 }
