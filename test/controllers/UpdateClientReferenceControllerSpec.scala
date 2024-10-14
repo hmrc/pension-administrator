@@ -17,7 +17,6 @@
 package controllers
 
 import connectors.UpdateClientReferenceConnector
-import org.joda.time.LocalDateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalacheck.Gen
@@ -40,6 +39,7 @@ import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.FakeAuthConnector
 
+import java.time.LocalDateTime
 import scala.concurrent.Future
 
 class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar with BeforeAndAfter

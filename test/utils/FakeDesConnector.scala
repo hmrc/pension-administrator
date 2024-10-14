@@ -18,13 +18,12 @@ package utils
 
 import connectors.DesConnector
 import models.PsaToBeRemovedFromScheme
-import org.joda.time.LocalDate
-import play.api.libs.json.JodaWrites._
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 import utils.testhelpers.PsaSubscriptionBuilder.psaSubscription
 
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeDesConnector extends DesConnector {
