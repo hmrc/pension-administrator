@@ -21,8 +21,10 @@ import config.AppConfig
 import models.SendEmailRequest
 import play.api.Logger
 import play.api.http.Status._
+import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, StringContextOps}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,7 +44,7 @@ trait EmailConnector {
 
 class EmailConnectorImpl @Inject()(
                                     appConfig: AppConfig,
-                                    http: HttpClient
+                                    httpV2Client: HttpClientV2
                                   ) extends EmailConnector {
 
   private val logger = Logger(classOf[EmailConnector])
@@ -50,7 +52,9 @@ class EmailConnectorImpl @Inject()(
   override def sendEmail(email: SendEmailRequest)
                         (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EmailStatus] = {
 
-    http.POST[SendEmailRequest, HttpResponse](appConfig.emailUrl, email).map { response =>
+    httpV2Client.post(url"${appConfig.emailUrl}")
+                 .withBody(email)
+                 .execute[http.HttpResponse].map { response =>
       response.status match {
         case ACCEPTED =>
           logger.debug("Email sent successfully")

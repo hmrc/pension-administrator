@@ -24,6 +24,7 @@ import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.domain.PsaId
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HttpClient, _}
 import utils.{ErrorHandler, HttpResponseHelper}
 
@@ -49,7 +50,7 @@ trait SchemeConnector {
 }
 
 class SchemeConnectorImpl @Inject()(
-                                     http: HttpClient,
+                                     httpV2Client: HttpClientV2,
                                      config: AppConfig
                                    ) extends SchemeConnector with HttpResponseHelper with ErrorHandler {
 
@@ -62,13 +63,14 @@ class SchemeConnectorImpl @Inject()(
 
     val headers: Seq[(String, String)] = Seq(("psaId", psaId.value), ("schemeReferenceNumber", srn), ("Content-Type", "application/json"))
 
-    implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headers: _*)
 
-    http.GET[HttpResponse](config.checkAssociationUrl)(implicitly, hc, implicitly) map { response =>
+    httpV2Client.get(url"${config.checkAssociationUrl}")
+      .setHeader(headers: _*)
+      .execute[HttpResponse] map { response =>
       val badResponse = Seq("Bad Request with missing parameters PSA Id or SRN")
       response.status match {
         case OK => Right(response.json)
-        case _ => Left(handleErrorResponse(s"Check for Association with headers: ${hc.headers _}", config.checkAssociationUrl, response, badResponse))
+        case _ => Left(handleErrorResponse(s"Check for Association with headers: ${headers: _*}", config.checkAssociationUrl, response, badResponse))
       }
     }
 
@@ -79,19 +81,18 @@ class SchemeConnectorImpl @Inject()(
                     ec: ExecutionContext,
                     request: RequestHeader): Future[Either[HttpException, JsValue]] = {
     val headers = Seq(("idType", "psaid"), ("idValue", psaId), ("Content-Type", "application/json"))
-    callListOfSchemes(config.listOfSchemesUrl, headers)
+    callListOfSchemes(url"${config.listOfSchemesUrl}", headers)
   }
 
-  private def callListOfSchemes(url: String, headers: Seq[(String, String)])
+  private def callListOfSchemes(url: java.net.URL, headers: Seq[(String, String)])
                                (implicit headerCarrier: HeaderCarrier,
                                 ec: ExecutionContext): Future[Either[HttpException, JsValue]] = {
-    implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headers: _*)
 
-    http.GET[HttpResponse](url)(implicitly, hc, implicitly) map { response =>
+    httpV2Client.get(url).setHeader(headers: _*).execute[HttpResponse] map { response =>
       val badResponse = Seq("Bad Request with missing parameter PSA Id")
       response.status match {
         case OK => Right(response.json)
-        case _ => Left(handleErrorResponse(s"List schemes with headers: ${hc.headers _}", url, response, badResponse))
+        case _ => Left(handleErrorResponse(s"List schemes with headers: ${headers: _*}", url.toString, response, badResponse))
       }
     }
   }
@@ -100,13 +101,13 @@ class SchemeConnectorImpl @Inject()(
                                (implicit hc: HeaderCarrier, ec: ExecutionContext)
   : Future[Either[HttpException, JsValue]] = {
 
-    val url = config.getSchemeDetailsUrl
-    val schemeHc = hc.withExtraHeaders("schemeIdType" -> schemeIdType, "idNumber" -> idNumber, "PSAId" -> psaId)
+    val url = url"${config.getSchemeDetailsUrl}"
+    val headers = Seq(("schemeIdType", schemeIdType), ("idNumber", idNumber), ("PSAId", psaId))
 
-    http.GET[HttpResponse](url)(implicitly, schemeHc, implicitly).map { response =>
+    httpV2Client.get(url).setHeader(headers: _*).execute[HttpResponse] map { response =>
       response.status match {
         case OK => Right(Json.parse(response.body))
-        case _ => Left(handleErrorResponse("GET", url, response, Seq.empty))
+        case _ => Left(handleErrorResponse("GET", url.toString, response, Seq.empty))
       }
     } andThen {
       case Failure(t: Throwable) => logger.warn("Unable to get scheme details in canPsaRegister call", t)
