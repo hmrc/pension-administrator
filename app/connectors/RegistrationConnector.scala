@@ -52,7 +52,7 @@ class RegistrationConnector @Inject()(
   private def desHeaderCarrierWithoutCorrelationId: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeaderWithoutCorrelationId)
 
   def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)
-                                       (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                       (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
     val registerWithIdUrl = url"${config.registerWithIdIndividualUrl.format(nino)}"
     val requestSchema = "/resources/schemas/1163-registerWithId-RequestSchema-4.3.0.json"
     val responseSchema = "/resources/schemas/1163-registerWithId-ResponseSchema-4.2.1.json"
@@ -79,7 +79,7 @@ class RegistrationConnector @Inject()(
   }
 
   def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)
-                                         (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                         (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
 
     val registerWithIdUrl = url"${config.registerWithIdOrganisationUrl.format(utr)}"
     val psaType: String = organisationPsaType(registerData)
@@ -115,7 +115,7 @@ class RegistrationConnector @Inject()(
   }
 
   def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)
-                                           (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                           (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
 
     val requestSchema = "/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json"
     val responseSchema = "/resources/schemas/1335_1336-registerWithoutId-ResponseSchema.json"
@@ -156,7 +156,7 @@ class RegistrationConnector @Inject()(
   }
 
   def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
-                                         (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                         (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
     val requestSchema = "/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json"
     val responseSchema = "/resources/schemas/1335_1336-registerWithoutId-ResponseSchema.json"
     val url = url"${config.registerWithoutIdIndividualUrl}"

@@ -70,7 +70,7 @@ class SchemeConnectorImpl @Inject()(
       val badResponse = Seq("Bad Request with missing parameters PSA Id or SRN")
       response.status match {
         case OK => Right(response.json)
-        case _ => Left(handleErrorResponse(s"Check for Association with headers: ${headers: _*}", config.checkAssociationUrl, response, badResponse))
+        case _ => Left(handleErrorResponse(s"Check for Association with headers: ${headers.toString}", config.checkAssociationUrl, response, badResponse))
       }
     }
 
@@ -92,7 +92,7 @@ class SchemeConnectorImpl @Inject()(
       val badResponse = Seq("Bad Request with missing parameter PSA Id")
       response.status match {
         case OK => Right(response.json)
-        case _ => Left(handleErrorResponse(s"List schemes with headers: ${headers: _*}", url.toString, response, badResponse))
+        case _ => Left(handleErrorResponse(s"List schemes with headers: ${headers.toString}", url.toString, response, badResponse))
       }
     }
   }
