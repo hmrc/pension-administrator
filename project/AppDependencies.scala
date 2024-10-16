@@ -13,7 +13,7 @@ object AppDependencies {
     "com.typesafe.play"             %% "play-json"                  % "2.10.5",
     "uk.gov.hmrc"                   %% "bootstrap-backend-play-30"  % bootstrapVersion,
     "com.networknt"                 % "json-schema-validator"       % "1.5.1",
-    "uk.gov.hmrc"                   %% "domain"                     % "8.3.0-play-28",
+    "uk.gov.hmrc"                   %% "domain-play-30"             % "10.0.0",
     ehcache
   )
 
