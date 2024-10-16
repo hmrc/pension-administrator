@@ -73,7 +73,7 @@ class AssociationConnectorImpl @Inject()(
                                  request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
 
     val minimalDetailsUrl = url"${appConfig.psaMinimalDetailsUrl.format(regime, idType, idValue)}"
-    httpV2Client.post(minimalDetailsUrl).setHeader(headerUtils.integrationFrameworkHeader: _*).execute[HttpResponse] map {
+    httpV2Client.get(minimalDetailsUrl).setHeader(headerUtils.integrationFrameworkHeader: _*).execute[HttpResponse] map {
       handleResponseIF(_, minimalDetailsUrl.toString)
     } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
   }
@@ -147,14 +147,18 @@ class AssociationConnectorImpl @Inject()(
     val url = url"${appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)}"
 
     val data = Json.toJson(acceptedInvitation)(writesIFAcceptedInvitation)
-    association(url, data, acceptedInvitation, "createAssociationRequest1445.json")(hc, implicitly, implicitly)
+    association(url, data, acceptedInvitation, "createAssociationRequest1445.json", headerUtils.integrationFrameworkHeader)(hc, implicitly, implicitly)
   }
 
-  private def association(url: java.net.URL, data: JsValue, acceptedInvitation: AcceptedInvitation, schemaFile: String)
+  private def association(url: java.net.URL, data: JsValue, acceptedInvitation: AcceptedInvitation,
+                          schemaFile: String,
+                          headers: Seq[(String, String)])
                          (implicit hc: HeaderCarrier, ec: ExecutionContext,
                           request: RequestHeader): Future[Either[HttpException, Unit]] = {
     logger.debug(s"[Accept-Invitation-Outgoing-Payload] - ${data.toString()}")
-    httpV2Client.post(url).withBody(data).execute[HttpResponse] map (processResponse(acceptedInvitation, _, url.toString, schemaFile))
+    httpV2Client.post(url)
+      .setHeader(headers: _*)
+      .withBody(data).execute[HttpResponse] map (processResponse(acceptedInvitation, _, url.toString, schemaFile))
   }
 }
 
