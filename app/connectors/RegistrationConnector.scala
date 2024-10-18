@@ -64,7 +64,9 @@ class RegistrationConnector @Inject()(
     if (requestValidationResult.nonEmpty) {
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdIndividual: ${requestValidationResult.mkString}")
     } else {
-      httpClientV2.post(registerWithIdUrl).withBody(registerData).execute[HttpResponse]  map {
+      httpClientV2.post(registerWithIdUrl)
+        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .withBody(registerData).execute[HttpResponse]  map {
         handleResponse(_,
           registerWithIdUrl.toString,
           requestSchema,
