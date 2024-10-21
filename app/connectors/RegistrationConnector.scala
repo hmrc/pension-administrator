@@ -49,8 +49,6 @@ class RegistrationConnector @Inject()(
 
   private val logger = Logger(classOf[RegistrationConnector])
 
-  private def desHeaderCarrierWithoutCorrelationId: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeaderWithoutCorrelationId)
-
   def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)
                                        (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
     val registerWithIdUrl = url"${config.registerWithIdIndividualUrl.format(nino)}"
@@ -64,7 +62,9 @@ class RegistrationConnector @Inject()(
     if (requestValidationResult.nonEmpty) {
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdIndividual: ${requestValidationResult.mkString}")
     } else {
-      httpClientV2.post(registerWithIdUrl).withBody(registerData).execute[HttpResponse]  map {
+      httpClientV2.post(registerWithIdUrl)
+        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .withBody(registerData).execute[HttpResponse]  map {
         handleResponse(_,
           registerWithIdUrl.toString,
           requestSchema,
@@ -92,7 +92,9 @@ class RegistrationConnector @Inject()(
     if (requestValidationResult.nonEmpty) {
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdOrganisation: ${requestValidationResult.mkString}")
     } else {
-      httpClientV2.post(registerWithIdUrl).withBody(registerData).execute[HttpResponse] map {
+      httpClientV2.post(registerWithIdUrl)
+        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .withBody(registerData).execute[HttpResponse] map {
         handleResponse(_,
           registerWithIdUrl.toString,
           requestSchema,
