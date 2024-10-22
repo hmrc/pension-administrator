@@ -33,6 +33,7 @@ import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler, JSONPaylo
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 @ImplementedBy(classOf[DesConnectorImpl])
 trait DesConnector {

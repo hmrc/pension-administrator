@@ -32,6 +32,7 @@ import utils._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 case class RegistrationRequestValidationFailureException(error: String) extends Exception(error)
 
