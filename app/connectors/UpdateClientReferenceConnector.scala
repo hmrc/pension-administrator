@@ -29,7 +29,6 @@ import uk.gov.hmrc.http.{HttpClient, _}
 import utils.{ErrorHandler, HttpResponseHelper, JSONPayloadSchemaValidator}
 
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.http.HttpReads.Implicits._
 
 @ImplementedBy(classOf[UpdateClientReferenceConnectorImpl])
 trait UpdateClientReferenceConnector {

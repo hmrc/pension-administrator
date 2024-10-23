@@ -27,12 +27,11 @@ import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HttpClient, _}
+import uk.gov.hmrc.http._
 import utils._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
-import uk.gov.hmrc.http.HttpReads.Implicits._
 
 case class RegistrationRequestValidationFailureException(error: String) extends Exception(error)
 

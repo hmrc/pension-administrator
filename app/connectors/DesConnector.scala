@@ -26,14 +26,13 @@ import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HttpClient, _}
+import uk.gov.hmrc.http._
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler, JSONPayloadSchemaValidator}
 
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
-import uk.gov.hmrc.http.HttpReads.Implicits._
 
 @ImplementedBy(classOf[DesConnectorImpl])
 trait DesConnector {
