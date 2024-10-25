@@ -64,7 +64,6 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
     )
 
   override def beforeEach(): Unit = {
-    when(mockHeaderUtils.desHeaderWithoutCorrelationId).thenReturn(Nil)
     when(mockHeaderUtils.integrationFrameworkHeader).thenReturn(Nil)
     when(mockHeaderUtils.desHeader).thenReturn(Nil)
     when(mockHeaderUtils.getCorrelationId).thenReturn(testCorrelationId)
