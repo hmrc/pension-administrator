@@ -16,7 +16,9 @@
 
 package models
 
+import org.apache.pekko.util.ByteString
 import play.api.libs.json.{Json, OFormat}
+import play.api.libs.ws.{BodyWritable, InMemoryBody}
 
 case class SendEmailRequest(to: List[String], templateId: String, parameters: Map[String, String], force: Boolean, eventUrl: Option[String])
 
@@ -29,5 +31,7 @@ object SendEmailRequest {
     new SendEmailRequest(to, templateId, parameters, false, None)
 
   implicit val format: OFormat[SendEmailRequest] = Json.format[SendEmailRequest]
+  implicit val knownFactsBodyWritable: BodyWritable[SendEmailRequest] = BodyWritable(a => InMemoryBody(ByteString(Json.toJson(a).toString())), "application/json")
+
 
 }

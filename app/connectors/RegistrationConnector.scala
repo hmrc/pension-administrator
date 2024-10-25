@@ -26,6 +26,7 @@ import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HttpClient, _}
 import utils._
 
@@ -38,21 +39,19 @@ case class RegistrationResponseValidationFailureException(error: String) extends
 
 
 class RegistrationConnector @Inject()(
-                                           http: HttpClient,
-                                           config: AppConfig,
-                                           auditService: AuditService,
-                                           headerUtils: HeaderUtils,
-                                           invalidPayloadHandler: InvalidPayloadHandler,
-                                           jsonPayloadSchemaValidator: JSONPayloadSchemaValidator
+                                       httpClientV2: HttpClientV2,
+                                       config: AppConfig,
+                                       auditService: AuditService,
+                                       headerUtils: HeaderUtils,
+                                       invalidPayloadHandler: InvalidPayloadHandler,
+                                       jsonPayloadSchemaValidator: JSONPayloadSchemaValidator
                                          ) extends HttpResponseHelper with ErrorHandler with RegistrationAuditService {
 
   private val logger = Logger(classOf[RegistrationConnector])
 
-  private def desHeaderCarrier: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader)
-
   def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)
-                                       (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-    val registerWithIdUrl = config.registerWithIdIndividualUrl.format(nino)
+                                       (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
+    val registerWithIdUrl = url"${config.registerWithIdIndividualUrl.format(nino)}"
     val requestSchema = "/resources/schemas/1163-registerWithId-RequestSchema-4.3.0.json"
     val responseSchema = "/resources/schemas/1163-registerWithId-ResponseSchema-4.2.1.json"
     val requestValidationResult = jsonPayloadSchemaValidator.validateJsonPayload(requestSchema, registerData)
@@ -61,9 +60,11 @@ class RegistrationConnector @Inject()(
     if (requestValidationResult.nonEmpty) {
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdIndividual: ${requestValidationResult.mkString}")
     } else {
-      http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrier, implicitly) map {
+      httpClientV2.post(registerWithIdUrl)
+        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .withBody(registerData).execute[HttpResponse]  map {
         handleResponse(_,
-          registerWithIdUrl,
+          registerWithIdUrl.toString,
           requestSchema,
           registerData,
           "Business Partner Matching",
@@ -76,9 +77,9 @@ class RegistrationConnector @Inject()(
   }
 
   def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)
-                                         (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                         (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
 
-    val registerWithIdUrl = config.registerWithIdOrganisationUrl.format(utr)
+    val registerWithIdUrl = url"${config.registerWithIdOrganisationUrl.format(utr)}"
     val psaType: String = organisationPsaType(registerData)
     val requestSchema = "/resources/schemas/1163-registerWithId-RequestSchema-4.3.0.json"
     val responseSchema = "/resources/schemas/1163-registerWithId-ResponseSchema-4.2.1.json"
@@ -89,9 +90,11 @@ class RegistrationConnector @Inject()(
     if (requestValidationResult.nonEmpty) {
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdOrganisation: ${requestValidationResult.mkString}")
     } else {
-      http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrier, implicitly) map {
+      httpClientV2.post(registerWithIdUrl)
+        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .withBody(registerData).execute[HttpResponse] map {
         handleResponse(_,
-          registerWithIdUrl,
+          registerWithIdUrl.toString,
           requestSchema,
           registerData,
           "Business Partner Matching",
@@ -112,12 +115,12 @@ class RegistrationConnector @Inject()(
   }
 
   def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)
-                                           (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                           (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
 
     val requestSchema = "/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json"
     val responseSchema = "/resources/schemas/1335_1336-registerWithoutId-ResponseSchema.json"
 
-    val url = config.registerWithoutIdOrganisationUrl
+    val url = url"${config.registerWithoutIdOrganisationUrl}"
     val correlationId = headerUtils.getCorrelationId
 
     val registerWithNoIdData = Json.toJson(registerData)(OrganisationRegistrant.writesOrganisationRegistrantRequest(correlationId))
@@ -132,12 +135,14 @@ class RegistrationConnector @Inject()(
     if (requestValidationResult.nonEmpty) {
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registrationNoIdOrganisation: ${requestValidationResult.mkString}")
     } else {
-      http.POST(url, registerWithNoIdData)(implicitly, httpResponseReads, desHeaderCarrier, implicitly) map {
+      httpClientV2.post(url)
+        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .withBody(registerWithNoIdData).execute[HttpResponse] map {
         response =>
           logger.debug(s"Registration Without Id Organisation response. Status=${response.status}\n${response.body}")
 
           handleResponse(response,
-            url,
+            url.toString,
             requestSchema,
             registerWithNoIdData,
             "Register without Id Organisation",
@@ -151,10 +156,10 @@ class RegistrationConnector @Inject()(
   }
 
   def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
-                                         (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                                         (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
     val requestSchema = "/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json"
     val responseSchema = "/resources/schemas/1335_1336-registerWithoutId-ResponseSchema.json"
-    val url = config.registerWithoutIdIndividualUrl
+    val url = url"${config.registerWithoutIdIndividualUrl}"
     val correlationId = headerUtils.getCorrelationId
 
     val body = Json.toJson(registrationRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(correlationId))
@@ -169,12 +174,14 @@ class RegistrationConnector @Inject()(
     if (requestValidationResult.nonEmpty) {
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registrationNoIdIndividual: ${requestValidationResult.mkString}")
     } else {
-      http.POST(url, body)(implicitly, httpResponseReads, desHeaderCarrier, implicitly) map {
+      httpClientV2.post(url)
+        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .withBody(body).execute[HttpResponse] map {
         response =>
           logger.debug(s"Registration Without Id Individual response. Status=${response.status}\n${response.body}")
 
           handleResponse(response,
-            url,
+            url.toString,
             requestSchema,
             body,
             "Register without Id Individual",

@@ -227,14 +227,16 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
       connector.registerWithIdIndividual(testNino, testIndividual, invalidData)
     }
 
-    assert(thrown.getMessage === "Invalid payload for registerWithIdIndividual: " +
-      "ValidationFailure(required,$: required property 'regime' not found,None)" +
-      "ValidationFailure(required,$: required property 'isAnAgent' not found,None)" +
-      "ValidationFailure(oneOf,$: should be valid to one and only one schema, but 0 are valid,None)" +
-      "ValidationFailure(required,$: required property 'requiresNameMatch' not found,None)" +
-      "ValidationFailure(required,$: required property 'organisation' not found,None)" +
-      "ValidationFailure(required,$: required property 'individual' not found,None)" +
-      "ValidationFailure(additionalProperties,$.data: is not defined in the schema and the schema does not allow additional properties,None)")
+    val errorMessage = thrown.getMessage
+
+    assert(errorMessage.contains("ValidationFailure(required,$: required property 'regime' not found,None)"))
+    assert(errorMessage.contains("ValidationFailure(required,$: required property 'isAnAgent' not found,None)"))
+    assert(errorMessage.contains("ValidationFailure(oneOf,$: must be valid to one and only one schema, but 0 are valid,None)"))
+    assert(errorMessage.contains("ValidationFailure(required,$: required property 'requiresNameMatch' not found,None)"))
+    assert(errorMessage.contains("ValidationFailure(required,$: required property 'organisation' not found,None)"))
+    assert(errorMessage.contains("ValidationFailure(required,$: required property 'individual' not found,None)"))
+    assert(errorMessage.contains("ValidationFailure(additionalProperties,$: property 'data' is not defined in " +
+      "the schema and the schema does not allow additional properties,None)"))
   }
 
   "registerWithIdOrganisation" should "handle OK (200)" in {
@@ -372,14 +374,15 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
       connector.registerWithIdOrganisation(testUtr, testOrganisation, invalidData)
     }
 
-    assert(thrown.getMessage === "Invalid payload for registerWithIdOrganisation: " +
-      "ValidationFailure(required,$: required property 'regime' not found,None)" +
-      "ValidationFailure(required,$: required property 'isAnAgent' not found,None)" +
-      "ValidationFailure(oneOf,$: should be valid to one and only one schema, but 0 are valid,None)" +
-      "ValidationFailure(required,$: required property 'requiresNameMatch' not found,None)" +
-      "ValidationFailure(required,$: required property 'organisation' not found,None)" +
-      "ValidationFailure(required,$: required property 'individual' not found,None)" +
-      "ValidationFailure(additionalProperties,$.data: is not defined in the schema and the schema does not allow additional properties,None)")
+    val errorMessage = thrown.getMessage
+    assert(errorMessage.contains("ValidationFailure(required,$: required property 'regime' not found,None)"))
+    assert(errorMessage.contains("ValidationFailure(required,$: required property 'isAnAgent' not found,None)"))
+    assert(errorMessage.contains("ValidationFailure(oneOf,$: must be valid to one and only one schema, but 0 are valid,None)"))
+    assert(errorMessage.contains("ValidationFailure(required,$: required property 'requiresNameMatch' not found,None)"))
+    assert(errorMessage.contains("ValidationFailure(required,$: required property 'organisation' not found,None)"))
+    assert(errorMessage.contains("ValidationFailure(required,$: required property 'individual' not found,None)"))
+    assert(errorMessage.contains("ValidationFailure(additionalProperties,$: property 'data' is not defined in " +
+      "the schema and the schema does not allow additional properties,None)"))
 
   }
 

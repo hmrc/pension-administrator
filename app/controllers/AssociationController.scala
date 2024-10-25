@@ -141,11 +141,10 @@ class AssociationController @Inject()(
   implicit hc: HeaderCarrier, request: RequestHeader):Future[Either[HttpException, MinimalDetails]]={
 
     associationConnector.getMinimalDetails(idValue, idType, regime) flatMap  {
-            case Right(psaDetails) => {
+            case Right(psaDetails) =>
               minimalDetailsCacheRepository.upsert(idValue,Json.toJson(psaDetails)).map(_ =>
                     Right(psaDetails)
               )
-            }
             case Left(e) => Future.successful(Left(e))
     }
   }
