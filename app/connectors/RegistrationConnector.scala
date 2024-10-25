@@ -26,8 +26,8 @@ import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HttpClient, _}
 import utils._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -61,7 +61,7 @@ class RegistrationConnector @Inject()(
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdIndividual: ${requestValidationResult.mkString}")
     } else {
       httpClientV2.post(registerWithIdUrl)
-        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .setHeader(headerUtils.desHeader: _*)
         .withBody(registerData).execute[HttpResponse]  map {
         handleResponse(_,
           registerWithIdUrl.toString,
@@ -91,7 +91,7 @@ class RegistrationConnector @Inject()(
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdOrganisation: ${requestValidationResult.mkString}")
     } else {
       httpClientV2.post(registerWithIdUrl)
-        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .setHeader(headerUtils.desHeader: _*)
         .withBody(registerData).execute[HttpResponse] map {
         handleResponse(_,
           registerWithIdUrl.toString,
@@ -136,7 +136,7 @@ class RegistrationConnector @Inject()(
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registrationNoIdOrganisation: ${requestValidationResult.mkString}")
     } else {
       httpClientV2.post(url)
-        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .setHeader(headerUtils.desHeader: _*)
         .withBody(registerWithNoIdData).execute[HttpResponse] map {
         response =>
           logger.debug(s"Registration Without Id Organisation response. Status=${response.status}\n${response.body}")
@@ -175,7 +175,7 @@ class RegistrationConnector @Inject()(
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registrationNoIdIndividual: ${requestValidationResult.mkString}")
     } else {
       httpClientV2.post(url)
-        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .setHeader(headerUtils.desHeader: _*)
         .withBody(body).execute[HttpResponse] map {
         response =>
           logger.debug(s"Registration Without Id Individual response. Status=${response.status}\n${response.body}")
