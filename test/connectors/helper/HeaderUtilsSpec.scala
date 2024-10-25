@@ -34,9 +34,13 @@ class HeaderUtilsSpec extends PlaySpec with Matchers with MockitoSugar {
     "call desHeader" must {
 
       "return all the appropriate headers" in {
-        val result = headerUtils.desHeaderWithoutCorrelationId
-        result mustEqual Seq("Environment" -> "local", "Authorization" -> "Bearer test-token",
+        val result = headerUtils.desHeader
+        result.filter {
+          case ("CorrelationId", _) => false
+          case _ => true
+        } mustEqual Seq("Environment" -> "local", "Authorization" -> "Bearer test-token",
           "Content-Type" -> "application/json")
+        result.map(_._1).contains("CorrelationId") mustBe true
       }
     }
 

@@ -48,7 +48,7 @@ class RegistrationConnector @Inject()(
 
   private val logger = Logger(classOf[RegistrationConnector])
 
-  private def desHeaderCarrierWithoutCorrelationId: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeaderWithoutCorrelationId)
+  private def desHeaderCarrier: HeaderCarrier = HeaderCarrier(extraHeaders = headerUtils.desHeader)
 
   def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)
                                        (implicit ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
@@ -58,12 +58,10 @@ class RegistrationConnector @Inject()(
     val requestValidationResult = jsonPayloadSchemaValidator.validateJsonPayload(requestSchema, registerData)
     val responseValidation = jsonPayloadSchemaValidator.validateJsonPayload(responseSchema, _)
 
-    logger.debug(s"[Pensions-Scheme-Header-Carrier]-${headerUtils.desHeaderWithoutCorrelationId.toString()}")
-
     if (requestValidationResult.nonEmpty) {
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdIndividual: ${requestValidationResult.mkString}")
     } else {
-      http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrierWithoutCorrelationId, implicitly) map {
+      http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrier, implicitly) map {
         handleResponse(_,
           registerWithIdUrl,
           requestSchema,
@@ -91,7 +89,7 @@ class RegistrationConnector @Inject()(
     if (requestValidationResult.nonEmpty) {
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdOrganisation: ${requestValidationResult.mkString}")
     } else {
-      http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrierWithoutCorrelationId, implicitly) map {
+      http.POST(registerWithIdUrl, registerData)(implicitly, implicitly[HttpReads[HttpResponse]], desHeaderCarrier, implicitly) map {
         handleResponse(_,
           registerWithIdUrl,
           requestSchema,
@@ -125,7 +123,7 @@ class RegistrationConnector @Inject()(
     val registerWithNoIdData = Json.toJson(registerData)(OrganisationRegistrant.writesOrganisationRegistrantRequest(correlationId))
 
     logger.debug(s"Registration Without Id Organisation request body:" +
-      s"${Json.prettyPrint(registerWithNoIdData)}) headers: ${headerUtils.desHeaderWithoutCorrelationId.toString()}")
+      s"${Json.prettyPrint(registerWithNoIdData)})")
 
     val requestValidationResult = jsonPayloadSchemaValidator.validateJsonPayload(requestSchema, registerWithNoIdData)
 
@@ -134,7 +132,7 @@ class RegistrationConnector @Inject()(
     if (requestValidationResult.nonEmpty) {
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registrationNoIdOrganisation: ${requestValidationResult.mkString}")
     } else {
-      http.POST(url, registerWithNoIdData)(implicitly, httpResponseReads, desHeaderCarrierWithoutCorrelationId, implicitly) map {
+      http.POST(url, registerWithNoIdData)(implicitly, httpResponseReads, desHeaderCarrier, implicitly) map {
         response =>
           logger.debug(s"Registration Without Id Organisation response. Status=${response.status}\n${response.body}")
 
@@ -162,7 +160,7 @@ class RegistrationConnector @Inject()(
     val body = Json.toJson(registrationRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(correlationId))
 
     logger.debug(s"Registration Without Id Individual request body:" +
-      s"${Json.prettyPrint(body)}) headers: ${headerUtils.desHeaderWithoutCorrelationId.toString()}")
+      s"${Json.prettyPrint(body)})")
 
     val requestValidationResult = jsonPayloadSchemaValidator.validateJsonPayload(requestSchema, body)
 
@@ -171,7 +169,7 @@ class RegistrationConnector @Inject()(
     if (requestValidationResult.nonEmpty) {
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registrationNoIdIndividual: ${requestValidationResult.mkString}")
     } else {
-      http.POST(url, body)(implicitly, httpResponseReads, desHeaderCarrierWithoutCorrelationId, implicitly) map {
+      http.POST(url, body)(implicitly, httpResponseReads, desHeaderCarrier, implicitly) map {
         response =>
           logger.debug(s"Registration Without Id Individual response. Status=${response.status}\n${response.body}")
 
