@@ -42,8 +42,6 @@ lazy val microservice = Project(AppDependencies.appName, file("."))
     Test / parallelExecution := true
   )
   .settings(CodeCoverageSettings.settings: _*)
-  .configs(IntegrationTest)
-  .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
   .settings(
     Test / fork := true,
     Test / javaOptions += "-Dconfig.file=conf/test.application.conf"
