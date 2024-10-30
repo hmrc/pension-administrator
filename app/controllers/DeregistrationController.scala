@@ -18,6 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.SchemeConnector
+import controllers.actions.AuthAction
 import models.{ListOfSchemes, SchemeDetails}
 import play.api.libs.json._
 import play.api.mvc._
@@ -29,12 +30,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class DeregistrationController @Inject()(
                                           schemeConnector: SchemeConnector,
-                                          cc: ControllerComponents
+                                          cc: ControllerComponents,
+                                          authAction: AuthAction
                                         )(implicit val ec: ExecutionContext)
   extends BackendController(cc)
     with ErrorHandler {
 
-  def canDeregister(psaId: String): Action[AnyContent] = Action.async {
+  def canDeregister(psaId: String): Action[AnyContent] = authAction.async {
     implicit request =>
       schemeConnector.listOfSchemes(psaId).flatMap {
         case Right(jsValue) =>

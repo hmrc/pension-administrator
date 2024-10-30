@@ -16,6 +16,7 @@
 
 package controllers.cache
 
+import controllers.actions.AuthAction
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -28,12 +29,13 @@ import scala.concurrent.{ExecutionContext, Future}
 abstract class PensionAdministratorCacheController(
                                                     repository: ManageCacheRepository,
                                                     val authConnector: AuthConnector,
-                                                    cc: ControllerComponents
+                                                    cc: ControllerComponents,
+                                                    authAction: AuthAction
                                                   )(implicit val ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   private val logger = Logger(classOf[PensionAdministratorCacheController])
 
-  def save(id: String): Action[AnyContent] = Action.async {
+  def save(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
       authorised() {
         request.body.asJson.map {
@@ -44,7 +46,7 @@ abstract class PensionAdministratorCacheController(
       }
   }
 
-  def get(id: String): Action[AnyContent] = Action.async {
+  def get(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
       authorised() {
         logger.debug("controllers.cache.PensionAdministratorCacheController.get: Authorised Request " + id)
@@ -58,7 +60,7 @@ abstract class PensionAdministratorCacheController(
       }
   }
 
-  def lastUpdated(id: String): Action[AnyContent] = Action.async {
+  def lastUpdated(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
       authorised() {
         logger.debug("controllers.cache.PensionAdministratorCacheController.get: Authorised Request " + id)
@@ -70,7 +72,7 @@ abstract class PensionAdministratorCacheController(
       }
   }
 
-  def remove(id: String): Action[AnyContent] = Action.async {
+  def remove(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
       authorised() {
         repository.remove(id).map(_ => Ok)

@@ -18,6 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.UpdateClientReferenceConnector
+import controllers.actions.AuthAction
 import models.UpdateClientReferenceRequest
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.mvc._
@@ -33,10 +34,11 @@ import scala.concurrent.Future
 class UpdateClientReferenceController @Inject()(
                                         override val authConnector: AuthConnector,
                                         updateClientReferenceConnector: UpdateClientReferenceConnector,
-                                        cc: ControllerComponents
+                                        cc: ControllerComponents,
+                                        authAction: AuthAction
                                       )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 
-  def updateClientReference: Action[AnyContent] = Action.async {
+  def updateClientReference: Action[AnyContent] = authAction.async {
     implicit request => {
       retrieveUser { _ =>
         request.body.asJson match {

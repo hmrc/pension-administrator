@@ -17,6 +17,7 @@
 package controllers.cache
 
 import com.google.inject.Inject
+import controllers.actions.AuthAction
 import models.Invitation
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
@@ -32,10 +33,11 @@ import scala.concurrent.Future
 class InvitationsCacheController @Inject()(
                                             repository: InvitationsCacheRepository,
                                             val authConnector: AuthConnector,
-                                            cc: ControllerComponents
+                                            cc: ControllerComponents,
+                                            authAction: AuthAction
                                           )(implicit val ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
-  def add: Action[AnyContent] = Action.async {
+  def add: Action[AnyContent] = authAction.async {
     implicit request =>
       authorised() {
         request.body.asJson.map {

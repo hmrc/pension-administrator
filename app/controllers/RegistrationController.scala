@@ -18,6 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.RegistrationConnector
+import controllers.actions.AuthAction
 import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest}
 import models.Organisation
 import play.api.Logger
@@ -38,12 +39,13 @@ import scala.util.{Failure, Success, Try}
 class RegistrationController @Inject()(
                                         override val authConnector: AuthConnector,
                                         registerConnector: RegistrationConnector,
+                                        authAction: AuthAction,
                                         cc: ControllerComponents
                                       )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 
   private val logger = Logger(classOf[RegistrationController])
 
-  def registerWithIdIndividual: Action[AnyContent] = Action.async {
+  def registerWithIdIndividual: Action[AnyContent] = authAction.async {
     implicit request => {
       retrieveUser { user =>
         request.body.asJson match {
@@ -62,7 +64,7 @@ class RegistrationController @Inject()(
     }
   }
 
-  def registerWithIdOrganisation: Action[AnyContent] = Action.async {
+  def registerWithIdOrganisation: Action[AnyContent] = authAction.async {
     implicit request => {
       retrieveUser { user =>
         request.body.asJson match {

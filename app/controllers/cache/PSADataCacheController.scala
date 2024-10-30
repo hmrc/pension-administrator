@@ -17,6 +17,7 @@
 package controllers.cache
 
 import com.google.inject.Inject
+import controllers.actions.AuthAction
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.PSADataCacheRepository
@@ -29,12 +30,13 @@ import scala.concurrent.Future
 class PSADataCacheController @Inject()(
                                         repository: PSADataCacheRepository,
                                         val authConnector: AuthConnector,
-                                        cc: ControllerComponents
+                                        cc: ControllerComponents,
+                                        authAction: AuthAction
                                       )(implicit val ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   private val logger = Logger(classOf[PSADataCacheController])
 
-  def save(id: String): Action[AnyContent] = Action.async {
+  def save(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
       authorised() {
         request.body.asJson.map {
@@ -45,7 +47,7 @@ class PSADataCacheController @Inject()(
       }
   }
 
-  def get(id: String): Action[AnyContent] = Action.async {
+  def get(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
       authorised() {
         logger.debug(message = "controllers.cache.PSADataCacheController.get: Authorised Request " + id)
@@ -59,7 +61,7 @@ class PSADataCacheController @Inject()(
       }
   }
 
-  def remove(id: String): Action[AnyContent] = Action.async {
+  def remove(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
       authorised() {
         repository.remove(id).map(_ => Ok)

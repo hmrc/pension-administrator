@@ -18,6 +18,7 @@ package controllers
 
 import audit.{AuditService, EmailAuditEvent}
 import com.google.inject.Inject
+import controllers.actions.AuthAction
 import models.enumeration.JourneyType
 import models.{EmailEvents, Opened}
 import play.api.Logger
@@ -26,23 +27,25 @@ import play.api.mvc._
 import uk.gov.hmrc.crypto.{ApplicationCrypto, Crypted}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import scala.concurrent.ExecutionContext
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class EmailResponseController @Inject()(
                                          auditService: AuditService,
                                          crypto: ApplicationCrypto,
                                          cc: ControllerComponents,
+                                         authAction: AuthAction,
                                          parser: PlayBodyParsers
                                        )(implicit val ec: ExecutionContext) extends BackendController(cc) {
 
   private val logger = Logger(classOf[EmailResponseController])
 
-  def retrieveStatus(journeyType: JourneyType.Name, id: String): Action[JsValue] = Action(parser.tolerantJson) {
+  def retrieveStatus(journeyType: JourneyType.Name, id: String): Action[JsValue] = authAction.async(parser.tolerantJson) {
     implicit request =>
       validatePsaId(id) match {
         case Right(psaId) =>
           request.body.validate[EmailEvents].fold(
-            _ => BadRequest("Bad request received for email call back event"),
+            _ => Future.successful(BadRequest("Bad request received for email call back event")),
             valid => {
               valid.events.filterNot(
                 _.event == Opened
@@ -50,11 +53,11 @@ class EmailResponseController @Inject()(
                 logger.debug(s"Email Audit event coming from $journeyType is $event")
                 auditService.sendEvent(EmailAuditEvent(psaId, event.event, journeyType))
               }
-              Ok
+              Future.successful(Ok)
             }
           )
 
-        case Left(result) => result
+        case Left(result) => Future.successful(result)
       }
   }
 
