@@ -18,7 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.UpdateClientReferenceConnector
-import controllers.actions.AuthAction
+import controllers.actions.PsaPspEnrolmentAuthAction
 import models.UpdateClientReferenceRequest
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.mvc._
@@ -35,7 +35,7 @@ class UpdateClientReferenceController @Inject()(
                                         override val authConnector: AuthConnector,
                                         updateClientReferenceConnector: UpdateClientReferenceConnector,
                                         cc: ControllerComponents,
-                                        authAction: AuthAction
+                                        authAction: PsaPspEnrolmentAuthAction
                                       )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 
   def updateClientReference: Action[AnyContent] = authAction.async {

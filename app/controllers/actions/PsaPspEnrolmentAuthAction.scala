@@ -16,15 +16,15 @@
 
 package controllers.actions
 
-import com.google.inject.Inject
+import com.google.inject.{ImplementedBy, Inject}
 import config.Constants
 import config.Constants._
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Results._
-import play.api.mvc._
+import play.api.mvc.{ActionFunction, _}
 import service.EnrolmentLoggingService
-import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.{AuthorisedFunctions, _}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
@@ -33,15 +33,20 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-class AuthAction @Inject() (
+@ImplementedBy(classOf[PsaPspEnrolmentAuthAction])
+trait AuthAction
+  extends ActionBuilder[AuthRequest, AnyContent]
+    with ActionFunction[Request, AuthRequest]
+    with AuthorisedFunctions
+    with Logging
+
+
+class PsaPspEnrolmentAuthAction @Inject()(
                              override val authConnector: AuthConnector,
                              val parser: BodyParsers.Default,
                              enrolmentLoggingService: EnrolmentLoggingService
                            )(implicit val executionContext: ExecutionContext)
-  extends ActionBuilder[AuthRequest, AnyContent]
-    with ActionFunction[Request, AuthRequest]
-    with AuthorisedFunctions
-    with Logging {
+  extends AuthAction {
 
   def getEnrolmentIdentifier(
                               enrolments: Enrolments,
@@ -58,28 +63,28 @@ class AuthAction @Inject() (
 
   def invoke[A](request: Request[A], block: AuthRequest[A] => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
 
-    authorised(Enrolment(NewEnrolmentKey) or Enrolment(LegacyEnrolmentKey)).retrieve(Retrievals.authorisedEnrolments) {
+    authorised(Enrolment(PSPEnrolmentKey) or Enrolment(PSAEnrolmentKey)).retrieve(Retrievals.authorisedEnrolments) {
       enrolments: Enrolments =>
-        val legacyEnrolmentId = getEnrolmentIdentifier(
+        val psaEnrolmentId = getEnrolmentIdentifier(
           enrolments,
-          LegacyEnrolmentKey,
-          LegacyEnrolmentIdKey
+          PSAEnrolmentKey,
+          PSAEnrolmentIdKey
         )
 
-        val newEnrolmentId = getEnrolmentIdentifier(
+        val pspEnrolmentId = getEnrolmentIdentifier(
           enrolments,
-          NewEnrolmentKey,
-          NewEnrolmentIdKey
+          PSPEnrolmentKey,
+          PSPEnrolmentIdKey
         )
 
-        newEnrolmentId
-          .orElse(legacyEnrolmentId)
+        psaEnrolmentId
+          .orElse(pspEnrolmentId)
           .map {
-            eoriNumber =>
-              block(AuthRequest(request, eoriNumber, newEnrolmentId.isDefined))
+            psaOrPspId =>
+              block(AuthRequest(request, psaOrPspId, psaEnrolmentId.isDefined))
           }
           .getOrElse {
-            Future.failed(InsufficientEnrolments(s"Unable to retrieve enrolment for either $NewEnrolmentKey or $LegacyEnrolmentKey"))
+            Future.failed(InsufficientEnrolments(s"Unable to retrieve enrolment for either $PSAEnrolmentKey or $PSPEnrolmentKey"))
           }
     }
   } recover {
@@ -95,3 +100,23 @@ class AuthAction @Inject() (
       InternalServerError(s"$thr")
   }
 }
+
+//class NoEnrolmentAuthAction @Inject()(
+//                                           override val authConnector: AuthConnector,
+//                                           val parser: BodyParsers.Default,
+//                                           enrolmentLoggingService: EnrolmentLoggingService
+//                                         )(implicit val executionContext: ExecutionContext)
+//  extends AuthAction {
+//
+//
+//  override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] =
+//    invoke(request, block)(HeaderCarrierConverter.fromRequest(request))
+//
+//  def invoke[A](request: Request[A], block: AuthRequest[A] => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
+//
+//    authorised().retrieve(Retrievals.externalId) {
+//      externalId => externalId.isDefined
+//
+//    }
+//  }
+//}

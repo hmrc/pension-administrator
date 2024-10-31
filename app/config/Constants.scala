@@ -19,20 +19,15 @@ package config
 import scala.util.matching.Regex
 
 object Constants {
-  val AcceptHeaderPattern: Regex = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
-
 
   val XClientIdHeader: String = "X-Client-Id"
 
 
-  val LegacyEnrolmentKey: String   = "HMRC-PSA-ORG"
-  val LegacyEnrolmentIdKey: String = "psaID"
+  val PSAEnrolmentKey: String   = "HMRC-PSA-ORG"
+  val PSAEnrolmentIdKey: String = "PsaID"
 
-  val NewEnrolmentKey: String   = "HMRC-PODS-ORG"
-  val NewEnrolmentIdKey: String = "psaID"
+  val PSPEnrolmentKey: String   = "HMRC-PODSPP-ORG"
+  val PSPEnrolmentIdKey: String = "PsaID"
 
-
-  val MissingECCEnrolmentMessage: String =
-    "User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system"
 
 }

@@ -33,7 +33,7 @@ class SchemeController @Inject()(
                                   schemeService: SchemeService,
                                  desConnector: DesConnector,
                                  cc: ControllerComponents,
-                                 authAction: actions.AuthAction
+                                 authAction: actions.PsaPspEnrolmentAuthAction
                                 )(implicit val ec: ExecutionContext)
                                  extends BackendController(cc) with ErrorHandler {
 
@@ -57,7 +57,7 @@ class SchemeController @Inject()(
     } recoverWith recoverFromError
   }
 
-  def getPsaDetails: Action[AnyContent] = Action.async {
+  def getPsaDetails: Action[AnyContent] = authAction.async {
     implicit request =>
       val psaId = request.headers.get("psaId")
       psaId match {
@@ -71,7 +71,7 @@ class SchemeController @Inject()(
 
   }
 
-  def removePsa: Action[PsaToBeRemovedFromScheme] = Action.async(parse.json[PsaToBeRemovedFromScheme]) {
+  def removePsa: Action[PsaToBeRemovedFromScheme] = authAction.async(parse.json[PsaToBeRemovedFromScheme]) {
     implicit request =>
       desConnector.removePSA(request.body) map {
         case Right(_) =>
@@ -80,7 +80,7 @@ class SchemeController @Inject()(
       }
   }
 
-  def deregisterPsa(psaId: String): Action[AnyContent] = Action.async {
+  def deregisterPsa(psaId: String): Action[AnyContent] = authAction.async {
     implicit request =>
       desConnector.deregisterPSA(psaId).map {
         case Right(_) => NoContent
@@ -88,7 +88,7 @@ class SchemeController @Inject()(
       }
   }
 
-  def updatePSA(psaId: String): Action[AnyContent] = Action.async {
+  def updatePSA(psaId: String): Action[AnyContent] = authAction.async {
     implicit request =>
 
        request.body.asJson match {

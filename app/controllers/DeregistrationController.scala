@@ -18,7 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.SchemeConnector
-import controllers.actions.AuthAction
+import controllers.actions.PsaPspEnrolmentAuthAction
 import models.{ListOfSchemes, SchemeDetails}
 import play.api.libs.json._
 import play.api.mvc._
@@ -31,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class DeregistrationController @Inject()(
                                           schemeConnector: SchemeConnector,
                                           cc: ControllerComponents,
-                                          authAction: AuthAction
+                                          authAction: PsaPspEnrolmentAuthAction
                                         )(implicit val ec: ExecutionContext)
   extends BackendController(cc)
     with ErrorHandler {

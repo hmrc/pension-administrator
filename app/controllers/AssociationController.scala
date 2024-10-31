@@ -26,6 +26,7 @@ import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.{AuthRetrievals, ErrorHandler}
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -35,12 +36,15 @@ class AssociationController @Inject()(
                                        associationConnector: AssociationConnector,
                                        minimalDetailsCacheRepository: MinimalDetailsCacheRepository,
                                        retrievals: AuthRetrievals,
+                                       auth: actions.PsaPspEnrolmentAuthAction,
+                                       val authConnector: AuthConnector,
                                        cc: ControllerComponents
-                                     )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler {
+                                     )(implicit val ec: ExecutionContext)
+                                      extends BackendController(cc) with ErrorHandler  with AuthorisedFunctions {
 
   private val logger = Logger(classOf[AssociationController])
 
-  def getMinimalDetails: Action[AnyContent] = Action.async {
+  def getMinimalDetails: Action[AnyContent] = auth.async {
     implicit request =>
       retrieveIdAndTypeFromHeaders{ (idValue, idType, regime) =>
         getMinimalDetail(idValue, idType, regime)
@@ -62,29 +66,31 @@ class AssociationController @Inject()(
 
   def acceptInvitation: Action[AnyContent] = Action.async {
     implicit request =>
-      val feJson = request.body.asJson
-      logger.debug(s"[Accept-Invitation-Incoming-Payload]$feJson")
+      authorised() {
+        val feJson = request.body.asJson
+        logger.debug(s"[Accept-Invitation-Incoming-Payload]$feJson")
 
-      feJson match {
-        case Some(acceptedInvitationJsValue) =>
-          acceptedInvitationJsValue.validate[AcceptedInvitation].fold(
-            _ =>
-              Future.failed(
-                new BadRequestException("Bad request received from frontend for accept invitation")
-              ),
-            acceptedInvitation =>
-              associationConnector.acceptInvitation(acceptedInvitation).map {
-                case Right(_) => Created
-                case Left(e) => result(e)
-              }
-          )
-        case None =>
-          Future.failed(new BadRequestException("No Request Body received for accept invitation"))
+        feJson match {
+          case Some(acceptedInvitationJsValue) =>
+            acceptedInvitationJsValue.validate[AcceptedInvitation].fold(
+              _ =>
+                Future.failed(
+                  new BadRequestException("Bad request received from frontend for accept invitation")
+                ),
+              acceptedInvitation =>
+                associationConnector.acceptInvitation(acceptedInvitation).map {
+                  case Right(_) => Created
+                  case Left(e) => result(e)
+                }
+            )
+          case None =>
+            Future.failed(new BadRequestException("No Request Body received for accept invitation"))
 
+        }
       }
   }
 
-  def getEmail: Action[AnyContent] = Action.async {
+  def getEmail: Action[AnyContent] = auth.async {
     implicit request =>
       retrievals.getPsaId flatMap {
         case Some(psaId) =>
@@ -96,7 +102,7 @@ class AssociationController @Inject()(
       }
   }
 
-  def getName: Action[AnyContent] = Action.async {
+  def getName: Action[AnyContent] = auth.async {
     implicit request =>
 
       for {
