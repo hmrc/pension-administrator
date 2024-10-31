@@ -23,7 +23,7 @@ object Constants {
   val XClientIdHeader: String = "X-Client-Id"
 
 
-  val PSAEnrolmentKey: String   = "HMRC-PSA-ORG"
+  val PSAEnrolmentKey: String   = "HMRC-PODS-ORG"
   val PSAEnrolmentIdKey: String = "PsaID"
 
   val PSPEnrolmentKey: String   = "HMRC-PODSPP-ORG"
