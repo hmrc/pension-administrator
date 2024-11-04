@@ -19,17 +19,16 @@ package controllers.actions
 import com.google.inject.Inject
 import config.AppConfig
 import play.api.mvc._
-import service.FakeEnrolmentLoggingService
 import uk.gov.hmrc.auth.core._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class FakeAuthAction @Inject()(
+case class FakeAuthConnector @Inject()(
   override val authConnector: AuthConnector,
   config: AppConfig,
   override val parser: BodyParsers.Default
 )(implicit override val executionContext: ExecutionContext)
-    extends PsaPspEnrolmentAuthAction(authConnector, parser = parser, enrolmentLoggingService = new FakeEnrolmentLoggingService) {
+    extends AuthAction {
 
   override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] =
     block(AuthRequest(request, "id", true))

@@ -17,6 +17,7 @@
 package controllers
 
 import base.SpecBase
+import config.AppConfig
 import connectors.RegistrationConnector
 import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest}
 import org.apache.pekko.stream.Materializer
@@ -31,6 +32,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json._
+import play.api.mvc.BodyParsers
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories._
@@ -65,11 +67,15 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
   private val mockRegistrationConnector = mock[RegistrationConnector]
 
   implicit val mat: Materializer = fakeApplication().materializer
+  private val fakeAuthConnector: FakeAuthConnector = new FakeAuthConnector(individualRetrievals)
+  private val mockAppConfig = mock[AppConfig]
 
+  val bodyParser = app.injector.instanceOf[BodyParsers.Default]
   private def registrationController(retrievals: Future[_]): RegistrationController =
     new RegistrationController(
       new FakeAuthConnector(retrievals),
       mockRegistrationConnector,
+      new actions.FakeAuthAction(fakeAuthConnector, mockAppConfig, parser = bodyParser),
       controllerComponents
     )
 

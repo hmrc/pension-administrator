@@ -17,6 +17,7 @@
 package service
 
 import audit.{AuditService, InvitationAuditEvent, StubSuccessfulAuditService}
+import base.SpecBase
 import config.AppConfig
 import connectors.{AssociationConnector, EmailConnector, SchemeConnector}
 import models._
@@ -27,11 +28,13 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterEach, EitherValues, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.Application
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsBoolean, JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
+import play.test.Helpers.fakeApplication
 import repositories._
 import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
 import uk.gov.hmrc.domain.PsaId
@@ -43,13 +46,15 @@ import utils.{DateHelper, FakeEmailConnector}
 import java.time.{Clock, Instant, LocalDate, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future}
 
-class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues
-  with MockitoSugar with BeforeAndAfterEach {
+class InvitationServiceImplSpec extends AsyncFlatSpec
+          with Matchers with EitherValues with OptionValues
+          with MockitoSugar with BeforeAndAfterEach {
 
   import InvitationServiceImplSpec._
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
+  //val app = fakeApplication()
 
   override def beforeEach(): Unit = {
     fakeAuditService.reset()

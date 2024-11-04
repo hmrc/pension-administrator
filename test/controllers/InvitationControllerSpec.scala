@@ -17,17 +17,26 @@
 package controllers
 
 import base.JsonFileReader
+import config.AppConfig
 import models.{IndividualDetails, MinimalDetails}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json._
-import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
+import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import service.InvitationService
+import uk.gov.hmrc.auth.core.AffinityGroup
+import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
+import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http._
+import utils.FakeAuthConnector
+import org.scalatestplus.play._
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.{Application, inject}
 
+import java.time.Clock
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationControllerSpec extends AsyncFlatSpec with Matchers {
@@ -113,8 +122,24 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar {
                  (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
       invitePsaResponse
   }
-
+  private val fakeAuthConnector: FakeAuthConnector = new FakeAuthConnector(individualRetrievals)
+  private val mockAppConfig = mock[AppConfig]
+  private val individualRetrievals =
+    Future.successful(
+      new ~(
+        Some(externalId),
+        Some(AffinityGroup.Individual)
+      )
+    )
+  val application: Application = GuiceApplicationBuilder()
+    .configure(
+      "metrics.jvm" -> false
+    )
+    .build()
+  val bodyParser = application.injector.instanceOf[BodyParsers.Default]
   val fakeInvitationService = new FakeInvitationService
-  val controller = new InvitationController(fakeInvitationService, stubControllerComponents())
+  val controller = new InvitationController(fakeInvitationService,
+                                            stubControllerComponents(),
+                                            new actions.FakeAuthAction(fakeAuthConnector, mockAppConfig, parser = bodyParser))
 
 }

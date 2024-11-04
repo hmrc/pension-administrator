@@ -17,6 +17,7 @@
 package controllers
 
 import base.JsonFileReader
+import config.AppConfig
 import connectors.AssociationConnector
 import models._
 import org.mockito.ArgumentMatchers._
@@ -24,15 +25,19 @@ import org.mockito.Mockito._
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
+import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.MinimalDetailsCacheRepository
 import uk.gov.hmrc.auth.core.AffinityGroup
+import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
+import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
-import utils.AuthRetrievals
+import utils.{AuthRetrievals, FakeAuthConnector}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -315,13 +320,31 @@ object AssociationControllerSpec extends MockitoSugar {
   lazy val mockMinimalDetailsCacheRepository: MinimalDetailsCacheRepository = mock[MinimalDetailsCacheRepository]
 
 
+  private val fakeAuthConnector: FakeAuthConnector = new FakeAuthConnector(individualRetrievals)
+  private val mockAppConfig = mock[AppConfig]
+  private val individualRetrievals =
+    Future.successful(
+      new ~(
+        Some(externalId),
+        Some(AffinityGroup.Individual)
+      )
+    )
+  val application: Application = GuiceApplicationBuilder()
+    .configure(
+      "metrics.jvm" -> false
+    )
+    .build()
+  val bodyParser = application.injector.instanceOf[BodyParsers.Default]
   def controller(psaId: Option[PsaId] = Some(PsaId("A2123456")),
                  affinityGroup: Option[AffinityGroup] = Some(AffinityGroup.Individual),
                  isEnabledFeatureToggle: Boolean = false): AssociationController = {
     when(mockAuthRetrievals.getPsaId(any(), any()))
       .thenReturn(Future.successful(psaId))
     new AssociationController(fakeAssociationConnector, mockMinimalDetailsCacheRepository,
-      mockAuthRetrievals, stubControllerComponents())
+      mockAuthRetrievals,
+      new actions.FakeAuthAction(fakeAuthConnector, mockAppConfig, parser = bodyParser),
+      fakeAuthConnector,
+      stubControllerComponents())
   }
 
   val acceptedInvitationRequest: JsValue = Json.parse(

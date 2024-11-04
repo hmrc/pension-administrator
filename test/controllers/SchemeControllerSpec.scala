@@ -16,9 +16,10 @@
 
 package controllers
 
+import play.api.mvc._
 import base.{JsonFileReader, SpecBase}
-import models.requests.AuthenticatedRequest
-import models.{PSAUser, PsaToBeRemovedFromScheme}
+import config.AppConfig
+import models.PsaToBeRemovedFromScheme
 import org.apache.pekko.stream.Materializer
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
@@ -28,7 +29,7 @@ import play.api.http.Status.BAD_GATEWAY
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsResultException, JsValue, Json}
-import play.api.mvc.{AnyContent, AnyContentAsEmpty, BodyParser, Request, RequestHeader, Result}
+import play.api.mvc.{AnyContent, AnyContentAsEmpty, BodyParser, BodyParsers, Request, RequestHeader, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.AdminDataRepositorySpec.mock
@@ -423,7 +424,7 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
       bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
       bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
-      bind[actions.AuthAction].to[actions.FakeAuthAction],
+      bind[actions.AuthAction].to[actions.FakeAuthConnector],
 
   )
 
@@ -464,20 +465,15 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
     )
   private val fakeAuthConnector: FakeAuthConnector = new FakeAuthConnector(individualRetrievals)
 
-  class FakePsaPspEnrolmentAuthAction(fakeAuthConnector, None) extends actions.AuthAction {
-    val parser: BodyParser[AnyContent] = controllerComponents.parsers.defaultBodyParser
-    implicit val executionContext: ExecutionContext = inject[ExecutionContext]
-    override def invokeBlock[A](request: Request[A],
-                                block: actions.AuthRequest[A] => Future[Result]): Future[Result] =
-      block(actions.AuthRequest(request, externalId,)))
-  }
-  private val mockAppConfig = mock[Configuration]
+  val bodyParser = app.injector.instanceOf[BodyParsers.Default]
+
+  private val mockAppConfig = mock[AppConfig]
   private val fakeSchemeService = new FakeSchemeService
   private val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
   private val controller = new SchemeController(fakeSchemeService,
                                                 fakeDesConnector,
                                                 controllerComponents,
-                                                new PsaPspEnrolmentAuthAction(actions.FakeAuthAction(fakeAuthConnector, mockAppConfig))
+                                                new actions.FakeAuthAction(fakeAuthConnector, mockAppConfig, parser = bodyParser))
 
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"
