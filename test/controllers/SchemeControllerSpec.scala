@@ -17,23 +17,29 @@
 package controllers
 
 import base.{JsonFileReader, SpecBase}
-import models.PsaToBeRemovedFromScheme
+import models.requests.AuthenticatedRequest
+import models.{PSAUser, PsaToBeRemovedFromScheme}
 import org.apache.pekko.stream.Materializer
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.Configuration
 import play.api.http.Status.BAD_GATEWAY
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsResultException, JsValue, Json}
-import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
+import play.api.mvc.{AnyContent, AnyContentAsEmpty, BodyParser, Request, RequestHeader, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import repositories.AdminDataRepositorySpec.mock
 import repositories._
 import service.SchemeService
+import uk.gov.hmrc.auth.core.AffinityGroup
+import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
+import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.FakeDesConnector
+import utils.{FakeAuthConnector, FakeDesConnector}
 import utils.testhelpers.PsaSubscriptionBuilder._
 
 import java.time.{LocalDate, ZoneId}
@@ -416,8 +422,10 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
       bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
       bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
-      bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
-    )
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
+      bind[actions.AuthAction].to[actions.FakeAuthAction],
+
+  )
 
   override def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
@@ -447,9 +455,29 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   private val psaVariationData: JsValue = readJsonFromFile("/data/validPsaVariationRequest.json")
 
+  private val individualRetrievals =
+    Future.successful(
+      new ~(
+        Some(externalId),
+        Some(AffinityGroup.Individual)
+      )
+    )
+  private val fakeAuthConnector: FakeAuthConnector = new FakeAuthConnector(individualRetrievals)
+
+  class FakePsaPspEnrolmentAuthAction(fakeAuthConnector, None) extends actions.AuthAction {
+    val parser: BodyParser[AnyContent] = controllerComponents.parsers.defaultBodyParser
+    implicit val executionContext: ExecutionContext = inject[ExecutionContext]
+    override def invokeBlock[A](request: Request[A],
+                                block: actions.AuthRequest[A] => Future[Result]): Future[Result] =
+      block(actions.AuthRequest(request, externalId,)))
+  }
+  private val mockAppConfig = mock[Configuration]
   private val fakeSchemeService = new FakeSchemeService
   private val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
-  private val controller = new SchemeController(fakeSchemeService, fakeDesConnector, controllerComponents)
+  private val controller = new SchemeController(fakeSchemeService,
+                                                fakeDesConnector,
+                                                controllerComponents,
+                                                new PsaPspEnrolmentAuthAction(actions.FakeAuthAction(fakeAuthConnector, mockAppConfig))
 
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"
