@@ -26,7 +26,7 @@ import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{BadRequestException, HttpClient, _}
+import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -79,7 +79,7 @@ class AssociationConnectorImpl @Inject()(
 
   override def logWarning[A](endpoint: String): PartialFunction[Try[Either[Throwable, A]], Unit] = {
     case Success(Left(e: HttpException))
-      if !e.getMessage.contains("DELIMITED_PSPID") && !e.getMessage.contains("DELIMITED_PSAID") && !e.getMessage.contains("PSAID_NOT_FOUND") =>
+      if !e.getMessage.contains("DELIMITED_PSPID") && !e.getMessage.contains("DELIMITED_PSAID") && !e.getMessage.contains("PSAID_NOT_FOUND") && !e.getMessage.contains("PSPID_NOT_FOUND")=>
         logger.warn(s"$endpoint received error response from DES", e)
     case Failure(e) =>
       logger.error(s"$endpoint received error response from DES", e)
@@ -103,6 +103,11 @@ class AssociationConnectorImpl @Inject()(
       case FORBIDDEN if response.body.contains("DELIMITED_PSPID") || response.body.contains("DELIMITED_PSAID") =>
         Left(
           new HttpException(response.body, FORBIDDEN)
+        )
+      case NOT_FOUND if response.body.contains("PSPID_NOT_FOUND") || response.body.contains("PSAID_NOT_FOUND") =>
+        logger.info("Invalid PSP/PSA ID entered by user.")
+        Left(
+          new HttpException(response.body, NOT_FOUND)
         )
       case _ =>
         Left(handleErrorResponse("Minimal details", url, response, badResponseSeq))

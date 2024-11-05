@@ -24,8 +24,8 @@ import models.{IdentifierDetails, UpdateClientReferenceRequest}
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HttpClient, _}
 import utils.{ErrorHandler, HttpResponseHelper, JSONPayloadSchemaValidator}
 
 import scala.concurrent.{ExecutionContext, Future}
