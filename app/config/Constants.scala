@@ -27,7 +27,7 @@ object Constants {
   val PSAEnrolmentIdKey: String = "PsaID"
 
   val PSPEnrolmentKey: String   = "HMRC-PODSPP-ORG"
-  val PSPEnrolmentIdKey: String = "PsaID"
+  val PSPEnrolmentIdKey: String = "PspID"
 
 
 }
