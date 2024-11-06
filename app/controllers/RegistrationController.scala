@@ -45,7 +45,7 @@ class RegistrationController @Inject()(
 
   private val logger = Logger(classOf[RegistrationController])
 
-  def registerWithIdIndividual: Action[AnyContent] = authAction.async {
+  def registerWithIdIndividual: Action[AnyContent] = Action.async {
     implicit request => {
       retrieveUser { user =>
         request.body.asJson match {
@@ -64,7 +64,7 @@ class RegistrationController @Inject()(
     }
   }
 
-  def registerWithIdOrganisation: Action[AnyContent] = authAction.async {
+  def registerWithIdOrganisation: Action[AnyContent] = Action.async {
     implicit request => {
       retrieveUser { user =>
         request.body.asJson match {

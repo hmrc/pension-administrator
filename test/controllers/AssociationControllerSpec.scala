@@ -32,18 +32,46 @@ import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.MinimalDetailsCacheRepository
-import uk.gov.hmrc.auth.core.AffinityGroup
+import uk.gov.hmrc.auth.core.authorise.Predicate
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, Enrolment, EnrolmentIdentifier, Enrolments}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
-import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrieval, ~}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
-import utils.{AuthRetrievals, FakeAuthConnector}
+import utils.AuthRetrievals
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers {
 
   import AssociationControllerSpec._
+  private val mockauthConnector: AuthConnector = mock[AuthConnector]
+
+  val newEnrolmentWithEori: Enrolments = Enrolments(
+    Set(
+      Enrolment(
+        key = "PsaID",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "HMRC-PODS-ORG",
+            "123"
+          )
+        ),
+        state = "Activated"
+      ),
+      Enrolment(
+        key = "PspID",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "HMRC-PODSPP-ORG",
+            "345"
+          )
+        ),
+        state = "Activated"
+      )))
+
+
 
   "getMinimalDetails" should "return OK when service returns successfully with success form Repo" in {
 
@@ -114,6 +142,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
   }
 
   "acceptInvitation" should "return Created when the data is posted successfully" in {
+    when(mockauthConnector.authorise(any[Predicate], any[Retrieval[_]])(any[HeaderCarrier], any[ExecutionContext]))
+      .thenReturn(Future.successful(()))
 
     val result = controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
 
@@ -315,19 +345,15 @@ object AssociationControllerSpec extends MockitoSugar {
   }
 
   val fakeAssociationConnector = new FakeAssociationConnector
-
+  val mockauthConnector: AuthConnector = mock[AuthConnector]
   lazy val mockAuthRetrievals: AuthRetrievals = mock[AuthRetrievals]
   lazy val mockMinimalDetailsCacheRepository: MinimalDetailsCacheRepository = mock[MinimalDetailsCacheRepository]
 
 
-  private val fakeAuthConnector: FakeAuthConnector = new FakeAuthConnector(individualRetrievals)
   private val mockAppConfig = mock[AppConfig]
-  private val individualRetrievals =
+  private val individualRetrievals: Future[Retrieval[Unit]] =
     Future.successful(
-      new ~(
-        Some(externalId),
-        Some(AffinityGroup.Individual)
-      )
+        EmptyRetrieval
     )
   val application: Application = GuiceApplicationBuilder()
     .configure(
@@ -342,8 +368,8 @@ object AssociationControllerSpec extends MockitoSugar {
       .thenReturn(Future.successful(psaId))
     new AssociationController(fakeAssociationConnector, mockMinimalDetailsCacheRepository,
       mockAuthRetrievals,
-      new actions.FakeAuthAction(fakeAuthConnector, mockAppConfig, parser = bodyParser),
-      fakeAuthConnector,
+      new actions.FakeAuthAction(mockauthConnector, mockAppConfig, parser = bodyParser),
+      mockauthConnector,
       stubControllerComponents())
   }
 

@@ -27,11 +27,10 @@ import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import service.InvitationService
-import uk.gov.hmrc.auth.core.AffinityGroup
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
-import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, ~}
 import uk.gov.hmrc.http._
-import utils.FakeAuthConnector
 import org.scalatestplus.play._
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.{Application, inject}
@@ -122,7 +121,6 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar {
                  (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
       invitePsaResponse
   }
-  private val fakeAuthConnector: FakeAuthConnector = new FakeAuthConnector(individualRetrievals)
   private val mockAppConfig = mock[AppConfig]
   private val individualRetrievals =
     Future.successful(
@@ -136,10 +134,12 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar {
       "metrics.jvm" -> false
     )
     .build()
+  private val mockauthConnector: AuthConnector = mock[AuthConnector]
+
   val bodyParser = application.injector.instanceOf[BodyParsers.Default]
   val fakeInvitationService = new FakeInvitationService
   val controller = new InvitationController(fakeInvitationService,
                                             stubControllerComponents(),
-                                            new actions.FakeAuthAction(fakeAuthConnector, mockAppConfig, parser = bodyParser))
+                                            new actions.FakeAuthAction(mockauthConnector, mockAppConfig, parser = bodyParser))
 
 }

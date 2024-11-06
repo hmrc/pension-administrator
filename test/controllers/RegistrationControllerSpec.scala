@@ -39,7 +39,6 @@ import repositories._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.FakeAuthConnector
 
 import java.time.LocalDate
 import scala.concurrent.Future
@@ -57,6 +56,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
       bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
     )
+  private val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   private val dataFromFrontend = readJsonFromFile("/data/validRegistrationNoIDOrganisationFE.json")
   private val dataToEmtp = readJsonFromFile("/data/validRegistrationNoIDOrganisationToEMTP.json").as[OrganisationRegistrant]
@@ -67,15 +67,14 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
   private val mockRegistrationConnector = mock[RegistrationConnector]
 
   implicit val mat: Materializer = fakeApplication().materializer
-  private val fakeAuthConnector: FakeAuthConnector = new FakeAuthConnector(individualRetrievals)
   private val mockAppConfig = mock[AppConfig]
 
   val bodyParser = app.injector.instanceOf[BodyParsers.Default]
   private def registrationController(retrievals: Future[_]): RegistrationController =
     new RegistrationController(
-      new FakeAuthConnector(retrievals),
+      mockAuthConnector,
       mockRegistrationConnector,
-      new actions.FakeAuthAction(fakeAuthConnector, mockAppConfig, parser = bodyParser),
+      new actions.FakeAuthAction(mockAuthConnector, mockAppConfig, parser = bodyParser),
       controllerComponents
     )
 

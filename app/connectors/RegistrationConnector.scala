@@ -57,13 +57,11 @@ class RegistrationConnector @Inject()(
     val requestValidationResult = jsonPayloadSchemaValidator.validateJsonPayload(requestSchema, registerData)
     val responseValidation = jsonPayloadSchemaValidator.validateJsonPayload(responseSchema, _)
 
-    logger.debug(s"[Pensions-Scheme-Header-Carrier]-${headerUtils.desHeaderWithoutCorrelationId.toString()}")
-
     if (requestValidationResult.nonEmpty) {
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdIndividual: ${requestValidationResult.mkString}")
     } else {
       httpClientV2.post(registerWithIdUrl)
-        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .setHeader(headerUtils.desHeader: _*)
         .withBody(registerData).execute[HttpResponse]  map {
         handleResponse(_,
           registerWithIdUrl.toString,
@@ -93,7 +91,7 @@ class RegistrationConnector @Inject()(
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdOrganisation: ${requestValidationResult.mkString}")
     } else {
       httpClientV2.post(registerWithIdUrl)
-        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .setHeader(headerUtils.desHeader: _*)
         .withBody(registerData).execute[HttpResponse] map {
         handleResponse(_,
           registerWithIdUrl.toString,
@@ -128,7 +126,7 @@ class RegistrationConnector @Inject()(
     val registerWithNoIdData = Json.toJson(registerData)(OrganisationRegistrant.writesOrganisationRegistrantRequest(correlationId))
 
     logger.debug(s"Registration Without Id Organisation request body:" +
-      s"${Json.prettyPrint(registerWithNoIdData)}) headers: ${headerUtils.desHeaderWithoutCorrelationId.toString()}")
+      s"${Json.prettyPrint(registerWithNoIdData)})")
 
     val requestValidationResult = jsonPayloadSchemaValidator.validateJsonPayload(requestSchema, registerWithNoIdData)
 
@@ -138,7 +136,7 @@ class RegistrationConnector @Inject()(
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registrationNoIdOrganisation: ${requestValidationResult.mkString}")
     } else {
       httpClientV2.post(url)
-        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .setHeader(headerUtils.desHeader: _*)
         .withBody(registerWithNoIdData).execute[HttpResponse] map {
         response =>
           logger.debug(s"Registration Without Id Organisation response. Status=${response.status}\n${response.body}")
@@ -167,7 +165,7 @@ class RegistrationConnector @Inject()(
     val body = Json.toJson(registrationRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(correlationId))
 
     logger.debug(s"Registration Without Id Individual request body:" +
-      s"${Json.prettyPrint(body)}) headers: ${headerUtils.desHeaderWithoutCorrelationId.toString()}")
+      s"${Json.prettyPrint(body)})")
 
     val requestValidationResult = jsonPayloadSchemaValidator.validateJsonPayload(requestSchema, body)
 
@@ -177,7 +175,7 @@ class RegistrationConnector @Inject()(
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registrationNoIdIndividual: ${requestValidationResult.mkString}")
     } else {
       httpClientV2.post(url)
-        .setHeader(headerUtils.desHeaderWithoutCorrelationId: _*)
+        .setHeader(headerUtils.desHeader: _*)
         .withBody(body).execute[HttpResponse] map {
         response =>
           logger.debug(s"Registration Without Id Individual response. Status=${response.status}\n${response.body}")

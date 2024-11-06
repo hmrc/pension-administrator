@@ -35,12 +35,12 @@ import play.api.test.Helpers._
 import repositories.AdminDataRepositorySpec.mock
 import repositories._
 import service.SchemeService
-import uk.gov.hmrc.auth.core.AffinityGroup
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
-import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, ~}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.{FakeAuthConnector, FakeDesConnector}
+import utils.{FakeDesConnector}
 import utils.testhelpers.PsaSubscriptionBuilder._
 
 import java.time.{LocalDate, ZoneId}
@@ -413,6 +413,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+  private val mockauthConnector: AuthConnector = mock[AuthConnector]
 
   implicit val mat: Materializer = app.materializer
 
@@ -463,7 +464,7 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
         Some(AffinityGroup.Individual)
       )
     )
-  private val fakeAuthConnector: FakeAuthConnector = new FakeAuthConnector(individualRetrievals)
+  private val fakeAuthConnector= mockauthConnector
 
   val bodyParser = app.injector.instanceOf[BodyParsers.Default]
 

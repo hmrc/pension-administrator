@@ -37,7 +37,6 @@ import repositories._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.FakeAuthConnector
 
 import java.time.LocalDateTime
 import scala.concurrent.Future
@@ -53,7 +52,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
         Some(AffinityGroup.Individual)
       )
     )
-
+  private val mockauthConnector: AuthConnector = mock[AuthConnector]
   private val mockUpdateClientReferenceConnector = mock[UpdateClientReferenceConnector]
 
   def modules: Seq[GuiceableModule] = Seq(
@@ -75,7 +74,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
     val requestBody = Json.obj("pstr" -> "pstr", "psaId" -> "psaId", "pspId" -> "pspId", "clientReference" -> "clientReference")
 
     "return OK for successful" in {
-      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(individualRetrievals))
+      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(mockauthConnector)
       running(_.overrides(
         bindings: _*
       )) { app =>
@@ -101,7 +100,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
 
     "throw BadRequestException" when {
       "nino cannot be read from request" in {
-        val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(individualRetrievals))
+        val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(mockauthConnector)
         running(_.overrides(
           bindings: _*
         )) { app =>
@@ -123,7 +122,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
       }
 
       "there is no body in the request" in {
-        val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(individualRetrievals))
+        val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(mockauthConnector)
         running(_.overrides(
           bindings: _*
         )) { app =>
@@ -138,7 +137,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
     }
 
     "return result from registration when connector returns failure" in {
-      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(individualRetrievals))
+      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(mockauthConnector)
       running(_.overrides(
         bindings: _*
       )) { app =>
@@ -164,7 +163,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
 
     "throw Exception when authorisation retrievals fails" in {
       val retrievals = InsufficientConfidenceLevel()
-      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(Future.failed(retrievals)))
+      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(mockauthConnector)
       running(_.overrides(
         bindings: _*
       )) { app =>
@@ -187,7 +186,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
       ))
 
       forAll(retrievalsGen) { retrievals =>
-        val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(Future.successful(retrievals)))
+        val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(mockauthConnector)
         running(_.overrides(
           bindings: _*
         )) { app =>
@@ -203,7 +202,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
 
     "throw UpstreamErrorResponse when given UpstreamErrorResponse from connector" in {
 
-      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(individualRetrievals))
+      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(mockauthConnector)
       running(_.overrides(
         bindings: _*
       )) { app =>
@@ -228,7 +227,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
     }
 
     "throw Exception when any other exception returned from connector" in {
-      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(individualRetrievals))
+      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(mockauthConnector)
       running(_.overrides(
         bindings: _*
       )) { app =>
