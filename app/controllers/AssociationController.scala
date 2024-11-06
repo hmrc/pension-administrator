@@ -36,7 +36,7 @@ class AssociationController @Inject()(
                                        associationConnector: AssociationConnector,
                                        minimalDetailsCacheRepository: MinimalDetailsCacheRepository,
                                        retrievals: AuthRetrievals,
-                                       auth: actions.PsaPspEnrolmentAuthAction,
+                                       auth: actions.AuthAction,
                                        val authConnector: AuthConnector,
                                        cc: ControllerComponents
                                      )(implicit val ec: ExecutionContext)
@@ -66,7 +66,6 @@ class AssociationController @Inject()(
 
   def acceptInvitation: Action[AnyContent] = Action.async {
     implicit request =>
-      authorised() {
         val feJson = request.body.asJson
         logger.debug(s"[Accept-Invitation-Incoming-Payload]$feJson")
 
@@ -87,7 +86,6 @@ class AssociationController @Inject()(
             Future.failed(new BadRequestException("No Request Body received for accept invitation"))
 
         }
-      }
   }
 
   def getEmail: Action[AnyContent] = auth.async {

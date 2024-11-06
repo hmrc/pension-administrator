@@ -22,20 +22,20 @@ import models.{IndividualDetails, MinimalDetails}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.libs.json._
+import play.api.Application
+import play.api.http.Status.BAD_GATEWAY
+import play.api.inject.NewInstanceInjector.instanceOf
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.JsValue
 import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import service.InvitationService
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
-import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, ~}
-import uk.gov.hmrc.http._
-import org.scalatestplus.play._
-import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.{Application, inject}
+import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
+import uk.gov.hmrc.http.{BadRequestException, _}
 
-import java.time.Clock
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationControllerSpec extends AsyncFlatSpec with Matchers {
@@ -134,12 +134,12 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar {
       "metrics.jvm" -> false
     )
     .build()
-  private val mockauthConnector: AuthConnector = mock[AuthConnector]
+  private val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   val bodyParser = application.injector.instanceOf[BodyParsers.Default]
   val fakeInvitationService = new FakeInvitationService
   val controller = new InvitationController(fakeInvitationService,
                                             stubControllerComponents(),
-                                            new actions.FakeAuthAction(mockauthConnector, mockAppConfig, parser = bodyParser))
+    new actions.AuthAction(mockAuthConnector, instanceOf[BodyParsers.Default]))
 
 }

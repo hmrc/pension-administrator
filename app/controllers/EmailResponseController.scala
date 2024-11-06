@@ -18,7 +18,7 @@ package controllers
 
 import audit.{AuditService, EmailAuditEvent}
 import com.google.inject.Inject
-import controllers.actions.PsaPspEnrolmentAuthAction
+import controllers.actions.AuthAction
 import models.enumeration.JourneyType
 import models.{EmailEvents, Opened}
 import play.api.Logger
@@ -34,7 +34,7 @@ class EmailResponseController @Inject()(
                                          auditService: AuditService,
                                          crypto: ApplicationCrypto,
                                          cc: ControllerComponents,
-                                         authAction: PsaPspEnrolmentAuthAction,
+                                         authAction: AuthAction,
                                          parser: PlayBodyParsers
                                        )(implicit val ec: ExecutionContext) extends BackendController(cc) {
 

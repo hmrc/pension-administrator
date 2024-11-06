@@ -18,7 +18,6 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.RegistrationConnector
-import controllers.actions.AuthAction
 import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest}
 import models.Organisation
 import play.api.Logger
@@ -39,7 +38,6 @@ import scala.util.{Failure, Success, Try}
 class RegistrationController @Inject()(
                                         override val authConnector: AuthConnector,
                                         registerConnector: RegistrationConnector,
-                                        authAction: AuthAction,
                                         cc: ControllerComponents
                                       )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 

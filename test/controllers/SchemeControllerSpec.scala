@@ -40,7 +40,7 @@ import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
 import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, ~}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.{FakeDesConnector}
+import utils.FakeDesConnector
 import utils.testhelpers.PsaSubscriptionBuilder._
 
 import java.time.{LocalDate, ZoneId}
@@ -413,7 +413,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
-  private val mockauthConnector: AuthConnector = mock[AuthConnector]
+  private val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   implicit val mat: Materializer = app.materializer
 
@@ -425,7 +425,7 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
       bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
       bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
-      bind[actions.AuthAction].to[actions.FakeAuthConnector],
+      bind[actions.AuthAction].to[actions.AuthAction],
 
   )
 
@@ -464,7 +464,7 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
         Some(AffinityGroup.Individual)
       )
     )
-  private val fakeAuthConnector= mockauthConnector
+  private val fakeAuthConnector= mockAuthConnector
 
   val bodyParser = app.injector.instanceOf[BodyParsers.Default]
 
@@ -474,7 +474,7 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
   private val controller = new SchemeController(fakeSchemeService,
                                                 fakeDesConnector,
                                                 controllerComponents,
-                                                new actions.FakeAuthAction(fakeAuthConnector, mockAppConfig, parser = bodyParser))
+    new actions.AuthAction(mockAuthConnector, app.injector.instanceOf[BodyParsers.Default]))
 
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"

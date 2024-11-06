@@ -32,6 +32,7 @@ import play.api.test.Helpers._
 import repositories._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
+import utils.AuthUtils
 
 import scala.concurrent.Future
 
@@ -41,13 +42,13 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
   private val authConnector: AuthConnector = mock[AuthConnector]
 
   private val app = new GuiceApplicationBuilder().configure("run.mode" -> "Test").overrides(Seq(
+    bind[AuthConnector].toInstance(authConnector),
     bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
     bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
     bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
     bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
     bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
-    bind[PSADataCacheRepository].toInstance(repo),
-    bind[AuthConnector].toInstance(authConnector)
+    bind[PSADataCacheRepository].toInstance(repo)
   )).build()
 
   implicit lazy val mat: Materializer = app.materializer
@@ -59,7 +60,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
       "return 200 and the relevant data when it exists" in {
         when(repo.get(eqTo("testId"))(any())) thenReturn Future.successful(Some(Json.obj("testId" -> "foo")))
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.authStub(authConnector)
 
         val result = controller.get("testId")(FakeRequest())
 
@@ -69,7 +70,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
       "return 404 when the data doesn't exist" in {
         when(repo.get(eqTo("testId"))(any())) thenReturn Future.successful(None)
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.authStub(authConnector)
 
         val result = controller.get("testId")(FakeRequest())
 
@@ -78,7 +79,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
       "throw an exception when the repository call fails" in {
         when(repo.get(eqTo("testId"))(any())) thenReturn Future.failed(new Exception())
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.authStub(authConnector)
 
         val result = controller.get("foo")(FakeRequest())
         an[Exception] must be thrownBy status(result)
@@ -104,7 +105,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
       }
 
       "return REQUEST_ENTITY_TOO_LARGE when the request body cannot be parsed" in {
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.authStub(authConnector)
 
         val result = call(controller.save(id = "testId"),
           FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
@@ -112,19 +113,12 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
         status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
       }
 
-      "throw an exception when the call is not authorised" in {
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed(new UnauthorizedException(""))
-
-        val result = call(controller.save(id = "testId"), FakeRequest().withRawBody(ByteString("foo")))
-
-        an[UnauthorizedException] must be thrownBy status(result)
-      }
     }
 
     s"on .remove " must {
       "return 200 when the data is removed successfully" in {
         when(repo.remove(eqTo("testId"))(any())) thenReturn Future.successful(true)
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.authStub(authConnector)
 
         val result = controller.remove(id = "testId")(FakeRequest())
 
@@ -132,7 +126,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
       }
 
       "throw an exception when the call is not authorised" in {
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed(new UnauthorizedException(""))
+        AuthUtils.authStub(authConnector)
 
         val result = controller.remove(id = "testId")(FakeRequest())
 

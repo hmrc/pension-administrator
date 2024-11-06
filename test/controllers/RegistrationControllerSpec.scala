@@ -17,7 +17,6 @@
 package controllers
 
 import base.SpecBase
-import config.AppConfig
 import connectors.RegistrationConnector
 import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest}
 import org.apache.pekko.stream.Materializer
@@ -32,13 +31,13 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json._
-import play.api.mvc.BodyParsers
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
+import utils.FakeAuthConnector
 
 import java.time.LocalDate
 import scala.concurrent.Future
@@ -56,7 +55,6 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
       bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
     )
-  private val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   private val dataFromFrontend = readJsonFromFile("/data/validRegistrationNoIDOrganisationFE.json")
   private val dataToEmtp = readJsonFromFile("/data/validRegistrationNoIDOrganisationToEMTP.json").as[OrganisationRegistrant]
@@ -67,14 +65,11 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
   private val mockRegistrationConnector = mock[RegistrationConnector]
 
   implicit val mat: Materializer = fakeApplication().materializer
-  private val mockAppConfig = mock[AppConfig]
 
-  val bodyParser = app.injector.instanceOf[BodyParsers.Default]
   private def registrationController(retrievals: Future[_]): RegistrationController =
     new RegistrationController(
-      mockAuthConnector,
+      new FakeAuthConnector(retrievals),
       mockRegistrationConnector,
-      new actions.FakeAuthAction(mockAuthConnector, mockAppConfig, parser = bodyParser),
       controllerComponents
     )
 

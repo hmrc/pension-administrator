@@ -26,6 +26,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Application
+import play.api.inject.NewInstanceInjector.instanceOf
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
@@ -33,7 +34,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.MinimalDetailsCacheRepository
 import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, Enrolment, EnrolmentIdentifier, Enrolments}
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, AuthorisedFunctions, Enrolment, EnrolmentIdentifier, Enrolments}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrieval, ~}
@@ -46,7 +47,13 @@ import scala.concurrent.{ExecutionContext, Future}
 class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers {
 
   import AssociationControllerSpec._
-  private val mockauthConnector: AuthConnector = mock[AuthConnector]
+  val mockAuthConnector: AuthConnector = mock[AuthConnector]
+  val authorisedFunctions = new AuthorisedFunctions {
+    override def authConnector: AuthConnector = mockAuthConnector
+  }
+
+
+
 
   val newEnrolmentWithEori: Enrolments = Enrolments(
     Set(
@@ -71,7 +78,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
         state = "Activated"
       )))
 
-
+  when(mockAuthConnector.authorise[Enrolments](any, any)(any, any))
+    .thenReturn(Future.successful(newEnrolmentWithEori))
 
   "getMinimalDetails" should "return OK when service returns successfully with success form Repo" in {
 
@@ -142,8 +150,6 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
   }
 
   "acceptInvitation" should "return Created when the data is posted successfully" in {
-    when(mockauthConnector.authorise(any[Predicate], any[Retrieval[_]])(any[HeaderCarrier], any[ExecutionContext]))
-      .thenReturn(Future.successful(()))
 
     val result = controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
 
@@ -368,7 +374,7 @@ object AssociationControllerSpec extends MockitoSugar {
       .thenReturn(Future.successful(psaId))
     new AssociationController(fakeAssociationConnector, mockMinimalDetailsCacheRepository,
       mockAuthRetrievals,
-      new actions.FakeAuthAction(mockauthConnector, mockAppConfig, parser = bodyParser),
+      new actions.AuthAction(mockauthConnector, instanceOf[BodyParsers.Default]),
       mockauthConnector,
       stubControllerComponents())
   }
