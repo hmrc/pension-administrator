@@ -18,7 +18,7 @@ package controllers
 
 import audit.{AuditService, EmailAuditEvent}
 import com.google.inject.Inject
-import controllers.actions.AuthAction
+import controllers.actions.{AuthAction, NoEnrolmentAuthAction}
 import models.enumeration.JourneyType
 import models.{EmailEvents, Opened}
 import play.api.Logger
@@ -34,7 +34,7 @@ class EmailResponseController @Inject()(
                                          auditService: AuditService,
                                          crypto: ApplicationCrypto,
                                          cc: ControllerComponents,
-                                         authAction: AuthAction,
+                                         authAction: NoEnrolmentAuthAction,
                                          parser: PlayBodyParsers
                                        )(implicit val ec: ExecutionContext) extends BackendController(cc) {
 
@@ -42,7 +42,6 @@ class EmailResponseController @Inject()(
 
   def retrieveStatus(journeyType: JourneyType.Name, id: String): Action[JsValue] = authAction.async(parser.tolerantJson) {
     implicit request =>
-      validatePsaId(id) match {
         case Right(psaId) =>
           request.body.validate[EmailEvents].fold(
             _ => Future.successful(BadRequest("Bad request received for email call back event")),
@@ -58,7 +57,6 @@ class EmailResponseController @Inject()(
           )
 
         case Left(result) => Future.successful(result)
-      }
   }
 
   private def validatePsaId(id: String): Either[Result, PsaId] =

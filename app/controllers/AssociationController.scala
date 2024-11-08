@@ -36,7 +36,8 @@ class AssociationController @Inject()(
                                        associationConnector: AssociationConnector,
                                        minimalDetailsCacheRepository: MinimalDetailsCacheRepository,
                                        retrievals: AuthRetrievals,
-                                       auth: actions.AuthAction,
+                                       auth: actions.PsaPspEnrolmentAuthAction,
+                                       noEnrollmentAuth: actions.NoEnrolmentAuthAction,
                                        val authConnector: AuthConnector,
                                        cc: ControllerComponents
                                      )(implicit val ec: ExecutionContext)
@@ -64,7 +65,7 @@ class AssociationController @Inject()(
       }
   }
 
-  def acceptInvitation: Action[AnyContent] = Action.async {
+  def acceptInvitation: Action[AnyContent] = noEnrollmentAuth.async {
     implicit request =>
         val feJson = request.body.asJson
         logger.debug(s"[Accept-Invitation-Incoming-Payload]$feJson")

@@ -30,7 +30,9 @@ import play.api.inject.guice.GuiceableModule
 import play.api.libs.json._
 import play.api.test.Helpers._
 import repositories._
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.BadRequestException
+import utils.AuthUtils
 
 import scala.concurrent.Future
 
@@ -41,6 +43,7 @@ class DeregistrationControllerSpec
     with ScalaCheckDrivenPropertyChecks {
 
   import DeregistrationControllerSpec._
+  private val authConnector: AuthConnector = mock[AuthConnector]
 
   private val mockSchemeConnector = mock[SchemeConnector]
 
@@ -65,6 +68,8 @@ class DeregistrationControllerSpec
     "return OK and false when canDeregister called with psa ID having some schemes" in {
       when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Right(validListSchemesResponse)))
+      AuthUtils.authStub(authConnector)
+
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
@@ -74,6 +79,8 @@ class DeregistrationControllerSpec
     "return OK and true when canDeregister called with psa ID having no scheme detail item at all" in {
       when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Right(listSchemesResponseNoSchemeDetail)))
+      AuthUtils.authStub(authConnector)
+
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
@@ -83,6 +90,8 @@ class DeregistrationControllerSpec
     "return OK and true when canDeregister called with psa ID having only wound-up or rejected schemes" in {
       when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Right(schemesWoundUpOrRejectedResponse)))
+      AuthUtils.authStub(authConnector)
+
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
@@ -94,6 +103,8 @@ class DeregistrationControllerSpec
         .thenReturn(Future.successful(Right(validListSchemesIncWoundUpResponse)))
       when(mockSchemeConnector.getSchemeDetails(ArgumentMatchers.eq(psaId), any(), any())(any(), any()))
         .thenReturn(Future.successful(Right(getSchemeDetails(Json.arr(psaObject(psaId))))))
+      AuthUtils.authStub(authConnector)
+
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
@@ -101,10 +112,13 @@ class DeregistrationControllerSpec
     }
 
     "return OK and false when canDeregister called with psa ID having Open scheme and there are other PSAs associated" in {
+      AuthUtils.authStub(authConnector)
       when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Right(validListSchemesIncWoundUpResponse)))
       when(mockSchemeConnector.getSchemeDetails(ArgumentMatchers.eq(psaId), any(), any())(any(), any()))
         .thenReturn(Future.successful(Right(getSchemeDetails(Json.arr(psaObject(psaId))))))
+      AuthUtils.authStub(authConnector)
+
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
@@ -114,6 +128,8 @@ class DeregistrationControllerSpec
     "return http exception when non OK httpresponse returned" in {
       when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Left(new BadRequestException("bad request"))))
+      AuthUtils.authStub(authConnector)
+
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
       status(result) mustBe BAD_REQUEST
     }
