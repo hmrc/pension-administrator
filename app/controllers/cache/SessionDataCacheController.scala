@@ -26,7 +26,7 @@ import scala.concurrent.ExecutionContext
 
 class SessionDataCacheController @Inject()(
                                                repository: SessionDataCacheRepository,
-                                               authConnector: AuthConnector,
                                                cc: ControllerComponents,
                                                authAction: AuthAction
-                                          )(implicit ec: ExecutionContext) extends PensionAdministratorCacheController(repository, authConnector, cc, authAction)
+                                          )(implicit ec: ExecutionContext)
+                                    extends PensionAdministratorCacheController(repository, cc, authAction)

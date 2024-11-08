@@ -28,27 +28,23 @@ import scala.concurrent.{ExecutionContext, Future}
 
 abstract class PensionAdministratorCacheController(
                                                     repository: ManageCacheRepository,
-                                                    val authConnector: AuthConnector,
                                                     cc: ControllerComponents,
                                                     authAction: AuthAction
-                                                  )(implicit val ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
+                                                  )(implicit val ec: ExecutionContext) extends BackendController(cc){
 
   private val logger = Logger(classOf[PensionAdministratorCacheController])
 
   def save(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
-      authorised() {
         request.body.asJson.map {
           jsValue =>
             repository.upsert(id, jsValue)
               .map(_ => Ok)
         } getOrElse Future.successful(EntityTooLarge)
-      }
   }
 
   def get(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
-      authorised() {
         logger.debug("controllers.cache.PensionAdministratorCacheController.get: Authorised Request " + id)
         repository.get(id).map { response =>
           logger.debug(s"controllers.cache.PensionAdministratorCacheController.get: Response for request Id $id is $response")
@@ -57,25 +53,20 @@ abstract class PensionAdministratorCacheController(
           }
             .getOrElse(NotFound)
         }
-      }
   }
 
   def lastUpdated(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
-      authorised() {
         logger.debug("controllers.cache.PensionAdministratorCacheController.get: Authorised Request " + id)
         repository.getLastUpdated(id).map { response =>
           logger.debug("controllers.cache.PensionAdministratorCacheController.get: Response " + response)
           response.map { date => Ok(Json.toJson(date)) }
             .getOrElse(NotFound)
         }
-      }
   }
 
   def remove(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
-      authorised() {
         repository.remove(id).map(_ => Ok)
-      }
   }
 }

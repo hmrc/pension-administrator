@@ -26,13 +26,11 @@ import scala.concurrent.ExecutionContext
 
 class PensionAdministratorCacheControllerImpl @Inject()(
                                                          repo: ManageCacheRepository,
-                                                         authConnector: AuthConnector,
                                                          cc: ControllerComponents,
                                                          authAction: AuthAction
                                                        )(implicit ec: ExecutionContext)
 extends PensionAdministratorCacheController(
     repository = repo,
-    authConnector = authConnector,
     cc = cc,
     authAction = authAction
   )

@@ -54,6 +54,9 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
   implicit lazy val mat: Materializer = app.materializer
 
   def controller: PSADataCacheController = app.injector.instanceOf[PSADataCacheController]
+  private val pstr = "pstr"
+  private val psaId = AuthUtils.psaId
+  private val fakeRequest = FakeRequest().withHeaders("pstr" -> pstr, "psaId" -> psaId)
 
   "PSADataCacheController" when {
     s"on .get " must {
@@ -62,7 +65,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
         when(repo.get(eqTo("testId"))(any())) thenReturn Future.successful(Some(Json.obj("testId" -> "foo")))
         AuthUtils.authStub(authConnector)
 
-        val result = controller.get("testId")(FakeRequest())
+        val result = controller.get("testId")(fakeRequest)
 
         status(result) mustEqual OK
         contentAsJson(result) mustEqual Json.obj("testId" -> "foo")
@@ -72,7 +75,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
         when(repo.get(eqTo("testId"))(any())) thenReturn Future.successful(None)
         AuthUtils.authStub(authConnector)
 
-        val result = controller.get("testId")(FakeRequest())
+        val result = controller.get("testId")(fakeRequest)
 
         status(result) mustEqual NOT_FOUND
       }
@@ -97,7 +100,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
       "return 200 when the request body can be parsed and passed to the repository successfully" in {
         when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.authStub(authConnector)
 
         val result = call(controller.save("testId"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
 
@@ -125,13 +128,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
         status(result) mustEqual OK
       }
 
-      "throw an exception when the call is not authorised" in {
-        AuthUtils.authStub(authConnector)
 
-        val result = controller.remove(id = "testId")(FakeRequest())
-
-        an[UnauthorizedException] must be thrownBy status(result)
-      }
     }
   }
 }

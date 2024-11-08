@@ -39,7 +39,6 @@ class InvitationsCacheController @Inject()(
 
   def add: Action[AnyContent] = authAction.async {
     implicit request =>
-      authorised() {
         request.body.asJson.map {
           jsValue =>
             jsValue.validate[Invitation].fold(
@@ -53,7 +52,6 @@ class InvitationsCacheController @Inject()(
         } getOrElse Future.failed(
           new BadRequestException("Bad Request with no request body returned for PSA Invitation")
         )
-      }
   }
 
   private def getByMap(map: Map[String, String]): Future[Result] = {
@@ -67,34 +65,27 @@ class InvitationsCacheController @Inject()(
 
   def get: Action[AnyContent] = Action.async {
     implicit request =>
-      authorised() {
         request.headers.get("inviteePsaId").flatMap { inviteePsaId =>
           request.headers.get("pstr").map { pstr =>
             getByMap(Map("inviteePsaId" -> inviteePsaId, "pstr" -> pstr))
           }
         }.getOrElse(Future.successful(BadRequest))
-      }
   }
 
   def getForScheme: Action[AnyContent] = Action.async {
     implicit request =>
-      authorised() {
         request.headers.get("pstr").map(pstr => getByMap(Map("pstr" -> pstr)))
           .getOrElse(Future.successful(BadRequest))
-      }
   }
 
   def getForInvitee: Action[AnyContent] = Action.async {
     implicit request =>
-      authorised() {
         request.headers.get("inviteePsaId").map(inviteePsaId => getByMap(Map("inviteePsaId" -> inviteePsaId)))
           .getOrElse(Future.successful(BadRequest))
-      }
   }
 
   def remove: Action[AnyContent] = Action.async {
     implicit request =>
-      authorised() {
         request.headers.get("inviteePsaId").flatMap(
           inviteePsaId =>
             request.headers.get("pstr").map(
@@ -102,6 +93,5 @@ class InvitationsCacheController @Inject()(
                 repository.remove(Map("inviteePsaId" -> inviteePsaId, "pstr" -> pstr)).map(_ => Ok)
             )
         ).getOrElse(Future.successful(BadRequest))
-      }
   }
 }

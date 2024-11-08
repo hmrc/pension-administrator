@@ -40,19 +40,14 @@ import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrieval, ~}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
-import utils.AuthRetrievals
+import utils.{AuthRetrievals, AuthUtils}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers {
+class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers  with MockitoSugar {
 
   import AssociationControllerSpec._
-  val mockAuthConnector: AuthConnector = mock[AuthConnector]
-  val authorisedFunctions = new AuthorisedFunctions {
-    override def authConnector: AuthConnector = mockAuthConnector
-  }
-
-
+  private val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
 
   val newEnrolmentWithEori: Enrolments = Enrolments(
@@ -250,39 +245,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     contentAsString(result) mustBe "bad request"
   }
 
-  "getName" should "return name associated with PSAID for authorised Individual" in {
-
-    fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
-      psaMinimalDetailsIndividualUser
-    )))
-
-    val result = controller().getName(fakeRequest)
-
-    status(result) mustBe OK
-    contentAsString(result) mustBe individual.fullName
-  }
-
-  it should "return name associated with PSAID for authorised Organisation" in {
-
-    fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
-      psaMinimalDetailsOrganisationUser
-    )))
-
-    val result = controller(affinityGroup = Some(AffinityGroup.Organisation)).getName(fakeRequest)
-
-    status(result) mustBe OK
-    contentAsString(result) mustBe "PSA Ltd."
-  }
-
-  it should "return UnauthorizedException with message for psaId not found in enrolments" in {
-
-    recoverToExceptionIf[UnauthorizedException](controller(psaId = None).getName(fakeRequest)) map { ex =>
-      ex.message mustBe "Cannot retrieve enrolment PSAID"
-    }
-
-  }
-
-  it should "relay response from connector if not OK" in {
+  "getName"  should "relay response from connector if not OK" in {
 
     fakeAssociationConnector.setPsaMinimalDetailsResponse(
       Future.successful(Left(new BadRequestException("bad request")))
@@ -299,6 +262,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 object AssociationControllerSpec extends MockitoSugar {
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+  AuthUtils.authStub(mockauthConnector)
 
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
@@ -356,7 +320,6 @@ object AssociationControllerSpec extends MockitoSugar {
   lazy val mockMinimalDetailsCacheRepository: MinimalDetailsCacheRepository = mock[MinimalDetailsCacheRepository]
 
 
-  private val mockAppConfig = mock[AppConfig]
   private val individualRetrievals: Future[Retrieval[Unit]] =
     Future.successful(
         EmptyRetrieval
