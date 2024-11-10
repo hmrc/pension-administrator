@@ -17,7 +17,7 @@
 package controllers
 
 import com.google.inject.Inject
-import controllers.actions.AuthAction
+import controllers.actions.{AuthAction, PsaPspEnrolmentAuthAction}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import service.InvitationService
 import uk.gov.hmrc.http.BadRequestException
@@ -29,7 +29,7 @@ import scala.concurrent.Future
 
 class InvitationController @Inject()(invitationService: InvitationService,
                                      cc: ControllerComponents,
-                                     authAction: AuthAction
+                                     authAction: PsaPspEnrolmentAuthAction
                                     )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler {
 
   def invite(): Action[AnyContent] = authAction.async {

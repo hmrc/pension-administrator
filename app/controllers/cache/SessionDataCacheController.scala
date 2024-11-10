@@ -17,7 +17,7 @@
 package controllers.cache
 
 import com.google.inject.Inject
-import controllers.actions.AuthAction
+import controllers.actions.{AuthAction, NoEnrolmentAuthAction}
 import play.api.mvc.ControllerComponents
 import repositories.SessionDataCacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -27,6 +27,6 @@ import scala.concurrent.ExecutionContext
 class SessionDataCacheController @Inject()(
                                                repository: SessionDataCacheRepository,
                                                cc: ControllerComponents,
-                                               authAction: AuthAction
+                                               authAction: NoEnrolmentAuthAction
                                           )(implicit ec: ExecutionContext)
                                     extends PensionAdministratorCacheController(repository, cc, authAction)

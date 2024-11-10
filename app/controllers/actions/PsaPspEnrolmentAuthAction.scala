@@ -51,8 +51,7 @@ trait AuthActionNoEnrollment
 
 class PsaPspEnrolmentAuthAction @Inject()(
                              override val authConnector: AuthConnector,
-                             val parser: BodyParsers.Default,
-                             enrolmentLoggingService: EnrolmentLoggingService
+                             val parser: BodyParsers.Default
                            )(implicit val executionContext: ExecutionContext)
   extends AuthAction {
 
@@ -98,7 +97,6 @@ class PsaPspEnrolmentAuthAction @Inject()(
   } recover {
     case e: InsufficientEnrolments =>
       logger.warn("Failed to authorise due to insufficient enrolments", e)
-      enrolmentLoggingService.logEnrolments(request.headers.get(Constants.XClientIdHeader))
       Forbidden("Current user doesn't have a valid EORI enrolment.")
     case e: AuthorisationException =>
       logger.warn(s"Failed to authorise", e)

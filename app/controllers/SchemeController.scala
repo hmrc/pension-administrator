@@ -33,7 +33,7 @@ class SchemeController @Inject()(
                                   schemeService: SchemeService,
                                  desConnector: DesConnector,
                                  cc: ControllerComponents,
-                                 authAction: actions.AuthAction
+                                 authAction: actions.PsaPspEnrolmentAuthAction
                                 )(implicit val ec: ExecutionContext)
                                  extends BackendController(cc) with ErrorHandler {
 

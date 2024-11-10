@@ -63,6 +63,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
   private val individualNoIdToConnector = individualNoIdFrontend.as[RegistrationNoIdIndividualRequest]
 
   private val mockRegistrationConnector = mock[RegistrationConnector]
+  private val mockAutoAction = mock[actions.NoEnrolmentAuthAction]
 
   implicit val mat: Materializer = fakeApplication().materializer
 
@@ -70,7 +71,8 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
     new RegistrationController(
       new FakeAuthConnector(retrievals),
       mockRegistrationConnector,
-      controllerComponents
+      controllerComponents,
+      mockAutoAction
     )
 
   before(reset(mockRegistrationConnector))

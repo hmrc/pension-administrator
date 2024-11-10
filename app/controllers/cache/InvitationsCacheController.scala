@@ -17,7 +17,7 @@
 package controllers.cache
 
 import com.google.inject.Inject
-import controllers.actions.AuthAction
+import controllers.actions.{AuthAction, NoEnrolmentAuthAction}
 import models.Invitation
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
@@ -34,7 +34,7 @@ class InvitationsCacheController @Inject()(
                                             repository: InvitationsCacheRepository,
                                             val authConnector: AuthConnector,
                                             cc: ControllerComponents,
-                                            authAction: AuthAction
+                                            authAction: NoEnrolmentAuthAction
                                           )(implicit val ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   def add: Action[AnyContent] = authAction.async {
@@ -63,7 +63,7 @@ class InvitationsCacheController @Inject()(
     }
   }
 
-  def get: Action[AnyContent] = Action.async {
+  def get: Action[AnyContent] = authAction.async {
     implicit request =>
         request.headers.get("inviteePsaId").flatMap { inviteePsaId =>
           request.headers.get("pstr").map { pstr =>
@@ -72,19 +72,19 @@ class InvitationsCacheController @Inject()(
         }.getOrElse(Future.successful(BadRequest))
   }
 
-  def getForScheme: Action[AnyContent] = Action.async {
+  def getForScheme: Action[AnyContent] = authAction.async {
     implicit request =>
         request.headers.get("pstr").map(pstr => getByMap(Map("pstr" -> pstr)))
           .getOrElse(Future.successful(BadRequest))
   }
 
-  def getForInvitee: Action[AnyContent] = Action.async {
+  def getForInvitee: Action[AnyContent] = authAction.async {
     implicit request =>
         request.headers.get("inviteePsaId").map(inviteePsaId => getByMap(Map("inviteePsaId" -> inviteePsaId)))
           .getOrElse(Future.successful(BadRequest))
   }
 
-  def remove: Action[AnyContent] = Action.async {
+  def remove: Action[AnyContent] = authAction.async {
     implicit request =>
         request.headers.get("inviteePsaId").flatMap(
           inviteePsaId =>

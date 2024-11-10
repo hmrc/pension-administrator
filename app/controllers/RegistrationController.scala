@@ -18,6 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.RegistrationConnector
+import controllers.actions.{NoEnrolmentAuthAction, PsaPspEnrolmentAuthAction}
 import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest}
 import models.Organisation
 import play.api.Logger
@@ -38,12 +39,13 @@ import scala.util.{Failure, Success, Try}
 class RegistrationController @Inject()(
                                         override val authConnector: AuthConnector,
                                         registerConnector: RegistrationConnector,
-                                        cc: ControllerComponents
+                                        cc: ControllerComponents,
+                                        authAction: NoEnrolmentAuthAction
                                       )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 
   private val logger = Logger(classOf[RegistrationController])
 
-  def registerWithIdIndividual: Action[AnyContent] = Action.async {
+  def registerWithIdIndividual: Action[AnyContent] = authAction.async {
     implicit request => {
       retrieveUser { user =>
         request.body.asJson match {
@@ -62,7 +64,7 @@ class RegistrationController @Inject()(
     }
   }
 
-  def registerWithIdOrganisation: Action[AnyContent] = Action.async {
+  def registerWithIdOrganisation: Action[AnyContent] = authAction.async {
     implicit request => {
       retrieveUser { user =>
         request.body.asJson match {
@@ -97,7 +99,7 @@ class RegistrationController @Inject()(
     Json.obj("regime" -> "PODA", "requiresNameMatch" -> requiresNameMatch, "isAnAgent" -> false)
   }
 
-  def registrationNoIdOrganisation: Action[OrganisationRegistrant] = Action.async(parse.json[OrganisationRegistrant]) {
+  def registrationNoIdOrganisation: Action[OrganisationRegistrant] = authAction.async(parse.json[OrganisationRegistrant]) {
     implicit request => {
       retrieveUser { user =>
         registerConnector.registrationNoIdOrganisation(user, request.body) map {
@@ -108,7 +110,7 @@ class RegistrationController @Inject()(
     }
   }
 
-  def registrationNoIdIndividual: Action[RegistrationNoIdIndividualRequest] = Action.async(parse.json[RegistrationNoIdIndividualRequest]) {
+  def registrationNoIdIndividual: Action[RegistrationNoIdIndividualRequest] = authAction.async(parse.json[RegistrationNoIdIndividualRequest]) {
     implicit request => {
       retrieveUser { user =>
         registerConnector.registrationNoIdIndividual(user, request.body) map {

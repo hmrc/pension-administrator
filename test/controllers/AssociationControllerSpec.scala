@@ -337,7 +337,7 @@ object AssociationControllerSpec extends MockitoSugar {
       .thenReturn(Future.successful(psaId))
     new AssociationController(fakeAssociationConnector, mockMinimalDetailsCacheRepository,
       mockAuthRetrievals,
-      new actions.AuthAction(mockauthConnector, instanceOf[BodyParsers.Default]),
+      new actions.NoEnrolmentAuthAction(mockauthConnector, instanceOf[BodyParsers.Default]),
       mockauthConnector,
       stubControllerComponents())
   }

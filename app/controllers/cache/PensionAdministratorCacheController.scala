@@ -16,7 +16,7 @@
 
 package controllers.cache
 
-import controllers.actions.AuthAction
+import controllers.actions.{AuthAction, NoEnrolmentAuthAction}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -29,7 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 abstract class PensionAdministratorCacheController(
                                                     repository: ManageCacheRepository,
                                                     cc: ControllerComponents,
-                                                    authAction: AuthAction
+                                                    authAction: NoEnrolmentAuthAction
                                                   )(implicit val ec: ExecutionContext) extends BackendController(cc){
 
   private val logger = Logger(classOf[PensionAdministratorCacheController])

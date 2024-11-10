@@ -450,7 +450,7 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
   private val controller = new SchemeController(fakeSchemeService,
                                                 fakeDesConnector,
                                                 controllerComponents,
-    new actions.AuthAction(mockAuthConnector, app.injector.instanceOf[BodyParsers.Default]))
+    new actions.PsaPspEnrolmentAuthAction(mockAuthConnector, app.injector.instanceOf[BodyParsers.Default]))
 
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"

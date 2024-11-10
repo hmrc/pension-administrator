@@ -19,6 +19,8 @@ package controllers
 import base.JsonFileReader
 import config.AppConfig
 import models.{IndividualDetails, MinimalDetails}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -33,16 +35,42 @@ import play.api.test.Helpers._
 import service.InvitationService
 import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
 import uk.gov.hmrc.auth.core.retrieve.~
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, Enrolment, EnrolmentIdentifier, Enrolments}
 import uk.gov.hmrc.http.{BadRequestException, _}
+import utils.AuthUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationControllerSpec extends AsyncFlatSpec with Matchers {
 
   import InvitationControllerSpec._
-
+  val mockAuthConnector: AuthConnector = mock[AuthConnector]
+  val newEnrolmentWithEori: Enrolments = Enrolments(
+    Set(
+      Enrolment(
+        key = "PsaID",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "HMRC-PODS-ORG",
+            "123"
+          )
+        ),
+        state = "Activated"
+      ),
+      Enrolment(
+        key = "PspID",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "HMRC-PODSPP-ORG",
+            "345"
+          )
+        ),
+        state = "Activated"
+      )))
+  when(mockAuthConnector.authorise[Enrolments](any, any)(any, any))
+    .thenReturn(Future.successful(newEnrolmentWithEori))
   "invite" should "return Created when service returns successfully" in {
+    AuthUtils.authStub(mockAuthConnector)
 
     val result = controller.invite()(fakeRequest.withJsonBody(invitation))
 
@@ -50,6 +78,7 @@ class InvitationControllerSpec extends AsyncFlatSpec with Matchers {
   }
 
   it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
+    AuthUtils.authStub(mockAuthConnector)
 
     fakeInvitationService.setInvitePsaResponse(
       Future.successful(Left(new BadRequestException("bad request")))
@@ -62,6 +91,7 @@ class InvitationControllerSpec extends AsyncFlatSpec with Matchers {
   }
 
   it should "return NOT_FOUND when service returns NOT_FOUND" in {
+    AuthUtils.authStub(mockAuthConnector)
 
     fakeInvitationService.setInvitePsaResponse(
       Future.successful(Left(new NotFoundException("not found")))
@@ -74,6 +104,7 @@ class InvitationControllerSpec extends AsyncFlatSpec with Matchers {
   }
 
   it should "throw BadRequestException when no data received in the request" in {
+    AuthUtils.authStub(mockAuthConnector)
 
     recoverToSucceededIf[BadRequestException] {
       controller.invite()(fakeRequest)
@@ -81,6 +112,7 @@ class InvitationControllerSpec extends AsyncFlatSpec with Matchers {
   }
 
   it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
+    AuthUtils.authStub(mockAuthConnector)
 
     fakeInvitationService.setInvitePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
@@ -90,6 +122,7 @@ class InvitationControllerSpec extends AsyncFlatSpec with Matchers {
   }
 
   it should "throw Exception when service throws any unknown Exception" in {
+    AuthUtils.authStub(mockAuthConnector)
 
     fakeInvitationService.setInvitePsaResponse(Future.failed(new Exception("Unknown Exception")))
 
@@ -136,10 +169,10 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar {
     .build()
   private val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
-  val bodyParser = application.injector.instanceOf[BodyParsers.Default]
+  val bodyParser: BodyParsers.Default = application.injector.instanceOf[BodyParsers.Default]
   val fakeInvitationService = new FakeInvitationService
   val controller = new InvitationController(fakeInvitationService,
                                             stubControllerComponents(),
-    new actions.AuthAction(mockAuthConnector, instanceOf[BodyParsers.Default]))
+    new actions.PsaPspEnrolmentAuthAction(mockAuthConnector, bodyParser))
 
 }

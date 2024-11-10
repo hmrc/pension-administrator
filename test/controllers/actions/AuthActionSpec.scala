@@ -60,7 +60,7 @@ class AuthActionSpec extends SpecBase with BeforeAndAfterEach {
 
           AuthUtils.authStub(mockAuthConnector)
 
-          val action = new AuthAction(mockAuthConnector, bodyParsers)
+          val action = new PsaPspEnrolmentAuthAction(mockAuthConnector, bodyParsers)
           val controller = new Harness(action)
           val result = controller.onPageLoad()(FakeRequest())
 
@@ -79,7 +79,7 @@ class AuthActionSpec extends SpecBase with BeforeAndAfterEach {
           when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
             .thenReturn(Future.successful(new~(Enrolments(Set.empty), Some("id"))))
 
-          val action = new AuthAction(mockAuthConnector, bodyParsers)
+          val action = new PsaPspEnrolmentAuthAction(mockAuthConnector, bodyParsers)
           val controller = new Harness(action)
           val result = controller.onPageLoad()(FakeRequest())
 
@@ -95,7 +95,7 @@ class AuthActionSpec extends SpecBase with BeforeAndAfterEach {
         running(app) {
           val bodyParsers = app.injector.instanceOf[BodyParsers.Default]
 
-          val authAction = new AuthAction(new FakeFailingAuthConnector(new MissingBearerToken), bodyParsers)
+          val authAction = new PsaPspEnrolmentAuthAction(new FakeFailingAuthConnector(new MissingBearerToken), bodyParsers)
           val controller = new Harness(authAction)
           val result = controller.onPageLoad()(FakeRequest())
 

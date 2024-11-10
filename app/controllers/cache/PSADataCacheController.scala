@@ -17,7 +17,7 @@
 package controllers.cache
 
 import com.google.inject.Inject
-import controllers.actions.AuthAction
+import controllers.actions.{AuthAction, NoEnrolmentAuthAction}
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.PSADataCacheRepository
@@ -31,7 +31,7 @@ class PSADataCacheController @Inject()(
                                         repository: PSADataCacheRepository,
                                         val authConnector: AuthConnector,
                                         cc: ControllerComponents,
-                                        authAction: AuthAction
+                                        authAction: NoEnrolmentAuthAction
                                       )(implicit val ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   private val logger = Logger(classOf[PSADataCacheController])
