@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,112 +16,79 @@
 
 package controllers.actions
 
-import com.google.inject.{ImplementedBy, Inject}
-import config.Constants
-import config.Constants._
 import play.api.Logging
-import play.api.libs.json.Json
 import play.api.mvc.Results._
-import play.api.mvc.{ActionFunction, _}
-import service.EnrolmentLoggingService
-import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
-import uk.gov.hmrc.auth.core.{AuthorisedFunctions, _}
+import play.api.mvc._
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-
-@ImplementedBy(classOf[PsaPspEnrolmentAuthAction])
-trait AuthAction
-  extends ActionBuilder[AuthRequest, AnyContent]
-    with ActionFunction[Request, AuthRequest]
-    with AuthorisedFunctions
-    with Logging
-
-trait AuthActionNoEnrollment
-  extends ActionBuilder[AuthRequestWithNoEnrollment, AnyContent]
-    with ActionFunction[Request, AuthRequestWithNoEnrollment]
-    with AuthorisedFunctions
-    with Logging
-
+case class PsaPspAuthRequest[A](request: Request[A], psaId: Option[String], pspId: Option[String], externalId: String) extends WrappedRequest[A](request)
 
 class PsaPspEnrolmentAuthAction @Inject()(
-                             override val authConnector: AuthConnector,
-                             val parser: BodyParsers.Default
-                           )(implicit val executionContext: ExecutionContext)
-  extends AuthAction {
+                                  override val authConnector: AuthConnector,
+                                  val parser: BodyParsers.Default
+                                )(implicit val executionContext: ExecutionContext)
+  extends ActionBuilder[PsaPspAuthRequest, AnyContent]
+    with ActionFunction[Request, PsaPspAuthRequest]
+    with AuthorisedFunctions
+    with Logging {
 
-  def getEnrolmentIdentifier(
-                              enrolments: Enrolments,
-                              enrolmentKey: String,
-                              enrolmentIdKey: String
-                            ): Option[String] =
+  private val PSPEnrolmentKey: String = "HMRC-PODSPP-ORG"
+  private val PSPEnrolmentIdKey: String = "PspID"
+  private val PSAEnrolmentKey: String = "HMRC-PODS-ORG"
+  private val PSAEnrolmentIdKey: String = "PsaID"
+  private def getEnrolmentIdentifier(
+                                      enrolments: Enrolments,
+                                      enrolmentKey: String,
+                                      enrolmentIdKey: String
+                                    ): Option[String] =
     for {
-      enrolment  <- enrolments.getEnrolment(enrolmentKey)
+      enrolment <- enrolments.getEnrolment(enrolmentKey)
       identifier <- enrolment.getIdentifier(enrolmentIdKey)
-    } yield identifier.value
+    }
+    yield identifier.value
 
-  override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] =
+  override def
+  invokeBlock[A](request: Request[A], block: PsaPspAuthRequest[A] => Future[Result]): Future[Result] =
     invoke(request, block)(HeaderCarrierConverter.fromRequest(request))
 
-  def invoke[A](request: Request[A], block: AuthRequest[A] => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
-
-    authorised(Enrolment(PSAEnrolmentKey)).retrieve(Retrievals.authorisedEnrolments and Retrievals.externalId) {
+  private def invoke[A](request: Request[A], block: PsaPspAuthRequest[A] => Future[Result])
+                       (implicit hc: HeaderCarrier): Future[Result] = {
+    authorised(Enrolment(PSAEnrolmentKey) or Enrolment(PSPEnrolmentKey)).retrieve(Retrievals.authorisedEnrolments and Retrievals.externalId) {
       case enrolments ~ Some(externalId) =>
-        val psaEnrolmentId = getEnrolmentIdentifier(
+        val psaId = getEnrolmentIdentifier(
           enrolments,
           PSAEnrolmentKey,
           PSAEnrolmentIdKey
         )
 
-        val pspEnrolmentId = getEnrolmentIdentifier(
+        val pspId = getEnrolmentIdentifier(
           enrolments,
           PSPEnrolmentKey,
           PSPEnrolmentIdKey
         )
 
-        psaEnrolmentId
-          .orElse(pspEnrolmentId)
-          .map {
-            psaOrPspId =>
-              block(AuthRequest(request, psaOrPspId, externalId))
-          }
-          .getOrElse {
-            Future.failed(InsufficientEnrolments(s"Unable to retrieve enrolment for either $PSAEnrolmentKey or $PSPEnrolmentKey"))
-          }
+        block(PsaPspAuthRequest(request, psaId, pspId, externalId))
+
+      case _ => Future.failed(new RuntimeException("No externalId found"))
     }
   } recover {
-    case e: InsufficientEnrolments =>
+    case e:
+      InsufficientEnrolments =>
       logger.warn("Failed to authorise due to insufficient enrolments", e)
-      Forbidden("Current user doesn't have a valid EORI enrolment.")
-    case e: AuthorisationException =>
+      Forbidden("Current user doesn't have a valid enrolment.")
+    case e:
+      AuthorisationException =>
       logger.warn(s"Failed to authorise", e)
       Unauthorized(s"Failed to authorise user: ${e.reason}")
     case NonFatal(thr) =>
       logger.error(s"Error returned from auth service: ${thr.getMessage}", thr)
-      InternalServerError(s"$thr")
+      throw thr
   }
 }
-
-class NoEnrolmentAuthAction @Inject()(
-                                           override val authConnector: AuthConnector,
-                                           val parser: BodyParsers.Default,
-                                         )(implicit val executionContext: ExecutionContext)
-  extends AuthActionNoEnrollment {
-
-
-  override def invokeBlock[A](request: Request[A], block: AuthRequestWithNoEnrollment[A] => Future[Result]): Future[Result] =
-    invoke(request, block)(HeaderCarrierConverter.fromRequest(request))
-
-  def invoke[A](request: Request[A], block: AuthRequestWithNoEnrollment[A] => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
-
-    authorised().retrieve(Retrievals.externalId) {
-      externalId =>
-            block(AuthRequestWithNoEnrollment(request, externalId))
-        }
-    }
-  }

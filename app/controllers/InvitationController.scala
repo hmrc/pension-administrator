@@ -17,7 +17,7 @@
 package controllers
 
 import com.google.inject.Inject
-import controllers.actions.{AuthAction, PsaPspEnrolmentAuthAction}
+import controllers.actions.PsaPspEnrolmentAuthAction
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import service.InvitationService
 import uk.gov.hmrc.http.BadRequestException

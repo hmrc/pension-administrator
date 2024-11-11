@@ -36,7 +36,7 @@ class AssociationController @Inject()(
                                        associationConnector: AssociationConnector,
                                        minimalDetailsCacheRepository: MinimalDetailsCacheRepository,
                                        retrievals: AuthRetrievals,
-                                       noEnrollmentAuth: actions.NoEnrolmentAuthAction,
+                                       psaPspAuth: actions.PsaPspEnrolmentAuthAction,
                                        val authConnector: AuthConnector,
                                        cc: ControllerComponents
                                      )(implicit val ec: ExecutionContext)
@@ -44,7 +44,7 @@ class AssociationController @Inject()(
 
   private val logger = Logger(classOf[AssociationController])
 
-  def getMinimalDetails: Action[AnyContent] = noEnrollmentAuth.async {
+  def getMinimalDetails: Action[AnyContent] = psaPspAuth.async {
     implicit request =>
       retrieveIdAndTypeFromHeaders{ (idValue, idType, regime) =>
         getMinimalDetail(idValue, idType, regime)
@@ -64,7 +64,7 @@ class AssociationController @Inject()(
       }
   }
 
-  def acceptInvitation: Action[AnyContent] = noEnrollmentAuth.async {
+  def acceptInvitation: Action[AnyContent] = psaPspAuth.async {
     implicit request =>
         val feJson = request.body.asJson
         logger.debug(s"[Accept-Invitation-Incoming-Payload]$feJson")
@@ -88,7 +88,7 @@ class AssociationController @Inject()(
         }
   }
 
-  def getEmail: Action[AnyContent] = noEnrollmentAuth.async {
+  def getEmail: Action[AnyContent] = psaPspAuth.async {
     implicit request =>
       retrievals.getPsaId flatMap {
         case Some(psaId) =>
@@ -100,7 +100,7 @@ class AssociationController @Inject()(
       }
   }
 
-  def getName: Action[AnyContent] = noEnrollmentAuth.async {
+  def getName: Action[AnyContent] = psaPspAuth.async {
     implicit request =>
 
       for {

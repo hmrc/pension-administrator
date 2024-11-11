@@ -17,7 +17,7 @@
 package controllers.cache
 
 import com.google.inject.Inject
-import controllers.actions.{AuthAction, NoEnrolmentAuthAction}
+import controllers.actions.NoEnrolmentAuthAction
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.PSADataCacheRepository

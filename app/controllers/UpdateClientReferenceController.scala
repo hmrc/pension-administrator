@@ -18,7 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.UpdateClientReferenceConnector
-import controllers.actions.{AuthAction, NoEnrolmentAuthAction}
+import controllers.actions.PsaPspEnrolmentAuthAction
 import models.UpdateClientReferenceRequest
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.mvc._
@@ -28,14 +28,13 @@ import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, Upst
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class UpdateClientReferenceController @Inject()(
                                         override val authConnector: AuthConnector,
                                         updateClientReferenceConnector: UpdateClientReferenceConnector,
                                         cc: ControllerComponents,
-                                        authAction: NoEnrolmentAuthAction
+                                        authAction: PsaPspEnrolmentAuthAction
                                       )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
 
   def updateClientReference: Action[AnyContent] = authAction.async {

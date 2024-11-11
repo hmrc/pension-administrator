@@ -18,7 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.SchemeConnector
-import controllers.actions.{AuthAction, PsaPspEnrolmentAuthAction}
+import controllers.actions.PsaPspEnrolmentAuthAction
 import models.{ListOfSchemes, SchemeDetails}
 import play.api.libs.json._
 import play.api.mvc._

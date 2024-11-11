@@ -17,7 +17,7 @@
 package controllers.cache
 
 import com.google.inject.Inject
-import controllers.actions.{AuthAction, NoEnrolmentAuthAction}
+import controllers.actions.PsaPspEnrolmentAuthAction
 import models.Invitation
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
@@ -27,14 +27,13 @@ import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationsCacheController @Inject()(
                                             repository: InvitationsCacheRepository,
                                             val authConnector: AuthConnector,
                                             cc: ControllerComponents,
-                                            authAction: NoEnrolmentAuthAction
+                                            authAction: PsaPspEnrolmentAuthAction
                                           )(implicit val ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   def add: Action[AnyContent] = authAction.async {

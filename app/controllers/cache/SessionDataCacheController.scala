@@ -17,7 +17,7 @@
 package controllers.cache
 
 import com.google.inject.Inject
-import controllers.actions.{AuthAction, NoEnrolmentAuthAction}
+import controllers.actions.NoEnrolmentAuthAction
 import play.api.mvc.ControllerComponents
 import repositories.SessionDataCacheRepository
 import uk.gov.hmrc.auth.core.AuthConnector

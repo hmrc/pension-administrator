@@ -16,7 +16,7 @@
 
 package controllers.cache
 
-import controllers.actions.{AuthAction, NoEnrolmentAuthAction}
+import controllers.actions.NoEnrolmentAuthAction
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
