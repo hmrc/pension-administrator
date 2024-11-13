@@ -17,10 +17,10 @@
 package models.Reads.PsaSubscriptionDetails
 
 import models.OrganisationOrPartner
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
 
 
 class OrganisationOrPartnerReadsSpec extends AnyWordSpec with Matchers with OptionValues with PsaSubscriptionDetailsGenerators {

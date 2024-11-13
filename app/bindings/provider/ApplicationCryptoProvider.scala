@@ -16,9 +16,10 @@
 
 package bindings.provider
 
-import javax.inject.{Inject, Provider}
 import play.api.Configuration
 import uk.gov.hmrc.crypto.ApplicationCrypto
+
+import javax.inject.{Inject, Provider}
 
 class ApplicationCryptoProvider @Inject()(configuration: Configuration) extends Provider[ApplicationCrypto] {
   def get(): ApplicationCrypto = new ApplicationCrypto(configuration.underlying)

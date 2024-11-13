@@ -17,7 +17,6 @@
 package controllers
 
 import base.JsonFileReader
-import config.AppConfig
 import connectors.AssociationConnector
 import models._
 import org.mockito.ArgumentMatchers._
@@ -33,11 +32,8 @@ import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.MinimalDetailsCacheRepository
-import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, AuthorisedFunctions, Enrolment, EnrolmentIdentifier, Enrolments}
-import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrieval, ~}
+import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrieval}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import utils.{AuthRetrievals, AuthUtils}
@@ -262,7 +258,6 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 object AssociationControllerSpec extends MockitoSugar {
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
-  AuthUtils.authStub(mockauthConnector)
 
   def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
@@ -329,16 +324,13 @@ object AssociationControllerSpec extends MockitoSugar {
       "metrics.jvm" -> false
     )
     .build()
-  val bodyParser = application.injector.instanceOf[BodyParsers.Default]
   def controller(psaId: Option[PsaId] = Some(PsaId("A2123456")),
-                 affinityGroup: Option[AffinityGroup] = Some(AffinityGroup.Individual),
                  isEnabledFeatureToggle: Boolean = false): AssociationController = {
     when(mockAuthRetrievals.getPsaId(any(), any()))
       .thenReturn(Future.successful(psaId))
     new AssociationController(fakeAssociationConnector, mockMinimalDetailsCacheRepository,
       mockAuthRetrievals,
-      new actions.NoEnrolmentAuthAction(mockauthConnector, instanceOf[BodyParsers.Default]),
-      mockauthConnector,
+      new actions.PsaPspEnrolmentAuthAction(mockauthConnector, instanceOf[BodyParsers.Default]),
       stubControllerComponents())
   }
 

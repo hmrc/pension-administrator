@@ -39,7 +39,7 @@ class AuthActionSpec extends SpecBase with BeforeAndAfterEach {
 
   private type RetrievalsType = Enrolments ~ Option[String]
 
-  class Harness(authAction: AuthAction) {
+  class Harness(authAction: PsaPspEnrolmentAuthAction) {
     def onPageLoad(): Action[AnyContent] = authAction { _ => Results.Ok }
   }
 

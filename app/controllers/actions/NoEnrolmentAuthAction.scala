@@ -18,9 +18,9 @@ package controllers.actions
 
 import com.google.inject.Inject
 import play.api.Logging
-import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, BodyParsers, Request, Result}
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
+import play.api.mvc._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
@@ -42,8 +42,9 @@ class NoEnrolmentAuthAction @Inject()(
   def invoke[A](request: Request[A], block: AuthRequestWithNoEnrollment[A] => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
 
     authorised().retrieve(Retrievals.externalId) {
-      externalId =>
+      case Some(externalId) =>
         block(AuthRequestWithNoEnrollment(request, externalId))
+      case _ => Future.failed(new RuntimeException("No externalId found"))
     }
   }
 }

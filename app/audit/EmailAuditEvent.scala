@@ -17,8 +17,8 @@
 package audit
 
 import models.Event
-import uk.gov.hmrc.domain.PsaId
 import models.enumeration.JourneyType
+import uk.gov.hmrc.domain.PsaId
 
 case class EmailAuditEvent(psaId: PsaId, event: Event, journeyType: JourneyType.Name) extends AuditEvent {
 

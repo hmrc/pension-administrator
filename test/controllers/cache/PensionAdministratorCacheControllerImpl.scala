@@ -17,10 +17,9 @@
 package controllers.cache
 
 import com.google.inject.Inject
-import controllers.actions.{AuthAction, NoEnrolmentAuthAction, PsaPspEnrolmentAuthAction}
+import controllers.actions.NoEnrolmentAuthAction
 import play.api.mvc.ControllerComponents
 import repositories.ManageCacheRepository
-import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.ExecutionContext
 

@@ -16,8 +16,6 @@
 
 package config
 
-import scala.util.matching.Regex
-
 object Constants {
 
   val XClientIdHeader: String = "X-Client-Id"

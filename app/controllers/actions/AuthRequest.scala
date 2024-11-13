@@ -16,19 +16,8 @@
 
 package controllers.actions;
 
-import play.api.Logging
-import play.api.mvc.Results._
 import play.api.mvc._
-import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
-
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.control.NonFatal
-import uk.gov.hmrc.auth.core.retrieve.~
 case class AuthRequest[A](request: Request[A], psaId: String, externalId: String) extends WrappedRequest[A](request)
 
-case class AuthRequestWithNoEnrollment[A](request: Request[A], externalId: Option[String]) extends WrappedRequest[A](request)
+case class AuthRequestWithNoEnrollment[A](request: Request[A], externalId: String) extends WrappedRequest[A](request)
 

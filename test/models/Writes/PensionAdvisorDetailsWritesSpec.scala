@@ -19,8 +19,8 @@ package models.Writes
 import base.CommonHelper
 import models.{Samples, Reads => _, _}
 import org.scalatest.OptionValues
-import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
 class PensionAdvisorDetailsWritesSpec extends AnyWordSpec with Matchers with OptionValues with Samples with CommonHelper {

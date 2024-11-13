@@ -384,7 +384,7 @@ object ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSug
 
   private def buildFormRepository(mongoHost: String, mongoPort: Int) = {
     val databaseName = "pension-administrator"
-    val mongoUri = s"mongodb://$mongoHost:$mongoPort/$databaseName?heartbeatFrequencyMS=1000&rm.failover=default"
+    val mongoUri = s"mongodb://$mongoHost:$mongoPort/$databaseName?heartbeatFrequencyMS=1000"
     new ManagePensionsDataCacheRepository(mockAppConfig, MongoComponent(mongoUri))
   }
 }

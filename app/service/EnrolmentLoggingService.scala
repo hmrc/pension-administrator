@@ -16,19 +16,15 @@
 
 package service
 
-import com.google.inject.ImplementedBy
-import com.google.inject.Inject
+import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import play.api.Logging
-import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.auth.core.Enrolment
-import uk.gov.hmrc.auth.core.EnrolmentIdentifier
+import uk.gov.hmrc.auth.core.{AuthConnector, Enrolment, EnrolmentIdentifier}
 import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[EnrolmentLoggingServiceImpl])
 trait EnrolmentLoggingService {

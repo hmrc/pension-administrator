@@ -20,7 +20,6 @@ import audit.{AuditService, PSARegistration, StubSuccessfulAuditService}
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.{ConnectorBehaviours, HeaderUtils}
-import models.User
 import models.registrationnoid._
 import org.mockito.Mockito.when
 import org.scalatest.EitherValues
@@ -34,7 +33,6 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories._
-import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl, WireMockHelper}
 
@@ -88,7 +86,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual).map {
+    connector.registerWithIdIndividual(testNino, externalId, testRegisterDataIndividual).map {
       response =>
         response.value shouldBe registerIndividualResponse
     }
@@ -107,7 +105,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     )
 
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdIndividual(testNino, externalId, testRegisterDataIndividual)) map {
       ex =>
         ex.statusCode shouldBe BAD_REQUEST
         ex.message should include("INVALID_NINO")
@@ -123,14 +121,14 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdIndividual(testNino, externalId, testRegisterDataIndividual)) map {
       ex =>
         ex.statusCode shouldBe CONFLICT
     }
   }
 
   it should behave like errorHandlerForPostApiFailures[JsValue](
-    connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual),
+    connector.registerWithIdIndividual(testNino, externalId, testRegisterDataIndividual),
     registerIndividualWithIdUrl
   )
 
@@ -146,12 +144,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual) map {
+    connector.registerWithIdIndividual(testNino, externalId, testRegisterDataIndividual) map {
       _ =>
         auditService.verifySent(
           PSARegistration(
             withId = true,
-            externalId = testIndividual.externalId,
+            externalId = externalId,
             psaType = "Individual",
             found = true,
             isUk = Some(true),
@@ -177,12 +175,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
 
     recoverToExceptionIf[RegistrationResponseValidationFailureException](connector.registerWithIdIndividual(
-      testNino, testIndividual, testRegisterDataIndividual)) map {
+      testNino, externalId, testRegisterDataIndividual)) map {
       ex =>
         auditService.verifySent(
           PSARegistration(
             withId = true,
-            externalId = testIndividual.externalId,
+            externalId = externalId,
             psaType = "Individual",
             found = false,
             isUk = None,
@@ -203,12 +201,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registerWithIdIndividual(testNino, testIndividual, testRegisterDataIndividual) map {
+    connector.registerWithIdIndividual(testNino, externalId, testRegisterDataIndividual) map {
       _ =>
         auditService.verifySent(
           PSARegistration(
             withId = true,
-            externalId = testIndividual.externalId,
+            externalId = externalId,
             psaType = "Individual",
             found = false,
             isUk = None,
@@ -224,7 +222,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     val invalidData = Json.obj("data" -> "invalid")
     val thrown = intercept[RegistrationRequestValidationFailureException] {
-      connector.registerWithIdIndividual(testNino, testIndividual, invalidData)
+      connector.registerWithIdIndividual(testNino, externalId, invalidData)
     }
 
     val errorMessage = thrown.getMessage
@@ -250,7 +248,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation).map {
+    connector.registerWithIdOrganisation(testUtr, externalId, testRegisterDataOrganisation).map {
       response =>
         response.value shouldBe registerOrganisationResponse
     }
@@ -268,7 +266,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdOrganisation(testUtr, externalId, testRegisterDataOrganisation)) map {
       ex =>
 
         ex.statusCode shouldBe BAD_REQUEST
@@ -277,7 +275,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
   }
 
   it should behave like errorHandlerForPostApiFailures(
-    connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation),
+    connector.registerWithIdOrganisation(testUtr, externalId, testRegisterDataOrganisation),
     registerOrganisationWithIdUrl
   )
 
@@ -293,12 +291,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation) map {
+    connector.registerWithIdOrganisation(testUtr, externalId, testRegisterDataOrganisation) map {
       _ =>
         auditService.verifySent(
           PSARegistration(
             withId = true,
-            externalId = testOrganisation.externalId,
+            externalId = externalId,
             psaType = psaType,
             found = true,
             isUk = Some(true),
@@ -323,12 +321,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     )
 
     recoverToExceptionIf[RegistrationResponseValidationFailureException](connector.registerWithIdOrganisation(
-      testUtr, testOrganisation, testRegisterDataOrganisation)) map {
+      testUtr, externalId, testRegisterDataOrganisation)) map {
       ex =>
         auditService.verifySent(
           PSARegistration(
             withId = true,
-            externalId = testOrganisation.externalId,
+            externalId = externalId,
             psaType = psaType,
             found = false,
             isUk = None,
@@ -349,12 +347,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registerWithIdOrganisation(testUtr, testOrganisation, testRegisterDataOrganisation) map {
+    connector.registerWithIdOrganisation(testUtr, externalId, testRegisterDataOrganisation) map {
       _ =>
         auditService.verifySent(
           PSARegistration(
             withId = true,
-            externalId = testOrganisation.externalId,
+            externalId = externalId,
             psaType = psaType,
             found = false,
             isUk = None,
@@ -371,7 +369,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     val invalidData = Json.obj("data" -> "invalid")
 
     val thrown = intercept[RegistrationRequestValidationFailureException] {
-      connector.registerWithIdOrganisation(testUtr, testOrganisation, invalidData)
+      connector.registerWithIdOrganisation(testUtr, externalId, invalidData)
     }
 
     val errorMessage = thrown.getMessage
@@ -397,7 +395,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant).map {
+    connector.registrationNoIdOrganisation(externalId, organisationRegistrant).map {
       response =>
         response.value shouldBe registerWithoutIdResponseJson
     }
@@ -405,7 +403,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
 
   it should behave like errorHandlerForPostApiFailures(
-    connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant),
+    connector.registrationNoIdOrganisation(externalId, organisationRegistrant),
     registerOrganisationWithoutIdUrl
   )
 
@@ -420,12 +418,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant) map {
+    connector.registrationNoIdOrganisation(externalId, organisationRegistrant) map {
       _ =>
         auditService.verifySent(
           PSARegistration(
             withId = false,
-            externalId = testOrganisation.externalId,
+            externalId = externalId,
             psaType = "Organisation",
             found = true,
             isUk = Some(false),
@@ -449,12 +447,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     )
 
     recoverToExceptionIf[RegistrationResponseValidationFailureException](connector.registrationNoIdOrganisation(
-      testOrganisation, organisationRegistrant)) map {
+      externalId, organisationRegistrant)) map {
       ex =>
         auditService.verifySent(
           PSARegistration(
             withId = false,
-            externalId = testOrganisation.externalId,
+            externalId = externalId,
             psaType = "Organisation",
             found = false,
             isUk = None,
@@ -475,12 +473,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant) map {
+    connector.registrationNoIdOrganisation(externalId, organisationRegistrant) map {
       _ =>
         auditService.verifySent(
           PSARegistration(
             withId = false,
-            externalId = testOrganisation.externalId,
+            externalId = externalId,
             psaType = "Organisation",
             found = false,
             isUk = None,
@@ -501,12 +499,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdOrganisation(testOrganisation, organisationRegistrant)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdOrganisation(externalId, organisationRegistrant)) map {
       ex =>
         auditService.verifySent(
           PSARegistration(
             withId = false,
-            externalId = testOrganisation.externalId,
+            externalId = externalId,
             psaType = "Organisation",
             found = false,
             isUk = None,
@@ -533,7 +531,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
           )
       )
 
-    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
+    connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest) map {
       response =>
         response.value shouldBe registerWithoutIdResponseJson
     }
@@ -552,7 +550,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
           )
       )
 
-    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
+    connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest) map {
       response =>
         response.left.value shouldBe a[BadRequestException]
         response.left.value.message should include("INVALID_PAYLOAD")
@@ -572,7 +570,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
           )
       )
 
-    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
+    connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest) map {
       response =>
         response.left.value shouldBe a[BadRequestException]
         response.left.value.message should include("INVALID_SUBMISSION")
@@ -591,7 +589,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
           )
       )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest)) map {
       ex =>
         ex.reportAs shouldBe BAD_GATEWAY
     }
@@ -609,7 +607,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
           )
       )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest)) map {
       ex =>
         ex.reportAs shouldBe BAD_GATEWAY
     }
@@ -631,12 +629,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
           )
       )
 
-    connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest) map {
+    connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest) map {
       _ =>
         auditService.verifySent(
           PSARegistration(
             withId = false,
-            externalId = testIndividual.externalId,
+            externalId = externalId,
             psaType = "Individual",
             found = true,
             isUk = Some(false),
@@ -663,12 +661,12 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
       )
 
     recoverToExceptionIf[RegistrationResponseValidationFailureException](connector.registrationNoIdIndividual(
-      testIndividual, registerIndividualWithoutIdRequest)) map {
+      externalId, registerIndividualWithoutIdRequest)) map {
       ex =>
         auditService.verifySent(
           PSARegistration(
             withId = false,
-            externalId = testIndividual.externalId,
+            externalId = externalId,
             psaType = "Individual",
             found = false,
             isUk = None,
@@ -691,13 +689,13 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
           )
       )
 
-    recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(testIndividual, registerIndividualWithoutIdRequest)) map {
+    recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest)) map {
       ex =>
         ex.reportAs shouldBe BAD_GATEWAY
         auditService.verifySent(
           PSARegistration(
             withId = false,
-            externalId = testIndividual.externalId,
+            externalId = externalId,
             psaType = "Individual",
             found = false,
             isUk = None,
@@ -725,8 +723,7 @@ object RegistrationConnectorSpec {
   val registerOrganisationWithoutIdUrl = "/registration/02.00.00/organisation"
   val registerIndividualWithoutIdUrl = "/registration/02.00.00/individual"
 
-  val testOrganisation: User = User("test-external-id", AffinityGroup.Organisation)
-  val testIndividual: User = User("test-external-id", AffinityGroup.Individual)
+  val externalId: String = "test-external-id"
   val testCorrelationId = "testCorrelationId"
 
   val testRegisterDataIndividual: JsObject = Json.obj("regime" -> "PODA", "requiresNameMatch" -> false, "isAnAgent" -> false)

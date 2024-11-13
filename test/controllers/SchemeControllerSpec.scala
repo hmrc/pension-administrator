@@ -16,32 +16,28 @@
 
 package controllers
 
-import play.api.mvc._
 import base.{JsonFileReader, SpecBase}
-import config.AppConfig
 import models.PsaToBeRemovedFromScheme
 import org.apache.pekko.stream.Materializer
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.Configuration
 import play.api.http.Status.BAD_GATEWAY
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsResultException, JsValue, Json}
-import play.api.mvc.{AnyContent, AnyContentAsEmpty, BodyParser, BodyParsers, Request, RequestHeader, Result}
+import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import repositories.AdminDataRepositorySpec.mock
 import repositories._
 import service.SchemeService
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
-import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, ~}
+import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.{AuthUtils, FakeDesConnector}
 import utils.testhelpers.PsaSubscriptionBuilder._
+import utils.{AuthUtils, FakeDesConnector}
 
 import java.time.{LocalDate, ZoneId}
 import scala.concurrent.{ExecutionContext, Future}
@@ -403,7 +399,7 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
       bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
       bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
-      bind[actions.AuthAction].toInstance(mock[actions.AuthAction])
+      bind[actions.PsaPspEnrolmentAuthAction].toInstance(mock[actions.PsaPspEnrolmentAuthAction])
 
   )
 

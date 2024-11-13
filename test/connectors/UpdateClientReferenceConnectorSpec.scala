@@ -20,7 +20,7 @@ import audit.{AuditService, StubSuccessfulAuditService, UpdateClientReferenceAud
 import base.JsonFileReader
 import com.github.tomakehurst.wiremock.client.WireMock._
 import connectors.helper.{ConnectorBehaviours, HeaderUtils}
-import models.{UpdateClientReferenceRequest, User}
+import models.UpdateClientReferenceRequest
 import org.mockito.Mockito._
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -33,7 +33,6 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories._
-import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http._
 import utils.WireMockHelper
 
@@ -147,8 +146,6 @@ object UpdateClientReferenceConnectorSpec {
   val updateClientReferenceUrl = "/pension-online/update-client-reference/pods"
   val auditService = new StubSuccessfulAuditService()
 
-  val testOrganisation: User = User("test-external-id", AffinityGroup.Organisation)
-  val testIndividual: User = User("test-external-id", AffinityGroup.Individual)
   val testCorrelationId = "testCorrelationId"
   val testUpdateClientReference: UpdateClientReferenceRequest = UpdateClientReferenceRequest(
     pstr = "45554528AV", psaId = "A3869826", pspId = "11542640", clientReference = Some("as1234aasda"))

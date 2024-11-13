@@ -16,11 +16,11 @@
 
 package service
 
-import org.apache.pekko.Done
 import base.SpecBase
 import models.FeatureToggle.{Disabled, Enabled}
 import models.FeatureToggleName.{EnrolmentRecovery, PsaFromIvToPdv, PsaRegistration, UpdateClientReference}
 import models.{FeatureToggle, FeatureToggleName, ToggleDetails}
+import org.apache.pekko.Done
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._

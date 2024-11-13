@@ -26,21 +26,18 @@ import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.{AuthRetrievals, ErrorHandler}
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class AssociationController @Inject()(
                                        associationConnector: AssociationConnector,
                                        minimalDetailsCacheRepository: MinimalDetailsCacheRepository,
                                        retrievals: AuthRetrievals,
                                        psaPspAuth: actions.PsaPspEnrolmentAuthAction,
-                                       val authConnector: AuthConnector,
                                        cc: ControllerComponents
                                      )(implicit val ec: ExecutionContext)
-                                      extends BackendController(cc) with ErrorHandler  with AuthorisedFunctions {
+                                      extends BackendController(cc) with ErrorHandler {
 
   private val logger = Logger(classOf[AssociationController])
 

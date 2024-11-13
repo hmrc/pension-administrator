@@ -20,7 +20,6 @@ import com.google.inject.Inject
 import controllers.actions.NoEnrolmentAuthAction
 import play.api.mvc.ControllerComponents
 import repositories.ManagePensionsDataCacheRepository
-import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.ExecutionContext
 

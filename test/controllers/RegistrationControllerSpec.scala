@@ -31,6 +31,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json._
+import play.api.mvc.BodyParsers
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories._
@@ -69,10 +70,9 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
   private def registrationController(retrievals: Future[_]): RegistrationController =
     new RegistrationController(
-      new FakeAuthConnector(retrievals),
       mockRegistrationConnector,
       controllerComponents,
-      mockAutoAction
+      new actions.NoEnrolmentAuthAction(new FakeAuthConnector(retrievals), app.injector.instanceOf[BodyParsers.Default])
     )
 
   before(reset(mockRegistrationConnector))
