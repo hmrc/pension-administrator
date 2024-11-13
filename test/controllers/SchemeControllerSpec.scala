@@ -415,8 +415,7 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
       bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
       bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
-      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
-      bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository])
     )
 
   override def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")

@@ -39,8 +39,7 @@ class EmailConnectorSpec extends AsyncFlatSpec with Matchers with WireMockHelper
       bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
       bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
-      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
-      bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
+      bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository])
     )
 
   override protected def portConfigKeys: String = "microservice.services.email.port"
