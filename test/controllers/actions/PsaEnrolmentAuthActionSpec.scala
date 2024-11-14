@@ -47,7 +47,7 @@ class PsaEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
     Mockito.reset(mockAuthConnector)
   }
 
-  "Auth action" must {
+  "PsaEnrolmentAuthAction" must {
 
     "when the user is logged in and has a PODS enrolment" must {
 

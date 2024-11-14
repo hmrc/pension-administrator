@@ -18,29 +18,25 @@ package controllers.actions
 
 import audit.AuditServiceSpec.mock
 import base.SpecBase
-import com.google.inject.Inject
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.concurrent.ScalaFutures
 import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.auth.core.retrieve.~
 import utils.AuthUtils
 import utils.AuthUtils.FakeFailingAuthConnector
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
-class PsaPspEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
+class NoEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
 
-  private type RetrievalsType = Enrolments ~ Option[String]
-
-  class Harness(authAction: PsaPspEnrolmentAuthAction) {
+  class Harness(authAction: NoEnrolmentAuthAction) {
     def onPageLoad(): Action[AnyContent] = authAction { _ => Results.Ok }
   }
 
@@ -50,41 +46,22 @@ class PsaPspEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
     Mockito.reset(mockAuthConnector)
   }
 
-  "PsaPspEnrolmentAuthAction" must {
+  "NoEnrolmentAuthAction" must {
 
-    "when the user is logged in and has a PODS enrolment" must {
+    "when the user is logged in" must {
 
       "must succeed" in {
 
         running(app) {
           val bodyParsers = app.injector.instanceOf[BodyParsers.Default]
 
-          AuthUtils.authStubPsp(mockAuthConnector)
+          AuthUtils.noEnrolmentAuthStub(mockAuthConnector)
 
-          val action = new PsaPspEnrolmentAuthAction(mockAuthConnector, bodyParsers)
+          val action = new NoEnrolmentAuthAction(mockAuthConnector, bodyParsers)
           val controller = new Harness(action)
           val result = controller.onPageLoad()(FakeRequest())
 
           status(result) mustEqual OK
-        }
-      }
-    }
-
-    "when the user is logged in without a PODS enrolment" must {
-
-      "must return Unauthorized" in {
-
-        running(app) {
-          val bodyParsers = app.injector.instanceOf[BodyParsers.Default]
-
-          when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
-            .thenReturn(Future.successful(new~(Enrolments(Set.empty), Some("id"))))
-
-          val action = new PsaPspEnrolmentAuthAction(mockAuthConnector, bodyParsers)
-          val controller = new Harness(action)
-          val result = controller.onPageLoad()(FakeRequest())
-
-          status(result) mustEqual FORBIDDEN
         }
       }
     }
@@ -96,11 +73,15 @@ class PsaPspEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
         running(app) {
           val bodyParsers = app.injector.instanceOf[BodyParsers.Default]
 
-          val authAction = new PsaPspEnrolmentAuthAction(new FakeFailingAuthConnector(new MissingBearerToken), bodyParsers)
+          val retrievals = MissingBearerToken()
+          val authAction = new NoEnrolmentAuthAction(new FakeFailingAuthConnector(retrievals), bodyParsers)
           val controller = new Harness(authAction)
           val result = controller.onPageLoad()(FakeRequest())
 
-          status(result) mustBe UNAUTHORIZED
+          ScalaFutures.whenReady(result.failed) { e =>
+            e mustBe a[Exception]
+            e.getMessage mustBe retrievals.msg
+          }
         }
       }
     }

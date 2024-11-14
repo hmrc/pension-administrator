@@ -19,13 +19,15 @@ package controllers.actions
 import com.google.inject.Inject
 import play.api.Logging
 import play.api.http.Status.UNAUTHORIZED
+import play.api.mvc.Results.{Forbidden, Unauthorized}
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisationException, AuthorisedFunctions, InsufficientEnrolments}
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 class NoEnrolmentAuthAction @Inject()(
                                        override val authConnector: AuthConnector,
