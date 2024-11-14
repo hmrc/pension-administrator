@@ -31,15 +31,16 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class SchemeController @Inject()(
                                   schemeService: SchemeService,
-                                 desConnector: DesConnector,
-                                 cc: ControllerComponents,
-                                 authAction: actions.PsaPspEnrolmentAuthAction
+                                  desConnector: DesConnector,
+                                  cc: ControllerComponents,
+                                  authAction: actions.PsaPspEnrolmentAuthAction,
+                                  noEnrolmentAuthAction: actions.NoEnrolmentAuthAction
                                 )(implicit val ec: ExecutionContext)
                                  extends BackendController(cc) with ErrorHandler {
 
   private val logger = Logger(classOf[SchemeController])
 
-  def registerPSA: Action[AnyContent] = authAction.async {
+  def registerPSA: Action[AnyContent] = noEnrolmentAuthAction.async {
     implicit request => {
 
       val feJson = request.body.asJson
