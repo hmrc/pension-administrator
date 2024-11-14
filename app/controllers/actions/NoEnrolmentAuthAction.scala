@@ -18,10 +18,11 @@ package controllers.actions
 
 import com.google.inject.Inject
 import play.api.Logging
+import play.api.http.Status.UNAUTHORIZED
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -44,7 +45,7 @@ class NoEnrolmentAuthAction @Inject()(
     authorised().retrieve(Retrievals.externalId) {
       case Some(externalId) =>
         block(AuthRequestWithNoEnrollment(request, externalId))
-      case _ => Future.failed(new RuntimeException("No externalId found"))
+      case _ => Future.failed(UpstreamErrorResponse("Not authorized", UNAUTHORIZED, UNAUTHORIZED))
     }
   }
 }

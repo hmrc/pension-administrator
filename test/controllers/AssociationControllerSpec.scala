@@ -21,11 +21,11 @@ import connectors.AssociationConnector
 import models._
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Application
-import play.api.inject.NewInstanceInjector.instanceOf
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
@@ -33,44 +33,21 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.MinimalDetailsCacheRepository
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrieval}
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
-import utils.{AuthRetrievals, AuthUtils}
+import utils.AuthUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers  with MockitoSugar {
+class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers  with MockitoSugar with BeforeAndAfterEach {
 
   import AssociationControllerSpec._
-  private val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
-
-  val newEnrolmentWithEori: Enrolments = Enrolments(
-    Set(
-      Enrolment(
-        key = "PsaID",
-        identifiers = Seq(
-          EnrolmentIdentifier(
-            "HMRC-PODS-ORG",
-            "123"
-          )
-        ),
-        state = "Activated"
-      ),
-      Enrolment(
-        key = "PspID",
-        identifiers = Seq(
-          EnrolmentIdentifier(
-            "HMRC-PODSPP-ORG",
-            "345"
-          )
-        ),
-        state = "Activated"
-      )))
-
-  when(mockAuthConnector.authorise[Enrolments](any, any)(any, any))
-    .thenReturn(Future.successful(newEnrolmentWithEori))
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    reset(mockauthConnector)
+    AuthUtils.authStub(mockauthConnector)
+  }
 
   "getMinimalDetails" should "return OK when service returns successfully with success form Repo" in {
 
@@ -221,12 +198,11 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     contentAsString(result) mustBe "test@email.com"
   }
 
-  it should "return UnauthorizedException with message for psaId not found in enrolments" in {
-
-    recoverToExceptionIf[UnauthorizedException](controller(psaId = None).getEmail(fakeRequest)) map { ex =>
-      ex.message mustBe "Cannot retrieve enrolment PSAID"
-    }
-
+  it should "return Forbidden with message for psaId not found in enrolments" in {
+    reset(mockauthConnector)
+    AuthUtils.failedAuthStub(mockauthConnector)
+    val result  = controller(psaId = None).getEmail(fakeRequest)
+    status(result) mustBe FORBIDDEN
   }
 
   it should "relay response from connector if not OK" in {
@@ -311,14 +287,8 @@ object AssociationControllerSpec extends MockitoSugar {
 
   val fakeAssociationConnector = new FakeAssociationConnector
   val mockauthConnector: AuthConnector = mock[AuthConnector]
-  lazy val mockAuthRetrievals: AuthRetrievals = mock[AuthRetrievals]
   lazy val mockMinimalDetailsCacheRepository: MinimalDetailsCacheRepository = mock[MinimalDetailsCacheRepository]
 
-
-  private val individualRetrievals: Future[Retrieval[Unit]] =
-    Future.successful(
-        EmptyRetrieval
-    )
   val application: Application = GuiceApplicationBuilder()
     .configure(
       "metrics.jvm" -> false
@@ -326,11 +296,9 @@ object AssociationControllerSpec extends MockitoSugar {
     .build()
   def controller(psaId: Option[PsaId] = Some(PsaId("A2123456")),
                  isEnabledFeatureToggle: Boolean = false): AssociationController = {
-    when(mockAuthRetrievals.getPsaId(any(), any()))
-      .thenReturn(Future.successful(psaId))
     new AssociationController(fakeAssociationConnector, mockMinimalDetailsCacheRepository,
-      mockAuthRetrievals,
-      new actions.PsaPspEnrolmentAuthAction(mockauthConnector, instanceOf[BodyParsers.Default]),
+      new actions.PsaPspEnrolmentAuthAction(mockauthConnector, application.injector.instanceOf[BodyParsers.Default]),
+      new actions.PsaEnrolmentAuthAction(mockauthConnector, application.injector.instanceOf[BodyParsers.Default]),
       stubControllerComponents())
   }
 

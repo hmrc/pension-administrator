@@ -18,7 +18,6 @@ package controllers.actions
 
 import audit.AuditServiceSpec.mock
 import base.SpecBase
-import com.google.inject.Inject
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.when
@@ -27,19 +26,18 @@ import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.auth.core.retrieve.~
 import utils.AuthUtils
+import utils.AuthUtils.FakeFailingAuthConnector
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
-class AuthActionSpec extends SpecBase with BeforeAndAfterEach {
+class PsaEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
 
   private type RetrievalsType = Enrolments ~ Option[String]
 
-  class Harness(authAction: PsaPspEnrolmentAuthAction) {
+  class Harness(authAction: PsaEnrolmentAuthAction) {
     def onPageLoad(): Action[AnyContent] = authAction { _ => Results.Ok }
   }
 
@@ -60,7 +58,7 @@ class AuthActionSpec extends SpecBase with BeforeAndAfterEach {
 
           AuthUtils.authStub(mockAuthConnector)
 
-          val action = new PsaPspEnrolmentAuthAction(mockAuthConnector, bodyParsers)
+          val action = new PsaEnrolmentAuthAction(mockAuthConnector, bodyParsers)
           val controller = new Harness(action)
           val result = controller.onPageLoad()(FakeRequest())
 
@@ -79,7 +77,7 @@ class AuthActionSpec extends SpecBase with BeforeAndAfterEach {
           when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
             .thenReturn(Future.successful(new~(Enrolments(Set.empty), Some("id"))))
 
-          val action = new PsaPspEnrolmentAuthAction(mockAuthConnector, bodyParsers)
+          val action = new PsaEnrolmentAuthAction(mockAuthConnector, bodyParsers)
           val controller = new Harness(action)
           val result = controller.onPageLoad()(FakeRequest())
 
@@ -95,7 +93,7 @@ class AuthActionSpec extends SpecBase with BeforeAndAfterEach {
         running(app) {
           val bodyParsers = app.injector.instanceOf[BodyParsers.Default]
 
-          val authAction = new PsaPspEnrolmentAuthAction(new FakeFailingAuthConnector(new MissingBearerToken), bodyParsers)
+          val authAction = new PsaEnrolmentAuthAction(new FakeFailingAuthConnector(new MissingBearerToken), bodyParsers)
           val controller = new Harness(authAction)
           val result = controller.onPageLoad()(FakeRequest())
 
@@ -105,11 +103,4 @@ class AuthActionSpec extends SpecBase with BeforeAndAfterEach {
     }
 
   }
-}
-
-class FakeFailingAuthConnector @Inject()(exceptionToReturn: Throwable) extends AuthConnector {
-  val serviceUrl: String = ""
-
-  override def authorise[A](predicate: Predicate, retrieval: Retrieval[A])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] =
-    Future.failed(exceptionToReturn)
 }

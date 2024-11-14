@@ -22,10 +22,9 @@ import play.api.Logger
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc._
 import repositories.MinimalDetailsCacheRepository
-import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import utils.{AuthRetrievals, ErrorHandler}
+import utils.ErrorHandler
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,8 +32,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class AssociationController @Inject()(
                                        associationConnector: AssociationConnector,
                                        minimalDetailsCacheRepository: MinimalDetailsCacheRepository,
-                                       retrievals: AuthRetrievals,
                                        psaPspAuth: actions.PsaPspEnrolmentAuthAction,
+                                       psaAuth: actions.PsaEnrolmentAuthAction,
                                        cc: ControllerComponents
                                      )(implicit val ec: ExecutionContext)
                                       extends BackendController(cc) with ErrorHandler {
@@ -85,45 +84,24 @@ class AssociationController @Inject()(
         }
   }
 
-  def getEmail: Action[AnyContent] = psaPspAuth.async {
+  def getEmail: Action[AnyContent] = psaAuth.async {
     implicit request =>
-      retrievals.getPsaId flatMap {
-        case Some(psaId) =>
-          getMinimalDetail(psaId.id, "psaid", "poda") map {
-          case Right(psaDetails) => Ok(psaDetails.email)
-          case Left(e) => result(e)
-        }
-        case _ => Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
+      getMinimalDetail(request.psaId.id, "psaid", "poda") map {
+        case Right(psaDetails) => Ok(psaDetails.email)
+        case Left(e) => result(e)
       }
   }
 
-  def getName: Action[AnyContent] = psaPspAuth.async {
+  def getName: Action[AnyContent] = psaAuth.async {
     implicit request =>
-
-      for {
-        maybePsaId <- retrievals.getPsaId
-        maybePsaDetails <- getPSAMinimalDetails(maybePsaId)
-      } yield {
-        maybePsaDetails match {
-          case Right(psaDetails) =>
-            psaDetails
-              .name
-              .map(n => Ok(n))
-              .getOrElse(throw new NotFoundException("PSA minimal details contains neither individual or organisation name"))
-          case Left(e) => result(e)
-        }
+      getMinimalDetail(request.psaId.id, "psaid", "poda").map {
+        case Right(psaDetails) =>
+          psaDetails
+            .name
+            .map(n => Ok(n))
+            .getOrElse(throw new NotFoundException("PSA minimal details contains neither individual or organisation name"))
+        case Left(e) => result(e)
       }
-
-  }
-
-  private def getPSAMinimalDetails(psaId: Option[PsaId])(
-    implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
-    psaId map {
-      id =>
-        getMinimalDetail(id.id, "psaid", "poda")
-    } getOrElse {
-      Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
-    }
   }
 
   private def getMinimalDetail(idValue: String, idType: String, regime: String)(

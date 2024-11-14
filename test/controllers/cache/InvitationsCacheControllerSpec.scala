@@ -151,7 +151,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
   private def validCacheControllerWithRemove(s: String): Unit = {
     s"$s" should "return 200 when the data is removed successfully" in {
       when(repo.remove(eqTo(mapBothKeys))(any())) thenReturn Future.successful(true)
-      when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+      AuthUtils.authStub(authConnector)
 
       val result = controller.remove()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
 

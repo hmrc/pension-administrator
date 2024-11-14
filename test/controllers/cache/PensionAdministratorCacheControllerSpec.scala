@@ -70,7 +70,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.get(eqTo("foo"))(any())) thenReturn Future.successful {
           Some(Json.obj())
         }
-        AuthUtils.authStub(authConnector)
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.get("foo")(FakeRequest())
 
@@ -82,7 +82,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.get(eqTo("foo"))(any())) thenReturn Future.successful {
           None
         }
-        AuthUtils.authStub(authConnector)
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.get("foo")(FakeRequest())
 
@@ -93,7 +93,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.get(eqTo("foo"))(any())) thenReturn Future.failed {
           new Exception()
         }
-        AuthUtils.authStub(authConnector)
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.get("foo")(FakeRequest())
 
@@ -120,7 +120,7 @@ class PensionAdministratorCacheControllerSpec
       "return 200 when the request body can be parsed and passed to the repository successfully" in {
 
         when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
-        AuthUtils.authStub(authConnector)
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = call(controller.save("foo"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
 
@@ -129,7 +129,7 @@ class PensionAdministratorCacheControllerSpec
 
       "return 413 when the request body cannot be parsed" in {
         when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
-        AuthUtils.authStub(authConnector)
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = call(controller.save("foo"), FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
@@ -152,7 +152,7 @@ class PensionAdministratorCacheControllerSpec
     s".remove" must {
       "return 200 when the data is removed successfully" in {
         when(repo.remove(eqTo("foo"))(any())) thenReturn Future.successful(true)
-        AuthUtils.authStub(authConnector)
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.remove("foo")(FakeRequest())
 
@@ -179,7 +179,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
           Some(date)
         }
-        AuthUtils.authStub(authConnector)
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.lastUpdated("foo")(FakeRequest())
 
@@ -191,7 +191,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
           None
         }
-        AuthUtils.authStub(authConnector)
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.lastUpdated("foo")(FakeRequest())
 
@@ -202,7 +202,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.failed {
           new Exception()
         }
-        AuthUtils.authStub(authConnector)
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.lastUpdated("foo")(FakeRequest())
 
