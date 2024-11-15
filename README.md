@@ -25,7 +25,7 @@ This service is written in Scala and Play, so needs at least a [JRE] to run.
 ## Running the Service
 **Service Manager Profile:** PODS_ALL
 
-**Port:** 8209
+**Port:** 8205
 
 **Link:** http://localhost:8201/register-as-pension-scheme-administrator/registered-psa-details
 
