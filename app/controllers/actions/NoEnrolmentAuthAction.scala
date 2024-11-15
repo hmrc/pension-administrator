@@ -31,7 +31,7 @@ import scala.util.control.NonFatal
 
 class NoEnrolmentAuthAction @Inject()(
                                        override val authConnector: AuthConnector,
-                                       val parser: BodyParsers.Default,
+                                       val parser: BodyParsers.Default
                                      )(implicit val executionContext: ExecutionContext)
   extends ActionBuilder[AuthRequestWithNoEnrollment, AnyContent]
     with ActionFunction[Request, AuthRequestWithNoEnrollment]
