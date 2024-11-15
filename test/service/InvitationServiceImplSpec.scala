@@ -29,7 +29,7 @@ import org.scalatest.{BeforeAndAfterEach, EitherValues, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsBoolean, JsValue, Json}
+import play.api.libs.json.{Format, JsBoolean, JsValue, Json, OWrites}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
 import repositories._
@@ -284,8 +284,8 @@ object InvitationServiceImplSpec extends MockitoSugar {
                        )
 
   object TestInvitation {
-    implicit val dateFormat = MongoJavatimeFormats.instantFormat
-    implicit val writes = Json.writes[TestInvitation]
+    implicit val dateFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
+    implicit val writes: OWrites[TestInvitation] = Json.writes[TestInvitation]
   }
 
   def invitationJson(inviteePsaId: PsaId, inviteeName: String): JsValue =

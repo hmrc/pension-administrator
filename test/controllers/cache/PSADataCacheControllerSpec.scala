@@ -18,7 +18,6 @@ package controllers.cache
 
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.ByteString
-import org.apache.commons.lang3.RandomUtils
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatest.matchers.must.Matchers
@@ -32,6 +31,7 @@ import play.api.test.Helpers._
 import repositories._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
+import utils.RandomUtils
 
 import scala.concurrent.Future
 

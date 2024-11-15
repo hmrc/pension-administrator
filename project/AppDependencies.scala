@@ -5,7 +5,7 @@ object AppDependencies {
 
   val appName = "pension-administrator"
   private val bootstrapVersion = "9.5.0"
-  private val mongoVersion = "2.2.0"
+  private val mongoVersion = "2.3.0"
   val compile: Seq[ModuleID] = Seq(
     ws,
     "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.17.2",

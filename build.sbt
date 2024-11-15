@@ -30,7 +30,6 @@ lazy val microservice = Project(AppDependencies.appName, file("."))
   .settings(libraryDependencies ++= appDependencies)
   .settings(retrieveManaged := true)
   .settings(PlayKeys.devSettings += "play.server.http.port" -> "8205")
-  .settings(update / evictionWarningOptions := EvictionWarningOptions.default.withWarnScalaVersionEviction(false))
   .settings(
     RoutesKeys.routesImport ++= Seq(
       "models.enumeration.JourneyType",

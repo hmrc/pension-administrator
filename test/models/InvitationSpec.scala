@@ -45,7 +45,7 @@ class InvitationSpec extends PlaySpec with GuiceOneAppPerSuite with ScalaFutures
       val json = Json.toJson(invitation)
       val result = json.validate[Invitation]
 
-      result mustBe a[JsSuccess[Invitation]]
+      result mustBe a[JsSuccess[_]]
       result.get mustBe invitation
     }
 
