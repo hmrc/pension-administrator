@@ -51,7 +51,6 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
-  //val app = fakeApplication()
 
   override def beforeEach(): Unit = {
     fakeAuditService.reset()
