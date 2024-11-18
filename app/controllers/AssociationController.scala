@@ -28,6 +28,7 @@ import utils.ErrorHandler
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 class AssociationController @Inject()(
                                        associationConnector: AssociationConnector,
@@ -50,6 +51,77 @@ class AssociationController @Inject()(
             case Left(e) => result(e)
           }
       }
+  }
+
+  def getMinimalDetailsSelf: Action[AnyContent] = psaPspAuth.async { implicit request =>
+    getRequiredUserParametersFromRequest.fold(error => Future.successful(BadRequest(error)), { case (id, idType, regime) =>
+      getMinimalDetail(id, idType, regime)
+        .map {
+          case Right(psaDetails) => Ok(Json.toJson(psaDetails))
+          case Left(ex) if ex.responseCode == NOT_FOUND => NotFound("no match found")
+          case Left(e) => result(e)
+        }
+    })
+
+  }
+
+  def getEmailInvitation: Action[AnyContent] = psaPspAuth.async { implicit request =>
+
+    def withRegime(id: String, idType: String, regime: String, name: String) = {
+      getMinimalDetail(id, idType, regime) map {
+        case Right(minimalDetails) =>
+          val nameMatches = minimalDetails.name.contains(name)
+          if(nameMatches) {
+            Ok(minimalDetails.email)
+          } else {
+            Forbidden("Provided user's name doesn't match with stored user's name")
+          }
+
+        case Left(e) => result(e)
+      }
+    }
+
+    def withParameters(id: String, idType: String, name: String) = {
+      val regime = idType match {
+        case "psaid" => Some("poda")
+        case "pspid" => Some("podp")
+        case _ => None
+      }
+      regime.map { withRegime(id, idType, _, name) }
+        .getOrElse(Future.successful(BadRequest("idType must be either psaid or pspid")))
+    }
+
+    (request.headers.get("id"), request.headers.get("idType"), request.headers.get("name")) match {
+      case (Some(id), Some(idType), Some(name)) => withParameters(id, idType, name)
+      case (id, idType, name) =>
+        def printMissingParam(paramName: String, param: Option[String]) = if(param.isEmpty) " " + paramName else ""
+        val missingParamErrors = Seq("id" -> id, "idType" -> idType, "name" -> name).map { case (name, param) => printMissingParam(name, param)}.mkString
+        Future.successful(
+          BadRequest(s"Missing headers:$missingParamErrors")
+        )
+    }
+  }
+
+  private def getRequiredUserParametersFromRequest(implicit req: actions.PsaPspAuthRequest[_]):Either[String, (String, String, String)] = {
+    val loggedInAsPsaOpt = Try(req.headers.get("loggedInAsPsa").map(_.toBoolean)).toOption.flatten
+    def process(loggedInAsPsa: Boolean) = {
+
+      if(loggedInAsPsa) {
+        req.psaId match {
+          case Some(psaId) => Right((psaId.id, psaId.name, "poda"))
+          case None => Left("PsaId credentials not found")
+        }
+      } else {
+        req.pspId match {
+          case Some(pspId) => Right((pspId.id, pspId.name, "podp"))
+          case None => Left("PspId credentials not found")
+        }
+      }
+    }
+
+    loggedInAsPsaOpt.map(process)
+      .getOrElse(Left("No header present loggedInAsPsa [true, false] - Should indicate if user is logged in as a PSA or PSP"))
+
   }
 
   private def retrieveIdAndTypeFromHeaders(block: (String, String, String) => Future[Result])(implicit request: RequestHeader):Future[Result] = {

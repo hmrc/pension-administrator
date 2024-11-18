@@ -22,13 +22,14 @@ import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.domain.{PsaId, PspId}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-case class PsaPspAuthRequest[A](request: Request[A], psaId: Option[String], pspId: Option[String], externalId: String) extends WrappedRequest[A](request)
+case class PsaPspAuthRequest[A](request: Request[A], psaId: Option[PsaId], pspId: Option[PspId], externalId: String) extends WrappedRequest[A](request)
 
 class PsaPspEnrolmentAuthAction @Inject()(
                                   override val authConnector: AuthConnector,
@@ -78,7 +79,7 @@ class PsaPspEnrolmentAuthAction @Inject()(
           case (None, None) =>
             logger.warn("Failed to authorise due to insufficient enrolments")
             Future.successful(Forbidden("Enrolments not present"))
-          case _ => block(PsaPspAuthRequest(request, psaId, pspId, externalId))
+          case _ => block(PsaPspAuthRequest(request, psaId.map(PsaId), pspId.map(PspId), externalId))
         }
 
       case _ => Future.failed(new RuntimeException("No externalId found"))

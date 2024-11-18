@@ -8,12 +8,19 @@ POST          /register-with-no-id/individual           controllers.Registration
 GET           /psa-subscription-details                 controllers.SchemeController.getPsaDetails
 POST          /register-psa                             controllers.SchemeController.registerPSA
 POST          /remove-psa                               controllers.SchemeController.removePsa
+# Deprecated
 DELETE        /deregister-psa/:psaId                    controllers.SchemeController.deregisterPsa(psaId: String)
+DELETE        /deregister-psa-self                      controllers.SchemeController.deregisterPsaSelf
+# Deprecated
 POST          /psa-variation/:psaId                     controllers.SchemeController.updatePSA(psaId: String)
+POST          /psa-veriation-self                       controllers.SchemeController.updatePsaSelf
 
 GET           /get-name                                 controllers.AssociationController.getName
 GET           /get-email                                controllers.AssociationController.getEmail
+# Deprecated
 GET           /get-minimal-psa                          controllers.AssociationController.getMinimalDetails
+GET           /get-minimal-details-self                 controllers.AssociationController.getMinimalDetailsSelf
+GET           /get-email-invitation                     controllers.AssociationController.getEmailInvitation
 
 POST          /accept-invitation                        controllers.AssociationController.acceptInvitation
 
@@ -38,6 +45,8 @@ GET           /invitation/get                           controllers.cache.Invita
 POST          /invitation/add                           controllers.cache.InvitationsCacheController.add
 DELETE        /invitation                               controllers.cache.InvitationsCacheController.remove
 
+# Deprecated
 GET           /can-deregister/:id                       controllers.DeregistrationController.canDeregister(id: String)
+GET           /can-deregister-self                      controllers.DeregistrationController.canDeregisterSelf
 
 POST          /updateClientReference                    controllers.UpdateClientReferenceController.updateClientReference

@@ -51,7 +51,22 @@ class PsaPspEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
 
     "when the user is logged in and has a PODS enrolment" must {
 
-      "must succeed" in {
+      "must succeed with PSA credentials" in {
+
+        running(app) {
+          val bodyParsers = app.injector.instanceOf[BodyParsers.Default]
+
+          AuthUtils.authStub(mockAuthConnector)
+
+          val action = new PsaPspEnrolmentAuthAction(mockAuthConnector, bodyParsers)
+          val controller = new Harness(action)
+          val result = controller.onPageLoad()(FakeRequest())
+
+          status(result) mustEqual OK
+        }
+      }
+
+      "must succeed with PSP credentials" in {
 
         running(app) {
           val bodyParsers = app.injector.instanceOf[BodyParsers.Default]

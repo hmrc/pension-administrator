@@ -18,7 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.SchemeConnector
-import controllers.actions.PsaPspEnrolmentAuthAction
+import controllers.actions.PsaEnrolmentAuthAction
 import models.{ListOfSchemes, SchemeDetails}
 import play.api.libs.json._
 import play.api.mvc._
@@ -31,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class DeregistrationController @Inject()(
                                           schemeConnector: SchemeConnector,
                                           cc: ControllerComponents,
-                                          authAction: PsaPspEnrolmentAuthAction
+                                          authAction: PsaEnrolmentAuthAction
                                         )(implicit val ec: ExecutionContext)
   extends BackendController(cc)
     with ErrorHandler {
@@ -47,6 +47,28 @@ class DeregistrationController @Inject()(
               val canDeregister: Boolean =
                 schemes == List.empty || schemes.forall(s => s.schemeStatus == "Rejected" || s.schemeStatus == "Wound-up")
               otherPsaAttached(canDeregister, schemes, psaId).map { list =>
+                val isOtherPsaAttached: Boolean = list.contains(true)
+                Ok(Json.obj("canDeregister" -> JsBoolean(canDeregister),
+                  "isOtherPsaAttached" -> JsBoolean(isOtherPsaAttached)))
+              }
+            case JsError(errors) => throw JsResultException(errors)
+          }
+        case Left(e) =>
+          Future.successful(result(e))
+      }
+  }
+
+  def canDeregisterSelf: Action[AnyContent] = authAction.async {
+    implicit request =>
+      schemeConnector.listOfSchemes(request.psaId.id).flatMap {
+        case Right(jsValue) =>
+
+          jsValue.validate[ListOfSchemes] match {
+            case JsSuccess(listOfSchemes, _) =>
+              val schemes: Seq[SchemeDetails] = listOfSchemes.schemeDetails.getOrElse(List.empty)
+              val canDeregister: Boolean =
+                schemes == List.empty || schemes.forall(s => s.schemeStatus == "Rejected" || s.schemeStatus == "Wound-up")
+              otherPsaAttached(canDeregister, schemes, request.psaId.id).map { list =>
                 val isOtherPsaAttached: Boolean = list.contains(true)
                 Ok(Json.obj("canDeregister" -> JsBoolean(canDeregister),
                   "isOtherPsaAttached" -> JsBoolean(isOtherPsaAttached)))
