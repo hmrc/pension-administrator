@@ -32,6 +32,7 @@ import play.api.test.{FakeRequest, Injecting}
 import repositories._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
+import utils.AuthUtils
 
 import java.time.Instant
 import scala.concurrent.Future
@@ -69,7 +70,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.get(eqTo("foo"))(any())) thenReturn Future.successful {
           Some(Json.obj())
         }
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.get("foo")(FakeRequest())
 
@@ -81,7 +82,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.get(eqTo("foo"))(any())) thenReturn Future.successful {
           None
         }
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.get("foo")(FakeRequest())
 
@@ -92,7 +93,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.get(eqTo("foo"))(any())) thenReturn Future.failed {
           new Exception()
         }
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.get("foo")(FakeRequest())
 
@@ -119,7 +120,7 @@ class PensionAdministratorCacheControllerSpec
       "return 200 when the request body can be parsed and passed to the repository successfully" in {
 
         when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = call(controller.save("foo"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
 
@@ -128,7 +129,7 @@ class PensionAdministratorCacheControllerSpec
 
       "return 413 when the request body cannot be parsed" in {
         when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = call(controller.save("foo"), FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
@@ -151,7 +152,7 @@ class PensionAdministratorCacheControllerSpec
     s".remove" must {
       "return 200 when the data is removed successfully" in {
         when(repo.remove(eqTo("foo"))(any())) thenReturn Future.successful(true)
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.remove("foo")(FakeRequest())
 
@@ -178,7 +179,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
           Some(date)
         }
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.lastUpdated("foo")(FakeRequest())
 
@@ -190,7 +191,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
           None
         }
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.lastUpdated("foo")(FakeRequest())
 
@@ -201,7 +202,7 @@ class PensionAdministratorCacheControllerSpec
         when(repo.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.failed {
           new Exception()
         }
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.successful(())
+        AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.lastUpdated("foo")(FakeRequest())
 

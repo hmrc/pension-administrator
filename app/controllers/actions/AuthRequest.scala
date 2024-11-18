@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-package audit
+package controllers.actions;
 
-import models.Event
-import models.enumeration.JourneyType
-import uk.gov.hmrc.domain.PsaId
+import play.api.mvc._
+case class AuthRequest[A](request: Request[A], psaId: String, externalId: String) extends WrappedRequest[A](request)
 
-case class EmailAuditEvent(psaId: PsaId, event: Event, journeyType: JourneyType.Name) extends AuditEvent {
+case class AuthRequestWithNoEnrollment[A](request: Request[A], externalId: String) extends WrappedRequest[A](request)
 
-  override def auditType: String = s"${journeyType.toString}EmailEvent"
-
-  override def details: Map[String, String] = Map("psaId" -> psaId.id, "event" -> event.toString)
-
-}

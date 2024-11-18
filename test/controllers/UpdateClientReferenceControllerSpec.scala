@@ -35,9 +35,9 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories._
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.FakeAuthConnector
+import utils.AuthUtils.FakeFailingAuthConnector
+import utils.{AuthUtils, FakeAuthConnector}
 
 import java.time.LocalDateTime
 import scala.concurrent.Future
@@ -45,13 +45,9 @@ import scala.concurrent.Future
 class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar with BeforeAndAfter
   with ScalaCheckDrivenPropertyChecks with Matchers {
 
-  private val externalId = "test-external-id"
   private val individualRetrievals =
     Future.successful(
-      new ~(
-        Some(externalId),
-        Some(AffinityGroup.Individual)
-      )
+      AuthUtils.authResponsePsp
     )
 
   private val mockUpdateClientReferenceConnector = mock[UpdateClientReferenceConnector]
@@ -163,41 +159,14 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
     }
 
     "throw Exception when authorisation retrievals fails" in {
-      val retrievals = InsufficientConfidenceLevel()
-      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(Future.failed(retrievals)))
+      val retrievals = InsufficientEnrolments()
+      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeFailingAuthConnector(retrievals))
       running(_.overrides(
         bindings: _*
       )) { app =>
 
         val result = updateClientReferenceController(app).updateClientReference(fakeRequest.withJsonBody(requestBody))
-
-        ScalaFutures.whenReady(result.failed) { e =>
-          e mustBe a[Exception]
-          e.getMessage mustBe retrievals.msg
-        }
-      }
-    }
-
-    "throw UpstreamErrorResponse when auth all retrievals are not present" in {
-
-      val retrievalsGen = Gen.oneOf(Seq(
-        new ~(None, None),
-        new ~(None, Some(AffinityGroup.Individual)),
-        new ~(Some(""), None)
-      ))
-
-      forAll(retrievalsGen) { retrievals =>
-        val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(Future.successful(retrievals)))
-        running(_.overrides(
-          bindings: _*
-        )) { app =>
-          val result = updateClientReferenceController(app).updateClientReference(fakeRequest.withJsonBody(requestBody))
-
-          ScalaFutures.whenReady(result.failed) { e =>
-            e mustBe a[UpstreamErrorResponse]
-            e.getMessage mustBe "Not authorized"
-          }
-        }
+        status(result) mustBe FORBIDDEN
       }
     }
 

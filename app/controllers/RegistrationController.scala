@@ -18,72 +18,66 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.RegistrationConnector
-import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest}
+import controllers.actions.NoEnrolmentAuthAction
 import models.Organisation
+import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest}
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.mvc._
-import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{BadRequestException, HttpException}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
 import utils.UtrHelper.stripUtr
 import utils.ValidationUtils._
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 class RegistrationController @Inject()(
-                                        override val authConnector: AuthConnector,
                                         registerConnector: RegistrationConnector,
-                                        cc: ControllerComponents
-                                      )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler with AuthorisedFunctions {
+                                        cc: ControllerComponents,
+                                        authAction: NoEnrolmentAuthAction
+                                      )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler {
 
   private val logger = Logger(classOf[RegistrationController])
 
-  def registerWithIdIndividual: Action[AnyContent] = Action.async {
+  def registerWithIdIndividual: Action[AnyContent] = authAction.async {
     implicit request => {
-      retrieveUser { user =>
-        request.body.asJson match {
-          case Some(jsBody) =>
-            Try((jsBody \ "nino").convertTo[String]) match {
-              case Success(nino) =>
-                registerConnector.registerWithIdIndividual(nino, user, mandatoryPODSData()) map handleResponse
-              case Failure(e) =>
-                logger.warn(s"Bad Request returned from frontend for Register With Id Individual $e")
-                Future.failed(new BadRequestException(s"Bad Request returned from frontend for Register With Id Individual $e"))
-            }
-          case _ =>
-            Future.failed(new BadRequestException("No request body received for register with Id Individual"))
-        }
+      request.body.asJson match {
+        case Some(jsBody) =>
+          Try((jsBody \ "nino").convertTo[String]) match {
+            case Success(nino) =>
+              registerConnector.registerWithIdIndividual(nino, request.externalId, mandatoryPODSData()) map handleResponse
+            case Failure(e) =>
+              logger.warn(s"Bad Request returned from frontend for Register With Id Individual $e")
+              Future.failed(new BadRequestException(s"Bad Request returned from frontend for Register With Id Individual $e"))
+          }
+        case _ =>
+          Future.failed(new BadRequestException("No request body received for register with Id Individual"))
       }
     }
   }
 
-  def registerWithIdOrganisation: Action[AnyContent] = Action.async {
+  def registerWithIdOrganisation: Action[AnyContent] = authAction.async {
     implicit request => {
-      retrieveUser { user =>
-        request.body.asJson match {
-          case Some(jsBody) =>
-            Try((stripUtr(Some("UTR"), Some((jsBody \ "utr").convertTo[String])), jsBody.convertTo[Organisation])) match {
-              case Success((Some(utr), org)) =>
-                val orgWithInvalidCharactersRemoved = org.copy( organisationName =
-                  org.organisationName.replaceAll("""[^a-zA-Z0-9- '&()\/]+""", ""))
-                val registerWithIdData = mandatoryPODSData(true).as[JsObject] ++
-                  Json.obj("organisation" -> Json.toJson(orgWithInvalidCharactersRemoved))
-                registerConnector.registerWithIdOrganisation(utr, user, registerWithIdData) map handleResponse
-              case Success((None, _)) =>
-                logger.warn("Bad Request returned for Register With Id Organisation - no UTR found")
-                Future.failed(new BadRequestException("Bad Request returned for Register With Id Organisation - no UTR found"))
-              case Failure(e) =>
-                logger.warn(s"Bad Request returned for Register With Id Organisation $e")
-                Future.failed(new BadRequestException(s"Bad Request returned for Register With Id Organisation $e"))
-            }
-          case _ =>
-            Future.failed(new BadRequestException("No request body received for Organisation"))
-        }
+      request.body.asJson match {
+        case Some(jsBody) =>
+          Try((stripUtr(Some("UTR"), Some((jsBody \ "utr").convertTo[String])), jsBody.convertTo[Organisation])) match {
+            case Success((Some(utr), org)) =>
+              val orgWithInvalidCharactersRemoved = org.copy(organisationName =
+                org.organisationName.replaceAll("""[^a-zA-Z0-9- '&()\/]+""", ""))
+              val registerWithIdData = mandatoryPODSData(true).as[JsObject] ++
+                Json.obj("organisation" -> Json.toJson(orgWithInvalidCharactersRemoved))
+              registerConnector.registerWithIdOrganisation(utr, request.externalId, registerWithIdData) map handleResponse
+            case Success((None, _)) =>
+              logger.warn("Bad Request returned for Register With Id Organisation - no UTR found")
+              Future.failed(new BadRequestException("Bad Request returned for Register With Id Organisation - no UTR found"))
+            case Failure(e) =>
+              logger.warn(s"Bad Request returned for Register With Id Organisation $e")
+              Future.failed(new BadRequestException(s"Bad Request returned for Register With Id Organisation $e"))
+          }
+        case _ =>
+          Future.failed(new BadRequestException("No request body received for Organisation"))
       }
     }
   }
@@ -97,35 +91,22 @@ class RegistrationController @Inject()(
     Json.obj("regime" -> "PODA", "requiresNameMatch" -> requiresNameMatch, "isAnAgent" -> false)
   }
 
-  def registrationNoIdOrganisation: Action[OrganisationRegistrant] = Action.async(parse.json[OrganisationRegistrant]) {
+  def registrationNoIdOrganisation: Action[OrganisationRegistrant] = authAction.async(parse.json[OrganisationRegistrant]) {
     implicit request => {
-      retrieveUser { user =>
-        registerConnector.registrationNoIdOrganisation(user, request.body) map {
-          case Right(response) => Ok(Json.toJson(response))
-          case Left(e) => result(e)
-        }
+      registerConnector.registrationNoIdOrganisation(request.externalId, request.body) map {
+        case Right(response) => Ok(Json.toJson(response))
+        case Left(e) => result(e)
       }
     }
   }
 
-  def registrationNoIdIndividual: Action[RegistrationNoIdIndividualRequest] = Action.async(parse.json[RegistrationNoIdIndividualRequest]) {
+  def registrationNoIdIndividual: Action[RegistrationNoIdIndividualRequest] = authAction.async(parse.json[RegistrationNoIdIndividualRequest]) {
     implicit request => {
-      retrieveUser { user =>
-        registerConnector.registrationNoIdIndividual(user, request.body) map {
-          case Right(response) => Ok(Json.toJson(response))
-          case Left(e) => result(e)
-        }
+      registerConnector.registrationNoIdIndividual(request.externalId, request.body) map {
+        case Right(response) => Ok(Json.toJson(response))
+        case Left(e) => result(e)
       }
     }
   }
 
-
-  private def retrieveUser(fn: models.User => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
-    authorised().retrieve(v2.Retrievals.externalId and v2.Retrievals.affinityGroup) {
-      case Some(externalId) ~ Some(affinityGroup) =>
-        fn(models.User(externalId, affinityGroup))
-      case _ =>
-        Future.failed(UpstreamErrorResponse("Not authorized", UNAUTHORIZED, UNAUTHORIZED))
-    }
-  }
 }

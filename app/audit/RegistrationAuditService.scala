@@ -16,7 +16,7 @@
 
 package audit
 
-import models.{Address, UkAddress, User}
+import models.{Address, UkAddress}
 import play.api.Logger
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
@@ -45,7 +45,7 @@ trait RegistrationAuditService {
 
   def sendPSARegistrationEvent(
                                 withId: Boolean,
-                                user: User,
+                                externalId: String,
                                 psaType: String,
                                 registerData: JsValue,
                                 isUk: JsValue => Option[Boolean]
@@ -56,7 +56,7 @@ trait RegistrationAuditService {
     case Success(Right(jsValue)) =>
       sendAuditEvent(
         withId = withId,
-        externalId = user.externalId,
+        externalId = externalId,
         psaType = psaType,
         found = true,
         isUk = isUk(jsValue),
@@ -68,7 +68,7 @@ trait RegistrationAuditService {
     case Success(Left(e)) =>
       sendAuditEvent(
         withId = withId,
-        externalId = user.externalId,
+        externalId = externalId,
         psaType = psaType,
         found = false,
         isUk = None,
@@ -81,7 +81,7 @@ trait RegistrationAuditService {
       logger.error("Error sendPSARegistrationEvent", t)
       sendAuditEvent(
         withId = withId,
-        externalId = user.externalId,
+        externalId = externalId,
         psaType = psaType,
         found = false,
         isUk = None,
@@ -95,7 +95,7 @@ trait RegistrationAuditService {
 
   def sendPSARegWithoutIdEvent(
                                 withId: Boolean,
-                                user: User,
+                                externalId: String,
                                 psaType: String,
                                 registerData: JsValue,
                                 isUk: JsValue => Option[Boolean]
@@ -106,7 +106,7 @@ trait RegistrationAuditService {
     case Success(Right(jsValue)) =>
       sendAuditEvent(
         withId = withId,
-        externalId = user.externalId,
+        externalId = externalId,
         psaType = psaType,
         found = true,
         isUk = isUk(jsValue),
@@ -118,7 +118,7 @@ trait RegistrationAuditService {
     case Success(Left(e)) =>
       sendAuditEvent(
         withId = withId,
-        externalId = user.externalId,
+        externalId = externalId,
         psaType = psaType,
         found = false,
         isUk = None,
@@ -131,7 +131,7 @@ trait RegistrationAuditService {
       logger.error("Error sendPSARegWithoutIdEvent", t)
       sendAuditEvent(
         withId = withId,
-        externalId = user.externalId,
+        externalId = externalId,
         psaType = psaType,
         found = false,
         isUk = None,

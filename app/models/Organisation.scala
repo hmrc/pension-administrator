@@ -16,7 +16,7 @@
 
 package models
 
-import play.api.libs.json.{Json, _}
+import play.api.libs.json._
 import utils.EnumUtils
 
 object OrganisationTypeEnum extends Enumeration {

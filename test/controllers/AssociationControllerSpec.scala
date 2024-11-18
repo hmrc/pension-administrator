@@ -21,24 +21,33 @@ import connectors.AssociationConnector
 import models._
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
+import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.MinimalDetailsCacheRepository
-import uk.gov.hmrc.auth.core.AffinityGroup
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
-import utils.AuthRetrievals
+import utils.AuthUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers {
+class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers  with MockitoSugar with BeforeAndAfterEach {
 
   import AssociationControllerSpec._
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    reset(mockauthConnector)
+    AuthUtils.authStub(mockauthConnector)
+  }
 
   "getMinimalDetails" should "return OK when service returns successfully with success form Repo" in {
 
@@ -189,12 +198,11 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     contentAsString(result) mustBe "test@email.com"
   }
 
-  it should "return UnauthorizedException with message for psaId not found in enrolments" in {
-
-    recoverToExceptionIf[UnauthorizedException](controller(psaId = None).getEmail(fakeRequest)) map { ex =>
-      ex.message mustBe "Cannot retrieve enrolment PSAID"
-    }
-
+  it should "return Forbidden with message for psaId not found in enrolments" in {
+    reset(mockauthConnector)
+    AuthUtils.failedAuthStub(mockauthConnector)
+    val result  = controller(psaId = None).getEmail(fakeRequest)
+    status(result) mustBe FORBIDDEN
   }
 
   it should "relay response from connector if not OK" in {
@@ -209,39 +217,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     contentAsString(result) mustBe "bad request"
   }
 
-  "getName" should "return name associated with PSAID for authorised Individual" in {
-
-    fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
-      psaMinimalDetailsIndividualUser
-    )))
-
-    val result = controller().getName(fakeRequest)
-
-    status(result) mustBe OK
-    contentAsString(result) mustBe individual.fullName
-  }
-
-  it should "return name associated with PSAID for authorised Organisation" in {
-
-    fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
-      psaMinimalDetailsOrganisationUser
-    )))
-
-    val result = controller(affinityGroup = Some(AffinityGroup.Organisation)).getName(fakeRequest)
-
-    status(result) mustBe OK
-    contentAsString(result) mustBe "PSA Ltd."
-  }
-
-  it should "return UnauthorizedException with message for psaId not found in enrolments" in {
-
-    recoverToExceptionIf[UnauthorizedException](controller(psaId = None).getName(fakeRequest)) map { ex =>
-      ex.message mustBe "Cannot retrieve enrolment PSAID"
-    }
-
-  }
-
-  it should "relay response from connector if not OK" in {
+  "getName"  should "relay response from connector if not OK" in {
 
     fakeAssociationConnector.setPsaMinimalDetailsResponse(
       Future.successful(Left(new BadRequestException("bad request")))
@@ -310,18 +286,20 @@ object AssociationControllerSpec extends MockitoSugar {
   }
 
   val fakeAssociationConnector = new FakeAssociationConnector
-
-  lazy val mockAuthRetrievals: AuthRetrievals = mock[AuthRetrievals]
+  val mockauthConnector: AuthConnector = mock[AuthConnector]
   lazy val mockMinimalDetailsCacheRepository: MinimalDetailsCacheRepository = mock[MinimalDetailsCacheRepository]
 
-
+  val application: Application = GuiceApplicationBuilder()
+    .configure(
+      "metrics.jvm" -> false
+    )
+    .build()
   def controller(psaId: Option[PsaId] = Some(PsaId("A2123456")),
-                 affinityGroup: Option[AffinityGroup] = Some(AffinityGroup.Individual),
                  isEnabledFeatureToggle: Boolean = false): AssociationController = {
-    when(mockAuthRetrievals.getPsaId(any(), any()))
-      .thenReturn(Future.successful(psaId))
     new AssociationController(fakeAssociationConnector, mockMinimalDetailsCacheRepository,
-      mockAuthRetrievals, stubControllerComponents())
+      new actions.PsaPspEnrolmentAuthAction(mockauthConnector, application.injector.instanceOf[BodyParsers.Default]),
+      new actions.PsaEnrolmentAuthAction(mockauthConnector, application.injector.instanceOf[BodyParsers.Default]),
+      stubControllerComponents())
   }
 
   val acceptedInvitationRequest: JsValue = Json.parse(

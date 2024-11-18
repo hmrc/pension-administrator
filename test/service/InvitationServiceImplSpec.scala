@@ -43,8 +43,9 @@ import utils.{DateHelper, FakeEmailConnector}
 import java.time.{Clock, Instant, LocalDate, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future}
 
-class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues
-  with MockitoSugar with BeforeAndAfterEach {
+class InvitationServiceImplSpec extends AsyncFlatSpec
+          with Matchers with EitherValues with OptionValues
+          with MockitoSugar with BeforeAndAfterEach {
 
   import InvitationServiceImplSpec._
 

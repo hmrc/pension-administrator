@@ -16,8 +16,8 @@
 
 package models.enumeration
 
-import play.api.mvc.PathBindable
 import models.enumeration.binders.EnumPathBinder
+import play.api.mvc.PathBindable
 
 object JourneyType extends Enumeration {
   type Name = Value

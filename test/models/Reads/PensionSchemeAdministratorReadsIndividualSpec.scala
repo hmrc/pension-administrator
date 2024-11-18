@@ -20,7 +20,7 @@ import models.{PensionSchemeAdministrator, Samples, UkAddress, Reads => _}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.libs.json.{Json, _}
+import play.api.libs.json._
 
 class PensionSchemeAdministratorReadsIndividualSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
   "JSON Payload of an individual PSA" should {

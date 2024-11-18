@@ -20,7 +20,6 @@ import audit._
 import com.google.inject.Inject
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.User
 import models.registrationnoid._
 import play.api.Logger
 import play.api.http.Status._
@@ -49,7 +48,7 @@ class RegistrationConnector @Inject()(
 
   private val logger = Logger(classOf[RegistrationConnector])
 
-  def registerWithIdIndividual(nino: String, user: User, registerData: JsValue)
+  def registerWithIdIndividual(nino: String, externalId: String, registerData: JsValue)
                                        (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
     val registerWithIdUrl = url"${config.registerWithIdIndividualUrl.format(nino)}"
     val requestSchema = "/resources/schemas/1163-registerWithId-RequestSchema-4.3.0.json"
@@ -71,12 +70,12 @@ class RegistrationConnector @Inject()(
           responseValidation
         )
       } andThen sendPSARegistrationEvent(
-        withId = true, user, "Individual", registerData, withIdIsUk
+        withId = true, externalId, "Individual", registerData, withIdIsUk
       )(auditService.sendEvent) andThen logWarning("registerWithIdIndividual")
     }
   }
 
-  def registerWithIdOrganisation(utr: String, user: User, registerData: JsValue)
+  def registerWithIdOrganisation(utr: String, externalId: String, registerData: JsValue)
                                          (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
 
     val registerWithIdUrl = url"${config.registerWithIdOrganisationUrl.format(utr)}"
@@ -101,7 +100,7 @@ class RegistrationConnector @Inject()(
           responseValidation
         )
       } andThen sendPSARegistrationEvent(
-        withId = true, user, psaType, registerData, withIdIsUk
+        withId = true, externalId, psaType, registerData, withIdIsUk
       )(auditService.sendEvent) andThen logWarningWithoutNotFound("registerWithIdOrganisation")
     }
   }
@@ -114,7 +113,7 @@ class RegistrationConnector @Inject()(
       logger.error(s"$endpoint received error response from DES", e)
   }
 
-  def registrationNoIdOrganisation(user: User, registerData: OrganisationRegistrant)
+  def registrationNoIdOrganisation(externalId: String, registerData: OrganisationRegistrant)
                                            (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
 
     val requestSchema = "/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json"
@@ -150,12 +149,12 @@ class RegistrationConnector @Inject()(
           )
 
       } andThen sendPSARegWithoutIdEvent(
-        withId = false, user, "Organisation", Json.toJson(registerWithNoIdData), _ => Some(false)
+        withId = false, externalId, "Organisation", Json.toJson(registerWithNoIdData), _ => Some(false)
       )(auditService.sendEvent) andThen logWarning("registrationNoIdOrganisation")
     }
   }
 
-  def registrationNoIdIndividual(user: User, registrationRequest: RegistrationNoIdIndividualRequest)
+  def registrationNoIdIndividual(externalId: String, registrationRequest: RegistrationNoIdIndividualRequest)
                                          (implicit ec: ExecutionContext, request: RequestHeader, hc: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
     val requestSchema = "/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json"
     val responseSchema = "/resources/schemas/1335_1336-registerWithoutId-ResponseSchema.json"
@@ -188,7 +187,7 @@ class RegistrationConnector @Inject()(
             responseValidation)
 
       } andThen sendPSARegWithoutIdEvent(
-        withId = false, user, "Individual", Json.toJson(registrationRequest), _ => Some(false)
+        withId = false, externalId, "Individual", Json.toJson(registrationRequest), _ => Some(false)
       )(auditService.sendEvent) andThen logWarning("registrationNoIdIndividual")
     }
   }

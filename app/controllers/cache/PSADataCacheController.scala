@@ -17,37 +17,35 @@
 package controllers.cache
 
 import com.google.inject.Inject
+import controllers.actions.NoEnrolmentAuthAction
 import play.api.Logger
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.PSADataCacheRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class PSADataCacheController @Inject()(
                                         repository: PSADataCacheRepository,
                                         val authConnector: AuthConnector,
-                                        cc: ControllerComponents
+                                        cc: ControllerComponents,
+                                        authAction: NoEnrolmentAuthAction
                                       )(implicit val ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   private val logger = Logger(classOf[PSADataCacheController])
 
-  def save(id: String): Action[AnyContent] = Action.async {
+  def save(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
-      authorised() {
         request.body.asJson.map {
           jsValue =>
             repository.upsert(id, jsValue)
               .map(_ => Ok)
         } getOrElse Future.successful(EntityTooLarge)
-      }
   }
 
-  def get(id: String): Action[AnyContent] = Action.async {
+  def get(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
-      authorised() {
         logger.debug(message = "controllers.cache.PSADataCacheController.get: Authorised Request " + id)
         repository.get(id).map { response =>
           logger.debug(message = s"controllers.cache.PSADataCacheController.get: Response for request Id $id is $response")
@@ -56,13 +54,10 @@ class PSADataCacheController @Inject()(
           }
             .getOrElse(NotFound)
         }
-      }
   }
 
-  def remove(id: String): Action[AnyContent] = Action.async {
+  def remove(id: String): Action[AnyContent] = authAction.async {
     implicit request =>
-      authorised() {
         repository.remove(id).map(_ => Ok)
-      }
   }
 }

@@ -16,12 +16,11 @@
 
 package models.Reads
 
-import models.Samples
-import models.{Reads => _, _}
+import models.{Samples, Reads => _, _}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.libs.json.{Json, _}
+import play.api.libs.json._
 
 
 class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValues with Samples {

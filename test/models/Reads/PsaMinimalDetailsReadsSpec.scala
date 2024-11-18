@@ -16,7 +16,7 @@
 
 package models.Reads
 
-import models.{MinimalDetails, IndividualDetails}
+import models.{IndividualDetails, MinimalDetails}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec

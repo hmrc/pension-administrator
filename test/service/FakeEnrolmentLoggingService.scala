@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-package audit
+package service
 
-import models.Event
-import models.enumeration.JourneyType
-import uk.gov.hmrc.domain.PsaId
+import uk.gov.hmrc.http.HeaderCarrier
 
-case class EmailAuditEvent(psaId: PsaId, event: Event, journeyType: JourneyType.Name) extends AuditEvent {
+import scala.concurrent.{ExecutionContext, Future}
 
-  override def auditType: String = s"${journeyType.toString}EmailEvent"
-
-  override def details: Map[String, String] = Map("psaId" -> psaId.id, "event" -> event.toString)
-
+class FakeEnrolmentLoggingService extends EnrolmentLoggingService {
+  override def logEnrolments(clientId: Option[String])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] = Future.successful(())
 }

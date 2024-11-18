@@ -26,8 +26,10 @@ import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
 import play.api.test.Helpers._
 import repositories._
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
 import uk.gov.hmrc.domain.PsaId
+import utils.AuthUtils
 
 import java.time.Instant
 
@@ -45,6 +47,7 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
       bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
       bind[AuditService].to(fakeAuditService)
     )
+  private val authConnector: AuthConnector = mock[AuthConnector]
 
   "EmailResponseController" must {
 
@@ -52,6 +55,7 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
 
       JourneyType.values.foreach { eventType =>
         s"will send events excluding Opened for ${eventType.toString} to audit service" in {
+          AuthUtils.authStub(authConnector)
 
           val encrypted = app.injector.instanceOf[ApplicationCrypto].QueryParameterCrypto.encrypt(PlainText(psa.id)).value
 
@@ -71,6 +75,7 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
 
   "respond with BAD_REQUEST when not given EmailEvents" in {
     fakeAuditService.reset()
+    AuthUtils.authStub(authConnector)
 
     val encrypted = app.injector.instanceOf[ApplicationCrypto].QueryParameterCrypto.encrypt(PlainText(psa.id)).value
 
@@ -86,6 +91,7 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
     "URL contains an id does not match PSAID pattern" in {
 
       fakeAuditService.reset()
+      AuthUtils.authStub(authConnector)
 
       val psa = app.injector.instanceOf[ApplicationCrypto].QueryParameterCrypto.encrypt(PlainText("psa")).value
 
@@ -104,6 +110,7 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
       fakeAuditService.reset()
 
       val psa = "manipulatedPSAID"
+      AuthUtils.authStub(authConnector)
 
       val controller = app.injector.instanceOf[EmailResponseController]
 
