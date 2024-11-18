@@ -1,5 +1,17 @@
 # Pension Administrator
 
+## Contents
+- [Overview](#overview)
+- [Requirements](#requirements)
+- [Running the Service](#running-the-service)
+- [Enrolments](#enrolments)
+- [Compile & Test](#compile--test)
+- [Identity Verification Testing](#identity-verification-testing)
+- [Navigation and Dependent Services](#navigation-and-dependent-services)
+- [Service Documentation](#service-documentation)
+- [Endpoints Used](#endpoints-used)
+- [License](#license)
+
 ## Overview
 
 This is the backend repository for Pension Administrator. This service allows a user to register and perform duties as a pension administrator. The pension administrator is the person or organisation responsible for the overall management of a pension scheme. A user registers to become a pension scheme administrator. As a pension scheme administrator they can invite others to and remove others from a scheme. 
@@ -15,9 +27,9 @@ This service has a corresponding front-end microservice, namely pension-administ
 ## Requirements
 This service is written in Scala and Play, so needs at least a [JRE] to run.
 
-**Node version:** 20.18.0
+**Node version:** 16.20.2
 
-**Java version:** 19
+**Java version:** 11
 
 **Scala version:** 2.13.14
 
