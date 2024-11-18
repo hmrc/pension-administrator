@@ -18,7 +18,6 @@ package controllers.actions
 
 import audit.AuditServiceSpec.mock
 import base.SpecBase
-import com.google.inject.Inject
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.when
@@ -27,14 +26,12 @@ import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.auth.core.retrieve.~
 import utils.AuthUtils
 import utils.AuthUtils.FakeFailingAuthConnector
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class PsaPspEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
 
