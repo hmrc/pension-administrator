@@ -16,13 +16,13 @@
 
 package models.Reads.PsaSubscriptionDetails
 
-import models._
-import utils.testhelpers.PsaSubscriptionBuilder._
 import models.PsaSubscription._
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import models._
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import utils.testhelpers.PsaSubscriptionBuilder._
 
 
 class PsaSubscriptionReadsSpec extends AnyWordSpec with Matchers with OptionValues with PsaSubscriptionDetailsGenerators with ScalaCheckPropertyChecks {

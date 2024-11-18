@@ -18,7 +18,7 @@ package models
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json
-import play.api.libs.json.{JsPath, Json, OFormat, Reads, Writes}
+import play.api.libs.json._
 
 
 case class PensionSchemeAdministratorDeclarationType(box1: Boolean, box2: Boolean, box3: Boolean, box4: Boolean,

@@ -16,17 +16,15 @@
 
 package models
 
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play._
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.{JsSuccess, Json}
 import uk.gov.hmrc.domain.PsaId
 
 import java.time.Instant
 
 class InvitationSpec extends PlaySpec with GuiceOneAppPerSuite with ScalaFutures {
-
-  import models._
 
   "Invitation" should {
 

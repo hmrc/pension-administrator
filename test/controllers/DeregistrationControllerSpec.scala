@@ -16,9 +16,9 @@
 
 package controllers
 
-import org.apache.pekko.stream.Materializer
 import base.{JsonFileReader, SpecBase}
 import connectors.SchemeConnector
+import org.apache.pekko.stream.Materializer
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -30,7 +30,9 @@ import play.api.inject.guice.GuiceableModule
 import play.api.libs.json._
 import play.api.test.Helpers._
 import repositories._
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.BadRequestException
+import utils.AuthUtils
 
 import scala.concurrent.Future
 
@@ -41,6 +43,7 @@ class DeregistrationControllerSpec
     with ScalaCheckDrivenPropertyChecks {
 
   import DeregistrationControllerSpec._
+  private val authConnector: AuthConnector = mock[AuthConnector]
 
   private val mockSchemeConnector = mock[SchemeConnector]
 
@@ -52,19 +55,25 @@ class DeregistrationControllerSpec
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
       bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
       bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
-      bind[SchemeConnector].toInstance(mockSchemeConnector)
+      bind[SchemeConnector].toInstance(mockSchemeConnector),
+      bind[AuthConnector].toInstance(authConnector)
     )
 
   implicit val mat: Materializer = app.materializer
 
   def deregistrationController: DeregistrationController = app.injector.instanceOf[DeregistrationController]
 
-  before(reset(mockSchemeConnector))
+  before {
+    reset(mockSchemeConnector)
+    reset(authConnector)
+    AuthUtils.authStub(authConnector)
+  }
 
   "Controller" must {
     "return OK and false when canDeregister called with psa ID having some schemes" in {
       when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Right(validListSchemesResponse)))
+
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
@@ -74,6 +83,7 @@ class DeregistrationControllerSpec
     "return OK and true when canDeregister called with psa ID having no scheme detail item at all" in {
       when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Right(listSchemesResponseNoSchemeDetail)))
+
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
@@ -83,6 +93,7 @@ class DeregistrationControllerSpec
     "return OK and true when canDeregister called with psa ID having only wound-up or rejected schemes" in {
       when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Right(schemesWoundUpOrRejectedResponse)))
+
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
@@ -94,6 +105,7 @@ class DeregistrationControllerSpec
         .thenReturn(Future.successful(Right(validListSchemesIncWoundUpResponse)))
       when(mockSchemeConnector.getSchemeDetails(ArgumentMatchers.eq(psaId), any(), any())(any(), any()))
         .thenReturn(Future.successful(Right(getSchemeDetails(Json.arr(psaObject(psaId))))))
+
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
@@ -105,6 +117,7 @@ class DeregistrationControllerSpec
         .thenReturn(Future.successful(Right(validListSchemesIncWoundUpResponse)))
       when(mockSchemeConnector.getSchemeDetails(ArgumentMatchers.eq(psaId), any(), any())(any(), any()))
         .thenReturn(Future.successful(Right(getSchemeDetails(Json.arr(psaObject(psaId))))))
+
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
 
       status(result) mustBe OK
@@ -114,6 +127,7 @@ class DeregistrationControllerSpec
     "return http exception when non OK httpresponse returned" in {
       when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
         .thenReturn(Future.successful(Left(new BadRequestException("bad request"))))
+
       val result = deregistrationController.canDeregister(psaId = psaId)(fakeRequest)
       status(result) mustBe BAD_REQUEST
     }
@@ -130,7 +144,7 @@ object DeregistrationControllerSpec extends JsonFileReader {
       |  "processingDate": "2001-12-17T09:30:47Z",
       |  "totalSchemesRegistered": "0"
       |}""".stripMargin)
-  private val psaId = "A123456"
+  private val psaId = "psaId"
 
   private def getSchemeDetails(psaArray: JsArray): JsObject =
     Json.obj("psaDetails" -> psaArray)

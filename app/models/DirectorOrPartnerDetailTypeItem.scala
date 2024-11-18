@@ -16,11 +16,12 @@
 
 package models
 
-import java.time.LocalDate
 import play.api.libs.functional.syntax._
 import play.api.libs.json
 import play.api.libs.json._
 import utils.UtrHelper.stripUtr
+
+import java.time.LocalDate
 
 case class DirectorOrPartnerDetailTypeItem(sequenceId: String, entityType: String, title: Option[String] = None,
                                            firstName: String, middleName: Option[String] = None, lastName: String,

@@ -18,7 +18,7 @@ package models
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
-import play.api.libs.json.{Json, Reads, _}
+import play.api.libs.json._
 
 case class ContactDetails(telephone: String, mobileNumber: Option[String] = None, fax: Option[String] = None, email: String, isChanged: Option[Boolean] = None)
 

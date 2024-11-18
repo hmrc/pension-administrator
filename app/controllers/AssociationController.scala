@@ -22,25 +22,25 @@ import play.api.Logger
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc._
 import repositories.MinimalDetailsCacheRepository
-import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import utils.{AuthRetrievals, ErrorHandler}
+import utils.ErrorHandler
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class AssociationController @Inject()(
                                        associationConnector: AssociationConnector,
                                        minimalDetailsCacheRepository: MinimalDetailsCacheRepository,
-                                       retrievals: AuthRetrievals,
+                                       psaPspAuth: actions.PsaPspEnrolmentAuthAction,
+                                       psaAuth: actions.PsaEnrolmentAuthAction,
                                        cc: ControllerComponents
-                                     )(implicit val ec: ExecutionContext) extends BackendController(cc) with ErrorHandler {
+                                     )(implicit val ec: ExecutionContext)
+                                      extends BackendController(cc) with ErrorHandler {
 
   private val logger = Logger(classOf[AssociationController])
 
-  def getMinimalDetails: Action[AnyContent] = Action.async {
+  def getMinimalDetails: Action[AnyContent] = psaPspAuth.async {
     implicit request =>
       retrieveIdAndTypeFromHeaders{ (idValue, idType, regime) =>
         getMinimalDetail(idValue, idType, regime)
@@ -60,69 +60,48 @@ class AssociationController @Inject()(
       }
   }
 
-  def acceptInvitation: Action[AnyContent] = Action.async {
+  def acceptInvitation: Action[AnyContent] = psaPspAuth.async {
     implicit request =>
-      val feJson = request.body.asJson
-      logger.debug(s"[Accept-Invitation-Incoming-Payload]$feJson")
+        val feJson = request.body.asJson
+        logger.debug(s"[Accept-Invitation-Incoming-Payload]$feJson")
 
-      feJson match {
-        case Some(acceptedInvitationJsValue) =>
-          acceptedInvitationJsValue.validate[AcceptedInvitation].fold(
-            _ =>
-              Future.failed(
-                new BadRequestException("Bad request received from frontend for accept invitation")
-              ),
-            acceptedInvitation =>
-              associationConnector.acceptInvitation(acceptedInvitation).map {
-                case Right(_) => Created
-                case Left(e) => result(e)
-              }
-          )
-        case None =>
-          Future.failed(new BadRequestException("No Request Body received for accept invitation"))
+        feJson match {
+          case Some(acceptedInvitationJsValue) =>
+            acceptedInvitationJsValue.validate[AcceptedInvitation].fold(
+              _ =>
+                Future.failed(
+                  new BadRequestException("Bad request received from frontend for accept invitation")
+                ),
+              acceptedInvitation =>
+                associationConnector.acceptInvitation(acceptedInvitation).map {
+                  case Right(_) => Created
+                  case Left(e) => result(e)
+                }
+            )
+          case None =>
+            Future.failed(new BadRequestException("No Request Body received for accept invitation"))
 
-      }
-  }
-
-  def getEmail: Action[AnyContent] = Action.async {
-    implicit request =>
-      retrievals.getPsaId flatMap {
-        case Some(psaId) =>
-          getMinimalDetail(psaId.id, "psaid", "poda") map {
-          case Right(psaDetails) => Ok(psaDetails.email)
-          case Left(e) => result(e)
         }
-        case _ => Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
-      }
   }
 
-  def getName: Action[AnyContent] = Action.async {
+  def getEmail: Action[AnyContent] = psaAuth.async {
     implicit request =>
-
-      for {
-        maybePsaId <- retrievals.getPsaId
-        maybePsaDetails <- getPSAMinimalDetails(maybePsaId)
-      } yield {
-        maybePsaDetails match {
-          case Right(psaDetails) =>
-            psaDetails
-              .name
-              .map(n => Ok(n))
-              .getOrElse(throw new NotFoundException("PSA minimal details contains neither individual or organisation name"))
-          case Left(e) => result(e)
-        }
+      getMinimalDetail(request.psaId.id, "psaid", "poda") map {
+        case Right(psaDetails) => Ok(psaDetails.email)
+        case Left(e) => result(e)
       }
-
   }
 
-  private def getPSAMinimalDetails(psaId: Option[PsaId])(
-    implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
-    psaId map {
-      id =>
-        getMinimalDetail(id.id, "psaid", "poda")
-    } getOrElse {
-      Future.failed(new UnauthorizedException("Cannot retrieve enrolment PSAID"))
-    }
+  def getName: Action[AnyContent] = psaAuth.async {
+    implicit request =>
+      getMinimalDetail(request.psaId.id, "psaid", "poda").map {
+        case Right(psaDetails) =>
+          psaDetails
+            .name
+            .map(n => Ok(n))
+            .getOrElse(throw new NotFoundException("PSA minimal details contains neither individual or organisation name"))
+        case Left(e) => result(e)
+      }
   }
 
   private def getMinimalDetail(idValue: String, idType: String, regime: String)(

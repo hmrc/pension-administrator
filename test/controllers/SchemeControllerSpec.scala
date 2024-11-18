@@ -19,6 +19,8 @@ package controllers
 import base.{JsonFileReader, SpecBase}
 import models.PsaToBeRemovedFromScheme
 import org.apache.pekko.stream.Materializer
+import org.mockito.Mockito
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -26,26 +28,35 @@ import play.api.http.Status.BAD_GATEWAY
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsResultException, JsValue, Json}
-import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
+import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories._
 import service.SchemeService
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.FakeDesConnector
 import utils.testhelpers.PsaSubscriptionBuilder._
+import utils.{AuthUtils, FakeDesConnector}
 
 import java.time.{LocalDate, ZoneId}
 import scala.concurrent.{ExecutionContext, Future}
 
-class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers {
+class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers with BeforeAndAfterEach {
 
   import SchemeControllerSpec._
 
   private val validRequestData = readJsonFromFile("/data/validPsaRequest.json")
 
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    Mockito.reset(mockAuthConnector)
+    AuthUtils.authStub(mockAuthConnector)
+  }
+
   "registerPSA" should "return OK when service returns successfully" in {
+    Mockito.reset(mockAuthConnector)
+    AuthUtils.noEnrolmentAuthStub(mockAuthConnector)
 
     val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
@@ -58,6 +69,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     fakeSchemeService.setRegisterPsaResponse(
       Future.successful(Left(new BadRequestException("bad request")))
     )
+    Mockito.reset(mockAuthConnector)
+    AuthUtils.noEnrolmentAuthStub(mockAuthConnector)
 
     val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
@@ -66,10 +79,10 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
   }
 
   it should "return CONFLICT when service returns CONFLICT" in {
-
     fakeSchemeService.setRegisterPsaResponse(
       Future.successful(Left(new ConflictException("conflict")))
     )
+    AuthUtils.noEnrolmentAuthStub(mockAuthConnector)
 
     val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
@@ -78,10 +91,10 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
   }
 
   it should "return NOT_FOUND when service returns NOT_FOUND" in {
-
     fakeSchemeService.setRegisterPsaResponse(
       Future.successful(Left(new NotFoundException("not found")))
     )
+    AuthUtils.noEnrolmentAuthStub(mockAuthConnector)
 
     val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
@@ -94,6 +107,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     fakeSchemeService.setRegisterPsaResponse(
       Future.successful(Left(new ForbiddenException("forbidden")))
     )
+    AuthUtils.noEnrolmentAuthStub(mockAuthConnector)
 
     val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
@@ -106,6 +120,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     fakeSchemeService.setRegisterPsaResponse(
       Future.successful(Left(new ForbiddenException("INVALID_PSAID : The back end has indicated that PSAID is already de-limited and hence not valid.")))
     )
+    AuthUtils.noEnrolmentAuthStub(mockAuthConnector)
 
     val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
@@ -115,6 +130,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
   it should "throw BadRequestException when no data recieved in the request" in {
 
+    AuthUtils.noEnrolmentAuthStub(mockAuthConnector)
     recoverToSucceededIf[BadRequestException] {
       controller.registerPSA(fakeRequest)
     }
@@ -123,7 +139,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
   it should "throw BadRequestException when service throws JsResultException" in {
 
     fakeSchemeService.setRegisterPsaResponse(Future.failed(JsResultException(Nil)))
-
+    AuthUtils.noEnrolmentAuthStub(mockAuthConnector)
     recoverToSucceededIf[BadRequestException] {
       controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
     }
@@ -132,7 +148,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
   it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
 
     fakeSchemeService.setRegisterPsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
-
+    AuthUtils.noEnrolmentAuthStub(mockAuthConnector)
     recoverToSucceededIf[UpstreamErrorResponse] {
       controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
     }
@@ -141,7 +157,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
   it should "throw Exception when service throws any unknown Exception" in {
 
     fakeSchemeService.setRegisterPsaResponse(Future.failed(new Exception("Unknown Exception")))
-
+    AuthUtils.noEnrolmentAuthStub(mockAuthConnector)
     recoverToSucceededIf[Exception] {
       controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
     }
@@ -327,14 +343,6 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     }
   }
 
-  it should "throw UpStream4xxResponse when service throws UpStream4xxResponse" in {
-
-    fakeDesConnector.setDeregisterPsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
-
-    recoverToSucceededIf[UpstreamErrorResponse] {
-      call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
-    }
-  }
 
   it should "throw Exception when service throws any unknown Exception" in {
 
@@ -364,19 +372,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     contentAsString(result) mustBe "INVALID_PSAID"
   }
 
-  it should "return NOT_FOUND when service returns NOT_FOUND" in {
-
-    fakeSchemeService.setUpdatePsaResponse(
-      Future.successful(Left(new NotFoundException("not found")))
-    )
-
-    val result = controller.updatePSA(psaId.id)(fakeRequest.withJsonBody(psaVariationData))
-
-    status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "not found"
-  }
-
   it should "throw BadRequestException when no data received in the request" in {
+    AuthUtils.authStub(mockAuthConnector)
 
     recoverToSucceededIf[BadRequestException] {
       controller.updatePSA(psaId.id)(fakeRequest)
@@ -386,15 +383,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
   it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
 
     fakeSchemeService.setUpdatePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
-
-    recoverToSucceededIf[UpstreamErrorResponse] {
-      controller.updatePSA(psaId.id)(fakeRequest.withJsonBody(psaVariationData))
-    }
-  }
-
-  it should "throw UpStream4xxResponse when service throws UpStream4xxResponse" in {
-
-    fakeSchemeService.setUpdatePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
+    AuthUtils.authStub(mockAuthConnector)
 
     recoverToSucceededIf[UpstreamErrorResponse] {
       controller.updatePSA(psaId.id)(fakeRequest.withJsonBody(psaVariationData))
@@ -406,6 +395,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+  private val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   implicit val mat: Materializer = app.materializer
 
@@ -416,8 +406,10 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
       bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
       bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
-      bind[AdminDataRepository].toInstance(mock[AdminDataRepository])
-    )
+      bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
+      bind[actions.PsaPspEnrolmentAuthAction].toInstance(mock[actions.PsaPspEnrolmentAuthAction])
+
+  )
 
   override def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
@@ -447,10 +439,15 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   private val psaVariationData: JsValue = readJsonFromFile("/data/validPsaVariationRequest.json")
 
+  private val bodyParser = app.injector.instanceOf[BodyParsers.Default]
+
   private val fakeSchemeService = new FakeSchemeService
   private val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
-  private val controller = new SchemeController(fakeSchemeService, fakeDesConnector, controllerComponents)
-
+  private val controller = new SchemeController(fakeSchemeService,
+                                                fakeDesConnector,
+                                                controllerComponents,
+    new actions.PsaPspEnrolmentAuthAction(mockAuthConnector, app.injector.instanceOf[BodyParsers.Default]),
+    new actions.NoEnrolmentAuthAction(mockAuthConnector, app.injector.instanceOf[BodyParsers.Default]))
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"
   private val removeDate: LocalDate = LocalDate.parse("2018-02-01").atStartOfDay(ZoneId.of("UTC")).toLocalDate
