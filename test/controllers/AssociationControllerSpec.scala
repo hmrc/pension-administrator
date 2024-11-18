@@ -33,7 +33,6 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.MinimalDetailsCacheRepository
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http._
 import utils.AuthUtils
 
@@ -46,7 +45,17 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockauthConnector)
+    reset(mockMinimalDetailsCacheRepository)
+    when(mockMinimalDetailsCacheRepository.get(any())(any()))
+      .thenReturn(Future.successful {
+        None
+      })
+    when(mockMinimalDetailsCacheRepository.upsert(any(), any())(any()))
+      .thenReturn(Future.successful(()))
     AuthUtils.authStub(mockauthConnector)
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
+      psaMinimalDetailsIndividualUser
+    )))
   }
 
   "getMinimalDetails" should "return OK when service returns successfully with success form Repo" in {
@@ -55,7 +64,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
       .thenReturn(Future.successful {
         Some(Json.toJson(psaMinimalDetailsIndividualUser))
       })
-    val result = controller(isEnabledFeatureToggle = true).getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
+    val result = controller().getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
 
     status(result) mustBe OK
     contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
@@ -71,7 +80,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     when(mockMinimalDetailsCacheRepository.upsert(any(), any())(any()))
       .thenReturn(Future.successful(()))
 
-    val result = controller(isEnabledFeatureToggle = true).getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
+    val result = controller().getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
 
     status(result) mustBe OK
     contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
@@ -87,7 +96,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     when(mockMinimalDetailsCacheRepository.upsert(any(), any())(any()))
       .thenReturn(Future.successful(()))
 
-    val result = controller(isEnabledFeatureToggle = true).getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
+    val result = controller().getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
 
     status(result) mustBe OK
     contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
@@ -112,6 +121,74 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     )
 
     val result = controller().getMinimalDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
+
+    status(result) mustBe NOT_FOUND
+    contentAsString(result) mustBe "no match found"
+  }
+
+  "getMinimalDetailsSelf" should "return OK when service returns successfully with success form Repo" in {
+
+    when(mockMinimalDetailsCacheRepository.get(any())(any()))
+      .thenReturn(Future.successful {
+        Some(Json.toJson(psaMinimalDetailsIndividualUser))
+      })
+    val result = controller().getMinimalDetailsSelf(fakeRequest.withHeaders("loggedInAsPsa" -> "true"))
+
+    status(result) mustBe OK
+    contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
+  }
+
+  it should "return OK when service returns successfully with Jserror " in {
+
+
+    when(mockMinimalDetailsCacheRepository.get(any())(any()))
+      .thenReturn(Future.successful {
+        Some(Json.obj())
+      })
+    when(mockMinimalDetailsCacheRepository.upsert(any(), any())(any()))
+      .thenReturn(Future.successful(()))
+
+    val result = controller().getMinimalDetailsSelf(fakeRequest.withHeaders("loggedInAsPsa" -> "true"))
+
+    status(result) mustBe OK
+    contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
+  }
+
+  it should "return OK when service returns successfully and return None" in {
+
+
+    when(mockMinimalDetailsCacheRepository.get(any())(any()))
+      .thenReturn(Future.successful {
+        None
+      })
+    when(mockMinimalDetailsCacheRepository.upsert(any(), any())(any()))
+      .thenReturn(Future.successful(()))
+
+    val result = controller().getMinimalDetailsSelf(fakeRequest.withHeaders("loggedInAsPsa" -> "true"))
+
+    status(result) mustBe OK
+    contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
+  }
+
+  it should "return bad request when connector returns BAD_REQUEST" in {
+
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(
+      Future.successful(Left(new BadRequestException("bad request")))
+    )
+
+    val result = controller().getMinimalDetailsSelf(fakeRequest.withHeaders("loggedInAsPsa" -> "true"))
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "bad request"
+  }
+
+  it should "return not found when connector returns NOT_FOUND" in {
+
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(
+      Future.successful(Left(new NotFoundException("not found")))
+    )
+
+    val result = controller().getMinimalDetailsSelf(fakeRequest.withHeaders("loggedInAsPsa" -> "true"))
 
     status(result) mustBe NOT_FOUND
     contentAsString(result) mustBe "no match found"
@@ -201,7 +278,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
   it should "return Forbidden with message for psaId not found in enrolments" in {
     reset(mockauthConnector)
     AuthUtils.failedAuthStub(mockauthConnector)
-    val result  = controller(psaId = None).getEmail(fakeRequest)
+    val result  = controller().getEmail(fakeRequest)
     status(result) mustBe FORBIDDEN
   }
 
@@ -217,7 +294,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     contentAsString(result) mustBe "bad request"
   }
 
-  "getName"  should "relay response from connector if not OK" in {
+  "getName" should "relay response from connector if not OK" in {
 
     fakeAssociationConnector.setPsaMinimalDetailsResponse(
       Future.successful(Left(new BadRequestException("bad request")))
@@ -227,6 +304,69 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     status(result) mustBe BAD_REQUEST
     contentAsString(result) mustBe "bad request"
+  }
+
+  "getEmailInvitation" should "return 200 if name and psaId match" in {
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
+      psaMinimalDetailsIndividualUser
+    )))
+
+    val req = fakeRequest.withHeaders(
+      "id" -> "psaId",
+      "idType" -> "psaid",
+      "name" -> psaMinimalDetailsIndividualUser.name.get
+    )
+
+    val result = controller().getEmailInvitation(req)
+
+    status(result) mustBe OK
+    contentAsString(result) mustBe psaMinimalDetailsIndividualUser.email
+  }
+
+  "getEmailInvitation" should "return Forbidden if name and psaId don't match" in {
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
+      psaMinimalDetailsIndividualUser
+    )))
+
+    val req = fakeRequest.withHeaders(
+      "id" -> "psaId",
+      "idType" -> "pspid",
+      "name" -> "no match"
+    )
+
+    val result = controller().getEmailInvitation(req)
+    status(result) mustBe FORBIDDEN
+    contentAsString(result) mustBe "Provided user's name doesn't match with stored user's name"
+  }
+
+  "getEmailInvitation" should "return BadRequest if idType header is not psaid or pspid" in {
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
+      psaMinimalDetailsIndividualUser
+    )))
+
+    val req = fakeRequest.withHeaders(
+      "id" -> "psaId",
+      "idType" -> "psaId",
+      "name" -> psaMinimalDetailsIndividualUser.name.get
+    )
+
+    val result = controller().getEmailInvitation(req)
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "idType must be either psaid or pspid"
+  }
+
+  "getEmailInvitation" should "return BadRequest if required headers are missing" in {
+    fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
+      psaMinimalDetailsIndividualUser
+    )))
+
+    val req = fakeRequest
+
+    val result = controller().getEmailInvitation(req)
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result).contains("Missing headers: ") mustBe true
   }
 
 }
@@ -294,8 +434,7 @@ object AssociationControllerSpec extends MockitoSugar {
       "metrics.jvm" -> false
     )
     .build()
-  def controller(psaId: Option[PsaId] = Some(PsaId("A2123456")),
-                 isEnabledFeatureToggle: Boolean = false): AssociationController = {
+  def controller(): AssociationController = {
     new AssociationController(fakeAssociationConnector, mockMinimalDetailsCacheRepository,
       new actions.PsaPspEnrolmentAuthAction(mockauthConnector, application.injector.instanceOf[BodyParsers.Default]),
       new actions.PsaEnrolmentAuthAction(mockauthConnector, application.injector.instanceOf[BodyParsers.Default]),

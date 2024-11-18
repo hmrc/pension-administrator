@@ -67,6 +67,7 @@ class DeregistrationControllerSpec
     reset(mockSchemeConnector)
     reset(authConnector)
     AuthUtils.authStub(authConnector)
+
   }
 
   "Controller" must {
@@ -132,6 +133,69 @@ class DeregistrationControllerSpec
       status(result) mustBe BAD_REQUEST
     }
   }
+  "canDeregisterSelf" must {
+    "return OK and false when canDeregister called with psa ID having some schemes" in {
+      when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
+        .thenReturn(Future.successful(Right(validListSchemesResponse)))
+
+      val result = deregistrationController.canDeregisterSelf(fakeRequest)
+
+      status(result) mustBe OK
+      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false))
+    }
+
+    "return OK and true when canDeregister called with psa ID having no scheme detail item at all" in {
+      when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
+        .thenReturn(Future.successful(Right(listSchemesResponseNoSchemeDetail)))
+
+      val result = deregistrationController.canDeregisterSelf(fakeRequest)
+
+      status(result) mustBe OK
+      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(true), "isOtherPsaAttached" -> JsBoolean(false))
+    }
+
+    "return OK and true when canDeregister called with psa ID having only wound-up or rejected schemes" in {
+      when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
+        .thenReturn(Future.successful(Right(schemesWoundUpOrRejectedResponse)))
+
+      val result = deregistrationController.canDeregisterSelf(fakeRequest)
+
+      status(result) mustBe OK
+      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(true), "isOtherPsaAttached" -> JsBoolean(false))
+    }
+
+    "return OK and false when canDeregister called with psa ID having both wound-up schemes and non-wound-up schemes and they are the only psa associated" in {
+      when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
+        .thenReturn(Future.successful(Right(validListSchemesIncWoundUpResponse)))
+      when(mockSchemeConnector.getSchemeDetails(ArgumentMatchers.eq(psaId), any(), any())(any(), any()))
+        .thenReturn(Future.successful(Right(getSchemeDetails(Json.arr(psaObject(psaId))))))
+
+      val result = deregistrationController.canDeregisterSelf(fakeRequest)
+
+      status(result) mustBe OK
+      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false))
+    }
+
+    "return OK and false when canDeregister called with psa ID having Open scheme and there are other PSAs associated" in {
+      when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
+        .thenReturn(Future.successful(Right(validListSchemesIncWoundUpResponse)))
+      when(mockSchemeConnector.getSchemeDetails(ArgumentMatchers.eq(psaId), any(), any())(any(), any()))
+        .thenReturn(Future.successful(Right(getSchemeDetails(Json.arr(psaObject(psaId))))))
+
+      val result = deregistrationController.canDeregisterSelf(fakeRequest)
+
+      status(result) mustBe OK
+      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false))
+    }
+
+    "return http exception when non OK httpresponse returned" in {
+      when(mockSchemeConnector.listOfSchemes(ArgumentMatchers.eq(psaId))(any(), any(), any()))
+        .thenReturn(Future.successful(Left(new BadRequestException("bad request"))))
+
+      val result = deregistrationController.canDeregisterSelf(fakeRequest)
+      status(result) mustBe BAD_REQUEST
+    }
+  }
 }
 
 object DeregistrationControllerSpec extends JsonFileReader {
@@ -144,7 +208,7 @@ object DeregistrationControllerSpec extends JsonFileReader {
       |  "processingDate": "2001-12-17T09:30:47Z",
       |  "totalSchemesRegistered": "0"
       |}""".stripMargin)
-  private val psaId = "psaId"
+  private val psaId = AuthUtils.psaId
 
   private def getSchemeDetails(psaArray: JsArray): JsObject =
     Json.obj("psaDetails" -> psaArray)

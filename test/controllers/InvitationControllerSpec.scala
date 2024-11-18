@@ -17,11 +17,8 @@
 package controllers
 
 import base.JsonFileReader
-import config.AppConfig
 import models.{IndividualDetails, MinimalDetails}
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
-import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
@@ -35,8 +32,6 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import service.InvitationService
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.Retrievals.externalId
-import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.AuthUtils
 
@@ -136,6 +131,6 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar {
   val fakeInvitationService = new FakeInvitationService
   val controller = new InvitationController(fakeInvitationService,
                                             stubControllerComponents(),
-    new actions.PsaPspEnrolmentAuthAction(mockAuthConnector, bodyParser))
+    new actions.PsaEnrolmentAuthAction(mockAuthConnector, bodyParser))
 
 }

@@ -34,7 +34,8 @@ class SchemeController @Inject()(
                                   desConnector: DesConnector,
                                   cc: ControllerComponents,
                                   authAction: actions.PsaPspEnrolmentAuthAction,
-                                  noEnrolmentAuthAction: actions.NoEnrolmentAuthAction
+                                  noEnrolmentAuthAction: actions.NoEnrolmentAuthAction,
+                                  psaAuthAction: actions.PsaEnrolmentAuthAction
                                 )(implicit val ec: ExecutionContext)
                                  extends BackendController(cc) with ErrorHandler {
 
@@ -89,12 +90,33 @@ class SchemeController @Inject()(
       }
   }
 
+  def deregisterPsaSelf: Action[AnyContent] = psaAuthAction.async {
+    implicit request =>
+      desConnector.deregisterPSA(request.psaId.id).map {
+        case Right(_) => NoContent
+        case Left(e) => result(e)
+      }
+  }
+
   def updatePSA(psaId: String): Action[AnyContent] = authAction.async {
     implicit request =>
 
        request.body.asJson match {
         case Some(jsValue) =>
           schemeService.updatePSA(psaId, jsValue).map {
+            case Right(_) => Ok
+            case Left(e) => result(e)
+          }
+        case _ => Future.failed(new BadRequestException("No PSA variation details in the header for psa update/variatiosn"))
+      }
+  }
+
+  def updatePsaSelf: Action[AnyContent] = psaAuthAction.async {
+    implicit request =>
+
+      request.body.asJson match {
+        case Some(jsValue) =>
+          schemeService.updatePSA(request.psaId.id, jsValue).map {
             case Right(_) => Ok
             case Left(e) => result(e)
           }
