@@ -439,8 +439,6 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   private val psaVariationData: JsValue = readJsonFromFile("/data/validPsaVariationRequest.json")
 
-  private val bodyParser = app.injector.instanceOf[BodyParsers.Default]
-
   private val fakeSchemeService = new FakeSchemeService
   private val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
   private val controller = new SchemeController(fakeSchemeService,
