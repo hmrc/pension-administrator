@@ -13,7 +13,7 @@ DELETE        /deregister-psa/:psaId                    controllers.SchemeContro
 DELETE        /deregister-psa-self                      controllers.SchemeController.deregisterPsaSelf
 # Deprecated
 POST          /psa-variation/:psaId                     controllers.SchemeController.updatePSA(psaId: String)
-POST          /psa-veriation-self                       controllers.SchemeController.updatePsaSelf
+POST          /psa-variation-self                       controllers.SchemeController.updatePsaSelf
 
 GET           /get-name                                 controllers.AssociationController.getName
 GET           /get-email                                controllers.AssociationController.getEmail
