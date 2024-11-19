@@ -18,21 +18,17 @@ package controllers.actions
 
 import audit.AuditServiceSpec.mock
 import base.SpecBase
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
-import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.~
 import utils.AuthUtils
 import utils.AuthUtils.FakeFailingAuthConnector
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 class NoEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
 

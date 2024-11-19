@@ -76,13 +76,15 @@ class DirectorOrPartnerReadsSpec extends AnyWordSpec with Matchers with OptionVa
 
       "we have a flag to say whether if they have been in the same previous address in last 12 months" in {
         forAll(psaDirectorOrPartnerDetailsGenerator){
-          directorOrPartner => directorOrPartner.as[DirectorOrPartner].isSameAddressForLast12Months mustBe (directorOrPartner \ "previousAddressDetails" \ "isPreviousAddressLast12Month").as[Boolean]
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].isSameAddressForLast12Months mustBe
+            (directorOrPartner \ "previousAddressDetails" \ "isPreviousAddressLast12Month").as[Boolean]
         }
       }
 
       "we have an optional previous address" in {
         forAll(psaDirectorOrPartnerDetailsGenerator){
-          directorOrPartner => directorOrPartner.as[DirectorOrPartner].previousAddress mustBe (directorOrPartner \ "previousAddressDetails" \ "previousAddress").asOpt[CorrespondenceAddress]
+          directorOrPartner => directorOrPartner.as[DirectorOrPartner].previousAddress mustBe
+            (directorOrPartner \ "previousAddressDetails" \ "previousAddress").asOpt[CorrespondenceAddress]
         }
       }
 

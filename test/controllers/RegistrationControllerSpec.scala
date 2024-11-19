@@ -36,7 +36,6 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories._
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.FakeAuthConnector
 
@@ -64,7 +63,6 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
   private val individualNoIdToConnector = individualNoIdFrontend.as[RegistrationNoIdIndividualRequest]
 
   private val mockRegistrationConnector = mock[RegistrationConnector]
-  private val mockAutoAction = mock[actions.NoEnrolmentAuthAction]
 
   implicit val mat: Materializer = fakeApplication().materializer
 

@@ -45,7 +45,6 @@ class PSADataCacheController @Inject()(
   }
 
   def get(id: String): Action[AnyContent] = authAction.async {
-    implicit request =>
         logger.debug(message = "controllers.cache.PSADataCacheController.get: Authorised Request " + id)
         repository.get(id).map { response =>
           logger.debug(message = s"controllers.cache.PSADataCacheController.get: Response for request Id $id is $response")
@@ -57,7 +56,6 @@ class PSADataCacheController @Inject()(
   }
 
   def remove(id: String): Action[AnyContent] = authAction.async {
-    implicit request =>
         repository.remove(id).map(_ => Ok)
   }
 }

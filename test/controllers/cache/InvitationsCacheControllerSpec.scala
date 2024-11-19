@@ -17,9 +17,9 @@
 package controllers.cache
 
 import com.mongodb.MongoException
-import org.apache.commons.lang3.RandomUtils
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.ByteString
+import utils.RandomUtils
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatest.flatspec.AsyncFlatSpec

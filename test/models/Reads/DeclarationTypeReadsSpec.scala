@@ -53,7 +53,8 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
       }
 
       "We have an isChanged flag" in {
-        val result = (declaration + ("isChanged" -> JsBoolean(true))).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+        val result = (declaration + ("isChanged" -> JsBoolean(true)))
+          .as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
 
         result.isChanged.value mustBe true
       }
@@ -127,8 +128,8 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
             "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))
 
           val workingKnowledge = "declarationWorkingKnowledge" -> JsString("whatyouWillNeed")
-          val result = (declaration + workingKnowledge + adviserName + adviserEmail + adviserPhone + adviserAddress).as[PensionSchemeAdministratorDeclarationType](
-            PensionSchemeAdministratorDeclarationType.apiReads)
+          val result = (declaration + workingKnowledge + adviserName + adviserEmail + adviserPhone + adviserAddress)
+            .as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box5 mustBe None
           result.box6 mustBe Some(true)
