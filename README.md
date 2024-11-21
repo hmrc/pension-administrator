@@ -155,6 +155,8 @@ Returns the Business Partner Record for an individual based on the NINO/UTR from
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```POST /register-with-id/organisation```
 
@@ -165,6 +167,7 @@ Returns the Business Partner Record for an organisation from ETMP based on the U
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
 
 **Standard Path**
 ```POST /register-with-no-id/organisation```
@@ -176,6 +179,8 @@ Registers an organisation on ETMP who does not have a UTR. Typically this will b
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```POST /register-with-no-id/individual```
 
@@ -185,6 +190,8 @@ Registers an individual on ETMP who does not have a UTR/NINO. Typically this wil
 | *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
 
 **Standard Path**
 ```GET /psa-subscription-details```
@@ -196,6 +203,8 @@ Get PSA Subscription Details [More...](docs/psa-subscription-details.md)
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```POST /register-psa```
 
@@ -206,6 +215,7 @@ Subscribe a pension scheme administrator [More...](docs/register-psa.md)
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
 
 **Standard Path**
 ```POST /remove-psa```
@@ -217,6 +227,8 @@ Remove a PSA from the scheme [More...](docs/remove-psa.md)
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```DELETE /deregister-psa/:psaId```    
 
@@ -226,6 +238,8 @@ De Register a PSA [More...](docs/deregister-psa.md)
 | *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
 
 **Standard Path**
 ```GET /can-deregister/:id```  
@@ -237,6 +251,8 @@ Can de register a PSA [More...](docs/can-deregister.md)
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```POST /psa-variation/:psaId```  
 
@@ -246,6 +262,8 @@ Update PSA Subscription Details [More...](docs/psa-variation.md)
 | *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
 
 **Standard Path**
 ```GET /get-minimal-psa``` 
@@ -257,6 +275,8 @@ Get PSA minimal Details [More...](docs/get-minimal-psa.md)
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```POST /accept-invitation``` 
 
@@ -266,6 +286,8 @@ Accept an invitation to administer a scheme [More...](docs/accept-invitation.md)
 | *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
 
 **Standard Path**
 ```GET /invite```  
@@ -277,6 +299,8 @@ Send an invite to a PSA for administering a scheme [More...](docs/invite.md)
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```GET /email-response/:journeyType/*id```
 
@@ -286,6 +310,8 @@ Sends an audit event with the correct response returned from an email service
 | *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
 
 **Standard Path**
 ```GET /get-name```  
@@ -297,6 +323,8 @@ Get PSA Name
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```GET /get-email```  
 
@@ -306,6 +334,8 @@ Get PSA Email
 | *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
 
 **Standard Path**
 ```GET /journey-cache/manage-pensions/:id```    
@@ -317,6 +347,8 @@ Returns the data from Manage Pensions Cache
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```POST /journey-cache/manage-pensions/:id```  
 
@@ -326,6 +358,8 @@ Save the data to Manage Pensions Cache
 | *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
 
 **Standard Path**
 ```DELETE /journey-cache/manage-pensions/:id``` 
@@ -337,6 +371,8 @@ Delete the data from Manage Pensions Cache
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```GET /journey-cache/psa-data/:id```  
 
@@ -346,6 +382,8 @@ Returns the data from Psa Data Cache
 | *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
 
 **Standard Path**
 ```POST /journey-cache/psa-data/:id``` 
@@ -357,6 +395,8 @@ Saves the data to Psa Data Cache
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```DELETE /journey-cache/psa-data/:id```
 
@@ -366,6 +406,8 @@ Delete the data from Psa Data Cache
 | *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
 
 **Standard Path**
 ```GET /invitation/get-for-scheme```
@@ -377,6 +419,8 @@ Get data for Scheme from Invitation Cache
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```GET /invitation/get-for-invitee```
 
@@ -386,6 +430,8 @@ Get data for invitee PSA Id from Invitation Cache
 | *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
 
 **Standard Path**
 ```GET   /invitation/get```
@@ -397,6 +443,8 @@ Get all the data from Invitation Cache based on invitee PSA Id and Pstr
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```GET   /invitation/add```
 
@@ -407,6 +455,8 @@ Add the data to invitation Cache
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
+---
+
 **Standard Path**
 ```DELETE   /invitation``` 
 
@@ -416,6 +466,8 @@ Remove the data from Invitation Cache based on invitee PSA Id and Pstr
 | *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
 
 ## License
 This code is open source software Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at:
