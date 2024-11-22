@@ -43,7 +43,6 @@ abstract class PensionAdministratorCacheController(
   }
 
   def get(id: String): Action[AnyContent] = authAction.async {
-    implicit request =>
         logger.debug("controllers.cache.PensionAdministratorCacheController.get: Authorised Request " + id)
         repository.get(id).map { response =>
           logger.debug(s"controllers.cache.PensionAdministratorCacheController.get: Response for request Id $id is $response")
@@ -55,7 +54,6 @@ abstract class PensionAdministratorCacheController(
   }
 
   def lastUpdated(id: String): Action[AnyContent] = authAction.async {
-    implicit request =>
         logger.debug("controllers.cache.PensionAdministratorCacheController.get: Authorised Request " + id)
         repository.getLastUpdated(id).map { response =>
           logger.debug("controllers.cache.PensionAdministratorCacheController.get: Response " + response)
@@ -65,7 +63,6 @@ abstract class PensionAdministratorCacheController(
   }
 
   def remove(id: String): Action[AnyContent] = authAction.async {
-    implicit request =>
         repository.remove(id).map(_ => Ok)
   }
 }

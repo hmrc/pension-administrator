@@ -49,7 +49,7 @@ object FeatureToggleName {
     val asString = "enrolment-recovery"
   }
 
-  val toggles = Seq(UpdateClientReference, PsaFromIvToPdv, PsaRegistration, EnrolmentRecovery)
+  val toggles: Seq[FeatureToggleName] = Seq(UpdateClientReference, PsaFromIvToPdv, PsaRegistration, EnrolmentRecovery)
 
   implicit val reads: Reads[FeatureToggleName] = Reads {
     case JsString(UpdateClientReference.asString) => JsSuccess(UpdateClientReference)

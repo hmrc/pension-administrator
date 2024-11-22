@@ -285,8 +285,8 @@ object InvitationServiceImplSpec extends MockitoSugar {
                        )
 
   object TestInvitation {
-    implicit val dateFormat = MongoJavatimeFormats.instantFormat
-    implicit val writes = Json.writes[TestInvitation]
+    implicit val dateFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
+    implicit val writes: OWrites[TestInvitation] = Json.writes[TestInvitation]
   }
 
   def invitationJson(inviteePsaId: PsaId, inviteeName: String): JsValue =

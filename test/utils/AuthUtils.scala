@@ -48,7 +48,9 @@ object AuthUtils {
     ), Some(id)
   )
 
-  def authStubPsp(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Enrolments ~ Option[String]]] = when(mockAuthConnector.authorise[Enrolments ~ Option[String]](any(), any())(any(), any())) thenReturn Future.successful(AuthUtils.authResponsePsp)
+  def authStubPsp(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Enrolments ~ Option[String]]] =
+    when(mockAuthConnector.authorise[Enrolments ~ Option[String]](any(), any())(any(), any())) thenReturn
+      Future.successful(AuthUtils.authResponsePsp)
   val authResponsePsp = new ~(
     Enrolments(
       Set(
@@ -57,7 +59,9 @@ object AuthUtils {
     ), Some(id)
   )
 
-  def noEnrolmentAuthStub(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Option[String]]] = when(mockAuthConnector.authorise[Option[String]](any(), any())(any(), any())) thenReturn Future.successful(AuthUtils.noEnrolmentAuthResponse)
+  def noEnrolmentAuthStub(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Option[String]]] =
+    when(mockAuthConnector.authorise[Option[String]](any(), any())(any(), any())) thenReturn
+      Future.successful(AuthUtils.noEnrolmentAuthResponse)
 
   val noEnrolmentAuthResponse: Option[String] = Some(id)
 
