@@ -651,6 +651,7 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   private val fakeSchemeService = new FakeSchemeService
   private val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
+  val bodyParser = app.injector.instanceOf[BodyParsers.Default]
   private val controller = new SchemeController(fakeSchemeService,
                                                 fakeDesConnector,
                                                 controllerComponents,
