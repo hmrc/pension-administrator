@@ -17,6 +17,7 @@
 package utils
 
 import com.google.inject.Inject
+import models.SchemeReferenceNumber
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.mockito.stubbing.OngoingStubbing
@@ -31,6 +32,8 @@ object AuthUtils {
   val id = "id"
   val psaId = "A2123456"
   val pspId = "21000005"
+  val srn = SchemeReferenceNumber("S2400000006")
+  val externalId = "externalId"
 
   def failedAuthStub(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Unit]] =
     when(mockAuthConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed(InsufficientEnrolments())

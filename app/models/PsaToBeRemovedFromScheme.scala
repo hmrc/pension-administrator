@@ -26,3 +26,9 @@ case class PsaToBeRemovedFromScheme(psaId: String, pstr: String, removalDate: Lo
 object PsaToBeRemovedFromScheme {
   implicit val formats: OFormat[PsaToBeRemovedFromScheme] = Json.format[PsaToBeRemovedFromScheme]
 }
+
+case class PsaToBeRemovedFromSchemeSelf(pstr: String, removalDate: LocalDate)
+
+object PsaToBeRemovedFromSchemeSelf {
+  implicit val format: OFormat[PsaToBeRemovedFromSchemeSelf] = Json.format
+}

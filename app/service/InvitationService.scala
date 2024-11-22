@@ -68,7 +68,7 @@ class InvitationServiceImpl @Inject()(
       {
         invitation =>
           handle(associationConnector.getMinimalDetails(invitation.inviteePsaId.id, "psaid", "poda")) { psaDetails =>
-            handle(isAssociated(invitation.inviteePsaId, SchemeReferenceNumber(invitation.srn))) {
+            handle(schemeConnector.checkForAssociation(Left(invitation.inviteePsaId), SchemeReferenceNumber(invitation.srn))) {
               case false if doNamesMatch(invitation.inviteeName, psaDetails) =>
                 handle(insertInvitation(invitation)) { _ =>
                   auditService.sendEvent(InvitationAuditEvent(invitation))
@@ -82,16 +82,6 @@ class InvitationServiceImpl @Inject()(
       }
     )
   }
-
-  private def isAssociated(psaId: PsaId, srn: SchemeReferenceNumber)
-                          (implicit hc: HeaderCarrier, requestHeader: RequestHeader, ec: ExecutionContext): Future[Either[HttpException, Boolean]] =
-    schemeConnector.checkForAssociation(psaId, srn) map {
-      case Right(json) => json.validate[Boolean].fold(
-        _ => Left(new InternalServerException("Response from pension-scheme cannot be parsed to boolean")),
-        Right(_)
-      )
-      case Left(ex) => Left(ex)
-    }
 
   private def doNamesMatch(inviteeName: String, psaDetails: MinimalDetails): Boolean = {
 

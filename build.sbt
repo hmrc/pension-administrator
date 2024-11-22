@@ -33,6 +33,7 @@ lazy val microservice = Project(AppDependencies.appName, file("."))
   .settings(update / evictionWarningOptions := EvictionWarningOptions.default.withWarnScalaVersionEviction(false))
   .settings(
     RoutesKeys.routesImport ++= Seq(
+      "models.SchemeReferenceNumber",
       "models.enumeration.JourneyType",
       "models.FeatureToggleName"
     ),
