@@ -32,7 +32,7 @@ object AuthUtils {
   val id = "id"
   val psaId = "A2123456"
   val pspId = "21000005"
-  val srn = SchemeReferenceNumber("S2400000006")
+  val srn: SchemeReferenceNumber = SchemeReferenceNumber("S2400000006")
   val externalId = "externalId"
 
   def failedAuthStub(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Unit]] =
