@@ -27,6 +27,9 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
 
+
+case class AuthRequestWithNoEnrollment[A](request: Request[A], externalId: String) extends WrappedRequest[A](request)
+
 class NoEnrolmentAuthAction @Inject()(
                                        override val authConnector: AuthConnector,
                                        val parser: BodyParsers.Default

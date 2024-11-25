@@ -36,9 +36,9 @@ import service.SchemeService
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, _}
-import utils.FakeDesConnector.deregisterPsaResponseJson
+import utils.FakeDesConnector.{deregisterPsaResponseJson, removePsaResponseJson}
 import utils.testhelpers.PsaSubscriptionBuilder._
-import utils.{AuthUtils, FakeDesConnector}
+import utils.{AuthUtils, FakeDesConnector, FakePsaSchemeAuthAction}
 
 import java.time.{LocalDate, ZoneId}
 import scala.concurrent.{ExecutionContext, Future}
@@ -49,6 +49,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
   private val validRequestData = readJsonFromFile("/data/validPsaRequest.json")
 
+  private val srn = AuthUtils.srn
+
   override def beforeEach(): Unit = {
     super.beforeEach()
     Mockito.reset(mockAuthConnector)
@@ -58,6 +60,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     fakeDesConnector.setDeregisterPsaResponse(
       Future.successful(Right(deregisterPsaResponseJson))
     )
+    fakeDesConnector.setPsaDetailsResponse(Future.successful(Right(Json.toJson(psaSubscription))))
+    fakeDesConnector.setRemovePsaResponse(Future.successful(Right(removePsaResponseJson)))
 
   }
 
@@ -202,9 +206,41 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     contentAsString(result) mustBe "not found"
   }
 
-  "removePSA" should "return NO_CONTENT when service returns successfully" in {
+  "getPsaDetailsSelf" should "return OK when service returns successfully" in {
 
-    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+    val result = controller.getPsaDetailsSelf(fakeRequest)
+
+    status(result) mustBe OK
+    contentAsJson(result) mustBe Json.toJson(psaSubscription)
+  }
+
+  it should "return bad request when connector returns BAD_REQUEST" in {
+
+    fakeDesConnector.setPsaDetailsResponse(
+      Future.successful(Left(new BadRequestException("bad request")))
+    )
+
+    val result = controller.getPsaDetailsSelf(fakeRequest)
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "bad request"
+  }
+
+  it should "return not found when connector returns NOT_FOUND" in {
+
+    fakeDesConnector.setPsaDetailsResponse(
+      Future.successful(Left(new NotFoundException("not found")))
+    )
+
+    val result = controller.getPsaDetailsSelf(fakeRequest)
+
+    status(result) mustBe NOT_FOUND
+    contentAsString(result) mustBe "not found"
+  }
+
+  "removePSAOld" should "return NO_CONTENT when service returns successfully" in {
+
+    val result = call(controller.removePsaOld, removePsaFakeRequest(removePsaJson))
     status(result) mustBe NO_CONTENT
 
   }
@@ -215,7 +251,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
       Future.successful(Left(new BadRequestException("bad request")))
     )
 
-    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+    val result = call(controller.removePsaOld, removePsaFakeRequest(removePsaJson))
 
     status(result) mustBe BAD_REQUEST
     contentAsString(result) mustBe "bad request"
@@ -227,7 +263,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
       Future.successful(Left(new ConflictException("conflict")))
     )
 
-    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+    val result = call(controller.removePsaOld, removePsaFakeRequest(removePsaJson))
 
     status(result) mustBe CONFLICT
     contentAsString(result) mustBe "conflict"
@@ -239,7 +275,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
       Future.successful(Left(new NotFoundException("not found")))
     )
 
-    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+    val result = call(controller.removePsaOld, removePsaFakeRequest(removePsaJson))
 
     status(result) mustBe NOT_FOUND
     contentAsString(result) mustBe "not found"
@@ -251,7 +287,62 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
       Future.successful(Left(new ForbiddenException("forbidden")))
     )
 
-    val result = call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+    val result = call(controller.removePsaOld, removePsaFakeRequest(removePsaJson))
+
+    status(result) mustBe FORBIDDEN
+    contentAsString(result) mustBe "forbidden"
+  }
+
+  "removePSA" should "return NO_CONTENT when service returns successfully" in {
+
+    val result = call(controller.removePsa(srn), removePsaFakeRequest(removePsaJson))
+    status(result) mustBe NO_CONTENT
+
+  }
+
+  it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
+
+    fakeDesConnector.setRemovePsaResponse(
+      Future.successful(Left(new BadRequestException("bad request")))
+    )
+
+    val result = call(controller.removePsa(srn), removePsaFakeRequest(removePsaJson))
+
+    status(result) mustBe BAD_REQUEST
+    contentAsString(result) mustBe "bad request"
+  }
+
+  it should "return CONFLICT when service returns CONFLICT" in {
+
+    fakeDesConnector.setRemovePsaResponse(
+      Future.successful(Left(new ConflictException("conflict")))
+    )
+
+    val result = call(controller.removePsa(srn), removePsaFakeRequest(removePsaJson))
+
+    status(result) mustBe CONFLICT
+    contentAsString(result) mustBe "conflict"
+  }
+
+  it should "return NOT_FOUND when service returns NOT_FOUND" in {
+
+    fakeDesConnector.setRemovePsaResponse(
+      Future.successful(Left(new NotFoundException("not found")))
+    )
+
+    val result = call(controller.removePsa(srn), removePsaFakeRequest(removePsaJson))
+
+    status(result) mustBe NOT_FOUND
+    contentAsString(result) mustBe "not found"
+  }
+
+  it should "return Forbidden when service return Forbidden" in {
+
+    fakeDesConnector.setRemovePsaResponse(
+      Future.successful(Left(new ForbiddenException("forbidden")))
+    )
+
+    val result = call(controller.removePsa(srn), removePsaFakeRequest(removePsaJson))
 
     status(result) mustBe FORBIDDEN
     contentAsString(result) mustBe "forbidden"
@@ -263,7 +354,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     fakeDesConnector.setRemovePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
     recoverToSucceededIf[UpstreamErrorResponse] {
-      call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+      call(controller.removePsa(srn), removePsaFakeRequest(removePsaJson))
     }
   }
 
@@ -272,7 +363,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     fakeDesConnector.setRemovePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
     recoverToSucceededIf[UpstreamErrorResponse] {
-      call(controller.removePsa, removePsaFakeRequest(removePsaJson))
+      call(controller.removePsa(srn), removePsaFakeRequest(removePsaJson))
     }
   }
 
@@ -560,13 +651,14 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   private val fakeSchemeService = new FakeSchemeService
   private val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
+  val bodyParser = app.injector.instanceOf[BodyParsers.Default]
   private val controller = new SchemeController(fakeSchemeService,
                                                 fakeDesConnector,
                                                 controllerComponents,
-    new actions.PsaPspEnrolmentAuthAction(mockAuthConnector, app.injector.instanceOf[BodyParsers.Default]),
-    new actions.NoEnrolmentAuthAction(mockAuthConnector, app.injector.instanceOf[BodyParsers.Default]),
-    new actions.PsaEnrolmentAuthAction(mockAuthConnector, app.injector.instanceOf[BodyParsers.Default])
-  )
+    new actions.PsaPspEnrolmentAuthAction(mockAuthConnector, bodyParser),
+    new actions.NoEnrolmentAuthAction(mockAuthConnector, bodyParser),
+    new actions.PsaEnrolmentAuthAction(mockAuthConnector, bodyParser),
+    new FakePsaSchemeAuthAction())
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"
   private val removeDate: LocalDate = LocalDate.parse("2018-02-01").atStartOfDay(ZoneId.of("UTC")).toLocalDate

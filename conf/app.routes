@@ -5,9 +5,13 @@ POST          /register-with-id/individual              controllers.Registration
 POST          /register-with-id/organisation            controllers.RegistrationController.registerWithIdOrganisation
 POST          /register-with-no-id/individual           controllers.RegistrationController.registrationNoIdIndividual
 
+# Deprecated
 GET           /psa-subscription-details                 controllers.SchemeController.getPsaDetails
+GET           /psa-subscription-details-self            controllers.SchemeController.getPsaDetailsSelf
 POST          /register-psa                             controllers.SchemeController.registerPSA
-POST          /remove-psa                               controllers.SchemeController.removePsa
+# Deprecated
+POST          /remove-psa                               controllers.SchemeController.removePsaOld
+POST          /remove-psa/:srn                          controllers.SchemeController.removePsa(srn: SchemeReferenceNumber)
 # Deprecated
 DELETE        /deregister-psa/:psaId                    controllers.SchemeController.deregisterPsa(psaId: String)
 DELETE        /deregister-psa-self                      controllers.SchemeController.deregisterPsaSelf
@@ -49,4 +53,6 @@ DELETE        /invitation                               controllers.cache.Invita
 GET           /can-deregister/:id                       controllers.DeregistrationController.canDeregister(id: String)
 GET           /can-deregister-self                      controllers.DeregistrationController.canDeregisterSelf
 
-POST          /updateClientReference                    controllers.UpdateClientReferenceController.updateClientReference
+# Deprecated
+POST          /updateClientReference                    controllers.UpdateClientReferenceController.updateClientReferenceOld
+POST          /updateClientReference/:srn               controllers.UpdateClientReferenceController.updateClientReference(srn: SchemeReferenceNumber)

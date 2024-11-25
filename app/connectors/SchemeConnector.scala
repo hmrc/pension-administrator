@@ -19,11 +19,11 @@ package connectors
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import models.SchemeReferenceNumber
-import play.api.Logger
+import play.api.Logging
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.domain.PsaId
+import uk.gov.hmrc.domain.{PsaId, PspId}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.client.HttpClientV2
 import utils.{ErrorHandler, HttpResponseHelper}
@@ -34,10 +34,9 @@ import scala.util.Failure
 @ImplementedBy(classOf[SchemeConnectorImpl])
 trait SchemeConnector {
 
-  def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)
+  def checkForAssociation(psaIdOrPspId: Either[PsaId, PspId], srn: SchemeReferenceNumber)
                          (implicit headerCarrier: HeaderCarrier,
-                          ec: ExecutionContext,
-                          request: RequestHeader): Future[Either[HttpException, JsValue]]
+                          ec: ExecutionContext): Future[Either[HttpException, Boolean]]
 
   def listOfSchemes(psaId: String)
                    (implicit headerCarrier: HeaderCarrier,
@@ -52,16 +51,25 @@ trait SchemeConnector {
 class SchemeConnectorImpl @Inject()(
                                      httpV2Client: HttpClientV2,
                                      config: AppConfig
-                                   ) extends SchemeConnector with HttpResponseHelper with ErrorHandler {
+                                   )(implicit ec: ExecutionContext) extends SchemeConnector with HttpResponseHelper with ErrorHandler with Logging {
 
-  private val logger = Logger(classOf[SchemeConnector])
+  override def checkForAssociation(psaIdOrPspId: Either[PsaId, PspId], srn: SchemeReferenceNumber)
+                          (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Boolean]] =
+    checkForAssociationCall(psaIdOrPspId, srn) map {
+      case Right(json) => json.validate[Boolean].fold(
+        _ => Left(new InternalServerException("Response from pension-scheme cannot be parsed to boolean")),
+        Right(_)
+      )
+      case Left(ex) => Left(ex)
+    }
+  private def checkForAssociationCall(psaIdOrPspId: Either[PsaId, PspId], srn: SchemeReferenceNumber)
+                                  (implicit headerCarrier: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
 
-  override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)
-                                  (implicit headerCarrier: HeaderCarrier,
-                                   ec: ExecutionContext,
-                                   request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-
-    val headers: Seq[(String, String)] = Seq(("psaId", psaId.value), ("schemeReferenceNumber", srn), ("Content-Type", "application/json"))
+    val id = psaIdOrPspId match {
+      case Left(psaId) => ("psaId", psaId.value)
+      case Right(pspId) => ("pspId", pspId.value)
+    }
+    val headers: Seq[(String, String)] = Seq(id, ("schemeReferenceNumber", srn), ("Content-Type", "application/json"))
 
 
     httpV2Client.get(url"${config.checkAssociationUrl}")
@@ -97,7 +105,7 @@ class SchemeConnectorImpl @Inject()(
     }
   }
 
-  override def getSchemeDetails(psaId: String, schemeIdType: String, idNumber: String)
+  def getSchemeDetails(psaId: String, schemeIdType: String, idNumber: String)
                                (implicit hc: HeaderCarrier, ec: ExecutionContext)
   : Future[Either[HttpException, JsValue]] = {
 

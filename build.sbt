@@ -32,6 +32,7 @@ lazy val microservice = Project(AppDependencies.appName, file("."))
   .settings(PlayKeys.devSettings += "play.server.http.port" -> "8205")
   .settings(
     RoutesKeys.routesImport ++= Seq(
+      "models.SchemeReferenceNumber",
       "models.enumeration.JourneyType",
       "models.FeatureToggleName"
     ),

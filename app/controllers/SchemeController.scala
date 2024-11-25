@@ -18,7 +18,7 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.DesConnector
-import models.PsaToBeRemovedFromScheme
+import models.{PsaToBeRemovedFromScheme, PsaToBeRemovedFromSchemeSelf}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -35,9 +35,10 @@ class SchemeController @Inject()(
                                   cc: ControllerComponents,
                                   authAction: actions.PsaPspEnrolmentAuthAction,
                                   noEnrolmentAuthAction: actions.NoEnrolmentAuthAction,
-                                  psaAuthAction: actions.PsaEnrolmentAuthAction
+                                  psaAuthAction: actions.PsaEnrolmentAuthAction,
+                                  psaSchemeAuthAction: actions.PsaSchemeAuthAction
                                 )(implicit val ec: ExecutionContext)
-                                 extends BackendController(cc) with ErrorHandler {
+  extends BackendController(cc) with ErrorHandler {
 
   private val logger = Logger(classOf[SchemeController])
 
@@ -73,7 +74,15 @@ class SchemeController @Inject()(
 
   }
 
-  def removePsa: Action[PsaToBeRemovedFromScheme] = authAction.async(parse.json[PsaToBeRemovedFromScheme]) {
+  def getPsaDetailsSelf: Action[AnyContent] = psaAuthAction.async {
+    implicit request =>
+      desConnector.getPSASubscriptionDetails(request.psaId.id).map {
+        case Right(psaDetails) => Ok(Json.toJson(psaDetails))
+        case Left(e) => result(e)
+      }
+  }
+
+  def removePsaOld: Action[PsaToBeRemovedFromScheme] = psaAuthAction.async(parse.json[PsaToBeRemovedFromScheme]) {
     implicit request =>
       desConnector.removePSA(request.body) map {
         case Right(_) =>
@@ -81,6 +90,16 @@ class SchemeController @Inject()(
         case Left(e) => result(e)
       }
   }
+
+  def removePsa(srn: String): Action[PsaToBeRemovedFromSchemeSelf] =
+    (psaAuthAction andThen psaSchemeAuthAction(srn)).async(parse.json[PsaToBeRemovedFromSchemeSelf]) { implicit request =>
+      val body = request.body
+      desConnector.removePSA(PsaToBeRemovedFromScheme(request.psaId.id, body.pstr, body.removalDate)) map {
+        case Right(_) =>
+          NoContent
+        case Left(e) => result(e)
+      }
+    }
 
   def deregisterPsa(psaId: String): Action[AnyContent] = authAction.async {
     implicit request =>
@@ -101,7 +120,7 @@ class SchemeController @Inject()(
   def updatePSA(psaId: String): Action[AnyContent] = authAction.async {
     implicit request =>
 
-       request.body.asJson match {
+      request.body.asJson match {
         case Some(jsValue) =>
           schemeService.updatePSA(psaId, jsValue).map {
             case Right(_) => Ok

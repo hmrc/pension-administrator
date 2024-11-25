@@ -16,7 +16,8 @@
 
 package controllers
 
-import connectors.UpdateClientReferenceConnector
+import connectors.{SchemeConnector, UpdateClientReferenceConnector}
+import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalacheck.Gen
@@ -35,9 +36,10 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories._
 import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.domain.PspId
 import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.AuthUtils.FakeFailingAuthConnector
-import utils.{AuthUtils, FakeAuthConnector}
+import utils.{AuthUtils, FakeAuthConnector, FakePsaSchemeAuthAction}
 
 import java.time.LocalDateTime
 import scala.concurrent.Future
@@ -47,26 +49,182 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
 
   private val individualRetrievals =
     Future.successful(
-      AuthUtils.authResponsePsp
+      AuthUtils.authResponse
     )
 
   private val mockUpdateClientReferenceConnector = mock[UpdateClientReferenceConnector]
+  private val mockSchemeConnector = mock[SchemeConnector]
 
-  def modules: Seq[GuiceableModule] = Seq(
+  private def modules: Seq[GuiceableModule] = Seq(
     bind[MinimalDetailsCacheRepository].toInstance(mock[MinimalDetailsCacheRepository]),
     bind[ManagePensionsDataCacheRepository].toInstance(mock[ManagePensionsDataCacheRepository]),
     bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
     bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
     bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
     bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
-    bind[UpdateClientReferenceConnector].toInstance(mockUpdateClientReferenceConnector)
+    bind[UpdateClientReferenceConnector].toInstance(mockUpdateClientReferenceConnector),
+    bind[actions.PsaSchemeAuthAction].toInstance(new FakePsaSchemeAuthAction),
+    bind[SchemeConnector].toInstance(mockSchemeConnector)
   )
 
-  def updateClientReferenceController(app: Application): UpdateClientReferenceController = app.injector.instanceOf[UpdateClientReferenceController]
+  private def updateClientReferenceController(app: Application): UpdateClientReferenceController = app.injector.instanceOf[UpdateClientReferenceController]
 
-  before(reset(mockUpdateClientReferenceConnector))
+  before {
+    reset(mockUpdateClientReferenceConnector)
+    when(mockSchemeConnector.checkForAssociation(ArgumentMatchers.eq(Right(PspId(AuthUtils.pspId))), ArgumentMatchers.eq(AuthUtils.srn))(any(), any()))
+      .thenReturn(Future.successful(Right(true)))
+  }
 
-  "updateClientReference " must {
+  private val requestHeaders = Seq("pstr" -> "pstr", "pspId" -> AuthUtils.pspId, "clientReference" -> "clientReference")
+
+  "updateClientReference" must {
+
+
+
+    "return OK for successful" in {
+      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(individualRetrievals))
+      running(_.overrides(
+        bindings: _*
+      )) { app =>
+
+        val successResponse: JsValue = Json.obj(
+          "status" -> "OK",
+          "statusText" -> "Hello there!",
+          "processingDate" -> LocalDateTime.now().toString()
+        )
+
+        when(mockUpdateClientReferenceConnector.updateClientReference(any(), any())(any(), any(), any()))
+          .thenReturn(Future.successful(Right(successResponse)))
+
+        val result = updateClientReferenceController(app).updateClientReference(AuthUtils.srn)(fakeRequest.withHeaders(requestHeaders:_*))
+
+        ScalaFutures.whenReady(result) { _ =>
+          status(result) mustBe OK
+          contentAsJson(result) mustEqual Json.toJson(successResponse)
+        }
+      }
+    }
+
+    "return Forbidden if psp is not associated with scheme" in {
+      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(individualRetrievals))
+      running(_.overrides(
+        bindings: _*
+      )) { app =>
+        when(mockSchemeConnector.checkForAssociation(ArgumentMatchers.eq(Right(PspId(AuthUtils.pspId))), ArgumentMatchers.eq(AuthUtils.srn))(any(), any()))
+          .thenReturn(Future.successful(Right(false)))
+        val result = updateClientReferenceController(app).updateClientReference(AuthUtils.srn)(fakeRequest.withHeaders(requestHeaders:_*))
+
+        status(result) mustBe FORBIDDEN
+        contentAsString(result) mustBe "PspId is not associated with scheme"
+      }
+    }
+  }
+
+    "throw BadRequestException" when {
+      "Required headers are missing" in {
+        val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(individualRetrievals))
+        running(_.overrides(
+          bindings: _*
+        )) { app =>
+
+          val badRequestGen = Gen.oneOf(Seq(
+            Seq(),
+            Seq("bad" -> "request")
+          ))
+
+          forAll(badRequestGen) { badRequest =>
+            val result = updateClientReferenceController(app).updateClientReference(AuthUtils.srn)(fakeRequest.withHeaders(badRequest:_*))
+
+            status(result) mustBe BAD_REQUEST
+            contentAsString(result) mustBe "Required headers missing: pspId pstr"
+          }
+        }
+      }
+
+    "return result from registration when connector returns failure" in {
+      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(individualRetrievals))
+      running(_.overrides(
+        bindings: _*
+      )) { app =>
+        val connectorFailureGen: Gen[HttpException] = Gen.oneOf(Seq(
+          new BadRequestException("INVALID_PAYLOAD"),
+          new NotFoundException("NOT FOUND"),
+          new ConflictException("CONFLICT")
+        ))
+
+        forAll(connectorFailureGen) { connectorFailure =>
+
+          when(mockUpdateClientReferenceConnector.updateClientReference(any(), any())(any(), any(), any()))
+            .thenReturn(Future.successful(Left(connectorFailure)))
+
+          val result = updateClientReferenceController(app).updateClientReference(AuthUtils.srn)(fakeRequest.withHeaders(requestHeaders:_*))
+
+          ScalaFutures.whenReady(result) { _ =>
+            status(result) mustBe connectorFailure.responseCode
+          }
+        }
+      }
+    }
+
+    "throw Exception when authorisation retrievals fails" in {
+      val retrievals = InsufficientEnrolments()
+      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeFailingAuthConnector(retrievals))
+      running(_.overrides(
+        bindings: _*
+      )) { app =>
+
+        val result = updateClientReferenceController(app).updateClientReference(AuthUtils.srn)(fakeRequest.withHeaders(requestHeaders:_*))
+        status(result) mustBe FORBIDDEN
+      }
+    }
+
+    "throw UpstreamErrorResponse when given UpstreamErrorResponse from connector" in {
+
+      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(individualRetrievals))
+      running(_.overrides(
+        bindings: _*
+      )) { app =>
+
+        val failureResponse = Json.obj(
+          "code" -> "SERVER_ERROR",
+          "reason" -> "DES is currently experiencing problems that require live service intervention."
+        )
+
+        when(mockUpdateClientReferenceConnector.updateClientReference(any(), any())(any(), any(), any()))
+          .thenReturn(Future.failed(UpstreamErrorResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
+        val result = updateClientReferenceController(app).updateClientReference(AuthUtils.srn)(fakeRequest.withHeaders(requestHeaders:_*))
+
+        ScalaFutures.whenReady(result.failed) { e =>
+          e mustBe a[UpstreamErrorResponse]
+          e.getMessage mustBe failureResponse.toString()
+
+          verify(mockUpdateClientReferenceConnector, times(1))
+            .updateClientReference(any(), any())(any(), any(), any())
+        }
+      }
+    }
+
+    "throw Exception when any other exception returned from connector" in {
+      val bindings: Seq[GuiceableModule] = modules :+ bind[AuthConnector].toInstance(new FakeAuthConnector(individualRetrievals))
+      running(_.overrides(
+        bindings: _*
+      )) { app =>
+        when(mockUpdateClientReferenceConnector.updateClientReference(any(), any())(any(), any(), any()))
+          .thenReturn(Future.failed(new Exception("Generic Exception")))
+        val result = updateClientReferenceController(app).updateClientReference(AuthUtils.srn)(fakeRequest.withHeaders(requestHeaders:_*))
+
+        ScalaFutures.whenReady(result.failed) { e =>
+          e mustBe a[Exception]
+          e.getMessage mustBe "Generic Exception"
+
+          verify(mockUpdateClientReferenceConnector, times(1))
+            .updateClientReference(any(), any())(any(), any(), any())
+        }
+      }
+    }
+  }
+
+  "updateClientReferenceOld" must {
 
     val requestBody = Json.obj("pstr" -> "pstr", "psaId" -> "psaId", "pspId" -> "pspId", "clientReference" -> "clientReference")
 
@@ -86,7 +244,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
         (any(), any(), any()))
           .thenReturn(Future.successful(Right(successResponse)))
 
-        val result = updateClientReferenceController(app).updateClientReference(fakeRequest.withJsonBody(requestBody))
+        val result = updateClientReferenceController(app).updateClientReferenceOld(fakeRequest.withJsonBody(requestBody))
 
         ScalaFutures.whenReady(result) { _ =>
           status(result) mustBe OK
@@ -108,7 +266,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
           ))
 
           forAll(badRequestGen) { badRequest =>
-            val result = updateClientReferenceController(app).updateClientReference(fakeRequest.withJsonBody(badRequest))
+            val result = updateClientReferenceController(app).updateClientReferenceOld(fakeRequest.withJsonBody(badRequest))
 
             ScalaFutures.whenReady(result.failed) { e =>
               e mustBe a[BadRequestException]
@@ -123,7 +281,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
         running(_.overrides(
           bindings: _*
         )) { app =>
-          val result = updateClientReferenceController(app).updateClientReference(fakeRequest)
+          val result = updateClientReferenceController(app).updateClientReferenceOld(fakeRequest)
 
           ScalaFutures.whenReady(result.failed) { e =>
             e mustBe a[BadRequestException]
@@ -149,7 +307,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
           when(mockUpdateClientReferenceConnector.updateClientReference(any(), any())(any(), any(), any()))
             .thenReturn(Future.successful(Left(connectorFailure)))
 
-          val result = updateClientReferenceController(app).updateClientReference(fakeRequest.withJsonBody(requestBody))
+          val result = updateClientReferenceController(app).updateClientReferenceOld(fakeRequest.withJsonBody(requestBody))
 
           ScalaFutures.whenReady(result) { _ =>
             status(result) mustBe connectorFailure.responseCode
@@ -165,7 +323,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
         bindings: _*
       )) { app =>
 
-        val result = updateClientReferenceController(app).updateClientReference(fakeRequest.withJsonBody(requestBody))
+        val result = updateClientReferenceController(app).updateClientReferenceOld(fakeRequest.withJsonBody(requestBody))
         status(result) mustBe FORBIDDEN
       }
     }
@@ -184,7 +342,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
 
         when(mockUpdateClientReferenceConnector.updateClientReference(any(), any())(any(), any(), any()))
           .thenReturn(Future.failed(UpstreamErrorResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
-        val result = updateClientReferenceController(app).updateClientReference(fakeRequest.withJsonBody(requestBody))
+        val result = updateClientReferenceController(app).updateClientReferenceOld(fakeRequest.withJsonBody(requestBody))
 
         ScalaFutures.whenReady(result.failed) { e =>
           e mustBe a[UpstreamErrorResponse]
@@ -203,7 +361,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
       )) { app =>
         when(mockUpdateClientReferenceConnector.updateClientReference(any(), any())(any(), any(), any()))
           .thenReturn(Future.failed(new Exception("Generic Exception")))
-        val result = updateClientReferenceController(app).updateClientReference(fakeRequest.withJsonBody(requestBody))
+        val result = updateClientReferenceController(app).updateClientReferenceOld(fakeRequest.withJsonBody(requestBody))
 
         ScalaFutures.whenReady(result.failed) { e =>
           e mustBe a[Exception]

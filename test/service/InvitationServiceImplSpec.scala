@@ -29,12 +29,12 @@ import org.scalatest.{BeforeAndAfterEach, EitherValues, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{Format, JsBoolean, JsValue, Json, OWrites}
+import play.api.libs.json.{Format, JsValue, Json, OWrites}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
 import repositories._
 import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
-import uk.gov.hmrc.domain.PsaId
+import uk.gov.hmrc.domain.{PsaId, PspId}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException, _}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import utils.FakeEmailConnector.containEmail
@@ -359,15 +359,16 @@ class FakeSchemeConnector extends SchemeConnector {
 
   import InvitationServiceImplSpec._
 
-  override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)
-                                  (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  override def checkForAssociation(psaIdOrPspId: Either[PsaId, PspId], srn: SchemeReferenceNumber)
+                                  (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Boolean]] = {
+    val psaId = psaIdOrPspId.swap.getOrElse(throw new RuntimeException("no psa id"))
     Future.successful {
       if (psaId equals invalidResponsePsaId) {
-        Right(Json.obj())
+        Left(new InternalServerException("Response from pension-scheme cannot be parsed to boolean"))
       } else if (psaId equals exceptionResponsePsaId) {
         Left(new NotFoundException("Cannot find this endpoint"))
       } else {
-        Right(JsBoolean(psaId equals associatedPsaId))
+        Right(psaId equals associatedPsaId)
       }
     }
   }
