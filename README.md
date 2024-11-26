@@ -154,9 +154,9 @@ The terms scheme reference number and submission reference number (SRN) are inte
 **Description**
 Returns the Business Partner Record for an individual based on the NINO/UTR from ETMP [More...](docs/register-with-id-ind.md)
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
-| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+| ```nino```             | ```json{"nino": "AA123456A"}```                     | ```json {"safeId": "XE0001234567890","organisationName": "Individual Name","address": {"line1": "10 Test Street","line2": "Test Town","postcode": "AB1 2CD","countryCode": "GB"}}```                         | 400	Bad request: Missing or invalid NINO. 500	Internal server error during registration process.          |
 
 ---
 
@@ -166,9 +166,9 @@ Returns the Business Partner Record for an individual based on the NINO/UTR from
 **Description**
 Returns the Business Partner Record for an organisation from ETMP based on the UTR[More...](docs/register-with-id-org.md)
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
-| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+| ```utr, organisationName```             | ```json{"utr": "1234567890","organisationName": "Test Organisation"}```                      | ```json{"safeId": "XE0009876543210","organisationName": "Test Organisation","address": {"line1": "20 Test Avenue","line2": "Sample City","postcode": "CD3 4EF","countryCode": "GB"}}```                         | 400	Bad request: Missing or invalid UTR. 500	Internal server error during registration process.          |
 
 ---
 
@@ -178,9 +178,9 @@ Returns the Business Partner Record for an organisation from ETMP based on the U
 **Description**
 Registers an organisation on ETMP who does not have a UTR. Typically this will be a non- UK organisation [More...](docs/register-with-no-id-org.md)
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
-| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+| ```organisationName, address```             | ```json{"organisationName": "New Organisation","address": {"line1": "30 New Street","line2": "New Town","postcode": "EF5 6GH","countryCode": "GB"}}```                      | ```json{"safeId": "XE0002468135790","organisationName": "New Organisation","address": {"line1": "30 New Street","line2": "New Town","postcode": "EF5 6GH","countryCode": "GB"}}```                         | 400	Bad request: Missing or invalid organisation name or address. 500	Internal server error during registration process.         |
 
 ---
 
@@ -190,9 +190,9 @@ Registers an organisation on ETMP who does not have a UTR. Typically this will b
 **Description**
 Registers an individual on ETMP who does not have a UTR/NINO. Typically this will be a non- UK individual [More...](docs/register-with-id-ind.md)
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
-| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+| ```firstName, lastName, address```             | ```json{"firstName": "John","lastName": "Doe","address": {"line1": "40 Test Lane","line2": "Sample City","postcode": "GH7 8IJ","countryCode": "GB"}}```                      | ```json{"safeId": "XE0001357913579","name": {"firstName": "John","lastName": "Doe"},"address": {"line1": "40 Test Lane","line2": "Sample City","postcode": "GH7 8IJ","countryCode": "GB"}}```                         | 400	Bad request: Missing or invalid individual details or address. 500	Internal server error during registration process.          |
 
 ---
 
@@ -202,7 +202,7 @@ Registers an individual on ETMP who does not have a UTR/NINO. Typically this wil
 **Description**
 Get PSA Subscription Details [More...](docs/psa-subscription-details.md)
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -214,9 +214,9 @@ Get PSA Subscription Details [More...](docs/psa-subscription-details.md)
 **Description**
 Subscribe a pension scheme administrator [More...](docs/register-psa.md)
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
-| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+| N/A             | INSERT REQUEST HERE                      | 200 OK: The PSA registration was successful. The response will contain the PSA registration details in JSON format.403 Forbidden: The PSA ID is invalid (INVALID_PSAID).400 Bad Request: The request body is missing or invalid.500 Internal Server Error: An internal error occurred.          |  ***     |
 
 ---
 
@@ -226,7 +226,7 @@ Subscribe a pension scheme administrator [More...](docs/register-psa.md)
 **Description**
 Remove a PSA from the scheme [More...](docs/remove-psa.md)
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -238,7 +238,7 @@ Remove a PSA from the scheme [More...](docs/remove-psa.md)
 **Description**
 De Register a PSA [More...](docs/deregister-psa.md)
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -250,7 +250,7 @@ De Register a PSA [More...](docs/deregister-psa.md)
 **Description**
 Can de register a PSA [More...](docs/can-deregister.md)
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -262,7 +262,7 @@ Can de register a PSA [More...](docs/can-deregister.md)
 **Description**
 Update PSA Subscription Details [More...](docs/psa-variation.md)
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -274,7 +274,7 @@ Update PSA Subscription Details [More...](docs/psa-variation.md)
 **Description**
 Get PSA minimal Details [More...](docs/get-minimal-psa.md) 
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -286,7 +286,7 @@ Get PSA minimal Details [More...](docs/get-minimal-psa.md)
 **Description**
 Accept an invitation to administer a scheme [More...](docs/accept-invitation.md)
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -298,7 +298,7 @@ Accept an invitation to administer a scheme [More...](docs/accept-invitation.md)
 **Description**
 Send an invite to a PSA for administering a scheme [More...](docs/invite.md)
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -310,7 +310,7 @@ Send an invite to a PSA for administering a scheme [More...](docs/invite.md)
 **Description**
 Sends an audit event with the correct response returned from an email service
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -322,7 +322,7 @@ Sends an audit event with the correct response returned from an email service
 **Description**
 Get PSA Name
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -334,7 +334,7 @@ Get PSA Name
 **Description**
 Get PSA Email
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -346,7 +346,7 @@ Get PSA Email
 **Description**
 Returns the data from Manage Pensions Cache
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -358,7 +358,7 @@ Returns the data from Manage Pensions Cache
 **Description**
 Save the data to Manage Pensions Cache
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -370,7 +370,7 @@ Save the data to Manage Pensions Cache
 **Description**
 Delete the data from Manage Pensions Cache
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -382,7 +382,7 @@ Delete the data from Manage Pensions Cache
 **Description**
 Returns the data from Psa Data Cache
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -394,7 +394,7 @@ Returns the data from Psa Data Cache
 **Description**
 Saves the data to Psa Data Cache
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -406,7 +406,7 @@ Saves the data to Psa Data Cache
 **Description**
 Delete the data from Psa Data Cache
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -418,7 +418,7 @@ Delete the data from Psa Data Cache
 **Description**
 Get data for Scheme from Invitation Cache
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -430,7 +430,7 @@ Get data for Scheme from Invitation Cache
 **Description**
 Get data for invitee PSA Id from Invitation Cache
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -442,7 +442,7 @@ Get data for invitee PSA Id from Invitation Cache
 **Description**
 Get all the data from Invitation Cache based on invitee PSA Id and Pstr
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -454,7 +454,7 @@ Get all the data from Invitation Cache based on invitee PSA Id and Pstr
 **Description**
 Add the data to invitation Cache
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
@@ -466,7 +466,7 @@ Add the data to invitation Cache
 **Description**
 Remove the data from Invitation Cache based on invitee PSA Id and Pstr
 
-| *Args*                        | *Expected Requests*                      | *Samples Response*                           | *Error Codes/Responses*                   |
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
 |-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
 | ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
 
