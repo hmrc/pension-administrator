@@ -17,7 +17,7 @@
 package controllers
 
 import connectors.AssociationConnector
-import models.{AcceptedInvitation, MinimalDetails}
+import models.{AcceptedInvitation, MinimalDetails, SchemeReferenceNumber}
 import play.api.Logger
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc._
@@ -35,6 +35,7 @@ class AssociationController @Inject()(
                                        minimalDetailsCacheRepository: MinimalDetailsCacheRepository,
                                        psaPspAuth: actions.PsaPspEnrolmentAuthAction,
                                        psaAuth: actions.PsaEnrolmentAuthAction,
+                                       schemeAuth: actions.PsaSchemeAuthAction,
                                        cc: ControllerComponents
                                      )(implicit val ec: ExecutionContext)
                                       extends BackendController(cc) with ErrorHandler {
@@ -65,7 +66,7 @@ class AssociationController @Inject()(
 
   }
 
-  def getEmailInvitation: Action[AnyContent] = psaPspAuth.async { implicit request =>
+  def getEmailInvitation(srn: SchemeReferenceNumber): Action[AnyContent] = (psaAuth andThen schemeAuth(srn)).async { implicit request =>
 
     def withRegime(id: String, idType: String, regime: String, name: String) = {
       getMinimalDetail(id, idType, regime) map {

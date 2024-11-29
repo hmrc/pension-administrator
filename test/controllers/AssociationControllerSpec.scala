@@ -34,7 +34,7 @@ import play.api.test.Helpers._
 import repositories.MinimalDetailsCacheRepository
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.http._
-import utils.AuthUtils
+import utils.{AuthUtils, FakePsaSchemeAuthAction}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -317,7 +317,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
       "name" -> psaMinimalDetailsIndividualUser.name.get
     )
 
-    val result = controller().getEmailInvitation(req)
+    val result = controller().getEmailInvitation(AuthUtils.srn)(req)
 
     status(result) mustBe OK
     contentAsString(result) mustBe psaMinimalDetailsIndividualUser.email
@@ -334,7 +334,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
       "name" -> "no match"
     )
 
-    val result = controller().getEmailInvitation(req)
+    val result = controller().getEmailInvitation(AuthUtils.srn)(req)
     status(result) mustBe FORBIDDEN
     contentAsString(result) mustBe "Provided user's name doesn't match with stored user's name"
   }
@@ -350,7 +350,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
       "name" -> psaMinimalDetailsIndividualUser.name.get
     )
 
-    val result = controller().getEmailInvitation(req)
+    val result = controller().getEmailInvitation(AuthUtils.srn)(req)
 
     status(result) mustBe BAD_REQUEST
     contentAsString(result) mustBe "idType must be either psaid or pspid"
@@ -363,7 +363,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     val req = fakeRequest
 
-    val result = controller().getEmailInvitation(req)
+    val result = controller().getEmailInvitation(AuthUtils.srn)(req)
 
     status(result) mustBe BAD_REQUEST
     contentAsString(result).contains("Missing headers: ") mustBe true
@@ -438,6 +438,7 @@ object AssociationControllerSpec extends MockitoSugar {
     new AssociationController(fakeAssociationConnector, mockMinimalDetailsCacheRepository,
       new actions.PsaPspEnrolmentAuthAction(mockauthConnector, application.injector.instanceOf[BodyParsers.Default]),
       new actions.PsaEnrolmentAuthAction(mockauthConnector, application.injector.instanceOf[BodyParsers.Default]),
+      new FakePsaSchemeAuthAction(),
       stubControllerComponents())
   }
 
