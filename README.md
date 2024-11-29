@@ -1,39 +1,482 @@
-Pension Administrator
-==================================
-  
-Back-end microservice to support the registration, variation, invitation, association and de-registration of a pension administrator.
+# Pension Administrator
 
-API
+- [Overview](#overview)
+- [Requirements](#requirements)
+- [Running the Service](#running-the-service)
+- [Enrolments](#enrolments)
+- [Compile & Test](#compile--test)
+- [Navigation and Dependent Services](#navigation-and-dependent-services)
+- [Service Documentation](#service-documentation)
+- [Endpoints](#endpoints)
+- [License](#license)
+
+## Overview
+
+This is the backend repository for Pension Administrator. This service allows a user to register and perform duties as a pension administrator. The pension administrator is the person or organisation responsible for the overall management of a pension scheme. A user registers to become a pension scheme administrator. As a pension scheme administrator they can invite others to and remove others from a scheme. 
+
+This service has a corresponding front-end microservice, namely pension-administrator-frontend.
+
+**Associated Frontend Link:** https://github.com/hmrc/pension-administrator-frontend
+
+**Stubs:** https://github.com/hmrc/pensions-scheme-stubs
+
+
+
+## Requirements
+This service is written in Scala and Play, so needs at least a [JRE] to run.
+
+**Node version:** 16.20.2
+
+**Java version:** 11
+
+**Scala version:** 2.13.14
+
+
+## Running the Service
+**Service Manager Profile:** PODS_ALL
+
+**Port:** 8205
+
+**Link:** http://localhost:8201/register-as-pension-scheme-administrator/registered-psa-details
+
+In order to run the service, ensure Service Manager is installed (see [MDTP guidance](https://docs.tax.service.gov.uk/mdtp-handbook/documentation/developer-set-up/set-up-service-manager.html) if needed) and launch the relevant configuration by typing into the terminal:
+`sm2 --start PODS_ALL`
+
+To run the service locally, enter `sm2 --stop PENSION_ADMINISTRATOR`.
+
+In your terminal, navigate to the relevant directory and enter `sbt run`.
+
+Access the Authority Wizard and login with the relevant enrolment details [here](http://localhost:9949/auth-login-stub/gg-sign-in)
+
+
+## Enrolments
+There are several different options for enrolling through the auth login stub. In order to enrol as a dummy user to access the platform for local development and testing purposes, the following details must be entered on the auth login page.
+
+
+For access to the **Pension Administrator dashboard** for local development, enter the following information: 
+
+**Redirect url -** http://localhost:8204/manage-pension-schemes/overview 
+
+**GNAP Token -** NO 
+
+**Affinity Group -** Organisation 
+
+**Enrolment Key -** HMRC-PODS-ORG 
+
+**Identifier Name -** PsaID 
+
+**Identifier Value -** A2100005
+
 ---
 
-| *Task*                                                                               | *Supported Methods* | *Description*                                                                                                                                       |
-|--------------------------------------------------------------------------------------|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| ```/register-with-id/individual                ```                                   | POST                | Returns the Business Partner Record for an individual based on the NINO/UTR from ETMP [More...](docs/register-with-id-ind.md)                       |
-| ```/register-with-id/organisation                 ```                                | POST                | Returns the Business Partner Record for an organisation from ETMP based on the UTR[More...](docs/register-with-id-org.md)                           |
-| ```/register-with-no-id/organisation                                     ```         | POST                | Registers an organisation on ETMP who does not have a UTR. Typically this will be a non- UK organisation [More...](docs/register-with-no-id-org.md) |
-| ```/register-with-no-id/individual                                              ```  | POST                | Registers an individual on ETMP who does not have a UTR/NINO. Typically this will be a non- UK individual [More...](docs/register-with-id-ind.md)   |
-| ```/psa-subscription-details                                              ```        | GET                 | Get PSA Subscription Details [More...](docs/psa-subscription-details.md)                                                                            |
-| ```/register-psa                                              ```                    | POST                | Subscribe a pension scheme administrator [More...](docs/register-psa.md)                                                                            |
-| ```/remove-psa                                              ```                      | POST                | Remove a PSA from the scheme [More...](docs/remove-psa.md)                                                                                          |
-| ```/deregister-psa/:psaId                                              ```           | DELE                | De Register a PSA [More...](docs/deregister-psa.md)                                                                                                 |
-| ```/can-deregister/:id                                              ```              | GET                 | Can de register a PSA [More...](docs/can-deregister.md)                                                                                             |
-| ```/psa-variation/:psaId                                              ```            | POST                | Update PSA Subscription Details [More...](docs/psa-variation.md)                                                                                    |
-| ```/get-minimal-psa                                              ```                 | GET                 | Get PSA minimal Details [More...](docs/get-minimal-psa.md)                                                                                          |
-| ```/accept-invitation                                              ```               | POST                | Accept an invitation to administer a scheme [More...](docs/accept-invitation.md)                                                                    |
-| ```/invite                                              ```                          | GET                 | Send an invite to a PSA for administering a scheme [More...](docs/invite.md)                                                                        |
-| ```/email-response/:journeyType/*id                                              ``` | GET                 | Sends an audit event with the correct response returned from an email service                                                                       |
-| ```/get-name                                              ```                        | GET                 | Get PSA Name                                                                                                                                        |
-| ```/get-email                                              ```                       | GET                 | Get PSA Email                                                                                                                                       |
-| ```/journey-cache/manage-pensions/:id        ```                                     | GET                 | Returns the data from Manage Pensions Cache                                                                                                         |
-| ```/journey-cache/manage-pensions/:id        ```                                     | POST                | Save the data to Manage Pensions Cache                                                                                                              |
-| ```/journey-cache/manage-pensions/:id        ```                                     | DELETE              | Delete the data from Manage Pensions Cache                                                                                                          |
-| ```/journey-cache/psa-data/:id               ```                                     | GET                 | Returns the data from Psa Data Cache                                                                                                                |
-| ```/journey-cache/psa-data/:id               ```                                     | POST                | Saves the data to Psa Data Cache                                                                                                                    |
-| ```/journey-cache/psa-data/:id               ```                                     | DELETE              | Delete the data from Psa Data Cache                                                                                                                 |
-| ```/invitation/get-for-scheme                ```                                     | GET                 | Get data for Scheme from Invitation Cache                                                                                                           |
-| ```/invitation/get-for-invitee               ```                                     | GET                 | Get data for invitee PSA Id from Invitation Cache                                                                                                   |
-| ```/invitation/get                           ```                                     | GET                 | Get all the data from Invitation Cache based on invitee PSA Id and Pstr                                                                             |
-| ```/invitation/add                           ```                                     | GET                 | Add the data to invitation Cache                                                                                                                    |
-| ```/invitation                              ```                                      | DELETE              | Remove the data from Invitation Cache based on invitee PSA Id and Pstr                                                                              |
+If you wish to access the **Pension Practitioner dashboard** for local development, enter the following information: 
+
+**Redirect URL -** http://localhost:8204/manage-pension-schemes/dashboard 
+
+**GNAP Token -** NO 
+
+**Affinity Group -** Organisation 
+
+**Enrolment Key -** HMRC-PODSPP-ORG 
+
+**Identifier Name -** PspID 
+
+**Identifier Value -** 21000005
+
+---
+
+**Dual enrolment** as both a Pension Administrator and Practitioner is also possible and can be accessed by entering:
+
+**Redirect url -** http://localhost:8204/manage-pension-schemes/overview 
+
+**GNAP Token -** NO 
+
+**Affinity Group -** Organisation 
+
+**Enrolment Key 1 -** HMRC-PODSPP-ORG Identifier 
+
+**Name 1 -** PspID Identifier 
+
+**Value 1 -** 21000005
+
+**Enrolment Key 2 -** HMRC-PODS-ORG 
+
+**Identifier Name 2 -** PsaID 
+
+**Identifier Value 2 -** A2100005
+
+---
+
+To access the **Scheme Registration journey**, enter the following information:
+
+**Redirect URL -** http://localhost:8204/manage-pension-schemes/you-need-to-register 
+
+**GNAP Token -** NO 
+
+**Affinity Group -** Organisation
+
+---
 
 
+## Compile & Test
+**To compile:** Run `sbt compile`
+
+**To test:** Use `sbt test`
+
+**To view test results with coverage:** Run `sbt clean coverage test coverageReport`
+
+For further information on the PODS Test Approach and wider testing including acceptance, accessibility, performance, security and E2E testing, visit the PODS Confluence page [here](https://confluence.tools.tax.service.gov.uk/pages/viewpage.action?spaceKey=PODSP&title=PODS+Test+Approach).
+
+For Journey Tests, visit the [Journey Test Repository](| Journey tests(https://github.com/hmrc/pods-journey-tests).
+
+View the prototype [here](https://pods-event-reporting-prototype.herokuapp.com/).
+
+
+## Navigation and Dependent Services
+The Pension Administrator Frontend integrates with the Manage Pension Schemes (MPS) service and uses various stubs available on [GitHub](https://github.com/hmrc/pensions-scheme-stubs). From the Authority Wizard page you will be redirected to the dashboard. Navigate to the appropriate area by accessing items listed within the service-specific tiles on the dashboard. On the Pension Administrator frontend, an administrator can change their details, stop being an administrator and check for invitations, explore Penalties & Charges, manage and migrate pension schemes.
+
+
+There are numerous APIs implemented throughout the MPS architecture, and the relevant endpoints are illustrated below. For an overview of all PODS APIs, refer to the [PODS API Documentation](https://confluence.tools.tax.service.gov.uk/display/PODSP/PODS+API+Latest+Version).
+
+
+## Service Documentation
+[To Do]
+Include relevant links or details to any additional, service-specific documents (e.g., stubs, testing protocols) when available. 
+
+## Note on terminology
+The terms scheme reference number and submission reference number (SRN) are interchangeable within the PODS codebase; some downstream APIs use scheme reference number, some use submission reference number, probably because of oversight on part of the technical teams who developed these APIs. This detail means the same thing, the reference number that was returned from ETMP when the scheme details were submitted.
+
+## Endpoints
+
+**Standard Path**
+```POST   /register-with-id/individual```
+
+**Description**
+Returns the Business Partner Record for an individual based on the NINO/UTR from ETMP [More...](docs/register-with-id-ind.md)
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```nino```             | ```json{"nino": "AA123456A"}```                     | ```json {"safeId": "XE0001234567890","organisationName": "Individual Name","address": {"line1": "10 Test Street","line2": "Test Town","postcode": "AB1 2CD","countryCode": "GB"}}```                         | 400	Bad request: Missing or invalid NINO. 500	Internal server error during registration process.          |
+
+---
+
+**Standard Path**
+```POST /register-with-id/organisation```
+
+**Description**
+Returns the Business Partner Record for an organisation from ETMP based on the UTR[More...](docs/register-with-id-org.md)
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```utr, organisationName```             | ```json{"utr": "1234567890","organisationName": "Test Organisation"}```                      | ```json{"safeId": "XE0009876543210","organisationName": "Test Organisation","address": {"line1": "20 Test Avenue","line2": "Sample City","postcode": "CD3 4EF","countryCode": "GB"}}```                         | 400	Bad request: Missing or invalid UTR. 500	Internal server error during registration process.          |
+
+---
+
+**Standard Path**
+```POST /register-with-no-id/organisation```
+
+**Description**
+Registers an organisation on ETMP who does not have a UTR. Typically this will be a non- UK organisation [More...](docs/register-with-no-id-org.md)
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```organisationName, address```             | ```json{"organisationName": "New Organisation","address": {"line1": "30 New Street","line2": "New Town","postcode": "EF5 6GH","countryCode": "GB"}}```                      | ```json{"safeId": "XE0002468135790","organisationName": "New Organisation","address": {"line1": "30 New Street","line2": "New Town","postcode": "EF5 6GH","countryCode": "GB"}}```                         | 400	Bad request: Missing or invalid organisation name or address. 500	Internal server error during registration process.         |
+
+---
+
+**Standard Path**
+```POST /register-with-no-id/individual```
+
+**Description**
+Registers an individual on ETMP who does not have a UTR/NINO. Typically this will be a non- UK individual [More...](docs/register-with-id-ind.md)
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```firstName, lastName, address```             | ```json{"firstName": "John","lastName": "Doe","address": {"line1": "40 Test Lane","line2": "Sample City","postcode": "GH7 8IJ","countryCode": "GB"}}```                      | ```json{"safeId": "XE0001357913579","name": {"firstName": "John","lastName": "Doe"},"address": {"line1": "40 Test Lane","line2": "Sample City","postcode": "GH7 8IJ","countryCode": "GB"}}```                         | 400	Bad request: Missing or invalid individual details or address. 500	Internal server error during registration process.          |
+
+---
+
+**Standard Path**
+```GET /psa-subscription-details```
+
+**Description**
+Get PSA Subscription Details [More...](docs/psa-subscription-details.md)
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```POST /register-psa```
+
+**Description**
+Subscribe a pension scheme administrator [More...](docs/register-psa.md)
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| N/A             | INSERT REQUEST HERE                      | 200 OK: The PSA registration was successful. The response will contain the PSA registration details in JSON format.403 Forbidden: The PSA ID is invalid (INVALID_PSAID).400 Bad Request: The request body is missing or invalid.500 Internal Server Error: An internal error occurred.          |  ***     |
+
+---
+
+**Standard Path**
+```POST /remove-psa```
+
+**Description**
+Remove a PSA from the scheme [More...](docs/remove-psa.md)
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```DELETE /deregister-psa/:psaId```    
+
+**Description**
+De Register a PSA [More...](docs/deregister-psa.md)
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```GET /can-deregister/:id```  
+
+**Description**
+Can de register a PSA [More...](docs/can-deregister.md)
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```POST /psa-variation/:psaId```  
+
+**Description**
+Update PSA Subscription Details [More...](docs/psa-variation.md)
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```GET /get-minimal-psa``` 
+
+**Description**
+Get PSA minimal Details [More...](docs/get-minimal-psa.md) 
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```POST /accept-invitation``` 
+
+**Description**
+Accept an invitation to administer a scheme [More...](docs/accept-invitation.md)
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```GET /invite```  
+
+**Description**
+Send an invite to a PSA for administering a scheme [More...](docs/invite.md)
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```GET /email-response/:journeyType/*id```
+
+**Description**
+Sends an audit event with the correct response returned from an email service
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```GET /get-name```  
+
+**Description**
+Get PSA Name
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```GET /get-email```  
+
+**Description**
+Get PSA Email
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```GET /journey-cache/manage-pensions/:id```    
+
+**Description**
+Returns the data from Manage Pensions Cache
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```POST /journey-cache/manage-pensions/:id```  
+
+**Description**
+Save the data to Manage Pensions Cache
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```DELETE /journey-cache/manage-pensions/:id``` 
+
+**Description**
+Delete the data from Manage Pensions Cache
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```GET /journey-cache/psa-data/:id```  
+
+**Description**
+Returns the data from Psa Data Cache
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```POST /journey-cache/psa-data/:id``` 
+
+**Description**
+Saves the data to Psa Data Cache
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```DELETE /journey-cache/psa-data/:id```
+
+**Description**
+Delete the data from Psa Data Cache
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```GET /invitation/get-for-scheme```
+
+**Description**
+Get data for Scheme from Invitation Cache
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```GET /invitation/get-for-invitee```
+
+**Description**
+Get data for invitee PSA Id from Invitation Cache
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```GET   /invitation/get```
+
+**Description**
+Get all the data from Invitation Cache based on invitee PSA Id and Pstr
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```GET   /invitation/add```
+
+**Description**
+Add the data to invitation Cache
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+**Standard Path**
+```DELETE   /invitation``` 
+
+**Description**
+Remove the data from Invitation Cache based on invitee PSA Id and Pstr
+
+| *Args*                        | *Expected Requests*                      | *Sample Response*                           | *Error Codes/Responses*                   |
+|-------------------------------|------------------------------------------|----------------------------------------------|-------------------------------------------|
+| ```INSERT ARGS```             | INSERT REQUEST HERE                      | INSERT RESPONSE HERE                         | INSERT ERROR CODES AND RESPONSES          |
+
+---
+
+## License
+This code is open source software Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at:
+
+[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+[↥ Back to Top](#pension-administrator)
