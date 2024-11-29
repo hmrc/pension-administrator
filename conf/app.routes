@@ -24,7 +24,7 @@ GET           /get-email                                controllers.AssociationC
 # Deprecated
 GET           /get-minimal-psa                          controllers.AssociationController.getMinimalDetails
 GET           /get-minimal-details-self                 controllers.AssociationController.getMinimalDetailsSelf
-GET           /get-email-invitation                     controllers.AssociationController.getEmailInvitation
+GET           /get-email-invitation/:srn                controllers.AssociationController.getEmailInvitation(srn: SchemeReferenceNumber)
 
 POST          /accept-invitation                        controllers.AssociationController.acceptInvitation
 
