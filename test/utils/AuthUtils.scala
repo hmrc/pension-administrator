@@ -63,7 +63,7 @@ object AuthUtils {
     when(mockAuthConnector.authorise[Option[String]](any(), any())(any(), any())) thenReturn
       Future.successful(AuthUtils.noEnrolmentAuthResponse)
 
-  val noEnrolmentAuthResponse: Option[String] = Some(id)
+  val noEnrolmentAuthResponse: Option[String] = Some(externalId)
 
   class FakeFailingAuthConnector @Inject()(exceptionToReturn: Throwable) extends AuthConnector {
     val serviceUrl: String = ""

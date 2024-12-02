@@ -53,16 +53,32 @@ abstract class PensionAdministratorCacheController(
         }
   }
 
-  def lastUpdated(id: String): Action[AnyContent] = authAction.async {
-        logger.debug("controllers.cache.PensionAdministratorCacheController.get: Authorised Request " + id)
-        repository.getLastUpdated(id).map { response =>
-          logger.debug("controllers.cache.PensionAdministratorCacheController.get: Response " + response)
-          response.map { date => Ok(Json.toJson(date)) }
-            .getOrElse(NotFound)
-        }
-  }
-
   def remove(id: String): Action[AnyContent] = authAction.async {
         repository.remove(id).map(_ => Ok)
+  }
+
+  def saveSelf: Action[AnyContent] = authAction.async {
+    implicit request =>
+      request.body.asJson.map {
+        jsValue =>
+          repository.upsert(request.externalId, jsValue)
+            .map(_ => Ok)
+      } getOrElse Future.successful(EntityTooLarge)
+  }
+
+  def getSelf: Action[AnyContent] = authAction.async { request =>
+    val id = request.externalId
+    logger.debug("controllers.cache.PensionAdministratorCacheController.get: Authorised Request " + id)
+    repository.get(id).map { response =>
+      logger.debug(s"controllers.cache.PensionAdministratorCacheController.get: Response for request Id $id is $response")
+      response.map {
+          Ok(_)
+        }
+        .getOrElse(NotFound)
+    }
+  }
+
+  def removeSelf: Action[AnyContent] = authAction.async { request =>
+    repository.remove(request.externalId).map(_ => Ok)
   }
 }
