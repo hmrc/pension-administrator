@@ -58,4 +58,29 @@ class PSADataCacheController @Inject()(
   def remove(id: String): Action[AnyContent] = authAction.async {
         repository.remove(id).map(_ => Ok)
   }
+
+  def saveSelf: Action[AnyContent] = authAction.async {
+    implicit request =>
+      request.body.asJson.map {
+        jsValue =>
+          repository.upsert(request.externalId, jsValue)
+            .map(_ => Ok)
+      } getOrElse Future.successful(EntityTooLarge)
+  }
+
+  def getSelf: Action[AnyContent] = authAction.async { request =>
+    val id = request.externalId
+    logger.debug(message = "controllers.cache.PSADataCacheController.get: Authorised Request " + id)
+    repository.get(id).map { response =>
+      logger.debug(message = s"controllers.cache.PSADataCacheController.get: Response for request Id $id is $response")
+      response.map {
+          Ok(_)
+        }
+        .getOrElse(NotFound)
+    }
+  }
+
+  def removeSelf: Action[AnyContent] = authAction.async { request =>
+    repository.remove(request.externalId).map(_ => Ok)
+  }
 }

@@ -28,17 +28,38 @@ GET           /get-email-invitation/:srn                controllers.AssociationC
 
 POST          /accept-invitation                        controllers.AssociationController.acceptInvitation
 
+# Deprecated
 GET           /journey-cache/manage-pensions/:id        controllers.cache.ManagePensionsCacheController.get(id: String)
+# Deprecated
 POST          /journey-cache/manage-pensions/:id        controllers.cache.ManagePensionsCacheController.save(id: String)
+# Deprecated
 DELETE        /journey-cache/manage-pensions/:id        controllers.cache.ManagePensionsCacheController.remove(id: String)
 
+GET           /journey-cache/manage-pensions-self        controllers.cache.ManagePensionsCacheController.getSelf
+POST          /journey-cache/manage-pensions-self        controllers.cache.ManagePensionsCacheController.saveSelf
+DELETE        /journey-cache/manage-pensions-self        controllers.cache.ManagePensionsCacheController.removeSelf
+
+# Deprecated
 GET           /journey-cache/session-data/:id           controllers.cache.SessionDataCacheController.get(id: String)
+# Deprecated
 POST          /journey-cache/session-data/:id           controllers.cache.SessionDataCacheController.save(id: String)
+# Deprecated
 DELETE        /journey-cache/session-data/:id           controllers.cache.SessionDataCacheController.remove(id: String)
 
+GET           /journey-cache/session-data-self           controllers.cache.SessionDataCacheController.getSelf
+POST          /journey-cache/session-data-self           controllers.cache.SessionDataCacheController.saveSelf
+DELETE        /journey-cache/session-data-self           controllers.cache.SessionDataCacheController.removeSelf
+
+# Deprecated
 GET           /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.get(id: String)
+# Deprecated
 POST          /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.save(id: String)
+# Deprecated
 DELETE        /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.remove(id: String)
+
+GET           /journey-cache/psa-data-self               controllers.cache.PSADataCacheController.getSelf
+POST          /journey-cache/psa-data-self               controllers.cache.PSADataCacheController.saveSelf
+DELETE        /journey-cache/psa-data-self               controllers.cache.PSADataCacheController.removeSelf
 
 POST          /email-response/:journeyType/:id          controllers.EmailResponseController.retrieveStatus(journeyType: JourneyType.Name, id: String)
 POST          /invite                                   controllers.InvitationController.invite

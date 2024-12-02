@@ -132,5 +132,72 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
 
     }
+
+    s"on .getSelf " must {
+
+      "return 200 and the relevant data when it exists" in {
+        when(repo.get(eqTo(AuthUtils.externalId))(any())) thenReturn Future.successful(Some(Json.obj("testId" -> "foo")))
+
+        val result = controller.getSelf(fakeRequest)
+
+        status(result) mustEqual OK
+        contentAsJson(result) mustEqual Json.obj("testId" -> "foo")
+      }
+
+      "return 404 when the data doesn't exist" in {
+        when(repo.get(eqTo(AuthUtils.externalId))(any())) thenReturn Future.successful(None)
+
+        val result = controller.getSelf(fakeRequest)
+
+        status(result) mustEqual NOT_FOUND
+      }
+
+      "throw an exception when the repository call fails" in {
+        when(repo.get(eqTo(AuthUtils.externalId))(any())) thenReturn Future.failed(new Exception())
+
+        val result = controller.getSelf(FakeRequest())
+        an[Exception] must be thrownBy status(result)
+      }
+
+      "throw an exception when the call is not authorised" in {
+        reset(authConnector)
+        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed(new UnauthorizedException(""))
+
+        val result = controller.getSelf(FakeRequest())
+        an[UnauthorizedException] must be thrownBy status(result)
+      }
+    }
+
+    s"on .saveSelf " must {
+
+      "return 200 when the request body can be parsed and passed to the repository successfully" in {
+        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
+
+        val result = call(controller.saveSelf, FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
+
+        status(result) mustEqual OK
+      }
+
+      "return REQUEST_ENTITY_TOO_LARGE when the request body cannot be parsed" in {
+
+        val result = call(controller.saveSelf,
+          FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
+
+        status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
+      }
+
+    }
+
+    s"on .removeSelf " must {
+      "return 200 when the data is removed successfully" in {
+        when(repo.remove(eqTo(AuthUtils.externalId))(any())) thenReturn Future.successful(true)
+
+        val result = controller.removeSelf(FakeRequest())
+
+        status(result) mustEqual OK
+      }
+
+
+    }
   }
 }
