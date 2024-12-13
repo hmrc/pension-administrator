@@ -29,12 +29,12 @@ import org.scalatest.{BeforeAndAfterEach, EitherValues, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsBoolean, JsValue, Json}
+import play.api.libs.json.{Format, JsValue, Json, OWrites}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
 import repositories._
 import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
-import uk.gov.hmrc.domain.PsaId
+import uk.gov.hmrc.domain.{PsaId, PspId}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException, _}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import utils.FakeEmailConnector.containEmail
@@ -43,8 +43,9 @@ import utils.{DateHelper, FakeEmailConnector}
 import java.time.{Clock, Instant, LocalDate, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future}
 
-class InvitationServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with OptionValues
-  with MockitoSugar with BeforeAndAfterEach {
+class InvitationServiceImplSpec extends AsyncFlatSpec
+          with Matchers with EitherValues with OptionValues
+          with MockitoSugar with BeforeAndAfterEach {
 
   import InvitationServiceImplSpec._
 
@@ -283,8 +284,8 @@ object InvitationServiceImplSpec extends MockitoSugar {
                        )
 
   object TestInvitation {
-    implicit val dateFormat = MongoJavatimeFormats.instantFormat
-    implicit val writes = Json.writes[TestInvitation]
+    implicit val dateFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
+    implicit val writes: OWrites[TestInvitation] = Json.writes[TestInvitation]
   }
 
   def invitationJson(inviteePsaId: PsaId, inviteeName: String): JsValue =
@@ -314,10 +315,6 @@ object InvitationServiceImplSpec extends MockitoSugar {
   val associatedPsaId: PsaId = PsaId("A2000005")
   val invalidResponsePsaId: PsaId = PsaId("A2000006")
   val exceptionResponsePsaId: PsaId = PsaId("A2000007")
-
-  object FakeConfig {
-    val invitationExpiryDays: Int = 30
-  }
 
 }
 
@@ -361,15 +358,16 @@ class FakeSchemeConnector extends SchemeConnector {
 
   import InvitationServiceImplSpec._
 
-  override def checkForAssociation(psaId: PsaId, srn: SchemeReferenceNumber)
-                                  (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  override def checkForAssociation(psaIdOrPspId: Either[PsaId, PspId], srn: SchemeReferenceNumber)
+                                  (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Boolean]] = {
+    val psaId = psaIdOrPspId.swap.getOrElse(throw new RuntimeException("no psa id"))
     Future.successful {
       if (psaId equals invalidResponsePsaId) {
-        Right(Json.obj())
+        Left(new InternalServerException("Response from pension-scheme cannot be parsed to boolean"))
       } else if (psaId equals exceptionResponsePsaId) {
         Left(new NotFoundException("Cannot find this endpoint"))
       } else {
-        Right(JsBoolean(psaId equals associatedPsaId))
+        Right(psaId equals associatedPsaId)
       }
     }
   }

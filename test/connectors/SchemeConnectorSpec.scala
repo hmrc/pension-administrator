@@ -71,8 +71,8 @@ class SchemeConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.checkForAssociation(psaId, srn) map { response =>
-      response.value shouldBe JsBoolean(true)
+    connector.checkForAssociation(Left(psaId), srn) map { response =>
+      response.value shouldBe true
     }
 
   }
@@ -88,7 +88,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
         )
     )
 
-    connector.checkForAssociation(psaId, srn) map { response =>
+    connector.checkForAssociation(Left(psaId), srn) map { response =>
       response.left.value shouldBe a[BadRequestException]
     }
 

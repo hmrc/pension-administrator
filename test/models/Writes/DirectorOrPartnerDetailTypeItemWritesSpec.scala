@@ -16,12 +16,12 @@
 
 package models.Writes
 
+import base.CommonHelper
 import models.{CorrespondenceCommonDetail, DirectorOrPartnerDetailTypeItem, PreviousAddressDetails, Samples}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json._
-import base.CommonHelper
 
 class DirectorOrPartnerDetailTypeItemWritesSpec extends AnyWordSpec with Matchers with OptionValues with CommonHelper with Samples {
   "An object of a partner detail type item" should {

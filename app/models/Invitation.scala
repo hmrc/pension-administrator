@@ -19,10 +19,10 @@ package models
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import uk.gov.hmrc.domain.PsaId
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, OffsetDateTime}
-import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 case class Invitation(srn: SchemeReferenceNumber,
                       pstr: String,

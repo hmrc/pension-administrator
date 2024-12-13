@@ -29,6 +29,7 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
   lazy val baseUrlEmail: String = servicesConfig.baseUrl("email")
   lazy val baseUrlPensionsScheme: String = servicesConfig.baseUrl("pensions-scheme")
   lazy val baseUrlPensionAdministrator: String = servicesConfig.baseUrl("pension-administrator")
+  val logInsufficientEnrolments: Boolean = runModeConfiguration.underlying.getBoolean("logInsufficientEnrolments")
 
   lazy val schemeAdminRegistrationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.scheme.administrator.register")}"
   lazy val registerWithoutIdOrganisationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.register.without.id.organisation")}"
@@ -57,7 +58,6 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Envi
   lazy val checkAssociationUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.checkPsaAssociation")}"
   lazy val getSchemeDetailsUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.getSchemeDetails")}"
 
-  lazy val invitationExpiryDays: Int = runModeConfiguration.underlying.getInt("invitationExpiryDays")
   lazy val invitationCallbackUrl: String = s"$baseUrlPensionAdministrator${runModeConfiguration.underlying.getString("serviceUrls.invitation.callback")}"
   lazy val updateClientReferenceUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.updateClientReference")}"
 

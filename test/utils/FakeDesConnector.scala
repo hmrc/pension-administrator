@@ -18,13 +18,12 @@ package utils
 
 import connectors.DesConnector
 import models.PsaToBeRemovedFromScheme
-import org.joda.time.LocalDate
-import play.api.libs.json.JodaWrites._
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 import utils.testhelpers.PsaSubscriptionBuilder.psaSubscription
 
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeDesConnector extends DesConnector {
@@ -80,7 +79,7 @@ object FakeDesConnector {
       "psaId" -> "A21999999"
     )
 
-  val updatePsaResponseJson = Json.obj(
+  val updatePsaResponseJson: JsObject = Json.obj(
     "processingDate" -> "2001-12-17T09:30:47Z",
     "formBundleNumber" -> "12345678912"
   )

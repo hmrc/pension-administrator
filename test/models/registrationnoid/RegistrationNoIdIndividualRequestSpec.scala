@@ -16,11 +16,12 @@
 
 package models.registrationnoid
 
-import org.joda.time.LocalDate
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.{JsResultException, JsValue, Json}
 import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl}
+
+import java.time.{LocalDate, LocalDateTime}
 
 class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
 
@@ -37,7 +38,7 @@ class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
   it should "produce valid JSON for a full address details request" in {
 
     val actual = Json.toJson(fullAddressRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
-    val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/registrationWithoutIdRequest.json")(actual)
+    val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json")(actual)
 
     validationFailures shouldBe empty
 
@@ -54,7 +55,7 @@ class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
   it should "produce valid JSON for a minimal address details request" in {
 
     val actual = Json.toJson(minimalAddressRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
-    val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/registrationWithoutIdRequest.json")(actual)
+    val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json")(actual)
 
     validationFailures shouldBe empty
 
@@ -87,7 +88,7 @@ object RegistrationNoIdIndividualRequestSpec {
   val fullAddressRequest = RegistrationNoIdIndividualRequest(
     "John",
     "Smith",
-    new LocalDate(1990, 4, 3),
+    LocalDate.of(1990, 4, 3),
     Address(
       "100, Sutton Street",
       "Wokingham",
@@ -126,7 +127,7 @@ object RegistrationNoIdIndividualRequestSpec {
   val minimalAddressRequest = RegistrationNoIdIndividualRequest(
     "John",
     "Smith",
-    new LocalDate(1990, 4, 3),
+    LocalDate.of(1990, 4, 3),
     Address(
       "100, Sutton Street",
       "Wokingham",
@@ -165,14 +166,14 @@ object RegistrationNoIdIndividualRequestSpec {
   val responseJson: JsValue = Json.parse(
     """
       |{
-      |  "processingDate": "2001-12-17T09:30:472",
+      |  "processingDate": "2001-12-17T09:30:47",
       |  "sapNumber": "1234567890",
       |  "safeId": "XE0001234567890"
       |}
     """.stripMargin
   )
 
-  val expectedResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890")
+  val expectedResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890", LocalDateTime.of(2001, 12, 17, 9, 30, 47))
 
   val invalidPayloadHandler: InvalidPayloadHandler = new InvalidPayloadHandlerImpl()
 

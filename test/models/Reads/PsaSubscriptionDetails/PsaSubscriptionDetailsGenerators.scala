@@ -16,11 +16,11 @@
 
 package models.Reads.PsaSubscriptionDetails
 
-import org.joda.time.LocalDate
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen
-import play.api.libs.json.JodaWrites._
 import play.api.libs.json.{JsArray, JsObject, Json}
+
+import java.time.LocalDate
 
 trait PsaSubscriptionDetailsGenerators {
   val legalStatus: Gen[String] = Gen.oneOf("Individual", "Partnership", "Limited Company")
@@ -109,7 +109,7 @@ trait PsaSubscriptionDetailsGenerators {
     day <- Gen.choose(1, 28)
     month <- Gen.choose(1, 12)
     year <- Gen.choose(2000, 2018)
-  } yield new LocalDate(year, month, day)
+  } yield LocalDate.of(year, month, day)
 
 
   val titlesGenerator: Gen[String] = Gen.oneOf("Mr", "Mrs", "Miss", "Ms", "Dr", "Sir", "Professor", "Lord")

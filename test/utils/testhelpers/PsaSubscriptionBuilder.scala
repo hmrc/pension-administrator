@@ -16,9 +16,9 @@
 
 package utils.testhelpers
 
-import java.time.LocalDate
+import models._
 
-import models.{OrganisationOrPartner, _}
+import java.time.LocalDate
 
 object PsaSubscriptionBuilder {
 

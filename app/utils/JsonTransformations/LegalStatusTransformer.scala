@@ -18,7 +18,7 @@ package utils.JsonTransformations
 
 import com.google.inject.Inject
 import play.api.libs.json.Reads._
-import play.api.libs.json.{__, _}
+import play.api.libs.json._
 
 class LegalStatusTransformer @Inject()() extends JsonTransformer {
   def returnPathBasedOnLegalStatus(individualPath: JsPath, companyPath: JsPath, partnershipPath: JsPath): Reads[JsPath] = {

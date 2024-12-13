@@ -5,29 +5,61 @@ POST          /register-with-id/individual              controllers.Registration
 POST          /register-with-id/organisation            controllers.RegistrationController.registerWithIdOrganisation
 POST          /register-with-no-id/individual           controllers.RegistrationController.registrationNoIdIndividual
 
+# Deprecated
 GET           /psa-subscription-details                 controllers.SchemeController.getPsaDetails
+GET           /psa-subscription-details-self            controllers.SchemeController.getPsaDetailsSelf
 POST          /register-psa                             controllers.SchemeController.registerPSA
-POST          /remove-psa                               controllers.SchemeController.removePsa
+# Deprecated
+POST          /remove-psa                               controllers.SchemeController.removePsaOld
+POST          /remove-psa/:srn                          controllers.SchemeController.removePsa(srn: SchemeReferenceNumber)
+# Deprecated
 DELETE        /deregister-psa/:psaId                    controllers.SchemeController.deregisterPsa(psaId: String)
+DELETE        /deregister-psa-self                      controllers.SchemeController.deregisterPsaSelf
+# Deprecated
 POST          /psa-variation/:psaId                     controllers.SchemeController.updatePSA(psaId: String)
+POST          /psa-variation-self                       controllers.SchemeController.updatePsaSelf
 
 GET           /get-name                                 controllers.AssociationController.getName
 GET           /get-email                                controllers.AssociationController.getEmail
+# Deprecated
 GET           /get-minimal-psa                          controllers.AssociationController.getMinimalDetails
+GET           /get-minimal-details-self                 controllers.AssociationController.getMinimalDetailsSelf
+GET           /get-email-invitation/:srn                controllers.AssociationController.getEmailInvitation(srn: SchemeReferenceNumber)
 
 POST          /accept-invitation                        controllers.AssociationController.acceptInvitation
 
+# Deprecated
 GET           /journey-cache/manage-pensions/:id        controllers.cache.ManagePensionsCacheController.get(id: String)
+# Deprecated
 POST          /journey-cache/manage-pensions/:id        controllers.cache.ManagePensionsCacheController.save(id: String)
+# Deprecated
 DELETE        /journey-cache/manage-pensions/:id        controllers.cache.ManagePensionsCacheController.remove(id: String)
 
+GET           /journey-cache/manage-pensions-self        controllers.cache.ManagePensionsCacheController.getSelf
+POST          /journey-cache/manage-pensions-self        controllers.cache.ManagePensionsCacheController.saveSelf
+DELETE        /journey-cache/manage-pensions-self        controllers.cache.ManagePensionsCacheController.removeSelf
+
+# Deprecated
 GET           /journey-cache/session-data/:id           controllers.cache.SessionDataCacheController.get(id: String)
+# Deprecated
 POST          /journey-cache/session-data/:id           controllers.cache.SessionDataCacheController.save(id: String)
+# Deprecated
 DELETE        /journey-cache/session-data/:id           controllers.cache.SessionDataCacheController.remove(id: String)
 
+GET           /journey-cache/session-data-self           controllers.cache.SessionDataCacheController.getSelf
+POST          /journey-cache/session-data-self           controllers.cache.SessionDataCacheController.saveSelf
+DELETE        /journey-cache/session-data-self           controllers.cache.SessionDataCacheController.removeSelf
+
+# Deprecated
 GET           /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.get(id: String)
+# Deprecated
 POST          /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.save(id: String)
+# Deprecated
 DELETE        /journey-cache/psa-data/:id               controllers.cache.PSADataCacheController.remove(id: String)
+
+GET           /journey-cache/psa-data-self               controllers.cache.PSADataCacheController.getSelf
+POST          /journey-cache/psa-data-self               controllers.cache.PSADataCacheController.saveSelf
+DELETE        /journey-cache/psa-data-self               controllers.cache.PSADataCacheController.removeSelf
 
 POST          /email-response/:journeyType/:id          controllers.EmailResponseController.retrieveStatus(journeyType: JourneyType.Name, id: String)
 POST          /invite                                   controllers.InvitationController.invite
@@ -38,6 +70,10 @@ GET           /invitation/get                           controllers.cache.Invita
 POST          /invitation/add                           controllers.cache.InvitationsCacheController.add
 DELETE        /invitation                               controllers.cache.InvitationsCacheController.remove
 
+# Deprecated
 GET           /can-deregister/:id                       controllers.DeregistrationController.canDeregister(id: String)
+GET           /can-deregister-self                      controllers.DeregistrationController.canDeregisterSelf
 
-POST          /updateClientReference                    controllers.UpdateClientReferenceController.updateClientReference
+# Deprecated
+POST          /updateClientReference                    controllers.UpdateClientReferenceController.updateClientReferenceOld
+POST          /updateClientReference/:srn               controllers.UpdateClientReferenceController.updateClientReference(srn: SchemeReferenceNumber)

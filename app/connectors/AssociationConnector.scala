@@ -25,7 +25,8 @@ import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.{BadRequestException, HttpClient, _}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{BadRequestException, _}
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -50,7 +51,7 @@ trait AssociationConnector {
 
 @Singleton
 class AssociationConnectorImpl @Inject()(
-                                          httpClient: HttpClient,
+                                          httpV2Client: HttpClientV2,
                                           appConfig: AppConfig,
                                           invalidPayloadHandler: InvalidPayloadHandler,
                                           headerUtils: HeaderUtils,
@@ -70,18 +71,17 @@ class AssociationConnectorImpl @Inject()(
                                  headerCarrier: HeaderCarrier,
                                  ec: ExecutionContext,
                                  request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-      headerUtils.integrationFrameworkHeader)
-    val minimalDetailsUrl = appConfig.psaMinimalDetailsUrl.format(regime, idType, idValue)
-    httpClient.GET(minimalDetailsUrl)(implicitly[HttpReads[HttpResponse]], implicitly[HeaderCarrier](hc),
-      implicitly) map {
-      handleResponseIF(_, minimalDetailsUrl)
+
+    val minimalDetailsUrl = url"${appConfig.psaMinimalDetailsUrl.format(regime, idType, idValue)}"
+    httpV2Client.get(minimalDetailsUrl).setHeader(headerUtils.integrationFrameworkHeader: _*).execute[HttpResponse] map {
+      handleResponseIF(_, minimalDetailsUrl.toString)
     } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
   }
 
   override def logWarning[A](endpoint: String): PartialFunction[Try[Either[Throwable, A]], Unit] = {
     case Success(Left(e: HttpException))
-      if !e.getMessage.contains("DELIMITED_PSPID") && !e.getMessage.contains("DELIMITED_PSAID") && !e.getMessage.contains("PSAID_NOT_FOUND") =>
+      if !e.getMessage.contains("DELIMITED_PSPID") && !e.getMessage.contains("DELIMITED_PSAID") &&
+        !e.getMessage.contains("PSAID_NOT_FOUND") && !e.getMessage.contains("PSPID_NOT_FOUND")=>
         logger.warn(s"$endpoint received error response from DES", e)
     case Failure(e) =>
       logger.error(s"$endpoint received error response from DES", e)
@@ -105,6 +105,11 @@ class AssociationConnectorImpl @Inject()(
       case FORBIDDEN if response.body.contains("DELIMITED_PSPID") || response.body.contains("DELIMITED_PSAID") =>
         Left(
           new HttpException(response.body, FORBIDDEN)
+        )
+      case NOT_FOUND if response.body.contains("PSPID_NOT_FOUND") || response.body.contains("PSAID_NOT_FOUND") =>
+        logger.info("Invalid PSP/PSA ID entered by user.")
+        Left(
+          new HttpException(response.body, NOT_FOUND)
         )
       case _ =>
         Left(handleErrorResponse("Minimal details", url, response, badResponseSeq))
@@ -145,19 +150,21 @@ class AssociationConnectorImpl @Inject()(
                       (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] = {
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
       headerUtils.integrationFrameworkHeader)
-    val url = appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)
+    val url = url"${appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)}"
 
     val data = Json.toJson(acceptedInvitation)(writesIFAcceptedInvitation)
-    association(url, data, acceptedInvitation, "createAssociationRequest1445.json")(hc, implicitly, implicitly)
+    association(url, data, acceptedInvitation, "createAssociationRequest1445.json", headerUtils.integrationFrameworkHeader)(hc, implicitly, implicitly)
   }
 
-  private def association(url: String, data: JsValue, acceptedInvitation: AcceptedInvitation, schemaFile: String)
+  private def association(url: java.net.URL, data: JsValue, acceptedInvitation: AcceptedInvitation,
+                          schemaFile: String,
+                          headers: Seq[(String, String)])
                          (implicit hc: HeaderCarrier, ec: ExecutionContext,
                           request: RequestHeader): Future[Either[HttpException, Unit]] = {
     logger.debug(s"[Accept-Invitation-Outgoing-Payload] - ${data.toString()}")
-    httpClient.POST[JsValue, HttpResponse](url, data)(
-      implicitly, implicitly, hc, implicitly
-    ) map (processResponse(acceptedInvitation, _, url, schemaFile))
+    httpV2Client.post(url)
+      .setHeader(headers: _*)
+      .withBody(data).execute[HttpResponse] map (processResponse(acceptedInvitation, _, url.toString, schemaFile))
   }
 }
 

@@ -16,12 +16,11 @@
 
 package models.Reads
 
-import models.Samples
-import models.{Reads => _, _}
+import models.{Samples, Reads => _, _}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.libs.json.{Json, _}
+import play.api.libs.json._
 
 
 class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
@@ -54,7 +53,8 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
       }
 
       "We have an isChanged flag" in {
-        val result = (declaration + ("isChanged" -> JsBoolean(true))).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+        val result = (declaration + ("isChanged" -> JsBoolean(true)))
+          .as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
 
         result.isChanged.value mustBe true
       }
@@ -128,8 +128,8 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
             "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))
 
           val workingKnowledge = "declarationWorkingKnowledge" -> JsString("whatyouWillNeed")
-          val result = (declaration + workingKnowledge + adviserName + adviserEmail + adviserPhone + adviserAddress).as[PensionSchemeAdministratorDeclarationType](
-            PensionSchemeAdministratorDeclarationType.apiReads)
+          val result = (declaration + workingKnowledge + adviserName + adviserEmail + adviserPhone + adviserAddress)
+            .as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box5 mustBe None
           result.box6 mustBe Some(true)

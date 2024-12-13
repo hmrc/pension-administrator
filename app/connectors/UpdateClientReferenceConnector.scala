@@ -24,45 +24,38 @@ import models.{IdentifierDetails, UpdateClientReferenceRequest}
 import play.api.http.Status._
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.{HttpClient, _}
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.client.HttpClientV2
 import utils.{ErrorHandler, HttpResponseHelper, JSONPayloadSchemaValidator}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-@ImplementedBy(classOf[UpdateClientReferenceConnectorImpl])
-trait UpdateClientReferenceConnector {
-
-  def updateClientReference(updateClientReferenceRequest: UpdateClientReferenceRequest, userAction: Option[String])(
-    implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]]
-}
-
 case class UpdateClientRefValidationFailureException(error: String) extends Exception(error)
 
-class UpdateClientReferenceConnectorImpl @Inject()(
-                                                    http: HttpClient,
+class UpdateClientReferenceConnector @Inject()(
+                                                    httpClientV2: HttpClientV2,
                                                     config: AppConfig,
                                                     headerUtils: HeaderUtils,
                                                     jsonPayloadSchemaValidator: JSONPayloadSchemaValidator,
                                                     auditService: AuditService
-                                                  ) extends UpdateClientReferenceConnector
-  with HttpResponseHelper with ErrorHandler with UpdateClientReferenceAuditService {
+                                                  ) extends HttpResponseHelper with ErrorHandler with UpdateClientReferenceAuditService {
 
-  override def updateClientReference(updateClientReferenceRequest: UpdateClientReferenceRequest, userAction: Option[String])
+  def updateClientReference(updateClientReferenceRequest: UpdateClientReferenceRequest, userAction: Option[String])
                                     (implicit headerCarrier: HeaderCarrier,
                                      ec: ExecutionContext,
                                      request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-    val updateClientReferenceUrl = config.updateClientReferenceUrl
+    val updateClientReferenceUrl = url"${config.updateClientReferenceUrl}"
     val schema = "/resources/schemas/updateClientReference1857.json"
     val jsValue = Json.toJson(new IdentifierDetails(updateClientReferenceRequest))
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-      headerUtils.integrationFrameworkHeader)
     val validationResult = jsonPayloadSchemaValidator.validateJsonPayload(schema, jsValue)
     if (validationResult.nonEmpty)
       throw UpdateClientRefValidationFailureException(s"Invalid payload when updateClientReference :-\n${validationResult.mkString}")
     else
-      http.PUT[JsValue, HttpResponse](updateClientReferenceUrl, jsValue)(implicitly, implicitly[HttpReads[HttpResponse]], hc, implicitly) map {
-        handlePostResponse(_, updateClientReferenceUrl)
-      } andThen sendClientReferenceEvent(updateClientReferenceRequest, userAction)(auditService.sendEvent)
+      httpClientV2.put(updateClientReferenceUrl)
+        .setHeader(headerUtils.integrationFrameworkHeader: _*)
+        .withBody(jsValue).execute[HttpResponse] map {
+        handlePostResponse(_, updateClientReferenceUrl.toString)
+      } andThen sendClientReferenceEvent(updateClientReferenceRequest, userAction)(auditService.sendEvent(_))
   }
 
   private def handlePostResponse(response: HttpResponse, url: String): Either[HttpException, JsValue] = {

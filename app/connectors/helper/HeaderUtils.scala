@@ -25,7 +25,7 @@ class HeaderUtils @Inject()(config: AppConfig) {
   val maxLengthCorrelationId = 32
   val maxLengthCorrelationIdIF = 36
 
-  def desHeaderWithoutCorrelationId: Seq[(String, String)] = {
+  private def desHeaderWithoutCorrelationId: Seq[(String, String)] = {
     Seq("Environment" -> config.desEnvironment,
       "Authorization" -> config.authorization,
       "Content-Type" -> "application/json"
