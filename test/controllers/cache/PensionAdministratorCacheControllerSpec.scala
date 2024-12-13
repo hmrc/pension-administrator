@@ -53,7 +53,6 @@ class PensionAdministratorCacheControllerSpec
       bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
       bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
-      bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
       bind[AuthConnector].toInstance(authConnector),
       bind[ManageCacheRepository].toInstance(repo)
     )

@@ -73,7 +73,7 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
           result.box6 mustBe None
         }
 
-        "set as 'taskList' (have working knowledge when psa registration toggle is on)" in {
+        "set as 'taskList' (have working knowledge)" in {
           val declaration = Json.obj("declaration" -> JsBoolean(true), "declarationFitAndProper" -> JsBoolean(true),
             "declarationWorkingKnowledge" -> JsString("taskList"))
           val result = declaration.as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
@@ -91,7 +91,7 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
           result.box6 mustBe Some(true)
         }
 
-        "set as 'whatyouWillNeed' (I don't have working knowledge when psa registration toggle is on)" in {
+        "set as 'whatyouWillNeed' (I don't have working knowledge)" in {
           val adviserDeclaration = "declarationWorkingKnowledge" -> JsString("whatyouWillNeed")
 
           val result = (declaration + adviserDeclaration).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
@@ -118,7 +118,7 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
           result.pensionAdvisorDetail.value mustBe pensionAdviserSample
         }
 
-        "set as 'whatyouWillNeed' (I don't have working knowledge when psa registration toggle is on) containing adviser details" in {
+        "set as 'whatyouWillNeed' (I don't have working knowledge) containing adviser details" in {
           val adviserName = "adviserName" -> JsString("John")
           val adviserPhone = "adviserPhone" -> JsString("07592113")
           val adviserEmail = "adviserEmail" -> JsString("test@test.com")
