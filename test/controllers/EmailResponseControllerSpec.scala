@@ -44,7 +44,6 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
       bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
       bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
-      bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
       bind[AuditService].to(fakeAuditService)
     )
   private val authConnector: AuthConnector = mock[AuthConnector]

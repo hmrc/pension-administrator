@@ -61,7 +61,6 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec with MockitoSugar 
     bind[SessionDataCacheRepository].toInstance(mock[SessionDataCacheRepository]),
     bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
     bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
-    bind[AdminDataRepository].toInstance(mock[AdminDataRepository]),
     bind[UpdateClientReferenceConnector].toInstance(mockUpdateClientReferenceConnector),
     bind[actions.PsaSchemeAuthAction].toInstance(new FakePsaSchemeAuthAction),
     bind[SchemeConnector].toInstance(mockSchemeConnector)
