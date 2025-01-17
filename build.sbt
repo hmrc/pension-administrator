@@ -49,4 +49,3 @@ lazy val microservice = Project(AppDependencies.appName, file("."))
   .settings(resolvers ++= Seq(
     Resolver.jcenterRepo
   ))
-  .settings(targetJvm := "jvm-11")
