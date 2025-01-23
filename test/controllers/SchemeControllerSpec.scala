@@ -174,38 +174,6 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     }
   }
 
-  "getPsaDetails" should "return OK when service returns successfully" in {
-
-    val result = controller.getPsaDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
-
-    status(result) mustBe OK
-    contentAsJson(result) mustBe Json.toJson(psaSubscription)
-  }
-
-  it should "return bad request when connector returns BAD_REQUEST" in {
-
-    fakeDesConnector.setPsaDetailsResponse(
-      Future.successful(Left(new BadRequestException("bad request")))
-    )
-
-    val result = controller.getPsaDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
-
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "bad request"
-  }
-
-  it should "return not found when connector returns NOT_FOUND" in {
-
-    fakeDesConnector.setPsaDetailsResponse(
-      Future.successful(Left(new NotFoundException("not found")))
-    )
-
-    val result = controller.getPsaDetails(fakeRequest.withHeaders(("psaId", "A2123456")))
-
-    status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "not found"
-  }
-
   "getPsaDetailsSelf" should "return OK when service returns successfully" in {
 
     val result = controller.getPsaDetailsSelf(fakeRequest)
@@ -236,61 +204,6 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     status(result) mustBe NOT_FOUND
     contentAsString(result) mustBe "not found"
-  }
-
-  "removePSAOld" should "return NO_CONTENT when service returns successfully" in {
-
-    val result = call(controller.removePsaOld, removePsaFakeRequest(removePsaJson))
-    status(result) mustBe NO_CONTENT
-
-  }
-
-  it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
-
-    fakeDesConnector.setRemovePsaResponse(
-      Future.successful(Left(new BadRequestException("bad request")))
-    )
-
-    val result = call(controller.removePsaOld, removePsaFakeRequest(removePsaJson))
-
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "bad request"
-  }
-
-  it should "return CONFLICT when service returns CONFLICT" in {
-
-    fakeDesConnector.setRemovePsaResponse(
-      Future.successful(Left(new ConflictException("conflict")))
-    )
-
-    val result = call(controller.removePsaOld, removePsaFakeRequest(removePsaJson))
-
-    status(result) mustBe CONFLICT
-    contentAsString(result) mustBe "conflict"
-  }
-
-  it should "return NOT_FOUND when service returns NOT_FOUND" in {
-
-    fakeDesConnector.setRemovePsaResponse(
-      Future.successful(Left(new NotFoundException("not found")))
-    )
-
-    val result = call(controller.removePsaOld, removePsaFakeRequest(removePsaJson))
-
-    status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "not found"
-  }
-
-  it should "return Forbidden when service return Forbidden" in {
-
-    fakeDesConnector.setRemovePsaResponse(
-      Future.successful(Left(new ForbiddenException("forbidden")))
-    )
-
-    val result = call(controller.removePsaOld, removePsaFakeRequest(removePsaJson))
-
-    status(result) mustBe FORBIDDEN
-    contentAsString(result) mustBe "forbidden"
   }
 
   "removePSA" should "return NO_CONTENT when service returns successfully" in {
@@ -376,81 +289,6 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     }
   }
 
-  "deregisterPSA" should "return OK when service returns successfully" in {
-
-    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
-    status(result) mustBe NO_CONTENT
-
-  }
-
-  it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
-
-    fakeDesConnector.setDeregisterPsaResponse(
-      Future.successful(Left(new BadRequestException("bad request")))
-    )
-
-    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
-
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "bad request"
-  }
-
-  it should "return CONFLICT when service returns CONFLICT" in {
-
-    fakeDesConnector.setDeregisterPsaResponse(
-      Future.successful(Left(new ConflictException("conflict")))
-    )
-
-    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
-
-    status(result) mustBe CONFLICT
-    contentAsString(result) mustBe "conflict"
-  }
-
-  it should "return NOT_FOUND when service returns NOT_FOUND" in {
-
-    fakeDesConnector.setDeregisterPsaResponse(
-      Future.successful(Left(new NotFoundException("not found")))
-    )
-
-    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
-
-    status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "not found"
-  }
-
-  it should "return Forbidden when service return Forbidden" in {
-
-    fakeDesConnector.setDeregisterPsaResponse(
-      Future.successful(Left(new ForbiddenException("forbidden")))
-    )
-
-    val result = call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
-
-    status(result) mustBe FORBIDDEN
-    contentAsString(result) mustBe "forbidden"
-  }
-
-
-  it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
-
-    fakeDesConnector.setDeregisterPsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
-
-    recoverToSucceededIf[UpstreamErrorResponse] {
-      call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
-    }
-  }
-
-
-  it should "throw Exception when service throws any unknown Exception" in {
-
-    fakeDesConnector.setDeregisterPsaResponse(Future.failed(new Exception("Unknown Exception")))
-
-    recoverToSucceededIf[Exception] {
-      call(controller.deregisterPsa(psaId.id), deregisterPsaFakeRequest)
-    }
-  }
-
   "deregisterPSASelf" should "return OK when service returns successfully" in {
 
     val result = call(controller.deregisterPsaSelf, deregisterPsaFakeRequest)
@@ -523,43 +361,6 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     recoverToSucceededIf[Exception] {
       call(controller.deregisterPsaSelf, deregisterPsaFakeRequest)
-    }
-  }
-
-  "updatePSA" should "return Ok when successful" in {
-
-    val result = controller.updatePSA(psaId.id)(fakeRequest.withJsonBody(psaVariationData))
-
-    status(result) mustBe OK
-  }
-
-  it should "return INVALID_PSAID when service returns INVALID_PSAID" in {
-
-    fakeSchemeService.setUpdatePsaResponse(
-      Future.successful(Left(new BadRequestException("INVALID_PSAID")))
-    )
-
-    val result = controller.updatePSA(psaId.id)(fakeRequest.withJsonBody(psaVariationData))
-
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "INVALID_PSAID"
-  }
-
-  it should "throw BadRequestException when no data received in the request" in {
-    AuthUtils.authStub(mockAuthConnector)
-
-    recoverToSucceededIf[BadRequestException] {
-      controller.updatePSA(psaId.id)(fakeRequest)
-    }
-  }
-
-  it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
-
-    fakeSchemeService.setUpdatePsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
-    AuthUtils.authStub(mockAuthConnector)
-
-    recoverToSucceededIf[UpstreamErrorResponse] {
-      controller.updatePSA(psaId.id)(fakeRequest.withJsonBody(psaVariationData))
     }
   }
 

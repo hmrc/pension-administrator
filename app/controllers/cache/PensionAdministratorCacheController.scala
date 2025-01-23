@@ -18,7 +18,6 @@ package controllers.cache
 
 import controllers.actions.NoEnrolmentAuthAction
 import play.api.Logger
-import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.ManageCacheRepository
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -32,30 +31,6 @@ abstract class PensionAdministratorCacheController(
                                                   )(implicit val ec: ExecutionContext) extends BackendController(cc){
 
   private val logger = Logger(classOf[PensionAdministratorCacheController])
-
-  def save(id: String): Action[AnyContent] = authAction.async {
-    implicit request =>
-        request.body.asJson.map {
-          jsValue =>
-            repository.upsert(id, jsValue)
-              .map(_ => Ok)
-        } getOrElse Future.successful(EntityTooLarge)
-  }
-
-  def get(id: String): Action[AnyContent] = authAction.async {
-        logger.debug("controllers.cache.PensionAdministratorCacheController.get: Authorised Request " + id)
-        repository.get(id).map { response =>
-          logger.debug(s"controllers.cache.PensionAdministratorCacheController.get: Response for request Id $id is $response")
-          response.map {
-            Ok(_)
-          }
-            .getOrElse(NotFound)
-        }
-  }
-
-  def remove(id: String): Action[AnyContent] = authAction.async {
-        repository.remove(id).map(_ => Ok)
-  }
 
   def saveSelf: Action[AnyContent] = authAction.async {
     implicit request =>

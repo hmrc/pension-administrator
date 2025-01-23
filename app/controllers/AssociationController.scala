@@ -42,18 +42,6 @@ class AssociationController @Inject()(
 
   private val logger = Logger(classOf[AssociationController])
 
-  def getMinimalDetails: Action[AnyContent] = psaPspAuth.async {
-    implicit request =>
-      retrieveIdAndTypeFromHeaders{ (idValue, idType, regime) =>
-        getMinimalDetail(idValue, idType, regime)
-         .map {
-            case Right(psaDetails) => Ok(Json.toJson(psaDetails))
-            case Left(ex) if ex.responseCode == NOT_FOUND => NotFound("no match found")
-            case Left(e) => result(e)
-          }
-      }
-  }
-
   def getMinimalDetailsSelf: Action[AnyContent] = psaPspAuth.async { implicit request =>
     getRequiredUserParametersFromRequest.fold(error => Future.successful(BadRequest(error)), { case (id, idType, regime) =>
       getMinimalDetail(id, idType, regime)
@@ -123,14 +111,6 @@ class AssociationController @Inject()(
     loggedInAsPsaOpt.map(process)
       .getOrElse(Left("No header present loggedInAsPsa [true, false] - Should indicate if user is logged in as a PSA or PSP"))
 
-  }
-
-  private def retrieveIdAndTypeFromHeaders(block: (String, String, String) => Future[Result])(implicit request: RequestHeader):Future[Result] = {
-      (request.headers.get("psaId"), request.headers.get("pspId")) match {
-        case (Some(id), None) => block(id, "psaid", "poda")
-        case (None, Some(id)) => block(id, "pspid", "podp")
-        case _ => Future.failed(new BadRequestException("No PSA or PSP Id in the header for get minimal details"))
-      }
   }
 
   def acceptInvitation: Action[AnyContent] = psaPspAuth.async {

@@ -60,33 +60,10 @@ class SchemeController @Inject()(
     } recoverWith recoverFromError
   }
 
-  def getPsaDetails: Action[AnyContent] = authAction.async {
-    implicit request =>
-      val psaId = request.headers.get("psaId")
-      psaId match {
-        case Some(id) =>
-          desConnector.getPSASubscriptionDetails(id).map {
-            case Right(psaDetails) => Ok(Json.toJson(psaDetails))
-            case Left(e) => result(e)
-          }
-        case _ => Future.failed(new BadRequestException("No PSA Id in the header for get minimal details"))
-      }
-
-  }
-
   def getPsaDetailsSelf: Action[AnyContent] = psaAuthAction.async {
     implicit request =>
       desConnector.getPSASubscriptionDetails(request.psaId.id).map {
         case Right(psaDetails) => Ok(Json.toJson(psaDetails))
-        case Left(e) => result(e)
-      }
-  }
-
-  def removePsaOld: Action[PsaToBeRemovedFromScheme] = psaAuthAction.async(parse.json[PsaToBeRemovedFromScheme]) {
-    implicit request =>
-      desConnector.removePSA(request.body) map {
-        case Right(_) =>
-          NoContent
         case Left(e) => result(e)
       }
   }
@@ -114,19 +91,6 @@ class SchemeController @Inject()(
       desConnector.deregisterPSA(request.psaId.id).map {
         case Right(_) => NoContent
         case Left(e) => result(e)
-      }
-  }
-
-  def updatePSA(psaId: String): Action[AnyContent] = authAction.async {
-    implicit request =>
-
-      request.body.asJson match {
-        case Some(jsValue) =>
-          schemeService.updatePSA(psaId, jsValue).map {
-            case Right(_) => Ok
-            case Left(e) => result(e)
-          }
-        case _ => Future.failed(new BadRequestException("No PSA variation details in the header for psa update/variatiosn"))
       }
   }
 

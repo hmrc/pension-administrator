@@ -4,7 +4,7 @@ import sbt._
 object AppDependencies {
 
   val appName = "pension-administrator"
-  private val bootstrapVersion = "9.5.0"
+  private val bootstrapVersion = "9.7.0"
   private val mongoVersion = "2.3.0"
   val compile: Seq[ModuleID] = Seq(
     ws,
@@ -13,8 +13,7 @@ object AppDependencies {
     "com.typesafe.play"             %% "play-json"                  % "2.10.5",
     "uk.gov.hmrc"                   %% "bootstrap-backend-play-30"  % bootstrapVersion,
     "com.networknt"                 % "json-schema-validator"       % "1.5.1",
-    "uk.gov.hmrc"                   %% "domain-play-30"             % "10.0.0",
-    ehcache
+    "uk.gov.hmrc"                   %% "domain-play-30"             % "10.0.0"
   )
 
   def test(scope: String = "test, it"): Seq[ModuleID] = Seq(
