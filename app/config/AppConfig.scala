@@ -17,6 +17,7 @@
 package config
 
 import com.google.inject.Inject
+import models.SchemeReferenceNumber
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
@@ -56,7 +57,8 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, servicesConfig: S
 
   lazy val emailUrl: String = s"$baseUrlEmail${runModeConfiguration.underlying.getString("serviceUrls.email")}"
   lazy val checkAssociationUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.checkPsaAssociation")}"
-  lazy val getSchemeDetailsUrl: String = s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.getSchemeDetails")}"
+  def getSchemeDetailsUrl(srn: SchemeReferenceNumber): String =
+    s"$baseUrlPensionsScheme${runModeConfiguration.underlying.getString("serviceUrls.getSchemeDetails")}".format(srn.id)
 
   lazy val invitationCallbackUrl: String = s"$baseUrlPensionAdministrator${runModeConfiguration.underlying.getString("serviceUrls.invitation.callback")}"
   lazy val updateClientReferenceUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.updateClientReference")}"

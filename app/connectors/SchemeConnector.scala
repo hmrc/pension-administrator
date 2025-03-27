@@ -22,7 +22,6 @@ import models.SchemeReferenceNumber
 import play.api.Logging
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.RequestHeader
 import uk.gov.hmrc.domain.{PsaId, PspId}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -38,12 +37,10 @@ trait SchemeConnector {
                          (implicit headerCarrier: HeaderCarrier,
                           ec: ExecutionContext): Future[Either[HttpException, Boolean]]
 
-  def listOfSchemes(psaId: String)
-                   (implicit headerCarrier: HeaderCarrier,
-                    ec: ExecutionContext,
-                    request: RequestHeader): Future[Either[HttpException, JsValue]]
+  def listOfSchemes(implicit headerCarrier: HeaderCarrier,
+                    ec: ExecutionContext): Future[Either[HttpException, JsValue]]
 
-  def getSchemeDetails(psaId: String, schemeIdType: String, idNumber: String)
+  def getSchemeDetails(schemeIdType: String, idNumber: String, srn: SchemeReferenceNumber)
                       (implicit hc: HeaderCarrier,
                        ec: ExecutionContext): Future[Either[HttpException, JsValue]]
 }
@@ -84,11 +81,9 @@ class SchemeConnectorImpl @Inject()(
 
   }
 
-  def listOfSchemes(psaId: String)
-                   (implicit headerCarrier: HeaderCarrier,
-                    ec: ExecutionContext,
-                    request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-    val headers = Seq(("idType", "psaid"), ("idValue", psaId), ("Content-Type", "application/json"))
+  def listOfSchemes(implicit headerCarrier: HeaderCarrier,
+                    ec: ExecutionContext): Future[Either[HttpException, JsValue]] = {
+    val headers = Seq(("idType", "psaid"), ("Content-Type", "application/json"))
     callListOfSchemes(url"${config.listOfSchemesUrl}", headers)
   }
 
@@ -105,12 +100,12 @@ class SchemeConnectorImpl @Inject()(
     }
   }
 
-  def getSchemeDetails(psaId: String, schemeIdType: String, idNumber: String)
+  def getSchemeDetails(schemeIdType: String, idNumber: String, srn: SchemeReferenceNumber)
                                (implicit hc: HeaderCarrier, ec: ExecutionContext)
   : Future[Either[HttpException, JsValue]] = {
 
-    val url = url"${config.getSchemeDetailsUrl}"
-    val headers = Seq(("schemeIdType", schemeIdType), ("idNumber", idNumber), ("PSAId", psaId))
+    val url = url"${config.getSchemeDetailsUrl(srn)}"
+    val headers = Seq(("schemeIdType", schemeIdType), ("idNumber", idNumber))
 
     httpV2Client.get(url).setHeader(headers: _*).execute[HttpResponse] map { response =>
       response.status match {

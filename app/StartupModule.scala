@@ -19,7 +19,7 @@ import play.api.{Configuration, Environment}
 import service.MigrationService
 
 class StartupModule(environment: Environment, configuration: Configuration) extends AbstractModule {
-  override def configure() = {
+  override def configure(): Unit = {
     if (configuration.get[Boolean]("mongo.migration.enable.migration")) bind(classOf[MigrationService]).asEagerSingleton()
   }
 }
