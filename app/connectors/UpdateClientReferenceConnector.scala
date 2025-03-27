@@ -17,7 +17,7 @@
 package connectors
 
 import audit.{AuditService, UpdateClientReferenceAuditService}
-import com.google.inject.{ImplementedBy, Inject}
+import com.google.inject.Inject
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.{IdentifierDetails, UpdateClientReferenceRequest}

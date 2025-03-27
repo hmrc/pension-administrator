@@ -38,7 +38,7 @@ class DeregistrationController @Inject()(
 
   def canDeregisterSelf: Action[AnyContent] = authAction.async {
     implicit request =>
-      schemeConnector.listOfSchemes(request.psaId.id).flatMap {
+      schemeConnector.listOfSchemes.flatMap {
         case Right(jsValue) =>
 
           jsValue.validate[ListOfSchemes] match {
@@ -62,7 +62,7 @@ class DeregistrationController @Inject()(
                               (implicit hc: HeaderCarrier): Future[Seq[Boolean]] =
     if (!canDeregister && schemes.exists(_.schemeStatus == "Open")) {
       Future.sequence(schemes.filter(_.schemeStatus == "Open").map { scheme =>
-        schemeConnector.getSchemeDetails(psaId, "srn", scheme.referenceNumber).map {
+        schemeConnector.getSchemeDetails("srn", scheme.referenceNumber, scheme.referenceNumber).map {
           case Right(jsValue) =>
             (jsValue \ "psaDetails").as[Seq[PsaDetails]](Reads.seq[PsaDetails]).exists(_.id != psaId)
           case Left(_) => false
