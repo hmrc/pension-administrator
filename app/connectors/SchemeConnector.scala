@@ -83,7 +83,7 @@ class SchemeConnectorImpl @Inject()(
 
   def listOfSchemes(implicit headerCarrier: HeaderCarrier,
                     ec: ExecutionContext): Future[Either[HttpException, JsValue]] = {
-    val headers = Seq(("idType", "psaid"), ("Content-Type", "application/json"))
+    val headers = Seq(("idType", "PSA"), ("Content-Type", "application/json"))
     callListOfSchemes(url"${config.listOfSchemesUrl}", headers)
   }
 
