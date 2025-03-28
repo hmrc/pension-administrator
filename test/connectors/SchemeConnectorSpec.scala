@@ -96,7 +96,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     server.stubFor(
       get(urlEqualTo(listSchemesUrl))
         .withHeader("Content-Type", equalTo("application/json"))
-        .withHeader("idType", equalTo("psaid"))
+        .withHeader("idType", equalTo("PSA"))
         .willReturn(
           ok(Json.stringify(validListOfSchemeResponse))
             .withHeader("Content-Type", "application/json")
