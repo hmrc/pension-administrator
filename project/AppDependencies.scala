@@ -1,12 +1,28 @@
+/*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import play.sbt.PlayImport.*
 import sbt.*
 
 object AppDependencies {
 
-  val appName = "pension-administrator"
   private val bootstrapVersion = "9.11.0"
   private val mongoVersion = "2.6.0"
-  val compile: Seq[ModuleID] = Seq(
+
+  private val compile: Seq[ModuleID] = Seq(
     ws,
     "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.19.0",
     "uk.gov.hmrc.mongo"             %% "hmrc-mongo-play-30"         % mongoVersion,
@@ -16,13 +32,15 @@ object AppDependencies {
     "uk.gov.hmrc"                   %% "domain-play-30"             % "10.0.0"
   )
 
-  def test(scope: String = "test, it"): Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"             %% "bootstrap-test-play-30"     % bootstrapVersion    % Test,
-    "uk.gov.hmrc.mongo"       %% "hmrc-mongo-test-play-30"    % mongoVersion        % Test,
-    "org.scalatest"           %% "scalatest"                  % "3.2.19"    % Test,
-    "org.scalatestplus"       %% "scalacheck-1-17"            % "3.2.18.0"  % Test,
-    "org.scalatestplus"       %% "mockito-4-6"                % "3.2.15.0"  % Test,
-    "org.scalatestplus.play"  %% "scalatestplus-play"         % "7.0.1"     % Test,
-    "io.github.wolfendale"    %% "scalacheck-gen-regexp"      % "1.1.0"     % Test
-  )
+  private val test: Seq[ModuleID] = Seq(
+    "uk.gov.hmrc"             %% "bootstrap-test-play-30"     % bootstrapVersion,
+    "uk.gov.hmrc.mongo"       %% "hmrc-mongo-test-play-30"    % mongoVersion,
+    "org.scalatest"           %% "scalatest"                  % "3.2.19",
+    "org.scalatestplus"       %% "scalacheck-1-17"            % "3.2.18.0",
+    "org.scalatestplus"       %% "mockito-4-6"                % "3.2.15.0",
+    "org.scalatestplus.play"  %% "scalatestplus-play"         % "7.0.1",
+    "io.github.wolfendale"    %% "scalacheck-gen-regexp"      % "1.1.0"
+  ).map(_ % Test)
+
+  def apply(): Seq[ModuleID] = compile ++ test
 }
