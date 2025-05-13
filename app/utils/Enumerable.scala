@@ -44,7 +44,7 @@ object Enumerable {
       }
     }
 
-    implicit def writes[A]: Writes[A] = {
+    implicit def writes[A: Enumerable]: Writes[A] = {
       Writes(value => JsString(value.toString))
     }
   }
