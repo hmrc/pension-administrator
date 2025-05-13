@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,12 +110,7 @@ object DirectorOrPartnerDetailTypeItem {
     }
   }
 
-  def directorOrPartnerReferenceReads(referenceFlag: String, referenceName: String): Reads[(Option[String], Option[String])] = (
-    (JsPath \ referenceName).readNullable[String] and
-      (JsPath \ "reason").readNullable[String]
-    ) ((referenceNumber, reason) => (referenceNumber, reason))
-
-  def directorOrPartnerReads(index: Int, personType: String): Reads[DirectorOrPartnerDetailTypeItem] = (
+  private def directorOrPartnerReads(index: Int, personType: String): Reads[DirectorOrPartnerDetailTypeItem] = (
     JsPath.read(IndividualDetailType.apiReads(personType)) and
       (JsPath \ "nino").readNullable[String]((__ \ "value").read[String]) and
       (JsPath \ "noNinoReason").readNullable[String] and

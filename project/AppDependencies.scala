@@ -1,18 +1,18 @@
-import play.sbt.PlayImport._
-import sbt._
+import play.sbt.PlayImport.*
+import sbt.*
 
 object AppDependencies {
 
   val appName = "pension-administrator"
-  private val bootstrapVersion = "9.7.0"
-  private val mongoVersion = "2.3.0"
+  private val bootstrapVersion = "9.11.0"
+  private val mongoVersion = "2.6.0"
   val compile: Seq[ModuleID] = Seq(
     ws,
-    "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.17.2",
+    "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.19.0",
     "uk.gov.hmrc.mongo"             %% "hmrc-mongo-play-30"         % mongoVersion,
-    "com.typesafe.play"             %% "play-json"                  % "2.10.5",
+    "com.typesafe.play"             %% "play-json"                  % "2.10.6",
     "uk.gov.hmrc"                   %% "bootstrap-backend-play-30"  % bootstrapVersion,
-    "com.networknt"                 % "json-schema-validator"       % "1.5.1",
+    "com.networknt"                 % "json-schema-validator"       % "1.5.6",
     "uk.gov.hmrc"                   %% "domain-play-30"             % "10.0.0"
   )
 

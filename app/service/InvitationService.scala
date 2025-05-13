@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import utils.{DateHelper, FuzzyNameMatcher}
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
 
-case class MongoDBFailedException(exceptionMesage: String) extends HttpException(exceptionMesage, INTERNAL_SERVER_ERROR)
+case class MongoDBFailedException(exceptionMessage: String) extends HttpException(exceptionMessage, INTERNAL_SERVER_ERROR)
 
 @ImplementedBy(classOf[InvitationServiceImpl])
 trait InvitationService {
@@ -72,7 +72,7 @@ class InvitationServiceImpl @Inject()(
               case false if doNamesMatch(invitation.inviteeName, psaDetails) =>
                 handle(insertInvitation(invitation)) { _ =>
                   auditService.sendEvent(InvitationAuditEvent(invitation))
-                  sendInviteeEmail(invitation, psaDetails, config).map(Right(_))
+                  sendInviteeEmail(invitation, psaDetails).map(Right(_))
                 }
               case true if doNamesMatch(invitation.inviteeName, psaDetails) =>
                 Future.successful(Left(new ForbiddenException("The invitation is to a PSA already associated with this scheme")))
@@ -172,7 +172,7 @@ class InvitationServiceImpl @Inject()(
       .replaceAll("[0-9]", "9")
   }
 
-  private def sendInviteeEmail(invitation: Invitation, psaDetails: MinimalDetails, config: AppConfig)
+  private def sendInviteeEmail(invitation: Invitation, psaDetails: MinimalDetails)
                               (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
 
     val name = psaDetails.individualDetails.map(_.fullName).getOrElse(psaDetails.organisationName.getOrElse(""))
