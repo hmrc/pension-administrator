@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
 package repositories
 
 import com.mongodb.client.model.FindOneAndUpdateOptions
+import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.bson.BsonBinary
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.*
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json._
+import play.api.libs.json.*
 import play.api.{Configuration, Logging}
 import repositories.ManageCacheEntry.ManageCacheEntryFormats.lastUpdatedKey
 import repositories.ManageCacheEntry.{DataEntry, JsonDataEntry, ManageCacheEntry, ManageCacheEntryFormats}
@@ -120,7 +121,7 @@ abstract class ManageCacheRepository(
     )
   ) with Logging {
 
-  import ManageCacheEntryFormats._
+  import ManageCacheEntryFormats.*
 
   private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
   private val jsonCrypto: Encrypter with Decrypter = SymmetricCryptoFactory.aesCryptoFromConfig(baseConfigKey = encryptionKey, config.underlying)
