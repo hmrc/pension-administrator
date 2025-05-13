@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,107 @@ import play.api.libs.json._
 import utils.JsonTransformations.{AddressTransformer, DirectorOrPartnerTransformer, LegalStatusTransformer}
 
 class DirectorsTransformationSpec extends AnyWordSpec with Matchers with OptionValues {
+
+  val legalStatusTransformer = new LegalStatusTransformer()
+  val addressTransformer = new AddressTransformer(legalStatusTransformer)
+  val directorOrPartnerTransformer = new DirectorOrPartnerTransformer(addressTransformer)
+
+  val moreThanTenFlag: JsValue = Json.parse(
+    """{
+                  "isMorethanTenDirectors":true
+              }""")
+
+  val legalStatus: JsValue = Json.parse(
+    """{
+                  "legalStatus":"Limited Company",
+                  "idType":"UTR",
+                  "idNumber":"0123456789",
+                  "noIdentifier":false
+             }""")
+
+  val userAnswersDirector: JsValue = Json.parse(
+    """      {
+                     "directorDetails" : {
+                       "firstName" : "Ann",
+                       "middleName" : "Sarah",
+                       "lastName" : "Baker",
+                       "isDeleted" : false
+                     },
+                     "hasNino" : true,
+                     "dateOfBirth" : "1980-03-01",
+                     "nino" : {
+                        "value" : "JC000001A"
+                      },
+                      "hasUtr": true,
+                      "utr" : {
+                        "value" : "0123456789"
+                      },
+                     "directorAddress" : {
+                       "addressLine1" : "1 Director Road",
+                       "addressLine2" : "Some District",
+                       "addressLine3" : "Anytown",
+                       "addressLine4" : "Somerset",
+                       "postcode" : "ZZ1 1ZZ",
+                       "country" : "GB"
+                     },
+                     "directorAddressYears" : "under_a_year",
+                     "directorPreviousAddress" : {
+                         "addressLine1" : "8 Pattinson Grove",
+                         "addressLine2" : "Ryton",
+                         "addressLine4" : "Tyne and Wear",
+                         "postcode" : "NE22 ARR",
+                         "country" : "ES"
+                     },
+                     "directorContactDetails" : {
+                       "email" : "ann_baker@test.com",
+                       "phone" : "0044-09876542312"
+                     },
+                     "isDirectorComplete" : true
+                   }""")
+
+  val desDirector: JsValue = Json.parse(
+    """      {
+                              "sequenceId":"000",
+                              "entityType":"Director",
+                              "title":"Mrs",
+                              "firstName":"Ann",
+                              "middleName":"Sarah",
+                              "lastName":"Baker",
+                              "dateOfBirth":"1980-03-01",
+                              "nino":"JC000001A",
+                              "noNinoReason" : "test",
+                              "utr":"0123456789",
+                              "noUtrReason" : "test",
+                              "correspondenceCommonDetails":{
+                                "addressDetails":{
+                                  "nonUKAddress":false,
+                                  "line1":"1 Director Road",
+                                  "line2":"Clifton",
+                                  "line3":"York",
+                                  "line4":"Yorkshire",
+                                  "postalCode":"YO1 9EX",
+                                  "countryCode":"GB"
+                                },
+                                "contactDetails":{
+                                  "telephone":"0044-09876542312",
+                                  "mobileNumber":"0044-09876542312",
+                                  "fax":"0044-09876542312",
+                                  "email":"ann_baker@test.com"
+                                }
+                              },
+                              "previousAddressDetails":{
+                                "isPreviousAddressLast12Month":true,
+                                "previousAddress": {
+                                  "nonUKAddress": false,
+                                  "line1":"1 Previous Road",
+                                  "line2":"Clifton",
+                                  "line3":"York",
+                                  "line4":"Yorkshire",
+                                  "postalCode":"YO1 9EX",
+                                  "countryCode":"ES"
+                                }
+                              }
+                            }""")
 
   "A payload containing a director" must {
     "map correctly to a valid user answers director" when {
@@ -139,105 +240,4 @@ class DirectorsTransformationSpec extends AnyWordSpec with Matchers with OptionV
       }
     }
   }
-
-  val legalStatusTransformer = new LegalStatusTransformer()
-  val addressTransformer = new AddressTransformer(legalStatusTransformer)
-  val directorOrPartnerTransformer = new DirectorOrPartnerTransformer(addressTransformer)
-
-  val userAnswersDirector: JsValue = Json.parse(
-    """      {
-                     "directorDetails" : {
-                       "firstName" : "Ann",
-                       "middleName" : "Sarah",
-                       "lastName" : "Baker",
-                       "isDeleted" : false
-                     },
-                     "hasNino" : true,
-                     "dateOfBirth" : "1980-03-01",
-                     "nino" : {
-                        "value" : "JC000001A"
-                      },
-                      "hasUtr": true,
-                      "utr" : {
-                        "value" : "0123456789"
-                      },
-                     "directorAddress" : {
-                       "addressLine1" : "1 Director Road",
-                       "addressLine2" : "Some District",
-                       "addressLine3" : "Anytown",
-                       "addressLine4" : "Somerset",
-                       "postcode" : "ZZ1 1ZZ",
-                       "country" : "GB"
-                     },
-                     "directorAddressYears" : "under_a_year",
-                     "directorPreviousAddress" : {
-                         "addressLine1" : "8 Pattinson Grove",
-                         "addressLine2" : "Ryton",
-                         "addressLine4" : "Tyne and Wear",
-                         "postcode" : "NE22 ARR",
-                         "country" : "ES"
-                     },
-                     "directorContactDetails" : {
-                       "email" : "ann_baker@test.com",
-                       "phone" : "0044-09876542312"
-                     },
-                     "isDirectorComplete" : true
-                   }""")
-
-  val desDirector: JsValue = Json.parse(
-    """      {
-                              "sequenceId":"000",
-                              "entityType":"Director",
-                              "title":"Mrs",
-                              "firstName":"Ann",
-                              "middleName":"Sarah",
-                              "lastName":"Baker",
-                              "dateOfBirth":"1980-03-01",
-                              "nino":"JC000001A",
-                              "noNinoReason" : "test",
-                              "utr":"0123456789",
-                              "noUtrReason" : "test",
-                              "correspondenceCommonDetails":{
-                                "addressDetails":{
-                                  "nonUKAddress":false,
-                                  "line1":"1 Director Road",
-                                  "line2":"Clifton",
-                                  "line3":"York",
-                                  "line4":"Yorkshire",
-                                  "postalCode":"YO1 9EX",
-                                  "countryCode":"GB"
-                                },
-                                "contactDetails":{
-                                  "telephone":"0044-09876542312",
-                                  "mobileNumber":"0044-09876542312",
-                                  "fax":"0044-09876542312",
-                                  "email":"ann_baker@test.com"
-                                }
-                              },
-                              "previousAddressDetails":{
-                                "isPreviousAddressLast12Month":true,
-                                "previousAddress": {
-                                  "nonUKAddress": false,
-                                  "line1":"1 Previous Road",
-                                  "line2":"Clifton",
-                                  "line3":"York",
-                                  "line4":"Yorkshire",
-                                  "postalCode":"YO1 9EX",
-                                  "countryCode":"ES"
-                                }
-                              }
-                            }""")
-
-  val moreThanTenFlag: JsValue = Json.parse(
-    """{
-                  "isMorethanTenDirectors":true
-              }""")
-
-  val legalStatus: JsValue = Json.parse(
-    """{
-                  "legalStatus":"Limited Company",
-                  "idType":"UTR",
-                  "idNumber":"0123456789",
-                  "noIdentifier":false
-             }""")
 }
