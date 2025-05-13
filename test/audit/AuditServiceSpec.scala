@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class AuditServiceSpec extends AsyncFlatSpec with Matchers with Inside with Mock
     val sentEvent = FakeAuditConnector.lastSentEvent
 
     inside(sentEvent) {
-      case DataEvent(auditSource, auditType, _, _, detail, _, _, _) =>
+      case DataEvent(auditSource, auditType, _, _, detail, _, _, _, None) =>
         auditSource shouldBe appName
         auditType shouldBe "TestAuditEvent"
         detail should contain("payload" -> "test-audit-payload")
@@ -83,7 +83,7 @@ object FakeAuditConnector extends AuditConnector {
 
   private var sentEvent: DataEvent = _
 
-  override def auditingConfig: AuditingConfig = AuditingConfig(None, enabled = false, "test audit service", false)
+  override def auditingConfig: AuditingConfig = AuditingConfig(None, enabled = false, "test audit service", auditSentHeaders = false)
 
   override def sendEvent(event: DataEvent)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AuditResult] = {
     sentEvent = event

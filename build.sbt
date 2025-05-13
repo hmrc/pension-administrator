@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,34 +14,41 @@
  * limitations under the License.
  */
 
-import AppDependencies.{compile, test}
+import play.sbt.PlayImport.PlayKeys
 import play.sbt.routes.RoutesKeys
-import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings, targetJvm}
+import sbt.*
+import sbt.Keys.*
+import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
 
-lazy val appDependencies: Seq[ModuleID] = compile ++ test()
+val appName = "pension-administrator"
 
-lazy val microservice = Project(AppDependencies.appName, file("."))
+ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / majorVersion := 0
+ThisBuild / scalacOptions ++= Seq(
+  "-Wconf:src=routes/.*:s",
+  //"-Xfatal-warnings", //added for future-proofing; disabled temporarily until scala3 aspect of ticket
+  "-Wunused:params",
+  "-Wunused:implicits",
+  "-Wunused:imports",
+  //"-Xsource:3", //added to implement scala3 fixes within scala2; disabled temporarily
+  "-feature"
+)
+
+val root: Project = Project(appName, file("."))
   .disablePlugins(JUnitXmlReportPlugin)
   .enablePlugins(PlayScala, SbtDistributablesPlugin)
-  .settings(majorVersion := 0)
-  .settings(scalaSettings: _*)
-  .settings(scalaVersion := "2.13.12")
-  .settings(defaultSettings(): _*)
-  .settings(libraryDependencies ++= appDependencies)
-  .settings(retrieveManaged := true)
-  .settings(PlayKeys.devSettings += "play.server.http.port" -> "8205")
+  .settings(scalaSettings *)
+  .settings(defaultSettings() *)
   .settings(
+    CodeCoverageSettings.settings,
+    retrieveManaged := true,
+    libraryDependencies ++= AppDependencies(),
+    PlayKeys.devSettings += "play.server.http.port" -> "8205",
+    Test / parallelExecution := true,
     RoutesKeys.routesImport ++= Seq(
       "models.SchemeReferenceNumber",
-      "models.enumeration.JourneyType"
+      "models.enumeration.JourneyType",
     ),
-    scalacOptions += "-Wconf:src=routes/.*:s"
-  )
-  .settings(
-    Test / parallelExecution := true
-  )
-  .settings(CodeCoverageSettings.settings: _*)
-  .settings(
     Test / fork := true,
     Test / javaOptions += "-Dconfig.file=conf/test.application.conf"
   )

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 package config
 
 import com.google.inject.Inject
-import play.api.{Configuration, Environment}
+import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-class AppConfig @Inject()(runModeConfiguration: Configuration, environment: Environment, servicesConfig: ServicesConfig) {
+class AppConfig @Inject()(runModeConfiguration: Configuration, servicesConfig: ServicesConfig) {
 
   lazy val appName: String = runModeConfiguration.underlying.getString("appName")
 
