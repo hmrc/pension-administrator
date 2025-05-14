@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,19 @@
 
 package connectors
 
-import audit._
+import audit.*
 import com.google.inject.Inject
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models.registrationnoid._
+import models.registrationnoid.*
 import play.api.Logger
-import play.api.http.Status._
-import play.api.libs.json._
+import play.api.http.Status.*
+import play.api.libs.json.*
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
-import utils._
+import utils.*
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -60,7 +61,7 @@ class RegistrationConnector @Inject()(
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdIndividual: ${requestValidationResult.mkString}")
     } else {
       httpClientV2.post(registerWithIdUrl)
-        .setHeader(headerUtils.desHeader: _*)
+        .setHeader(headerUtils.desHeader *)
         .withBody(registerData).execute[HttpResponse]  map {
         handleResponse(_,
           registerWithIdUrl.toString,
@@ -90,7 +91,7 @@ class RegistrationConnector @Inject()(
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registerWithIdOrganisation: ${requestValidationResult.mkString}")
     } else {
       httpClientV2.post(registerWithIdUrl)
-        .setHeader(headerUtils.desHeader: _*)
+        .setHeader(headerUtils.desHeader *)
         .withBody(registerData).execute[HttpResponse] map {
         handleResponse(_,
           registerWithIdUrl.toString,
@@ -105,7 +106,7 @@ class RegistrationConnector @Inject()(
     }
   }
 
-  def logWarningWithoutNotFound[A](endpoint: String): PartialFunction[Try[Either[HttpException, A]], Unit] = {
+  private def logWarningWithoutNotFound[A](endpoint: String): PartialFunction[Try[Either[HttpException, A]], Unit] = {
     case Success(Left(_: NotFoundException)) => () //Don't log 404 responses as warnings.
     case Success(Left(e: HttpException)) =>
       logger.warn(s"$endpoint received error response from DES", e)
@@ -135,7 +136,7 @@ class RegistrationConnector @Inject()(
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registrationNoIdOrganisation: ${requestValidationResult.mkString}")
     } else {
       httpClientV2.post(url)
-        .setHeader(headerUtils.desHeader: _*)
+        .setHeader(headerUtils.desHeader *)
         .withBody(registerWithNoIdData).execute[HttpResponse] map {
         response =>
           logger.debug(s"Registration Without Id Organisation response. Status=${response.status}\n${response.body}")
@@ -174,7 +175,7 @@ class RegistrationConnector @Inject()(
       throw RegistrationRequestValidationFailureException(s"Invalid payload for registrationNoIdIndividual: ${requestValidationResult.mkString}")
     } else {
       httpClientV2.post(url)
-        .setHeader(headerUtils.desHeader: _*)
+        .setHeader(headerUtils.desHeader *)
         .withBody(body).execute[HttpResponse] map {
         response =>
           logger.debug(s"Registration Without Id Individual response. Status=${response.status}\n${response.body}")

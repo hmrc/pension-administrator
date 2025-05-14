@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,20 @@
 
 package connectors
 
-import audit._
+import audit.*
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.{PsaSubscription, PsaToBeRemovedFromScheme}
 import play.api.Logger
-import play.api.http.Status._
-import play.api.libs.json._
+import play.api.http.Status.*
+import play.api.libs.json.*
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler, JSONPayloadSchemaValidator}
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
@@ -194,7 +195,7 @@ class DesConnectorImpl @Inject()(
     if (validationResult.nonEmpty)
       throw PSAValidationFailureException(s"Invalid payload when updatePSA :-\n${validationResult.mkString}")
     else
-      httpV2Client.post(url).setHeader(headerUtils.desHeader: _*).withBody(data).execute[HttpResponse] map {
+      httpV2Client.post(url).setHeader(headerUtils.desHeader *).withBody(data).execute[HttpResponse] map {
         handlePostResponse(_, url.toString)
       }
   }

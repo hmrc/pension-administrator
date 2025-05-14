@@ -144,7 +144,7 @@ abstract class ManageCacheRepository(
       val setOperation = Updates.combine(
         Updates.set(idField, id),
         Updates.set(dataKey, Codecs.toBson(data)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(Instant.now())(MongoJavatimeFormats.instantFormat))
+        Updates.set(lastUpdatedKey, Codecs.toBson(Instant.now())(using MongoJavatimeFormats.instantFormat))
       )
       collection.withDocumentClass[JsonDataEntry]().findOneAndUpdate(
         filter = Filters.eq(idField, id),
