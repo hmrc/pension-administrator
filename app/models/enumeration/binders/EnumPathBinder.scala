@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,19 @@ package models.enumeration.binders
 
 import play.api.mvc.PathBindable
 
-object EnumPathBinder {
+class EnumPathBinder[T <: Enumeration](val en: T) {
+  
+  def pathBinder(enums: T)(implicit stringBinder: PathBindable[String]): PathBindable[en.Value] = new PathBindable[en.Value] {
 
-  def pathBinder[T <: Enumeration](enumValue: T)(implicit stringBinder: PathBindable[String]): PathBindable[T#Value] = new PathBindable[T#Value] {
-
-    def bind(key: String, value: String): Either[String, T#Value] = {
-      enumtByName(enumValue, value) match {
+    def bind(key: String, value: String): Either[String, en.Value] = {
+      enumByName(enums, value) match {
         case Some(v) => Right(v)
         case None => Left(s"Unknown Enum Type $value")
       }
     }
 
-    override def unbind(key: String, value: T#Value): String = stringBinder.unbind(key, value.toString)
+    override def unbind(key: String, value: en.Value): String = stringBinder.unbind(key, value.toString)
 
-    private def enumtByName(enumValue: T, key: String): Option[T#Value] = enumValue.values.find(_.toString == key)
+    private def enumByName(enums: T, key: String): Option[en.Value] = enums.values.find(_.toString == key).asInstanceOf[Option[en.Value]]
   }
 }
