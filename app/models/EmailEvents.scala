@@ -44,7 +44,7 @@ case class EmailEvent(event: Event, detected: Instant)
 object EmailEvent {
 
   implicit val read: Reads[EmailEvent] = {
-    ((JsPath \ "event").read[Event] and ((JsPath \ "detected").read[String] map Instant.parse))(EmailEvent.apply _)
+    ((JsPath \ "event").read[Event] and ((JsPath \ "detected").read[String] map Instant.parse))(EmailEvent.apply)
   }
 
   implicit val write: Writes[EmailEvent] = (

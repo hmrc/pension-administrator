@@ -24,35 +24,31 @@ case class RegistrationNoIdIndividualRequest(firstName: String, lastName: String
 
 object RegistrationNoIdIndividualRequest {
   implicit val formats: Format[RegistrationNoIdIndividualRequest] = Json.format[RegistrationNoIdIndividualRequest]
-
+  private val jsString: String => JsString = play.api.libs.json.JsString.apply
 
   def writesRegistrationNoIdIndividualRequest(acknowledgementReference: String): OWrites[RegistrationNoIdIndividualRequest] = {
 
-    new OWrites[RegistrationNoIdIndividualRequest] {
-
-      override def writes(registrant: RegistrationNoIdIndividualRequest): JsObject = {
-        Json.obj(
-          "regime" -> "PODA",
-          "acknowledgementReference" -> acknowledgementReference,
-          "isAnAgent" -> JsBoolean(false),
-          "isAGroup" -> JsBoolean(false),
-          "individual" -> Json.obj(
-            "firstName" -> registrant.firstName,
-            "lastName" -> registrant.lastName,
-            "dateOfBirth" -> Json.toJson(registrant.dateOfBirth)
-          ),
-          "address" -> Json.obj(
-            "addressLine1" -> registrant.address.addressLine1,
-            "addressLine2" -> registrant.address.addressLine2,
-            "addressLine3" -> registrant.address.addressLine3.map(JsString).getOrElse[JsValue](JsNull),
-            "addressLine4" -> registrant.address.addressLine4.map(JsString).getOrElse[JsValue](JsNull),
-            "postalCode" -> registrant.address.postcode.map(JsString).getOrElse[JsValue](JsNull),
-            "countryCode" -> registrant.address.country
-          ),
-          "contactDetails" -> Json.obj()
-        )
-      }
-
+    (registrant: RegistrationNoIdIndividualRequest) => {
+      Json.obj(
+        "regime" -> "PODA",
+        "acknowledgementReference" -> acknowledgementReference,
+        "isAnAgent" -> JsBoolean(false),
+        "isAGroup" -> JsBoolean(false),
+        "individual" -> Json.obj(
+          "firstName" -> registrant.firstName,
+          "lastName" -> registrant.lastName,
+          "dateOfBirth" -> Json.toJson(registrant.dateOfBirth)
+        ),
+        "address" -> Json.obj(
+          "addressLine1" -> registrant.address.addressLine1,
+          "addressLine2" -> registrant.address.addressLine2,
+          "addressLine3" -> registrant.address.addressLine3.map(jsString).getOrElse[JsValue](JsNull),
+          "addressLine4" -> registrant.address.addressLine4.map(jsString).getOrElse[JsValue](JsNull),
+          "postalCode" -> registrant.address.postcode.map(jsString).getOrElse[JsValue](JsNull),
+          "countryCode" -> registrant.address.country
+        ),
+        "contactDetails" -> Json.obj()
+      )
     }
 
   }

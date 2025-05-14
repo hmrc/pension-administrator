@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ object PensionSchemeAdministratorDeclarationType {
     (JsPath \ "declaration").read[Boolean] and
       (JsPath \ "declarationFitAndProper").read[Boolean] and
       (JsPath \ "declarationWorkingKnowledge").read[String] and
-      json.Reads.optionWithNull(PensionAdvisorDetail.apiReads) and
+      json.Reads.optionWithNull(using PensionAdvisorDetail.apiReads) and
       (JsPath \ "isChanged").readNullable[Boolean]
     ) ((declarationSectionOneToFour, declarationSectionSeven, workingKnowledge, adviserDetail, isChanged) => {
     val declarationOutput = PensionSchemeAdministratorDeclarationType(declarationSectionOneToFour, declarationSectionOneToFour,
@@ -62,7 +62,7 @@ object PensionSchemeAdministratorDeclarationType {
       (JsPath \ "box5").writeNullable[Boolean] and
       (JsPath \ "box6").writeNullable[Boolean] and
       (JsPath \ "box7").write[Boolean] and
-      (JsPath \ "pensionAdvisorDetails").writeNullable(PensionAdvisorDetail.psaUpdateWrites) and
+      (JsPath \ "pensionAdvisorDetails").writeNullable(using PensionAdvisorDetail.psaUpdateWrites) and
       (JsPath \ "changeFlag").write[Boolean]
     ) (
     padt =>

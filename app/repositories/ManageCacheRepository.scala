@@ -99,7 +99,7 @@ object ManageCacheEntry {
 
 abstract class ManageCacheRepository(
                                       collectionName: String,
-                                      ttl: Int,
+                                      ttl: Long,
                                       mongoComponent: MongoComponent,
                                       encryptionKey: String,
                                       config: Configuration
@@ -124,7 +124,7 @@ abstract class ManageCacheRepository(
   import ManageCacheEntryFormats.*
 
   private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
-  private val jsonCrypto: Encrypter with Decrypter = SymmetricCryptoFactory.aesCryptoFromConfig(baseConfigKey = encryptionKey, config.underlying)
+  private val jsonCrypto: Encrypter & Decrypter = SymmetricCryptoFactory.aesCryptoFromConfig(baseConfigKey = encryptionKey, config.underlying)
 
   def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
     if (encrypted) {
