@@ -24,12 +24,12 @@ import models.{PsaSubscription, PsaToBeRemovedFromScheme}
 import play.api.Logger
 import play.api.http.Status.*
 import play.api.libs.json.*
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler, JSONPayloadSchemaValidator}
-import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
@@ -103,7 +103,7 @@ class DesConnectorImpl @Inject()(
       throw PSAValidationFailureException(s"Invalid payload when registerPSA :-\n${validationResult.mkString}")
     else
       httpV2Client.post(url)
-        .setHeader(headerUtils.desHeader: _*)
+        .setHeader(headerUtils.desHeader *)
         .withBody(registerData).execute[HttpResponse] map {
         handlePostResponse(_, url.toString)
       }
@@ -119,7 +119,7 @@ class DesConnectorImpl @Inject()(
     val subscriptionDetailsUrl = url"${config.psaSubscriptionDetailsUrl.format(psaId)}"
 
     httpV2Client.get(subscriptionDetailsUrl)
-      .setHeader(headerUtils.desHeader: _*)
+      .setHeader(headerUtils.desHeader *)
       .execute[HttpResponse] map {
       handleGetResponse(_, subscriptionDetailsUrl.toString)
     } andThen schemeAuditService.sendPSADetailsEvent(psaId)(auditService.sendEvent) andThen
@@ -142,7 +142,7 @@ class DesConnectorImpl @Inject()(
       "initiatedIDNumber" -> psaToBeRemoved.psaId,
       "ceaseDate" -> psaToBeRemoved.removalDate.toString
     )
-    removePSAFromScheme(url, data, "/resources/schemas/ceaseFromScheme1461.json", psaToBeRemoved)(hc, implicitly, implicitly)
+    removePSAFromScheme(url, data, "/resources/schemas/ceaseFromScheme1461.json", psaToBeRemoved)(using hc, implicitly, implicitly)
   }
 
   private def removePSAFromScheme(url: java.net.URL, data: JsValue, schema: String, psaToBeRemoved: PsaToBeRemovedFromScheme)
@@ -170,7 +170,7 @@ class DesConnectorImpl @Inject()(
       url"${config.deregisterPsaUrl.format(psaId)}",
       data,
       "/resources/schemas/deregister1469.json",
-      psaId)(hc, implicitly, implicitly)
+      psaId)(using hc, implicitly, implicitly)
   }
 
   private def deregisterAdministrator(url: java.net.URL, data: JsValue, schema: String, psaId: String)

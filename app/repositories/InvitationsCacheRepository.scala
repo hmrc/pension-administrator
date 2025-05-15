@@ -19,8 +19,7 @@ package repositories
 import com.google.inject.{Inject, Singleton}
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import models.Invitation
-import org.mongodb.scala.SingleObservableFuture
-import org.mongodb.scala.ObservableFuture
+import org.mongodb.scala.{ObservableFuture, SingleObservableFuture}
 import org.mongodb.scala.bson.BsonBinary
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.*
@@ -72,8 +71,8 @@ object InvitationsCacheEntry {
         (JsPath \ "inviteePsaId").read[String] and
           (JsPath \ "pstr").read[String] and
           (JsPath \ "data").read[BsonBinary] and
-          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now())) and
-          (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+          (JsPath \ "lastUpdated").read(using instantReads).orElse(Reads.pure(Instant.now())) and
+          (JsPath \ "expireAt").read(using instantReads).orElse(Reads.pure(Instant.now()))
         )((inviteePsaIdKey, pstr, data, lastUpdated, expireAt) =>
         DataEntry(inviteePsaIdKey, pstr, data, lastUpdated, expireAt)
       ).reads(json)
@@ -101,8 +100,8 @@ object InvitationsCacheEntry {
         (JsPath \ "inviteePsaId").read[String] and
           (JsPath \ "pstr").read[String] and
           (JsPath \ "data").read[JsValue] and
-          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now())) and
-          (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+          (JsPath \ "lastUpdated").read(using instantReads).orElse(Reads.pure(Instant.now())) and
+          (JsPath \ "expireAt").read(using instantReads).orElse(Reads.pure(Instant.now()))
         )((inviteePsaIdKey, pstr, data, lastUpdated, expireAt) =>
         JsonDataEntry(inviteePsaIdKey, pstr, data, lastUpdated, expireAt)
       ).reads(json)

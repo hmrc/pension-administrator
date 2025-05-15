@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package models
 
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.*
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
@@ -64,7 +64,7 @@ object Invitation {
         (JsPath \ "inviterPsaId").read[PsaId] and
         (JsPath \ "inviteePsaId").read[PsaId] and
         (JsPath \ "inviteeName").read[String] and
-        (JsPath \ "expireAt").read(parseTimestamp)
+        (JsPath \ "expireAt").read(using parseTimestamp)
       )((srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt) =>
       Invitation(srn, pstr, schemeName, inviterPsaId, inviteePsaId, inviteeName, expireAt)
     ).reads(json)

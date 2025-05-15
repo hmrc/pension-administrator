@@ -17,8 +17,8 @@
 package utils.JsonTransformations
 
 import com.google.inject.Inject
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.*
 import play.api.libs.json.Reads.JsObjectReducer
 
 trait JsonTransformer {
@@ -56,10 +56,10 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
   }
 
   private val getCrn: Reads[JsObject] = {
-    (__ \ Symbol("psaSubscriptionDetails") \ Symbol("organisationOrPartnerDetails")).read(__.read(readsCrn)).orElse(doNothing)
+    (__ \ Symbol("psaSubscriptionDetails") \ Symbol("organisationOrPartnerDetails")).read(using __.read(using readsCrn)).orElse(doNothing)
   }
 
-  def readsCrn: Reads[JsObject] = {
+  private def readsCrn: Reads[JsObject] = {
     (__ \ Symbol("crnNumber")).read[String].flatMap { _ =>
       ((__ \ Symbol("hasCrn")).json.put(JsBoolean(true)) and
         (__ \ "companyRegistrationNumber").json.copyFrom((__ \ Symbol("crnNumber")).json.pick)).reduce

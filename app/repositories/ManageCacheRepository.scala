@@ -60,7 +60,7 @@ object ManageCacheEntry {
       override def reads(json: JsValue): JsResult[DataEntry] = (
         (JsPath \ "id").read[String] and
           (JsPath \ "data").read[BsonBinary] and
-          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now()))
+          (JsPath \ "lastUpdated").read(using instantReads).orElse(Reads.pure(Instant.now()))
         )((id, data, lastUpdated) =>
         DataEntry(id, data, lastUpdated)
       ).reads(json)
@@ -80,7 +80,7 @@ object ManageCacheEntry {
       override def reads(json: JsValue): JsResult[JsonDataEntry] = (
         (JsPath \ "id").read[String] and
           (JsPath \ "data").read[JsValue] and
-          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now()))
+          (JsPath \ "lastUpdated").read(using instantReads).orElse(Reads.pure(Instant.now()))
         )((id, data, lastUpdated) =>
         JsonDataEntry(id, data, lastUpdated)
       ).reads(json)

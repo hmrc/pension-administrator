@@ -123,7 +123,7 @@ class RegistrationConnector @Inject()(
     val url = url"${config.registerWithoutIdOrganisationUrl}"
     val correlationId = headerUtils.getCorrelationId
 
-    val registerWithNoIdData = Json.toJson(registerData)(OrganisationRegistrant.writesOrganisationRegistrantRequest(correlationId))
+    val registerWithNoIdData = Json.toJson(registerData)(using OrganisationRegistrant.writesOrganisationRegistrantRequest(correlationId))
 
     logger.debug(s"Registration Without Id Organisation request body:" +
       s"${Json.prettyPrint(registerWithNoIdData)})")
@@ -162,7 +162,7 @@ class RegistrationConnector @Inject()(
     val url = url"${config.registerWithoutIdIndividualUrl}"
     val correlationId = headerUtils.getCorrelationId
 
-    val body = Json.toJson(registrationRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(correlationId))
+    val body = Json.toJson(registrationRequest)(using RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(correlationId))
 
     logger.debug(s"Registration Without Id Individual request body:" +
       s"${Json.prettyPrint(body)})")

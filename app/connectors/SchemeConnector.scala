@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import models.SchemeReferenceNumber
 import play.api.Logging
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.domain.{PsaId, PspId}
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import utils.{ErrorHandler, HttpResponseHelper}
 
@@ -73,7 +73,7 @@ class SchemeConnectorImpl @Inject()(
 
 
     httpV2Client.get(url"${config.checkAssociationUrl}")
-      .setHeader(headers: _*)
+      .setHeader(headers *)
       .execute[HttpResponse] map { response =>
       val badResponse = Seq("Bad Request with missing parameters PSA Id or SRN")
       response.status match {
@@ -96,7 +96,7 @@ class SchemeConnectorImpl @Inject()(
                                (implicit headerCarrier: HeaderCarrier,
                                 ec: ExecutionContext): Future[Either[HttpException, JsValue]] = {
 
-    httpV2Client.get(url).setHeader(headers: _*).execute[HttpResponse] map { response =>
+    httpV2Client.get(url).setHeader(headers *).execute[HttpResponse] map { response =>
       val badResponse = Seq("Bad Request with missing parameter PSA Id")
       response.status match {
         case OK => Right(response.json)
@@ -112,7 +112,7 @@ class SchemeConnectorImpl @Inject()(
     val url = url"${config.getSchemeDetailsUrl}"
     val headers = Seq(("schemeIdType", schemeIdType), ("idNumber", idNumber), ("PSAId", psaId))
 
-    httpV2Client.get(url).setHeader(headers: _*).execute[HttpResponse] map { response =>
+    httpV2Client.get(url).setHeader(headers *).execute[HttpResponse] map { response =>
       response.status match {
         case OK => Right(Json.parse(response.body))
         case _ => Left(handleErrorResponse("GET", url.toString, response, Seq.empty))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package controllers.actions
 
 import play.api.Logging
-import play.api.mvc.Results._
-import play.api.mvc._
-import uk.gov.hmrc.auth.core._
+import play.api.mvc.*
+import play.api.mvc.Results.*
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.domain.PsaId
@@ -55,7 +55,7 @@ class PsaEnrolmentAuthAction @Inject()(
 
   override def
   invokeBlock[A](request: Request[A], block: PsaAuthRequest[A] => Future[Result]): Future[Result] =
-    invoke(request, block)(HeaderCarrierConverter.fromRequest(request))
+    invoke(request, block)(using HeaderCarrierConverter.fromRequest(request))
 
   private def invoke[A](request: Request[A], block: PsaAuthRequest[A] => Future[Result])
                        (implicit hc: HeaderCarrier): Future[Result] = {
