@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import utils.EnumUtils
 
 object OrganisationTypeEnum extends Enumeration {
   type OrganisationType = Value
-  val CorporateBody = Value("Corporate Body")
-  val NotSpecified = Value("Not Specified")
-  val LLP = Value("LLP")
-  val Partnership = Value("Partnership")
-  val UnincorporatedBody = Value("Unincorporated Body")
+  val CorporateBody: Value = Value("Corporate Body")
+  val NotSpecified: Value = Value("Not Specified")
+  val LLP: Value = Value("LLP")
+  val Partnership: Value = Value("Partnership")
+  val UnincorporatedBody: Value = Value("Unincorporated Body")
 
   implicit def enumFormats: Format[OrganisationType] = EnumUtils.enumFormat(OrganisationTypeEnum)
 }

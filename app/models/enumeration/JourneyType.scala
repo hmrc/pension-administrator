@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,10 @@ import play.api.mvc.PathBindable
 
 object JourneyType extends Enumeration {
   type Name = Value
-  val PSA = Value("PSA")
-  val INVITE = Value("PSAInvite")
-  val VARIATION = Value("Variation")
-
-  implicit val journeyTypePathBinder: PathBindable[Name] = EnumPathBinder.pathBinder(this)
+  val PSA: Value = Value("PSA")
+  val INVITE: Value = Value("PSAInvite")
+  val VARIATION: Value = Value("Variation")
+  
+  implicit val journeyTypePathBinder: PathBindable[JourneyType.Value] =
+    new EnumPathBinder(JourneyType).pathBinder.asInstanceOf[PathBindable[JourneyType.Value]]
 }

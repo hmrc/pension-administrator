@@ -16,6 +16,7 @@
 
 package models.enumeration.binders
 
+import play.api.libs.json.OFormat
 import play.api.mvc.PathBindable
 
 class EnumPathBinder[T <: Enumeration](val en: T) {
