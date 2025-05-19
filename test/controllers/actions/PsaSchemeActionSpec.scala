@@ -52,11 +52,12 @@ class PsaSchemeActionSpec extends PlaySpec with MockitoSugar with BeforeAndAfter
   private def getResult = {
     new PsaSchemeAuthAction(mockSchemeConnector)
       .apply(srn)
-      .invokeBlock(authRequest, { _: PsaAuthRequest[AnyContent] => Future.successful(Ok("success")) })
+      .invokeBlock(authRequest, (_: PsaAuthRequest[AnyContent]) => Future.successful(Ok("success")))
   }
 
   private def mockCheckForAssociation = {
-    when(mockSchemeConnector.checkForAssociation(ArgumentMatchers.eq(Left(PsaId(AuthUtils.psaId))), ArgumentMatchers.eq(srn))(ArgumentMatchers.any(), ArgumentMatchers.any()))
+    when(mockSchemeConnector.checkForAssociation(ArgumentMatchers.eq(Left(PsaId(AuthUtils.psaId))),
+      ArgumentMatchers.eq(srn))(using ArgumentMatchers.any(), ArgumentMatchers.any()))
   }
 
   "PsaSchemeActionSpec" must {

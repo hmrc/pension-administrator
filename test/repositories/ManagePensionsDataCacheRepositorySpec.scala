@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package repositories
 import base.MongoConfig
 import com.typesafe.config.Config
 import org.mockito.Mockito.when
+import org.mongodb.scala.{ObservableFuture, SingleObservableFuture}
 import org.mongodb.scala.bson.{BsonDocument, BsonString}
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.ScalaFutures
@@ -34,12 +35,18 @@ import uk.gov.hmrc.mongo.MongoComponent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter with
-  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures with MongoConfig { // scalastyle:off magic.number
+class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec
+                                              with MockitoSugar
+                                              with Matchers
+                                              with BeforeAndAfter
+                                              with BeforeAndAfterEach
+                                              with BeforeAndAfterAll
+                                              with ScalaFutures
+                                              with MongoConfig { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
-  import ManagePensionsDataCacheRepositorySpec._
+  import ManagePensionsDataCacheRepositorySpec.*
 
   private val idField: String = "id"
 
