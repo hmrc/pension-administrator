@@ -16,7 +16,7 @@
 
 package models
 
-import play.api.libs.json._
+import play.api.libs.json.*
 import utils.EnumUtils
 
 object OrganisationTypeEnum extends Enumeration {
@@ -27,7 +27,10 @@ object OrganisationTypeEnum extends Enumeration {
   val Partnership: Value = Value("Partnership")
   val UnincorporatedBody: Value = Value("Unincorporated Body")
 
-  implicit def enumFormats: Format[OrganisationType] = EnumUtils.enumFormat(OrganisationTypeEnum)
+  private val enumUtils = new EnumUtils(OrganisationTypeEnum)
+
+  implicit def enumFormats: Format[OrganisationType] = enumUtils.enumFormat()
+
 }
 
 case class Organisation(organisationName: String, organisationType: OrganisationTypeEnum.OrganisationType)
