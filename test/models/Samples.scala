@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,22 +22,24 @@ import java.time.LocalDate
 
 trait Samples {
 
-  val ukAddressSampleWithTwoLines = UkAddress("line1", Some("line2"), None, None, "GB", "NE1")
-  val nonUkAddressSample = InternationalAddress("line1", Some("line2"), Some("line3"), Some("line4"), "IT", Some("NE1"))
-  val ukAddressSample = UkAddress("line1", Some("line2"), Some("line3"), Some("line4"), "GB", "NE1")
-  val numberOfDirectorOrPartnersSample = NumberOfDirectorOrPartnersType(isMorethanTenDirectors = Some(true), isMorethanTenPartners = Some(true))
-  val previousAddressDetailsSample = PreviousAddressDetails(isPreviousAddressLast12Month = false)
-  val previousAddressDetailsSample2 = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
-  val contactDetailsSample = ContactDetails("07592113", email = "test@test.com")
+  val ukAddressSampleWithTwoLines: UkAddress = UkAddress("line1", Some("line2"), None, None, "GB", "NE1")
+  val nonUkAddressSample: InternationalAddress = InternationalAddress("line1", Some("line2"), Some("line3"), Some("line4"), "IT", Some("NE1"))
+  val ukAddressSample: UkAddress = UkAddress("line1", Some("line2"), Some("line3"), Some("line4"), "GB", "NE1")
+  val numberOfDirectorOrPartnersSample: NumberOfDirectorOrPartnersType = NumberOfDirectorOrPartnersType(
+    isMorethanTenDirectors = Some(true), isMorethanTenPartners = Some(true))
+  val previousAddressDetailsSample: PreviousAddressDetails = PreviousAddressDetails(isPreviousAddressLast12Month = false)
+  val previousAddressDetailsSample2: PreviousAddressDetails = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
+  val contactDetailsSample: ContactDetails = ContactDetails("07592113", email = "test@test.com")
 
-  val pensionAdvisorDetail = PensionAdvisorDetail(name = "xyz",
+  val pensionAdvisorDetail: PensionAdvisorDetail = PensionAdvisorDetail(name = "xyz",
     addressDetail = nonUkAddressSample,
     contactDetail = contactDetailsSample)
 
-  val declarationSample = PensionSchemeAdministratorDeclarationType(box1 = true, box2 = true, box3 = true, box4 = true, Some(true), None, box7 = true, None)
-  val declarationSample2 = PensionSchemeAdministratorDeclarationType(box1 = true,
+  val declarationSample: PensionSchemeAdministratorDeclarationType = PensionSchemeAdministratorDeclarationType(box1 = true,
+    box2 = true, box3 = true, box4 = true, Some(true), None, box7 = true, None)
+  val declarationSample2: PensionSchemeAdministratorDeclarationType = PensionSchemeAdministratorDeclarationType(box1 = true,
     box2 = true, box3 = true, box4 = true, Some(true), None, box7 = true, Some(pensionAdvisorDetail))
-  val pensionSchemeAdministratorSample = PensionSchemeAdministrator(customerType = "TestCustomer",
+  val pensionSchemeAdministratorSample: PensionSchemeAdministrator = PensionSchemeAdministrator(customerType = "TestCustomer",
     legalStatus = "Limited Company",
     sapNumber = "NumberTest",
     noIdentifier = true,
@@ -52,7 +54,7 @@ trait Samples {
     numberOfDirectorOrPartners = Some(numberOfDirectorOrPartnersSample),
     directorOrPartnerDetail = None, declaration = declarationSample)
 
-  val pensionSchemeAdministratorSamplePartnership = PensionSchemeAdministrator(customerType = "TestCustomer",
+  val pensionSchemeAdministratorSamplePartnership: PensionSchemeAdministrator = PensionSchemeAdministrator(customerType = "TestCustomer",
     legalStatus = "Partnership",
     sapNumber = "NumberTest",
     noIdentifier = true,
@@ -67,7 +69,7 @@ trait Samples {
     numberOfDirectorOrPartners = Some(numberOfDirectorOrPartnersSample),
     directorOrPartnerDetail = None, declaration = declarationSample)
 
-  val pensionSchemeAdministratorSampleIndividual = PensionSchemeAdministrator(customerType = "TestCustomer",
+  val pensionSchemeAdministratorSampleIndividual: PensionSchemeAdministrator = PensionSchemeAdministrator(customerType = "TestCustomer",
     legalStatus = "Individual",
     sapNumber = "NumberTest",
     noIdentifier = true,
@@ -84,10 +86,10 @@ trait Samples {
     numberOfDirectorOrPartners = None,
     directorOrPartnerDetail = None, declaration = declarationSample)
 
-  val correspondenceCommonDetails = CorrespondenceCommonDetail(nonUkAddressSample, contactDetailsSample)
+  val correspondenceCommonDetails: CorrespondenceCommonDetail = CorrespondenceCommonDetail(nonUkAddressSample, contactDetailsSample)
 
-  def pensionSchemeAdministratorSample2(personType: String) = {
-    val item1 = directorOrPartnerSample(personType) copy (previousAddressDetail = previousAddressDetailsSample2)
+  def pensionSchemeAdministratorSample2(personType: String): PensionSchemeAdministrator = {
+    val item1 = directorOrPartnerSample(personType) `copy` (previousAddressDetail = previousAddressDetailsSample2)
     val item2 = item1.copy(firstName = "Paul", middleName = None, lastName = "Stephens", previousAddressDetail = previousAddressDetailsSample2)
 
     pensionSchemeAdministratorSample.copy(

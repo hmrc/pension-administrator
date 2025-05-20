@@ -19,7 +19,7 @@ package repositories
 import base.MongoConfig
 import com.typesafe.config.Config
 import org.mockito.Mockito.*
-import org.mongodb.scala.SingleObservableFuture
+import org.mongodb.scala.{ObservableFuture, SingleObservableFuture}
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
