@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ class OrganisationRegistrantWritesSpec extends AnyWordSpec with Matchers {
           """.stripMargin
         )
 
-        val result = Json.toJson(orgRegistrant)(OrganisationRegistrant.writesOrganisationRegistrantRequest("test-correlation-id"))
+        val result = Json.toJson(orgRegistrant)(using OrganisationRegistrant.writesOrganisationRegistrantRequest("test-correlation-id"))
 
         result mustBe expectedJsValue
       }

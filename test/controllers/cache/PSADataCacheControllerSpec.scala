@@ -93,7 +93,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
       "throw an exception when the call is not authorised" in {
         reset(authConnector)
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed(new UnauthorizedException(""))
+        when(authConnector.authorise[Unit](any(), any())(using any(), any())) thenReturn Future.failed(new UnauthorizedException(""))
 
         val result = controller.get("foo")(FakeRequest())
         an[UnauthorizedException] must be thrownBy status(result)
@@ -103,7 +103,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
     s"on .save " must {
 
       "return 200 when the request body can be parsed and passed to the repository successfully" in {
-        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
+        when(repo.upsert(any(), any())(using any())) thenReturn Future.successful(())
 
         val result = call(controller.save("testId"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
 

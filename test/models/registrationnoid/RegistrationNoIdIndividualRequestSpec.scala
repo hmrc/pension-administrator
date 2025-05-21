@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ import java.time.{LocalDate, LocalDateTime}
 
 class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
 
-  import RegistrationNoIdIndividualRequestSpec._
+  import RegistrationNoIdIndividualRequestSpec.*
 
   "RegistrationNoIdIndividualRequest.apiWrites" should "transform a request with full address details" in {
 
-    val actual = Json.toJson(fullAddressRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
+    val actual = Json.toJson(fullAddressRequest)(using RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
 
     actual shouldEqual expectedFullAddressJson
 
@@ -37,7 +37,7 @@ class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
 
   it should "produce valid JSON for a full address details request" in {
 
-    val actual = Json.toJson(fullAddressRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
+    val actual = Json.toJson(fullAddressRequest)(using RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
     val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json")(actual)
 
     validationFailures shouldBe empty
@@ -46,7 +46,7 @@ class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
 
   it should "transform a request with minimal address details" in {
 
-    val actual = Json.toJson(minimalAddressRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
+    val actual = Json.toJson(minimalAddressRequest)(using RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
 
     actual shouldEqual expectedMinimalAddressJson
 
@@ -54,7 +54,7 @@ class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
 
   it should "produce valid JSON for a minimal address details request" in {
 
-    val actual = Json.toJson(minimalAddressRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
+    val actual = Json.toJson(minimalAddressRequest)(using RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
     val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json")(actual)
 
     validationFailures shouldBe empty
@@ -85,7 +85,7 @@ object RegistrationNoIdIndividualRequestSpec {
 
   val acknowledgementReference = "test-acknowledgement-reference"
 
-  val fullAddressRequest = RegistrationNoIdIndividualRequest(
+  val fullAddressRequest: RegistrationNoIdIndividualRequest = RegistrationNoIdIndividualRequest(
     "John",
     "Smith",
     LocalDate.of(1990, 4, 3),
@@ -124,7 +124,7 @@ object RegistrationNoIdIndividualRequestSpec {
     """.stripMargin
   )
 
-  val minimalAddressRequest = RegistrationNoIdIndividualRequest(
+  val minimalAddressRequest: RegistrationNoIdIndividualRequest = RegistrationNoIdIndividualRequest(
     "John",
     "Smith",
     LocalDate.of(1990, 4, 3),
@@ -173,7 +173,7 @@ object RegistrationNoIdIndividualRequestSpec {
     """.stripMargin
   )
 
-  val expectedResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890", LocalDateTime.of(2001, 12, 17, 9, 30, 47))
+  val expectedResponse: RegisterWithoutIdResponse = RegisterWithoutIdResponse("XE0001234567890", "1234567890", LocalDateTime.of(2001, 12, 17, 9, 30, 47))
 
   val invalidPayloadHandler: InvalidPayloadHandler = new InvalidPayloadHandlerImpl()
 

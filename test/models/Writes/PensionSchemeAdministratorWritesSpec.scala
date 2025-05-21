@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,17 +32,16 @@ class PensionSchemeAdministratorWritesSpec extends AnyWordSpec with Matchers wit
 
         "parse pension adviser correctly" in {
 
-          val pensionSchemeAdministratorSample2 = pensionSchemeAdministratorSample copy (declaration = declarationSample2)
+          val pensionSchemeAdministratorSampleTwo = pensionSchemeAdministratorSample `copy` (declaration = declarationSample2).toString
 
-          val result = Json.toJson(pensionSchemeAdministratorSample2)(
-            PensionSchemeAdministrator.psaSubmissionWrites)
+          val result = Json.toJson(pensionSchemeAdministratorSampleTwo)(using PensionSchemeAdministrator.psaSubmissionWrites)
 
           result.toString() must include("\"pensionAdvisorDetail\":")
         }
 
-        "We are doing a PSA submission containing previous address at rool level" in {
+        "We are doing a PSA submission containing previous address at root level" in {
           val result = Json.toJson(pensionSchemeAdministratorSample.copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample))))(
-            PensionSchemeAdministrator.psaSubmissionWrites)
+            using PensionSchemeAdministrator.psaSubmissionWrites)
 
           result.toString() must include("true,\"previousAddressDetail\":")
         }
@@ -51,21 +50,21 @@ class PensionSchemeAdministratorWritesSpec extends AnyWordSpec with Matchers wit
           val directorWithPreviousAddress = directorOrPartnerSample(personType)
             .copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample)))
           val result = Json.toJson(pensionSchemeAdministratorSample.copy(directorOrPartnerDetail = Some(List(directorWithPreviousAddress))))(
-            PensionSchemeAdministrator.psaSubmissionWrites)
+            using PensionSchemeAdministrator.psaSubmissionWrites)
 
           result.toString() must include("true,\"previousAddressDetail\":")
         }
 
         s"We are checking the changeOfDirectorOrPartnerDetails flag is not included" in {
-          val result = Json.toJson(pensionSchemeAdministratorSample)(PensionSchemeAdministrator.psaSubmissionWrites)
+          val result = Json.toJson(pensionSchemeAdministratorSample)(using PensionSchemeAdministrator.psaSubmissionWrites)
 
           (result \ "changeOfDirectorOrPartnerDetails").asOpt[Boolean] mustBe None
         }
 
         s"We are doing a PSA submission with ${personType}s containing directorOrPartnerDetail at root level for update writes" in {
-          val result = Json.toJson(pensionSchemeAdministratorSample2(personType)
+          val result = Json.toJson(pensionSchemeAdministratorSampleTwo(personType)
             .copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample))))(
-            PensionSchemeAdministrator.psaUpdateWrites)
+            using PensionSchemeAdministrator.psaUpdateWrites)
 
           result mustEqual readJsonFromFile(s"/data/validPsaVariationRequest$personType.json")
         }

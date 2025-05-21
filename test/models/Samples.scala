@@ -88,10 +88,10 @@ trait Samples {
 
   val correspondenceCommonDetails: CorrespondenceCommonDetail = CorrespondenceCommonDetail(nonUkAddressSample, contactDetailsSample)
 
-  def pensionSchemeAdministratorSample2(personType: String): PensionSchemeAdministrator = {
-    val item1 = directorOrPartnerSample(personType) `copy` (previousAddressDetail = previousAddressDetailsSample2)
+  def pensionSchemeAdministratorSampleTwo(personType: String): PensionSchemeAdministrator = {
+    val item1 = directorOrPartnerSample(personType) `copy` (previousAddressDetail = previousAddressDetailsSample2).toString
     val item2 = item1.copy(firstName = "Paul", middleName = None, lastName = "Stephens", previousAddressDetail = previousAddressDetailsSample2)
-
+    
     pensionSchemeAdministratorSample.copy(
       directorOrPartnerDetail = Some(List(item1, item2)
       ),
@@ -113,14 +113,15 @@ trait Samples {
     correspondenceCommonDetail = correspondenceCommonDetails,
     previousAddressDetail = PreviousAddressDetails(isPreviousAddressLast12Month = false))
 
-  val companySample = OrganisationDetailType("Test Name", vatRegistrationNumber = Some("VAT11111"),
+  val companySample: OrganisationDetailType = OrganisationDetailType("Test Name", vatRegistrationNumber = Some("VAT11111"),
     payeReference = Some("PAYE11111"), crnNumber = Some("CRN11111"))
 
-  val partnershipSample = OrganisationDetailType("Test Partnership", crnNumber = Some("CRN11111"))
+  val partnershipSample: OrganisationDetailType = OrganisationDetailType("Test Partnership", crnNumber = Some("CRN11111"))
 
-  val individualSample = IndividualDetailType(firstName = "John", middleName = Some("Does Does"), lastName = "Doe", dateOfBirth = LocalDate.parse("2019-01-31"))
+  val individualSample: IndividualDetailType = IndividualDetailType(firstName = "John", middleName = Some("Does Does"),
+    lastName = "Doe", dateOfBirth = LocalDate.parse("2019-01-31"))
 
-  val pensionAdviserSample = PensionAdvisorDetail("John", ukAddressSample, contactDetailsSample)
+  val pensionAdviserSample: PensionAdvisorDetail = PensionAdvisorDetail("John", ukAddressSample, contactDetailsSample)
 
   def testDirectorOrPartner(personType: String): JsObject = Json.obj(s"${personType}Details" -> Json.obj(
     "firstName" -> JsString("John"),

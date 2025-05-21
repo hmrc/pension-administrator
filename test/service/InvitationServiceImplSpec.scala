@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ package service
 import audit.{AuditService, InvitationAuditEvent, StubSuccessfulAuditService}
 import config.AppConfig
 import connectors.{AssociationConnector, EmailConnector, SchemeConnector}
-import models._
+import models.*
 import models.enumeration.JourneyType
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterEach, EitherValues, OptionValues}
@@ -32,10 +32,10 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{Format, JsValue, Json, OWrites}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
-import repositories._
+import repositories.*
 import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
 import uk.gov.hmrc.domain.{PsaId, PspId}
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException, _}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException, *}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import utils.FakeEmailConnector.containEmail
 import utils.{DateHelper, FakeEmailConnector}
@@ -47,7 +47,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
           with Matchers with EitherValues with OptionValues
           with MockitoSugar with BeforeAndAfterEach {
 
-  import InvitationServiceImplSpec._
+  import InvitationServiceImplSpec.*
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
@@ -55,7 +55,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
   override def beforeEach(): Unit = {
     fakeAuditService.reset()
     reset(invitationsCacheRepository)
-    when(invitationsCacheRepository.upsert(any())(any()))
+    when(invitationsCacheRepository.upsert(any())(using any()))
       .thenReturn(Future.successful(()))
   }
 
@@ -63,7 +63,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(johnDoePsaId, johnDoe.individualDetails.value.name)).map {
       response =>
-        verify(invitationsCacheRepository, times(1)).upsert(any())(any())
+        verify(invitationsCacheRepository, times(1)).upsert(any())(using any())
         response.value should equal(())
     }
   }
@@ -87,7 +87,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
       response =>
-        verify(invitationsCacheRepository, times(1)).upsert(any())(any())
+        verify(invitationsCacheRepository, times(1)).upsert(any())(using any())
         response.value should equal(())
     }
   }
@@ -133,7 +133,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(notFoundPsaId, "")) map {
       response =>
-        verify(invitationsCacheRepository, never).upsert(any())(any())
+        verify(invitationsCacheRepository, never).upsert(any())(using any())
         response.left.value shouldBe a[NotFoundException]
         response.left.value.message should include("NOT_FOUND")
     }
@@ -143,7 +143,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(johnDoePsaId, "Wrong Name")) map {
       response =>
-        verify(invitationsCacheRepository, never).upsert(any())(any())
+        verify(invitationsCacheRepository, never).upsert(any())(using any())
         response.left.value shouldBe a[NotFoundException]
         response.left.value.message should include("The name and PSA Id do not match")
     }
@@ -153,7 +153,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(acmeLtdPsaId, "Wrong Name")) map {
       response =>
-        verify(invitationsCacheRepository, never).upsert(any())(any())
+        verify(invitationsCacheRepository, never).upsert(any())(using any())
         response.left.value shouldBe a[NotFoundException]
         response.left.value.message should include("The name and PSA Id do not match")
     }
@@ -181,7 +181,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.fullName)) map {
       response =>
-        verify(invitationsCacheRepository, times(1)).upsert(any())(any())
+        verify(invitationsCacheRepository, times(1)).upsert(any())(using any())
         response.value should equal(())
     }
   }
@@ -190,7 +190,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(johnDoePsaId, "John Paul Doe")) map {
       response =>
-        verify(invitationsCacheRepository, times(1)).upsert(any())(any())
+        verify(invitationsCacheRepository, times(1)).upsert(any())(using any())
         response.value should equal(())
     }
   }
@@ -199,17 +199,17 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.name)) map {
       response =>
-        verify(invitationsCacheRepository, times(1)).upsert(any())(any())
+        verify(invitationsCacheRepository, times(1)).upsert(any())(using any())
         response.value should equal(())
     }
   }
 
   it should "return MongoDBFailedException if insertion failed with RunTimeException from mongodb" in {
-    when(invitationsCacheRepository.upsert(any())(any())).thenReturn(Future.failed(new RuntimeException("failed to perform DB operation")))
+    when(invitationsCacheRepository.upsert(any())(using any())).thenReturn(Future.failed(new RuntimeException("failed to perform DB operation")))
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.name)) map {
       response =>
-        verify(invitationsCacheRepository, times(1)).upsert(any())(any())
+        verify(invitationsCacheRepository, times(1)).upsert(any())(using any())
         response.left.value shouldBe a[MongoDBFailedException]
         response.left.value.message should include("failed to perform DB operation")
     }
@@ -320,7 +320,7 @@ object InvitationServiceImplSpec extends MockitoSugar {
 
 class FakeAssociationConnector extends AssociationConnector {
 
-  import InvitationServiceImplSpec._
+  import InvitationServiceImplSpec.*
 
   def getMinimalDetails(idValue: String, idType: String, regime: String)
                        (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext,
@@ -356,7 +356,7 @@ class FakeAssociationConnector extends AssociationConnector {
 
 class FakeSchemeConnector extends SchemeConnector {
 
-  import InvitationServiceImplSpec._
+  import InvitationServiceImplSpec.*
 
   override def checkForAssociation(psaIdOrPspId: Either[PsaId, PspId], srn: SchemeReferenceNumber)
                                   (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Boolean]] = {
