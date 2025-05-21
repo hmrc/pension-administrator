@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package models.Reads
 
-import models.{Samples, Reads => _, _}
+import models.{Samples, Reads as _, *}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.libs.json._
+import play.api.libs.json.*
 
 
 class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
@@ -33,7 +33,7 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
 
       "We have a declaration field" when {
         "It is true then boxes 1,2,3 and 4 are true" in {
-          val result = declaration.as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+          val result = declaration.as[PensionSchemeAdministratorDeclarationType](using PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box1 mustBe true
           result.box2 mustBe true
@@ -43,7 +43,7 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
 
         "It is false then boxes 1,2,3, and 4 will be false " in {
           val result = (declaration + ("declaration" ->
-            JsBoolean(false))).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+            JsBoolean(false))).as[PensionSchemeAdministratorDeclarationType](using PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box1 mustBe false
           result.box2 mustBe false
@@ -54,20 +54,20 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
 
       "We have an isChanged flag" in {
         val result = (declaration + ("isChanged" -> JsBoolean(true)))
-          .as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+          .as[PensionSchemeAdministratorDeclarationType](using PensionSchemeAdministratorDeclarationType.apiReads)
 
         result.isChanged.value mustBe true
       }
 
       "We have a fitAndProper declaration field" in {
-        val result = declaration.as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+        val result = declaration.as[PensionSchemeAdministratorDeclarationType](using PensionSchemeAdministratorDeclarationType.apiReads)
 
         result.box7 mustBe true
       }
 
       "We have a declarationWorkingKnowledge field" when {
         "set as 'workingKnowledge'" in {
-          val result = declaration.as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+          val result = declaration.as[PensionSchemeAdministratorDeclarationType](using PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box5 mustBe Some(true)
           result.box6 mustBe None
@@ -76,7 +76,7 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
         "set as 'taskList' (have working knowledge)" in {
           val declaration = Json.obj("declaration" -> JsBoolean(true), "declarationFitAndProper" -> JsBoolean(true),
             "declarationWorkingKnowledge" -> JsString("taskList"))
-          val result = declaration.as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+          val result = declaration.as[PensionSchemeAdministratorDeclarationType](using PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box5 mustBe Some(true)
           result.box6 mustBe None
@@ -85,7 +85,7 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
         "set as 'adviser'" in {
           val adviserDeclaration = "declarationWorkingKnowledge" -> JsString("adviser")
 
-          val result = (declaration + adviserDeclaration).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+          val result = (declaration + adviserDeclaration).as[PensionSchemeAdministratorDeclarationType](using PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box5 mustBe None
           result.box6 mustBe Some(true)
@@ -94,7 +94,7 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
         "set as 'whatyouWillNeed' (I don't have working knowledge)" in {
           val adviserDeclaration = "declarationWorkingKnowledge" -> JsString("whatyouWillNeed")
 
-          val result = (declaration + adviserDeclaration).as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+          val result = (declaration + adviserDeclaration).as[PensionSchemeAdministratorDeclarationType](using PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box5 mustBe None
           result.box6 mustBe Some(true)
@@ -110,8 +110,8 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
             "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB"))
 
           val workingKnowledge = "declarationWorkingKnowledge" -> JsString("adviser")
-          val result = (declaration + workingKnowledge + adviserName + adviserEmail + adviserPhone + adviserAddress).as[PensionSchemeAdministratorDeclarationType](
-            PensionSchemeAdministratorDeclarationType.apiReads)
+          val result = (declaration + workingKnowledge + adviserName + adviserEmail + adviserPhone + adviserAddress)
+            .as[PensionSchemeAdministratorDeclarationType](using PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box5 mustBe None
           result.box6 mustBe Some(true)
@@ -129,7 +129,7 @@ class DeclarationTypeReadsSpec extends AnyWordSpec with Matchers with OptionValu
 
           val workingKnowledge = "declarationWorkingKnowledge" -> JsString("whatyouWillNeed")
           val result = (declaration + workingKnowledge + adviserName + adviserEmail + adviserPhone + adviserAddress)
-            .as[PensionSchemeAdministratorDeclarationType](PensionSchemeAdministratorDeclarationType.apiReads)
+            .as[PensionSchemeAdministratorDeclarationType](using PensionSchemeAdministratorDeclarationType.apiReads)
 
           result.box5 mustBe None
           result.box6 mustBe Some(true)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ class ContactDetailsWritesSpec extends AnyWordSpec with Matchers with OptionValu
   "A contact details object" should {
     "serialize correctly to a valid des payload" when {
       val contactDetails = ContactDetails("16342346",None,None,"test@test.com")
-      val result = Json.toJson(contactDetails)(ContactDetails.updateWrites)
+      val result = Json.toJson(contactDetails)(using ContactDetails.updateWrites)
 
       "we have a phone" in {
         (result \ "telephone").as[String] mustBe contactDetails.telephone
@@ -42,7 +42,7 @@ class ContactDetailsWritesSpec extends AnyWordSpec with Matchers with OptionValu
 
       "we have a change flag" in {
         val contactDetails = ContactDetails("16342346",None,None,"test@test.com",Some(true))
-        val result = Json.toJson(contactDetails)(ContactDetails.updateWrites)
+        val result = Json.toJson(contactDetails)(using ContactDetails.updateWrites)
 
         (result \ "changeFlag").as[Boolean] mustBe contactDetails.isChanged.value
       }

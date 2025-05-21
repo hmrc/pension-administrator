@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ class DeclarationWritesSpec extends AnyWordSpec with Matchers with OptionValues 
     "Map correctly to a valid des payload" when {
       val declaration = PensionSchemeAdministratorDeclarationType(true,true,true,true,Some(true),Some(true),true, Some(pensionAdviserSample))
 
-      val result = Json.toJson(declaration)(PensionSchemeAdministratorDeclarationType.psaUpdateWrites)
+      val result = Json.toJson(declaration)(using PensionSchemeAdministratorDeclarationType.psaUpdateWrites)
 
       "we have box1" in {
         (result \ "box1").as[Boolean] mustBe declaration.box1
@@ -64,7 +64,7 @@ class DeclarationWritesSpec extends AnyWordSpec with Matchers with OptionValues 
       "we have an isChanged flag" in {
         val declaration = PensionSchemeAdministratorDeclarationType(true,true,true,true,Some(true),Some(true),true, Some(pensionAdviserSample),Some(true))
 
-        val result = Json.toJson(declaration)(PensionSchemeAdministratorDeclarationType.psaUpdateWrites)
+        val result = Json.toJson(declaration)(using PensionSchemeAdministratorDeclarationType.psaUpdateWrites)
 
         (result \ "changeFlag").asOpt[Boolean] mustBe declaration.isChanged
       }

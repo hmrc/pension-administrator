@@ -32,13 +32,13 @@ class PensionAdvisorDetailsReadsSpec extends AnyWordSpec with Matchers with Opti
           "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB")))
 
       "We have a name" in {
-        val result = input.as[Option[PensionAdvisorDetail]](PensionAdvisorDetail.apiReads)
+        val result = input.as[Option[PensionAdvisorDetail]](using PensionAdvisorDetail.apiReads)
 
         result.value.name mustBe pensionAdviserSample.name
       }
 
       "We have an address" in {
-        val result = input.as[Option[PensionAdvisorDetail]](PensionAdvisorDetail.apiReads)
+        val result = input.as[Option[PensionAdvisorDetail]](using PensionAdvisorDetail.apiReads)
 
         result.value.addressDetail mustBe pensionAdviserSample.addressDetail
       }

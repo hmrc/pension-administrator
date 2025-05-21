@@ -21,9 +21,9 @@ import models.SchemeReferenceNumber
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.mockito.stubbing.OngoingStubbing
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
-import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,10 +36,10 @@ object AuthUtils {
   val externalId = "externalId"
 
   def failedAuthStub(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Unit]] =
-    when(mockAuthConnector.authorise[Unit](any(), any())(using any(), any())) thenReturn Future.failed(InsufficientEnrolments())
+    when(mockAuthConnector.authorise[Unit](any(), any())(using any(), any())) `thenReturn` Future.failed(InsufficientEnrolments())
 
   def authStub(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Enrolments ~ Option[String]]] =
-    when(mockAuthConnector.authorise[Enrolments ~ Option[String]](any(), any())(using any(), any())) thenReturn Future.successful(AuthUtils.authResponse)
+    when(mockAuthConnector.authorise[Enrolments ~ Option[String]](any(), any())(using any(), any())) `thenReturn` Future.successful(AuthUtils.authResponse)
   val authResponse = new ~(
     Enrolments(
       Set(
@@ -49,7 +49,7 @@ object AuthUtils {
   )
 
   def authStubPsp(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Enrolments ~ Option[String]]] =
-    when(mockAuthConnector.authorise[Enrolments ~ Option[String]](any(), any())(any(), any())) thenReturn
+    when(mockAuthConnector.authorise[Enrolments ~ Option[String]](any(), any())(using any(), any())) `thenReturn`
       Future.successful(AuthUtils.authResponsePsp)
   val authResponsePsp = new ~(
     Enrolments(
@@ -60,7 +60,7 @@ object AuthUtils {
   )
 
   def noEnrolmentAuthStub(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Option[String]]] =
-    when(mockAuthConnector.authorise[Option[String]](any(), any())(using any(), any())) thenReturn
+    when(mockAuthConnector.authorise[Option[String]](any(), any())(using any(), any())) `thenReturn`
       Future.successful(AuthUtils.noEnrolmentAuthResponse)
 
   val noEnrolmentAuthResponse: Option[String] = Some(externalId)

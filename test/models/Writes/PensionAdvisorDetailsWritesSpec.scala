@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package models.Writes
 
 import base.CommonHelper
-import models.{Samples, Reads => _, _}
+import models.{Samples, Reads as _, *}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -27,10 +27,10 @@ class PensionAdvisorDetailsWritesSpec extends AnyWordSpec with Matchers with Opt
 
   "A pension advisor details object" should {
     "Map pension advisor" when {
-      val result = Json.toJson(pensionAdvisorDetail)(PensionAdvisorDetail.psaUpdateWrites)
+      val result = Json.toJson(pensionAdvisorDetail)(using PensionAdvisorDetail.psaUpdateWrites)
 
       Seq(
-        ("addressDetails", Json.toJson(nonUkAddressSample)(InternationalAddress.updatePreviousAddressWrites)),
+        ("addressDetails", Json.toJson(nonUkAddressSample)(using InternationalAddress.updatePreviousAddressWrites)),
         ("contactDetails", Json.toJson(contactDetailsSample))
       ).foreach { testElement =>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package models.Reads
 
-import models.{PensionSchemeAdministrator, Samples, UkAddress, Reads => _}
+import models.{PensionSchemeAdministrator, Samples, UkAddress, Reads as _}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.libs.json._
+import play.api.libs.json.*
 
 class PensionSchemeAdministratorReadsIndividualSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
   "JSON Payload of an individual PSA" should {
@@ -52,74 +52,74 @@ class PensionSchemeAdministratorReadsIndividualSpec extends AnyWordSpec with Mat
       )
 
       "We have a valid legalStatus" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.legalStatus mustEqual pensionSchemeAdministratorSampleIndividual.legalStatus
       }
 
       "We have a valid sapNumber" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.sapNumber mustEqual pensionSchemeAdministratorSample.sapNumber
       }
 
       "We have a valid noIdentifier" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.noIdentifier mustEqual pensionSchemeAdministratorSample.noIdentifier
       }
 
       "We have valid customerType" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.customerType mustEqual pensionSchemeAdministratorSample.customerType
       }
 
       "We have a valid idType" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.idType mustEqual pensionSchemeAdministratorSample.idType
       }
 
       "We have a valid idNumber" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
 
 
         result.idNumber mustEqual pensionSchemeAdministratorSample.idNumber
       }
 
       "We have a valid UTR idNumber" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input("UTR", "k1234567890123"))(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input("UTR", "k1234567890123"))(using PensionSchemeAdministrator.apiReads).asOpt.value
 
 
-        result.idNumber mustEqual Some("4567890123")
+        result.idNumber mustBe Some("4567890123")
       }
 
       "We have contact details" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.correspondenceContactDetail.telephone mustBe pensionSchemeAdministratorSample.correspondenceContactDetail.telephone
       }
 
       "We have previous address details" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.previousAddressDetail.isPreviousAddressLast12Month mustBe pensionSchemeAdministratorSample.previousAddressDetail.isPreviousAddressLast12Month
       }
 
       "We have correspondence address when the contact Address toggle is on" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.correspondenceAddressDetail mustBe ukAddressSample
       }
 
       "We have individual details" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
         result.individualDetail.value.dateOfBirth mustBe individualSample.dateOfBirth
       }
 
       "We have individual details but no organisation details" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
         result.organisationDetail mustBe None
       }
 
@@ -127,20 +127,20 @@ class PensionSchemeAdministratorReadsIndividualSpec extends AnyWordSpec with Mat
         val expectedContactDetails = contactDetailsSample.copy(telephone = "11111")
         val individiualContactDetails = "individualContactDetails" -> Json.obj("phone" -> "11111", "email" -> "test@test.com")
         val result =
-          Json.fromJson[PensionSchemeAdministrator](input() + individiualContactDetails - "contactDetails")(PensionSchemeAdministrator.apiReads).asOpt.value
+          Json.fromJson[PensionSchemeAdministrator](input() + individiualContactDetails - "contactDetails")(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.correspondenceContactDetail.telephone mustBe expectedContactDetails.telephone
       }
 
       "We have an individual contact address" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
         result.correspondenceAddressDetail.asInstanceOf[UkAddress] mustBe ukAddressSample
       }
 
       "We have an individual previous address > 1 year" in {
         val expectedIndividualPreviousAddress = previousAddressDetailsSample.copy(isPreviousAddressLast12Month = false, address = None)
         val result =
-          Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+          Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.previousAddressDetail.isPreviousAddressLast12Month mustBe expectedIndividualPreviousAddress.isPreviousAddressLast12Month
       }
@@ -160,13 +160,13 @@ class PensionSchemeAdministratorReadsIndividualSpec extends AnyWordSpec with Mat
         val input2 = input() + individualAddressYears + individualPreviousAddress
 
         val result =
-          Json.fromJson[PensionSchemeAdministrator](input2)(PensionSchemeAdministrator.apiReads).asOpt.value
+          Json.fromJson[PensionSchemeAdministrator](input2)(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.previousAddressDetail.isPreviousAddressLast12Month mustBe expectedIndividualPreviousAddress.isPreviousAddressLast12Month
       }
 
       "The user is not an existing PSA user" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.pensionSchemeAdministratorIdentifierStatus.isExistingPensionSchemaAdministrator mustBe
           pensionSchemeAdministratorSample.pensionSchemeAdministratorIdentifierStatus.isExistingPensionSchemaAdministrator
@@ -174,20 +174,20 @@ class PensionSchemeAdministratorReadsIndividualSpec extends AnyWordSpec with Mat
 
       "The user is an existing PSA user with no previous reference" in {
         val existingPSA = "existingPSA" -> Json.obj("isExistingPSA" -> JsBoolean(true))
-        val result = Json.fromJson[PensionSchemeAdministrator](input() + existingPSA)(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input() + existingPSA)(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.pensionSchemeAdministratorIdentifierStatus.isExistingPensionSchemaAdministrator mustBe true
       }
 
       "The user is an existing PSA user with previous reference number" in {
         val existingPSA = "existingPSA" -> Json.obj("isExistingPSA" -> JsBoolean(true), "existingPSAId" -> JsString("TestId"))
-        val result = Json.fromJson[PensionSchemeAdministrator](input() + existingPSA)(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input() + existingPSA)(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.pensionSchemeAdministratorIdentifierStatus.existingPensionSchemaAdministratorReference mustBe Some("TestId")
       }
 
       "We have a declaration" in {
-        val result = Json.fromJson[PensionSchemeAdministrator](input())(PensionSchemeAdministrator.apiReads).asOpt.value
+        val result = Json.fromJson[PensionSchemeAdministrator](input())(using PensionSchemeAdministrator.apiReads).asOpt.value
 
         result.declaration mustBe pensionSchemeAdministratorSample.declaration
       }
