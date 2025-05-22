@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package connectors
 
 import audit.{AuditService, PSARegistration, StubSuccessfulAuditService}
 import base.JsonFileReader
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import connectors.helper.{ConnectorBehaviours, HeaderUtils}
-import models.registrationnoid._
+import models.registrationnoid.*
 import org.mockito.Mockito.when
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -31,9 +31,9 @@ import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import repositories._
-import uk.gov.hmrc.http._
+import play.api.test.Helpers.*
+import repositories.*
+import uk.gov.hmrc.http.*
 import utils.{InvalidPayloadHandler, InvalidPayloadHandlerImpl, WireMockHelper}
 
 import java.time.{LocalDate, LocalDateTime}
@@ -46,7 +46,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
   with MockitoSugar
   with ConnectorBehaviours {
 
-  import RegistrationConnectorSpec._
+  import RegistrationConnectorSpec.*
 
   private val mockHeaderUtils = mock[HeaderUtils]
 
@@ -888,6 +888,6 @@ object RegistrationConnectorSpec {
     )
 
   val registerIndividualWithoutIdRequestJson: JsValue =
-    Json.toJson(registerIndividualWithoutIdRequest)(RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(testCorrelationId))
+    Json.toJson(registerIndividualWithoutIdRequest)(using RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(testCorrelationId))
 
 }

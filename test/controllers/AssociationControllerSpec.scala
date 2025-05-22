@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package controllers
 
 import base.JsonFileReader
 import connectors.AssociationConnector
-import models._
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import models.*
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
@@ -30,27 +30,27 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import repositories.MinimalDetailsCacheRepository
-import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.auth.core.*
+import uk.gov.hmrc.http.*
 import utils.{AuthUtils, FakePsaSchemeAuthAction}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers  with MockitoSugar with BeforeAndAfterEach {
 
-  import AssociationControllerSpec._
+  import AssociationControllerSpec.*
 
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockauthConnector)
     reset(mockMinimalDetailsCacheRepository)
-    when(mockMinimalDetailsCacheRepository.get(any())(any()))
+    when(mockMinimalDetailsCacheRepository.get(any())(using any()))
       .thenReturn(Future.successful {
         None
       })
-    when(mockMinimalDetailsCacheRepository.upsert(any(), any())(any()))
+    when(mockMinimalDetailsCacheRepository.upsert(any(), any())(using any()))
       .thenReturn(Future.successful(()))
     AuthUtils.authStub(mockauthConnector)
     fakeAssociationConnector.setPsaMinimalDetailsResponse(Future.successful(Right(
@@ -60,46 +60,46 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
   "getMinimalDetailsSelf" should "return OK when service returns successfully with success form Repo" in {
 
-    when(mockMinimalDetailsCacheRepository.get(any())(any()))
+    when(mockMinimalDetailsCacheRepository.get(any())(using any()))
       .thenReturn(Future.successful {
         Some(Json.toJson(psaMinimalDetailsIndividualUser))
       })
     val result = controller().getMinimalDetailsSelf(fakeRequest.withHeaders("loggedInAsPsa" -> "true"))
 
-    status(result) mustBe OK
-    contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
+    status(result) `mustBe` OK
+    contentAsJson(result) `mustBe` Json.toJson(psaMinimalDetailsIndividualUser)
   }
 
   it should "return OK when service returns successfully with Jserror " in {
 
 
-    when(mockMinimalDetailsCacheRepository.get(any())(any()))
+    when(mockMinimalDetailsCacheRepository.get(any())(using any()))
       .thenReturn(Future.successful {
         Some(Json.obj())
       })
-    when(mockMinimalDetailsCacheRepository.upsert(any(), any())(any()))
+    when(mockMinimalDetailsCacheRepository.upsert(any(), any())(using any()))
       .thenReturn(Future.successful(()))
 
     val result = controller().getMinimalDetailsSelf(fakeRequest.withHeaders("loggedInAsPsa" -> "true"))
 
-    status(result) mustBe OK
-    contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
+    status(result) `mustBe` OK
+    contentAsJson(result) `mustBe` Json.toJson(psaMinimalDetailsIndividualUser)
   }
 
   it should "return OK when service returns successfully and return None" in {
 
 
-    when(mockMinimalDetailsCacheRepository.get(any())(any()))
+    when(mockMinimalDetailsCacheRepository.get(any())(using any()))
       .thenReturn(Future.successful {
         None
       })
-    when(mockMinimalDetailsCacheRepository.upsert(any(), any())(any()))
+    when(mockMinimalDetailsCacheRepository.upsert(any(), any())(using any()))
       .thenReturn(Future.successful(()))
 
     val result = controller().getMinimalDetailsSelf(fakeRequest.withHeaders("loggedInAsPsa" -> "true"))
 
-    status(result) mustBe OK
-    contentAsJson(result) mustBe Json.toJson(psaMinimalDetailsIndividualUser)
+    status(result) `mustBe` OK
+    contentAsJson(result) `mustBe` Json.toJson(psaMinimalDetailsIndividualUser)
   }
 
   it should "return bad request when connector returns BAD_REQUEST" in {
@@ -110,8 +110,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     val result = controller().getMinimalDetailsSelf(fakeRequest.withHeaders("loggedInAsPsa" -> "true"))
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "bad request"
+    status(result) `mustBe` BAD_REQUEST
+    contentAsString(result) `mustBe` "bad request"
   }
 
   it should "return not found when connector returns NOT_FOUND" in {
@@ -122,23 +122,23 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     val result = controller().getMinimalDetailsSelf(fakeRequest.withHeaders("loggedInAsPsa" -> "true"))
 
-    status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "no match found"
+    status(result) `mustBe` NOT_FOUND
+    contentAsString(result) `mustBe` "no match found"
   }
 
   "acceptInvitation" should "return Created when the data is posted successfully" in {
 
     val result = controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
 
-    status(result) mustBe CREATED
+    status(result) `mustBe` CREATED
   }
 
   it should "throw BadRequestException when no data received in the request" in {
 
     recoverToExceptionIf[BadRequestException](controller().acceptInvitation(fakeRequest)) map {
       ex =>
-        ex.responseCode mustBe BAD_REQUEST
-        ex.message mustBe "No Request Body received for accept invitation"
+        ex.responseCode `mustBe` BAD_REQUEST
+        ex.message `mustBe` "No Request Body received for accept invitation"
     }
   }
 
@@ -146,8 +146,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     recoverToExceptionIf[BadRequestException](controller().acceptInvitation(fakeRequest.withJsonBody(Json.obj("invalid" -> "data")))) map {
       ex =>
-        ex.responseCode mustBe BAD_REQUEST
-        ex.message mustBe "Bad request received from frontend for accept invitation"
+        ex.responseCode `mustBe` BAD_REQUEST
+        ex.message `mustBe` "Bad request received from frontend for accept invitation"
     }
   }
 
@@ -158,8 +158,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     )
     val result = controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
 
-    status(result) mustBe CONFLICT
-    contentAsString(result) mustBe "Conflict"
+    status(result) `mustBe` CONFLICT
+    contentAsString(result) `mustBe` "Conflict"
   }
 
   it should "return BAD_REQUEST when connector return BadRequestException" in {
@@ -169,8 +169,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     )
     val result = controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "Bad Request"
+    status(result) `mustBe` BAD_REQUEST
+    contentAsString(result) `mustBe` "Bad Request"
   }
 
   it should "return NOT_FOUND when connector return NotFoundException" in {
@@ -180,8 +180,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     )
     val result = controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))
 
-    status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "Not Found"
+    status(result) `mustBe` NOT_FOUND
+    contentAsString(result) `mustBe` "Not Found"
   }
 
   it should "throw Upstream5xxResponse when connector throws Upstream5xxResponse" in {
@@ -190,8 +190,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     recoverToExceptionIf[UpstreamErrorResponse](controller().acceptInvitation(fakeRequest.withJsonBody(acceptedInvitationRequest))) map {
       ex =>
-        ex.statusCode mustBe SERVICE_UNAVAILABLE
-        ex.message mustBe "Failed with 5XX"
+        ex.statusCode `mustBe` SERVICE_UNAVAILABLE
+        ex.message `mustBe` "Failed with 5XX"
     }
   }
 
@@ -203,15 +203,15 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     val result = controller().getEmail(fakeRequest)
 
-    status(result) mustBe OK
-    contentAsString(result) mustBe "test@email.com"
+    status(result) `mustBe` OK
+    contentAsString(result) `mustBe` "test@email.com"
   }
 
   it should "return Forbidden with message for psaId not found in enrolments" in {
     reset(mockauthConnector)
     AuthUtils.failedAuthStub(mockauthConnector)
     val result  = controller().getEmail(fakeRequest)
-    status(result) mustBe FORBIDDEN
+    status(result) `mustBe` FORBIDDEN
   }
 
   it should "relay response from connector if not OK" in {
@@ -222,8 +222,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     val result = controller().getEmail(fakeRequest)
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "bad request"
+    status(result) `mustBe` BAD_REQUEST
+    contentAsString(result) `mustBe` "bad request"
   }
 
   "getName" should "relay response from connector if not OK" in {
@@ -234,8 +234,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     val result = controller().getName(fakeRequest)
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "bad request"
+    status(result) `mustBe` BAD_REQUEST
+    contentAsString(result) `mustBe` "bad request"
   }
 
   "getEmailInvitation" should "return 200 if name and psaId match" in {
@@ -251,8 +251,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     val result = controller().getEmailInvitation(AuthUtils.srn)(req)
 
-    status(result) mustBe OK
-    contentAsString(result) mustBe psaMinimalDetailsIndividualUser.email
+    status(result) `mustBe` OK
+    contentAsString(result) `mustBe` psaMinimalDetailsIndividualUser.email
   }
 
   "getEmailInvitation" should "return Forbidden if name and psaId don't match" in {
@@ -267,8 +267,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
     )
 
     val result = controller().getEmailInvitation(AuthUtils.srn)(req)
-    status(result) mustBe FORBIDDEN
-    contentAsString(result) mustBe "Provided user's name doesn't match with stored user's name"
+    status(result) `mustBe` FORBIDDEN
+    contentAsString(result) `mustBe` "Provided user's name doesn't match with stored user's name"
   }
 
   "getEmailInvitation" should "return BadRequest if idType header is not psaid or pspid" in {
@@ -284,8 +284,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     val result = controller().getEmailInvitation(AuthUtils.srn)(req)
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "idType must be either psaid or pspid"
+    status(result) `mustBe` BAD_REQUEST
+    contentAsString(result) `mustBe` "idType must be either psaid or pspid"
   }
 
   "getEmailInvitation" should "return BadRequest if required headers are missing" in {
@@ -297,8 +297,8 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
 
     val result = controller().getEmailInvitation(AuthUtils.srn)(req)
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result).contains("Missing headers: ") mustBe true
+    status(result) `mustBe` BAD_REQUEST
+    contentAsString(result).contains("Missing headers: ") `mustBe` true
   }
 
 }

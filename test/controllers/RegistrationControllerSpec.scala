@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import connectors.RegistrationConnector
 import models.registrationnoid.{OrganisationRegistrant, RegistrationNoIdIndividualRequest}
 import org.apache.pekko.stream.Materializer
 import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.*
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
@@ -30,13 +30,13 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json._
+import play.api.libs.json.*
 import play.api.mvc.BodyParsers
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import repositories._
-import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.http.{BadRequestException, _}
+import play.api.test.Helpers.*
+import repositories.*
+import uk.gov.hmrc.auth.core.*
+import uk.gov.hmrc.http.{BadRequestException, *}
 import utils.FakeAuthConnector
 
 import java.time.LocalDate
@@ -44,7 +44,7 @@ import scala.concurrent.Future
 
 class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfter with ScalaCheckDrivenPropertyChecks {
 
-  import RegistrationControllerSpec._
+  import RegistrationControllerSpec.*
 
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
@@ -65,7 +65,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
   implicit val mat: Materializer = fakeApplication().materializer
 
-  private def registrationController(retrievals: Future[_]): RegistrationController =
+  private def registrationController(retrievals: Future[?]): RegistrationController =
     new RegistrationController(
       mockRegistrationConnector,
       controllerComponents,
@@ -84,7 +84,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       val jsResponse = readJsonFromFile("/data/validRegisterWithIdIndividualResponse.json")
 
       when(mockRegistrationConnector.registerWithIdIndividual(eqTo(nino), any(), eqTo(mandatoryRequestData))
-      (any(), any(), any()))
+      (using any(), any(), any()))
         .thenReturn(Future.successful(Right(jsResponse)))
 
       val result = registrationController(idRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
@@ -136,7 +136,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
       forAll(connectorFailureGen) { connectorFailure =>
 
-        when(mockRegistrationConnector.registerWithIdIndividual(eqTo(nino), any(), eqTo(mandatoryRequestData))(any(), any(), any()))
+        when(mockRegistrationConnector.registerWithIdIndividual(eqTo(nino), any(), eqTo(mandatoryRequestData))(using any(), any(), any()))
           .thenReturn(Future.successful(Left(connectorFailure)))
 
         val result = registrationController(idRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
@@ -182,7 +182,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         "reason" -> "DES is currently experiencing problems that require live service intervention."
       )
 
-      when(mockRegistrationConnector.registerWithIdIndividual(eqTo(nino), any(), eqTo(mandatoryRequestData))(any(), any(), any()))
+      when(mockRegistrationConnector.registerWithIdIndividual(eqTo(nino), any(), eqTo(mandatoryRequestData))(using any(), any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
 
       val result = registrationController(idRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
@@ -192,13 +192,13 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         e.getMessage mustBe failureResponse.toString()
 
         verify(mockRegistrationConnector, times(1))
-          .registerWithIdIndividual(eqTo(nino), any(), eqTo(mandatoryRequestData))(any(), any(), any())
+          .registerWithIdIndividual(eqTo(nino), any(), eqTo(mandatoryRequestData))(using any(), any(), any())
       }
     }
 
     "throw Exception when any other exception returned from connector" in {
 
-      when(mockRegistrationConnector.registerWithIdIndividual(eqTo(nino), any(), eqTo(mandatoryRequestData))(any(), any(), any()))
+      when(mockRegistrationConnector.registerWithIdIndividual(eqTo(nino), any(), eqTo(mandatoryRequestData))(using any(), any(), any()))
         .thenReturn(Future.failed(new Exception("Generic Exception")))
 
       val result = registrationController(idRetrievals).registerWithIdIndividual(fakeRequest.withJsonBody(requestBody))
@@ -208,7 +208,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         e.getMessage mustBe "Generic Exception"
 
         verify(mockRegistrationConnector, times(1))
-          .registerWithIdIndividual(eqTo(nino), any(), eqTo(mandatoryRequestData))(any(), any(), any())
+          .registerWithIdIndividual(eqTo(nino), any(), eqTo(mandatoryRequestData))(using any(), any(), any())
       }
     }
   }
@@ -239,7 +239,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
       val jsonCaptor = ArgumentCaptor.forClass(classOf[JsValue])
 
       when(mockRegistrationConnector
-        .registerWithIdOrganisation(eqTo("1100000000"), any(), jsonCaptor.capture())(any(), any(), any()))
+        .registerWithIdOrganisation(eqTo("1100000000"), any(), jsonCaptor.capture())(using any(), any(), any()))
         .thenReturn(Future.successful(Right(jsResponse)))
 
       val result = registrationController(idRetrievals).registerWithIdOrganisation(fakeRequest.withJsonBody(inputData))
@@ -271,9 +271,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
             e mustBe a[BadRequestException]
             e.getMessage must startWith("Bad Request returned for Register With Id Organisation")
           }
-
         }
-
       }
 
       "there is no body in the request" in {
@@ -296,7 +294,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
       forAll(connectorFailureGen) { connectorFailure =>
 
-        when(mockRegistrationConnector.registerWithIdOrganisation(eqTo("1100000000"), any(), any())(any(), any(), any()))
+        when(mockRegistrationConnector.registerWithIdOrganisation(eqTo("1100000000"), any(), any())(using any(), any(), any()))
           .thenReturn(Future.successful(Left(connectorFailure)))
 
         val result = registrationController(idRetrievals).registerWithIdOrganisation(fakeRequest.withJsonBody(inputData))
@@ -304,7 +302,6 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         ScalaFutures.whenReady(result) { _ =>
           status(result) mustBe connectorFailure.responseCode
         }
-
       }
 
     }
@@ -325,15 +322,12 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
       val retrievals = None
 
-
       val result = registrationController(Future.successful(retrievals)).registerWithIdOrganisation(fakeRequest.withJsonBody(inputData))
 
       ScalaFutures.whenReady(result.failed) { e =>
         e mustBe a[UpstreamErrorResponse]
         e.getMessage mustBe "Not authorized"
       }
-
-
     }
 
     "throw UpstreamErrorResponse when given UpstreamErrorResponse from connector" in {
@@ -343,7 +337,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         "reason" -> "DES is currently experiencing problems that require live service intervention."
       )
 
-      when(mockRegistrationConnector.registerWithIdOrganisation(eqTo("1100000000"), any(), any())(any(), any(), any()))
+      when(mockRegistrationConnector.registerWithIdOrganisation(eqTo("1100000000"), any(), any())(using any(), any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
 
       val result = registrationController(idRetrievals).registerWithIdOrganisation(fakeRequest.withJsonBody(inputData))
@@ -353,7 +347,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         e.getMessage mustBe failureResponse.toString()
 
         verify(mockRegistrationConnector, times(1))
-          .registerWithIdOrganisation(eqTo("1100000000"), any(), any())(any(), any(), any())
+          .registerWithIdOrganisation(eqTo("1100000000"), any(), any())(using any(), any(), any())
       }
     }
 
@@ -371,14 +365,14 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         "safeId" -> "XE0001234567890"
       )
 
-      when(mockRegistrationConnector.registrationNoIdOrganisation(any(), eqTo(dataToEmtp))(any(), any(), any()))
+      when(mockRegistrationConnector.registrationNoIdOrganisation(any(), eqTo(dataToEmtp))(using any(), any(), any()))
         .thenReturn(Future.successful(Right(jsResponse)))
 
       val result = call(registrationController(idRetrievals).registrationNoIdOrganisation, fakeRequest(dataFromFrontend))
 
       ScalaFutures.whenReady(result) { _ =>
         status(result) mustBe OK
-        verify(mockRegistrationConnector, times(1)).registrationNoIdOrganisation(any(), eqTo(dataToEmtp))(any(), any(), any())
+        verify(mockRegistrationConnector, times(1)).registrationNoIdOrganisation(any(), eqTo(dataToEmtp))(using any(), any(), any())
       }
     }
 
@@ -392,7 +386,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
       forAll(connectorFailureGen) { connectorFailure =>
 
-        when(mockRegistrationConnector.registrationNoIdOrganisation(any(), eqTo(dataToEmtp))(any(), any(), any()))
+        when(mockRegistrationConnector.registrationNoIdOrganisation(any(), eqTo(dataToEmtp))(using any(), any(), any()))
           .thenReturn(Future.successful(Left(connectorFailure)))
 
         val result = call(registrationController(idRetrievals).registrationNoIdOrganisation, fakeRequest(dataFromFrontend))
@@ -437,7 +431,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         "reason" -> "DES is currently experiencing problems that require live service intervention."
       )
 
-      when(mockRegistrationConnector.registrationNoIdOrganisation(any(), eqTo(dataToEmtp))(any(), any(), any()))
+      when(mockRegistrationConnector.registrationNoIdOrganisation(any(), eqTo(dataToEmtp))(using any(), any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
 
       val result = call(registrationController(idRetrievals).registrationNoIdOrganisation, fakeRequest(dataFromFrontend))
@@ -447,7 +441,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         e.getMessage mustBe failureResponse.toString()
 
         verify(mockRegistrationConnector, times(1))
-          .registrationNoIdOrganisation(any(), eqTo(dataToEmtp))(any(), any(), any())
+          .registrationNoIdOrganisation(any(), eqTo(dataToEmtp))(using any(), any(), any())
       }
     }
   }
@@ -459,14 +453,14 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
     "return OK with successful response from connector" in {
       val jsResponse = Json.obj("safeId" -> " XE0001234567890", "sapNumber" -> "1234567890")
 
-      when(mockRegistrationConnector.registrationNoIdIndividual(any(), eqTo(individualNoIdToConnector))(any(), any(), any()))
+      when(mockRegistrationConnector.registrationNoIdIndividual(any(), eqTo(individualNoIdToConnector))(using any(), any(), any()))
         .thenReturn(Future.successful(Right(jsResponse)))
 
       val result = call(registrationController(idRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
 
       ScalaFutures.whenReady(result) { _ =>
         status(result) mustBe OK
-        verify(mockRegistrationConnector, times(1)).registrationNoIdIndividual(any(), eqTo(individualNoIdToConnector))(any(), any(), any())
+        verify(mockRegistrationConnector, times(1)).registrationNoIdIndividual(any(), eqTo(individualNoIdToConnector))(using any(), any(), any())
       }
     }
 
@@ -480,7 +474,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
 
       forAll(connectorFailureGen) { connectorFailure =>
 
-        when(mockRegistrationConnector.registrationNoIdIndividual(any(), eqTo(individualNoIdToConnector))(any(), any(), any()))
+        when(mockRegistrationConnector.registrationNoIdIndividual(any(), eqTo(individualNoIdToConnector))(using any(), any(), any()))
           .thenReturn(Future.successful(Left(connectorFailure)))
 
         val result = call(registrationController(idRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
@@ -513,7 +507,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         "reason" -> "DES is currently experiencing problems that require live service intervention."
       )
 
-      when(mockRegistrationConnector.registrationNoIdIndividual(any(), eqTo(individualNoIdToConnector))(any(), any(), any()))
+      when(mockRegistrationConnector.registrationNoIdIndividual(any(), eqTo(individualNoIdToConnector))(using any(), any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse(failureResponse.toString(), INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)))
 
       val result = call(registrationController(idRetrievals).registrationNoIdIndividual, fakeRequest(individualNoIdFrontend))
@@ -523,7 +517,7 @@ class RegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeA
         e.getMessage mustBe failureResponse.toString()
 
         verify(mockRegistrationConnector, times(1))
-          .registrationNoIdIndividual(any(), eqTo(individualNoIdToConnector))(any(), any(), any())
+          .registrationNoIdIndividual(any(), eqTo(individualNoIdToConnector))(using any(), any(), any())
       }
     }
   }

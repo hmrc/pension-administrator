@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import uk.gov.hmrc.auth.core._
+import play.api.test.Helpers.*
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.~
 import utils.AuthUtils
 import utils.AuthUtils.FakeFailingAuthConnector
@@ -74,7 +74,7 @@ class PsaEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
         running(app) {
           val bodyParsers = app.injector.instanceOf[BodyParsers.Default]
 
-          when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
+          when(mockAuthConnector.authorise[RetrievalsType](any(), any())(using any(), any()))
             .thenReturn(Future.successful(new~(Enrolments(Set.empty), Some("id"))))
 
           val action = new PsaEnrolmentAuthAction(mockAuthConnector, bodyParsers)

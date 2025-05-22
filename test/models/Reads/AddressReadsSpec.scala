@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 
 package models.Reads
 
-import models._
+import models.*
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.libs.json._
+import play.api.libs.json.*
 
 
 class AddressReadsSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
@@ -68,38 +68,38 @@ class AddressReadsSpec extends AnyWordSpec with Matchers with OptionValues with 
 
       "We have common address elements" when {
         "with addressLine 1" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](using Address.commonAddressElementsReads)
 
           result._1 mustBe ukAddressSample.addressLine1
         }
 
         "with addressLine 2" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](using Address.commonAddressElementsReads)
 
           result._2 mustBe ukAddressSample.addressLine2
         }
 
         "with addressLine 3" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](using Address.commonAddressElementsReads)
 
           result._3 mustBe ukAddressSample.addressLine3
         }
 
         "with addressLine 4" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](using Address.commonAddressElementsReads)
 
           result._4 mustBe ukAddressSample.addressLine4
         }
 
         "with countryCode" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](using Address.commonAddressElementsReads)
 
           result._5 mustBe ukAddressSample.countryCode
         }
 
         "with a countryCode defined as `country`" in {
           val result = (address - "countryCode" +
-            ("country" -> JsString("GB"))).as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](Address.commonAddressElementsReads)
+            ("country" -> JsString("GB"))).as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](using Address.commonAddressElementsReads)
 
           result._5 mustBe ukAddressSample.countryCode
         }

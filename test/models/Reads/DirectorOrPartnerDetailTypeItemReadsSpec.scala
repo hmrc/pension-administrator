@@ -129,7 +129,7 @@ class DirectorOrPartnerDetailTypeItemReadsSpec extends AnyWordSpec with Matchers
               "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"), "postcode" -> JsString("NE1"), "country" -> JsString("IT"))))
 
           val result = JsArray(directorWithCorrespondenceCommonDetail).as[List[DirectorOrPartnerDetailTypeItem]](
-            DirectorOrPartnerDetailTypeItem.apiReads(personType))
+            using DirectorOrPartnerDetailTypeItem.apiReads(personType))
           val expectedDirector = directorOrPartnerSample(personType).copy(correspondenceCommonDetail = correspondenceCommonDetails)
 
           result.last.correspondenceCommonDetail mustBe expectedDirector.correspondenceCommonDetail
@@ -138,6 +138,7 @@ class DirectorOrPartnerDetailTypeItemReadsSpec extends AnyWordSpec with Matchers
     }
   }
 }
+
 object DirectorOrPartnerDetailTypeItemReadsSpec {
 
   private def directorOrPartner(personType: String): JsObject = Json.obj(
@@ -156,5 +157,3 @@ object DirectorOrPartnerDetailTypeItemReadsSpec {
   val directors: Seq[JsObject] = Seq(directorOrPartner("director"), directorOrPartner("director"))
   val partners: Seq[JsObject] = Seq(directorOrPartner("partner"), directorOrPartner("partner"))
 }
-
-

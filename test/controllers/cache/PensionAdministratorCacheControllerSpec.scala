@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,16 @@ package controllers.cache
 import base.SpecBase
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.ByteString
-import org.mockito.ArgumentMatchers.{eq => eqTo, _}
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.{eq as eqTo, *}
+import org.mockito.Mockito.*
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Injecting}
-import repositories._
+import repositories.*
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
 import utils.{AuthUtils, RandomUtils}
@@ -65,9 +65,9 @@ class PensionAdministratorCacheControllerSpec
   "PensionAdministratorCacheController self" must {
     s".getSelf" must {
       "return 200 and the relevant data when it exists" in {
-        when(repo.get(eqTo(AuthUtils.externalId))(any())) thenReturn Future.successful {
+        when(repo.get(eqTo(AuthUtils.externalId))(using any())).thenReturn(Future.successful {
           Some(Json.obj())
-        }
+        })
         AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.getSelf(FakeRequest())
@@ -77,9 +77,9 @@ class PensionAdministratorCacheControllerSpec
       }
 
       "return 404 when the data doesn't exist" in {
-        when(repo.get(eqTo(AuthUtils.externalId))(any())) thenReturn Future.successful {
+        when(repo.get(eqTo(AuthUtils.externalId))(using any())).thenReturn(Future.successful {
           None
-        }
+        })
         AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.getSelf(FakeRequest())
@@ -88,26 +88,26 @@ class PensionAdministratorCacheControllerSpec
       }
 
       "throw an exception when the repository call fails" in {
-        when(repo.get(eqTo(AuthUtils.externalId))(any())) thenReturn Future.failed {
+        when(repo.get(eqTo(AuthUtils.externalId))(using any())).thenReturn(Future.failed {
           new Exception()
-        }
+        })
         AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.getSelf(FakeRequest())
 
-        an[Exception] must be thrownBy {
+        an[Exception] mustBe thrownBy {
           status(result)
         }
       }
 
       "throw an exception when the call is not authorised" in {
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed {
+        when(authConnector.authorise[Unit](any(), any())(using any(), any())).thenReturn(Future.failed {
           new UnauthorizedException("")
-        }
+        })
 
         val result = controller.getSelf(FakeRequest())
 
-        an[UnauthorizedException] must be thrownBy {
+        an[UnauthorizedException] mustBe thrownBy {
           status(result)
         }
       }
@@ -117,7 +117,7 @@ class PensionAdministratorCacheControllerSpec
 
       "return 200 when the request body can be parsed and passed to the repository successfully" in {
 
-        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
+        when(repo.upsert(any(), any())(using any())).thenReturn(Future.successful(()))
         AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = call(controller.saveSelf, FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
@@ -126,7 +126,7 @@ class PensionAdministratorCacheControllerSpec
       }
 
       "return 413 when the request body cannot be parsed" in {
-        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
+        when(repo.upsert(any(), any())(using any())).thenReturn(Future.successful(()))
         AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = call(controller.saveSelf, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
@@ -135,9 +135,9 @@ class PensionAdministratorCacheControllerSpec
       }
 
       "throw an exception when the call is not authorised" in {
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed {
+        when(authConnector.authorise[Unit](any(), any())(using any(), any())).thenReturn(Future.failed {
           new UnauthorizedException("")
-        }
+        })
 
         val result = call(controller.saveSelf, FakeRequest().withRawBody(ByteString("foo")))
 
@@ -149,7 +149,7 @@ class PensionAdministratorCacheControllerSpec
 
     s".removeSelf" must {
       "return 200 when the data is removed successfully" in {
-        when(repo.remove(eqTo(AuthUtils.externalId))(any())) thenReturn Future.successful(true)
+        when(repo.remove(eqTo(AuthUtils.externalId))(using any())).thenReturn(Future.successful(true))
         AuthUtils.noEnrolmentAuthStub(authConnector)
 
         val result = controller.removeSelf(FakeRequest())
@@ -158,13 +158,13 @@ class PensionAdministratorCacheControllerSpec
       }
 
       "throw an exception when the call is not authorised" in {
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed {
+        when(authConnector.authorise[Unit](any(), any())(using any(), any())).thenReturn(Future.failed {
           new UnauthorizedException("")
-        }
+        })
 
         val result = controller.removeSelf(FakeRequest())
 
-        an[UnauthorizedException] must be thrownBy {
+        an[UnauthorizedException] mustBe thrownBy {
           status(result)
         }
       }

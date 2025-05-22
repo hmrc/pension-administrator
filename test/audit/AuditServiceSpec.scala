@@ -24,12 +24,13 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import repositories._
+import repositories.*
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.config.AuditingConfig
 import uk.gov.hmrc.play.audit.http.connector.{AuditChannel, AuditConnector, AuditResult, DatastreamMetrics}
 import uk.gov.hmrc.play.audit.model.DataEvent
 
+import scala.compiletime.uninitialized
 import scala.concurrent.{ExecutionContext, Future}
 
 class AuditServiceSpec extends AsyncFlatSpec with Matchers with Inside with MockitoSugar {
@@ -81,7 +82,7 @@ object AuditServiceSpec extends MockitoSugar {
 //noinspection ScalaDeprecation
 object FakeAuditConnector extends AuditConnector {
 
-  private var sentEvent: DataEvent = _
+  private var sentEvent: DataEvent = uninitialized
 
   override def auditingConfig: AuditingConfig = AuditingConfig(None, enabled = false, "test audit service", auditSentHeaders = false)
 
