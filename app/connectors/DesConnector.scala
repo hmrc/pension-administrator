@@ -95,6 +95,8 @@ class DesConnectorImpl @Inject()(
                            headerCarrier: HeaderCarrier,
                            ec: ExecutionContext,
                            request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
+    val _ = request
     val psaSchema = "/resources/schemas/psaSubscription.json"
     val url = url"${config.schemeAdminRegistrationUrl}"
 
@@ -115,7 +117,6 @@ class DesConnectorImpl @Inject()(
                                          ec: ExecutionContext,
                                          request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
-
     val subscriptionDetailsUrl = url"${config.psaSubscriptionDetailsUrl.format(psaId)}"
 
     httpV2Client.get(subscriptionDetailsUrl)
@@ -132,8 +133,8 @@ class DesConnectorImpl @Inject()(
                          headerCarrier: HeaderCarrier,
                          ec: ExecutionContext,
                          request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-      headerUtils.integrationFrameworkHeader)
+
+    implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headerUtils.integrationFrameworkHeader *)
     val url = url"${config.removePsaUrl.format(psaToBeRemoved.pstr)}"
     val data: JsValue = Json.obj(
       "ceaseIDType" -> "PSAID",
@@ -145,8 +146,14 @@ class DesConnectorImpl @Inject()(
     removePSAFromScheme(url, data, "/resources/schemas/ceaseFromScheme1461.json", psaToBeRemoved)(using hc, implicitly, implicitly)
   }
 
-  private def removePSAFromScheme(url: java.net.URL, data: JsValue, schema: String, psaToBeRemoved: PsaToBeRemovedFromScheme)
-                                 (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  private def removePSAFromScheme(url: java.net.URL,
+                                  data: JsValue,
+                                  schema: String,
+                                  psaToBeRemoved: PsaToBeRemovedFromScheme)
+                                 (implicit hc: HeaderCarrier,
+                                  ec: ExecutionContext,
+                                  request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
     val validationResult = jsonPayloadSchemaValidator.validateJsonPayload(schema, data)
 
     if (validationResult.nonEmpty)
@@ -163,9 +170,10 @@ class DesConnectorImpl @Inject()(
                              headerCarrier: HeaderCarrier,
                              ec: ExecutionContext,
                              request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
     val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-      headerUtils.integrationFrameworkHeader)
+    implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headerUtils.integrationFrameworkHeader *)
+
     deregisterAdministrator(
       url"${config.deregisterPsaUrl.format(psaId)}",
       data,
@@ -174,8 +182,10 @@ class DesConnectorImpl @Inject()(
   }
 
   private def deregisterAdministrator(url: java.net.URL, data: JsValue, schema: String, psaId: String)
-                                     (implicit hc: HeaderCarrier, ec: ExecutionContext,
+                                     (implicit hc: HeaderCarrier,
+                                      ec: ExecutionContext,
                                       request: RequestHeader): Future[Either[HttpException, JsValue]] =
+
     httpV2Client.post(url).withBody(data).execute[HttpResponse] map {
       handlePostResponse(_, url.toString)
     } andThen
@@ -187,6 +197,8 @@ class DesConnectorImpl @Inject()(
                          headerCarrier: HeaderCarrier,
                          ec: ExecutionContext,
                          request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
+    val _ = request
     val psaVariationSchema = "/resources/schemas/psaVariation.json"
 
     val url = url"${config.psaVariationDetailsUrl.format(psaId)}"

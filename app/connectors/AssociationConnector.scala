@@ -148,9 +148,11 @@ class AssociationConnectorImpl @Inject()(
   }
 
   def acceptInvitation(acceptedInvitation: AcceptedInvitation)
-                      (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] = {
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-      headerUtils.integrationFrameworkHeader)
+                      (implicit headerCarrier: HeaderCarrier,
+                       ec: ExecutionContext,
+                       request: RequestHeader): Future[Either[HttpException, Unit]] = {
+
+    implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headerUtils.integrationFrameworkHeader *)
     val url = url"${appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)}"
 
     val data = Json.toJson(acceptedInvitation)(using writesIFAcceptedInvitation)
