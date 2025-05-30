@@ -32,6 +32,7 @@ import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler, JSONPayloadSchemaValidator}
 
 import java.time.LocalDate
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
 
@@ -94,9 +95,8 @@ class DesConnectorImpl @Inject()(
                           (implicit
                            headerCarrier: HeaderCarrier,
                            ec: ExecutionContext,
-                           request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                           @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
-    val _ = request
     val psaSchema = "/resources/schemas/psaSubscription.json"
     val url = url"${config.schemeAdminRegistrationUrl}"
 
@@ -196,9 +196,8 @@ class DesConnectorImpl @Inject()(
                         (implicit
                          headerCarrier: HeaderCarrier,
                          ec: ExecutionContext,
-                         request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                         @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
-    val _ = request
     val psaVariationSchema = "/resources/schemas/psaVariation.json"
 
     val url = url"${config.psaVariationDetailsUrl.format(psaId)}"

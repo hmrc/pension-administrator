@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import models.SendEmailRequest
 import org.scalatest.matchers.{MatchResult, Matcher}
 import uk.gov.hmrc.http.HeaderCarrier
 
+import scala.annotation.unused
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,7 +30,7 @@ class FakeEmailConnector extends EmailConnector {
   private val sent: mutable.ArrayDeque[SendEmailRequest] = mutable.ArrayDeque[SendEmailRequest]()
 
   override def sendEmail(email: SendEmailRequest)
-                        (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EmailStatus] = {
+                        (implicit @unused hc: HeaderCarrier, @unused ec: ExecutionContext): Future[EmailStatus] = {
 
     sent += email
     Future.successful(EmailSent)

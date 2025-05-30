@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package audit
 
 import play.api.mvc.RequestHeader
 
+import scala.annotation.unused
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 
@@ -26,7 +27,7 @@ class StubSuccessfulAuditService extends AuditService {
   private val events: mutable.ListBuffer[AuditEvent] = mutable.ListBuffer()
 
   override def sendEvent[T <: AuditEvent](event: T)
-                                         (implicit rh: RequestHeader, ec: ExecutionContext): Unit = {
+                                         (implicit @unused rh: RequestHeader, @unused ec: ExecutionContext): Unit = {
     events += event
   }
 

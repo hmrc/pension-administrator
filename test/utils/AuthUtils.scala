@@ -26,6 +26,7 @@ import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
 import uk.gov.hmrc.http.HeaderCarrier
 
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
 object AuthUtils {
@@ -66,7 +67,7 @@ object AuthUtils {
   class FakeFailingAuthConnector @Inject()(exceptionToReturn: Throwable) extends AuthConnector {
     val serviceUrl: String = ""
 
-    override def authorise[A](predicate: Predicate, retrieval: Retrieval[A])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] =
+    override def authorise[A](predicate: Predicate, retrieval: Retrieval[A])(implicit @unused hc: HeaderCarrier, @unused ec: ExecutionContext): Future[A] =
       Future.failed(exceptionToReturn)
   }
 }

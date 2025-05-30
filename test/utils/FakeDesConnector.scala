@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 import utils.testhelpers.PsaSubscriptionBuilder.psaSubscription
 
 import java.time.LocalDate
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeDesConnector extends DesConnector {
@@ -47,27 +48,29 @@ class FakeDesConnector extends DesConnector {
   def setUpdatePsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.updatePsaResponse = response
 
   override def registerPSA(registerData: JsValue)(implicit
-                                                  headerCarrier: HeaderCarrier,
-                                                  ec: ExecutionContext,
-                                                  request: RequestHeader): Future[Either[HttpException, JsValue]] = registerPsaResponse
+                                                  @unused headerCarrier: HeaderCarrier,
+                                                  @unused ec: ExecutionContext,
+                                                  @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = registerPsaResponse
 
   override def getPSASubscriptionDetails(psaId: String)(implicit
-                                                        headerCarrier: HeaderCarrier,
-                                                        ec: ExecutionContext,
-                                                        request: RequestHeader): Future[Either[HttpException, JsValue]] = getPsaResponse
+                                                        @unused headerCarrier: HeaderCarrier,
+                                                        @unused ec: ExecutionContext,
+                                                        @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = getPsaResponse
 
   override def removePSA(psaToBeRemoved: PsaToBeRemovedFromScheme)(implicit
-                                                                   headerCarrier: HeaderCarrier,
-                                                                   ec: ExecutionContext,
-                                                                   request: RequestHeader): Future[Either[HttpException, JsValue]] = removePsaResponse
+                                                                   @unused headerCarrier: HeaderCarrier,
+                                                                   @unused ec: ExecutionContext,
+                                                                   @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = removePsaResponse
 
-  override def deregisterPSA(psaId: String)(implicit headerCarrier: HeaderCarrier,
-                                            ec: ExecutionContext,
-                                            request: RequestHeader): Future[Either[HttpException, JsValue]] = deregisterPsaResponse
+  override def deregisterPSA(psaId: String)(implicit
+                                            @unused headerCarrier: HeaderCarrier,
+                                            @unused ec: ExecutionContext,
+                                            @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = deregisterPsaResponse
 
-  override def updatePSA(psaId: String, data: JsValue)(implicit headerCarrier: HeaderCarrier,
-                                                       ec: ExecutionContext,
-                                                       request: RequestHeader): Future[Either[HttpException, JsValue]] = updatePsaResponse
+  override def updatePSA(psaId: String, data: JsValue)(implicit
+                                                       @unused headerCarrier: HeaderCarrier,
+                                                       @unused ec: ExecutionContext,
+                                                       @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = updatePsaResponse
 }
 
 object FakeDesConnector {

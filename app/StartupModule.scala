@@ -15,10 +15,10 @@
  */
 
 import com.google.inject.AbstractModule
-import play.api.Configuration
+import play.api.{Configuration, Environment}
 import service.MigrationService
 
-class StartupModule(configuration: Configuration) extends AbstractModule {
+class StartupModule(environment: Environment, configuration: Configuration) extends AbstractModule {
   override def configure(): Unit = {
     if (configuration.get[Boolean]("mongo.migration.enable.migration")) bind(classOf[MigrationService]).asEagerSingleton()
   }

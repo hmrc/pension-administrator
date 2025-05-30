@@ -32,9 +32,11 @@ class PensionSchemeAdministratorWritesSpec extends AnyWordSpec with Matchers wit
 
         "parse pension adviser correctly" in {
 
-          val pensionSchemeAdministratorSampleTwo = pensionSchemeAdministratorSample `copy` (declaration = declarationSample2).toString
+          val pensionSchemeAdministratorSample2 = pensionSchemeAdministratorSample `copy` declarationSample2.toString
 
-          val result = Json.toJson(pensionSchemeAdministratorSampleTwo)(using PensionSchemeAdministrator.psaSubmissionWrites)
+          val result = Json.toJson(pensionSchemeAdministratorSample2)(using PensionSchemeAdministrator.psaSubmissionWrites)
+
+          //val pensionSchemeAdministratorSampleTwo = pensionSchemeAdministratorSample `copy` (declaration = declarationSample2).toString
 
           result.toString() must include("\"pensionAdvisorDetail\":")
         }
