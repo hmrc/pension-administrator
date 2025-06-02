@@ -115,12 +115,12 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
 
   // scalastyle:on method.length
 
-  private def validCacheControllerWithGet(s: String, map: Map[String, String], testMethod: () => Action[AnyContent], invalidMap: Map[String, String]): Unit = {
+  private def validCacheControllerWithGet(s: String, map: Map[String, String], testMethod: () => Action[AnyContent]): Unit = {
     s"$s should work for request with headers: $map" should "return 200 and the relevant data when it exists" in {
       when(repo.getByKeys(eqTo(map))(using any())).thenReturn(Future.successful(Some(invitationList)))
       AuthUtils.authStub(authConnector)
       val result = testMethod()(FakeRequest().withHeaders(map.toSeq *))
-      status(result) mustEqual OK
+      status(result).mustBe(OK)
       contentAsString(result) mustEqual Json.toJson(invitationList).toString
     }
 
@@ -155,8 +155,8 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
   }
 
   "InvitationsCacheController" should behave like validCacheControllerWithInsert()
-  it should behave like validCacheControllerWithGet("get", mapBothKeys, () => controller.get, Map())
-  it should behave like validCacheControllerWithGet("getForScheme", mapPstr, () => controller.getForScheme, mapInviteePsaId)
-  it should behave like validCacheControllerWithGet("getForInvitee", mapInviteePsaId, () => controller.getForInvitee, mapPstr)
+  it should behave like validCacheControllerWithGet("get", mapBothKeys, () => controller.get)
+  it should behave like validCacheControllerWithGet("getForScheme", mapPstr, () => controller.getForScheme)
+  it should behave like validCacheControllerWithGet("getForInvitee", mapInviteePsaId, () => controller.getForInvitee)
   it should behave like validCacheControllerWithRemove("remove")
 }

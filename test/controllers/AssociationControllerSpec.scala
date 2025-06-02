@@ -36,6 +36,7 @@ import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.http.*
 import utils.{AuthUtils, FakePsaSchemeAuthAction}
 
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
 class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers  with MockitoSugar with BeforeAndAfterEach {
@@ -343,17 +344,21 @@ object AssociationControllerSpec extends MockitoSugar {
     def setAcceptInvitationResponse(response: Future[Either[HttpException, Unit]]): Unit = this.acceptInvitationResponse = response
 
     def getMinimalDetails(idValue: String, idType: String, regime: String)(implicit
-                                                                           headerCarrier: HeaderCarrier,
-                                                                           ec: ExecutionContext,
-                                                                           request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = minimalPsaDetailsResponse
+                                                                           @unused headerCarrier: HeaderCarrier,
+                                                                           @unused ec: ExecutionContext,
+                                                                           @unused request: RequestHeader):
+    Future[Either[HttpException, MinimalDetails]] = minimalPsaDetailsResponse
 
     def findMinimalDetailsByID(idValue: String, idType: String, regime: String)(implicit
                                                                                 headerCarrier: HeaderCarrier,
                                                                                 ec: ExecutionContext,
-                                                                                request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] =
-      getMinimalDetails(idValue, idType, regime).map(_.map(Option(_)))
+                                                                                request: RequestHeader):
+    Future[Either[HttpException, Option[MinimalDetails]]] = getMinimalDetails(idValue, idType, regime).map(_.map(Option(_)))
 
-    override def acceptInvitation(invitation: AcceptedInvitation)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader):
+    override def acceptInvitation(invitation: AcceptedInvitation)(implicit
+                                                                  @unused headerCarrier: HeaderCarrier,
+                                                                  @unused ec: ExecutionContext,
+                                                                  @unused request: RequestHeader):
     Future[Either[HttpException, Unit]] = acceptInvitationResponse
   }
 

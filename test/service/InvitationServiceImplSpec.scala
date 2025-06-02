@@ -41,6 +41,7 @@ import utils.FakeEmailConnector.containEmail
 import utils.{DateHelper, FakeEmailConnector}
 
 import java.time.{Clock, Instant, LocalDate, ZoneOffset}
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationServiceImplSpec extends AsyncFlatSpec
@@ -275,13 +276,12 @@ object InvitationServiceImplSpec extends MockitoSugar {
 
 
   case class TestInvitation(srn: SchemeReferenceNumber,
-                        pstr: String,
-                        schemeName: String,
-                        inviterPsaId: PsaId,
-                        inviteePsaId: PsaId,
-                        inviteeName: String,
-                        expireAt: Instant
-                       )
+                             pstr: String,
+                             schemeName: String,
+                             inviterPsaId: PsaId,
+                             inviteePsaId: PsaId,
+                             inviteeName: String,
+                             expireAt: Instant)
 
   object TestInvitation {
     implicit val dateFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
@@ -323,8 +323,10 @@ class FakeAssociationConnector extends AssociationConnector {
   import InvitationServiceImplSpec.*
 
   def getMinimalDetails(idValue: String, idType: String, regime: String)
-                       (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext,
-                        request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
+                       (implicit
+                        @unused headerCarrier: HeaderCarrier,
+                        @unused ec: ExecutionContext,
+                        @unused request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
 
     PsaId(idValue) match {
       case `johnDoePsaId` | `associatedPsaId` => Future.successful(Right(johnDoe))
@@ -338,10 +340,12 @@ class FakeAssociationConnector extends AssociationConnector {
   }
 
 
-  def findMinimalDetailsByID(idValue: String, idType: String, regime: String)(implicit
-                                                                              headerCarrier: HeaderCarrier,
-                                                                              ec: ExecutionContext,
-                                                                              request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] =
+  def findMinimalDetailsByID(idValue: String,
+                             idType: String,
+                             regime: String)(implicit
+                                              headerCarrier: HeaderCarrier,
+                                              ec: ExecutionContext,
+                                              request: RequestHeader): Future[Either[HttpException, Option[MinimalDetails]]] =
     getMinimalDetails(idValue, idType, regime).map(_.map(Option(_)))
 
 
@@ -359,7 +363,8 @@ class FakeSchemeConnector extends SchemeConnector {
   import InvitationServiceImplSpec.*
 
   override def checkForAssociation(psaIdOrPspId: Either[PsaId, PspId], srn: SchemeReferenceNumber)
-                                  (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpException, Boolean]] = {
+                                  (implicit @unused hc: HeaderCarrier,
+                                            @unused ec: ExecutionContext): Future[Either[HttpException, Boolean]] = {
     val psaId = psaIdOrPspId.swap.getOrElse(throw new RuntimeException("no psa id"))
     Future.successful {
       if (psaId equals invalidResponsePsaId) {

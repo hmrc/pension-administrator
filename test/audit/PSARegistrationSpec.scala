@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,21 +48,16 @@ class PSARegistrationSpec extends AnyFlatSpec with Matchers {
     "withId" -> withId.toString,
     "externalId" -> externalId,
     "psaType" -> psaType,
-    "found" -> found.toString,
-    "isUk" -> isUk.map(_.toString).getOrElse(""),
+    "found" -> found,
+    "isUk" -> isUk.map(identity).getOrElse(""),
     "status" -> status.toString,
     "request" -> Json.stringify(request),
-    "response" -> {
-      response match {
-        case Some(json) => Json.stringify(json)
-        case _ => ""
-      }
-    }
+    "response" -> response.map(Json.stringify).getOrElse("")
   )
 
   "PSARegistration.details" should "output the correct map of data for individual" in {
 
-    eventUK.auditType shouldBe "PSARegistration"
+    eventUK.auditType.shouldBe("PSARegistration")
 
     eventUK.details shouldBe expected(withId = true, "individual")
 
@@ -70,7 +65,7 @@ class PSARegistrationSpec extends AnyFlatSpec with Matchers {
 
   it should "output the correct map of data for organisation" in {
 
-    eventUKOrg.auditType shouldBe "PSARegistration"
+    eventUKOrg.auditType.shouldBe("PSARegistration")
 
     eventUKOrg.details shouldBe expected(withId = true, "organisation")
 
@@ -78,7 +73,7 @@ class PSARegistrationSpec extends AnyFlatSpec with Matchers {
 
   "PSARegWithoutId.details" should "output the correct map of data for individual" in {
 
-    eventNonUK.auditType shouldBe "PSARegWithoutId"
+    eventNonUK.auditType.shouldBe("PSARegWithoutId")
 
     eventNonUK.details shouldBe expected(withId = false, "individual")
 
@@ -86,7 +81,7 @@ class PSARegistrationSpec extends AnyFlatSpec with Matchers {
 
   it should "output the correct map of data for organisation" in {
 
-    eventNonUKOrg.auditType shouldBe "PSARegWithoutId"
+    eventNonUKOrg.auditType.shouldBe("PSARegWithoutId")
 
     eventNonUKOrg.details shouldBe expected(withId = false, "organisation")
 

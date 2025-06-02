@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,17 +30,18 @@ import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsResultException, JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import repositories._
+import play.api.test.Helpers.*
+import repositories.*
 import service.SchemeService
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http.{BadRequestException, _}
+import uk.gov.hmrc.http.{BadRequestException, *}
 import utils.FakeDesConnector.{deregisterPsaResponseJson, removePsaResponseJson}
-import utils.testhelpers.PsaSubscriptionBuilder._
+import utils.testhelpers.PsaSubscriptionBuilder.*
 import utils.{AuthUtils, FakeDesConnector, FakePsaSchemeAuthAction}
 
 import java.time.{LocalDate, ZoneId}
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
 class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers with BeforeAndAfterEach {
@@ -432,12 +433,15 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
     def setUpdatePsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.updatePsaResponse = response
 
-    override def registerPSA(json: JsValue)(implicit headerCarrier: HeaderCarrier,
-                                            ec: ExecutionContext,
-                                            request: RequestHeader): Future[Either[HttpException, JsValue]] = registerPsaResponse
+    override def registerPSA(json: JsValue)(implicit
+                                            @unused headerCarrier: HeaderCarrier,
+                                            @unused ec: ExecutionContext,
+                                            @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = registerPsaResponse
 
-    override def updatePSA(psaId: String, json: JsValue)(
-      implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = updatePsaResponse
+    override def updatePSA(psaId: String, json: JsValue)(implicit
+                                                         @unused headerCarrier: HeaderCarrier,
+                                                         @unused ec: ExecutionContext,
+                                                         @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = updatePsaResponse
   }
 
   private val registerPsaResponseJson: JsValue =

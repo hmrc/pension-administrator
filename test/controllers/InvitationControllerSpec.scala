@@ -29,12 +29,13 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.JsValue
 import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import service.InvitationService
-import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.http.{BadRequestException, _}
+import uk.gov.hmrc.auth.core.*
+import uk.gov.hmrc.http.{BadRequestException, *}
 import utils.AuthUtils
 
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationControllerSpec extends AsyncFlatSpec with Matchers with BeforeAndAfterEach {
@@ -104,7 +105,7 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar {
 
   private val invitation = readJsonFromFile("/data/validInvitation.json")
 
-  val response = MinimalDetails("aaa@email.com", true, None, Some(IndividualDetails("John", Some("Doe"), "Doe")),
+  val response: MinimalDetails = MinimalDetails("aaa@email.com", true, None, Some(IndividualDetails("John", Some("Doe"), "Doe")),
     rlsFlag = true,
     deceasedFlag = true)
 
@@ -117,9 +118,12 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar {
     def setInvitePsaResponse(response: Future[Either[HttpException, Unit]]): Unit = this.invitePsaResponse = response
 
     def invitePSA(jsValue: JsValue)
-                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
-      invitePsaResponse
+                 (implicit
+                  @unused headerCarrier: HeaderCarrier,
+                  @unused ec: ExecutionContext,
+                  @unused request: RequestHeader): Future[Either[HttpException, Unit]] = invitePsaResponse
   }
+
   val application: Application = GuiceApplicationBuilder()
     .configure(
       "metrics.jvm" -> false
