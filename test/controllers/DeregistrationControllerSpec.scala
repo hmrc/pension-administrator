@@ -77,7 +77,7 @@ class DeregistrationControllerSpec
 
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
-      status(result) mustBe OK
+      status(result).mustBe(OK)
       contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false))
     }
 
@@ -87,7 +87,7 @@ class DeregistrationControllerSpec
 
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
-      status(result) `mustBe` OK
+      status(result).mustBe(OK)
       contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(true), "isOtherPsaAttached" -> JsBoolean(false))
     }
 
@@ -97,7 +97,7 @@ class DeregistrationControllerSpec
 
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
-      status(result) `mustBe` OK
+      status(result).mustBe(OK)
       contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(true), "isOtherPsaAttached" -> JsBoolean(false))
     }
 
@@ -109,7 +109,7 @@ class DeregistrationControllerSpec
 
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
-      status(result) `mustBe` OK
+      status(result).mustBe(OK)
       contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false))
     }
 
@@ -121,7 +121,7 @@ class DeregistrationControllerSpec
 
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
-      status(result) `mustBe` OK
+      status(result).mustBe(OK)
       contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false))
     }
 

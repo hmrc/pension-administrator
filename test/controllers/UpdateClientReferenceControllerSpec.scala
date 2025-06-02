@@ -95,7 +95,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec
         val result = updateClientReferenceController(app).updateClientReference(AuthUtils.srn)(fakeRequest.withHeaders(requestHeaders *))
 
         ScalaFutures.whenReady(result) { _ =>
-          status(result) `mustBe` OK
+          status(result).mustBe(OK)
           contentAsJson(result) mustEqual Json.toJson(successResponse)
         }
       }
@@ -111,8 +111,8 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec
           .thenReturn(Future.successful(Right(false)))
         val result = updateClientReferenceController(app).updateClientReference(AuthUtils.srn)(fakeRequest.withHeaders(requestHeaders *))
 
-        status(result) `mustBe` FORBIDDEN
-        contentAsString(result) mustBe "PspId is not associated with scheme"
+        status(result).mustBe(FORBIDDEN)
+        contentAsString(result).mustBe("PspId is not associated with scheme")
       }
     }
   }
@@ -132,8 +132,8 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec
           forAll(badRequestGen) { badRequest =>
             val result = updateClientReferenceController(app).updateClientReference(AuthUtils.srn)(fakeRequest.withHeaders(badRequest *))
 
-            status(result) `mustBe` BAD_REQUEST
-            contentAsString(result) mustBe "Required headers missing: pspId pstr"
+            status(result).mustBe(BAD_REQUEST)
+            contentAsString(result).mustBe("Required headers missing: pspId pstr")
           }
         }
       }
@@ -157,7 +157,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec
             val result = updateClientReferenceController(app).updateClientReference(AuthUtils.srn)(fakeRequest.withHeaders(requestHeaders *))
 
             ScalaFutures.whenReady(result) { _ =>
-              status(result) `mustBe` connectorFailure.responseCode
+              status(result).mustBe(connectorFailure.responseCode)
             }
           }
         }
@@ -171,7 +171,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec
         )) { app =>
 
           val result = updateClientReferenceController(app).updateClientReference(AuthUtils.srn)(fakeRequest.withHeaders(requestHeaders *))
-          status(result) `mustBe` FORBIDDEN
+          status(result).mustBe(FORBIDDEN)
         }
       }
 
@@ -193,7 +193,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec
 
           ScalaFutures.whenReady(result.failed) { e =>
             e `mustBe` a[UpstreamErrorResponse]
-            e.getMessage `mustBe` failureResponse.toString()
+            e.getMessage.mustBe(failureResponse.toString())
 
             verify(mockUpdateClientReferenceConnector, times(1))
               .updateClientReference(any(), any())(using any(), any(), any())
@@ -212,7 +212,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec
 
           ScalaFutures.whenReady(result.failed) { e =>
             e `mustBe` a[Exception]
-            e.getMessage `mustBe` "Generic Exception"
+            e.getMessage.mustBe("Generic Exception")
 
             verify(mockUpdateClientReferenceConnector, times(1))
               .updateClientReference(any(), any())(using any(), any(), any())

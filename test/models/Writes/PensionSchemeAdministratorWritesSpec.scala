@@ -29,14 +29,10 @@ class PensionSchemeAdministratorWritesSpec extends AnyWordSpec with Matchers wit
 
       s"Map all ${personType}s previous addresses to `previousDetail`" when {
 
-
         "parse pension adviser correctly" in {
 
-          val pensionSchemeAdministratorSample2 = pensionSchemeAdministratorSample `copy` declarationSample2.toString
-
-          val result = Json.toJson(pensionSchemeAdministratorSample2)(using PensionSchemeAdministrator.psaSubmissionWrites)
-
-          //val pensionSchemeAdministratorSampleTwo = pensionSchemeAdministratorSample `copy` (declaration = declarationSample2).toString
+          val pensionSchemeAdministratorSampleTwo = pensionSchemeAdministratorSample.copy(declaration = declarationSampleTwo)
+          val result = Json.toJson(pensionSchemeAdministratorSampleTwo)(using PensionSchemeAdministrator.psaSubmissionWrites)
 
           result.toString() must include("\"pensionAdvisorDetail\":")
         }
@@ -63,12 +59,12 @@ class PensionSchemeAdministratorWritesSpec extends AnyWordSpec with Matchers wit
           (result \ "changeOfDirectorOrPartnerDetails").asOpt[Boolean] mustBe None
         }
 
+        //FAIL
         s"We are doing a PSA submission with ${personType}s containing directorOrPartnerDetail at root level for update writes" in {
           val result = Json.toJson(pensionSchemeAdministratorSampleTwo(personType)
-            .copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample))))(
-            using PensionSchemeAdministrator.psaUpdateWrites)
+            .copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample))))(using PensionSchemeAdministrator.psaUpdateWrites)
 
-          result mustEqual readJsonFromFile(s"/data/validPsaVariationRequest$personType.json")
+          result.mustBe(readJsonFromFile(s"/data/validPsaVariationRequest$personType.json"))
         }
 
       }

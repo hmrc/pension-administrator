@@ -28,7 +28,7 @@ trait Samples {
   val numberOfDirectorOrPartnersSample: NumberOfDirectorOrPartnersType = NumberOfDirectorOrPartnersType(
     isMorethanTenDirectors = Some(true), isMorethanTenPartners = Some(true))
   val previousAddressDetailsSample: PreviousAddressDetails = PreviousAddressDetails(isPreviousAddressLast12Month = false)
-  val previousAddressDetailsSample2: PreviousAddressDetails = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
+  val previousAddressDetailsSampleTwo: PreviousAddressDetails = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
   val contactDetailsSample: ContactDetails = ContactDetails("07592113", email = "test@test.com")
 
   val pensionAdvisorDetail: PensionAdvisorDetail = PensionAdvisorDetail(name = "xyz",
@@ -37,7 +37,7 @@ trait Samples {
 
   val declarationSample: PensionSchemeAdministratorDeclarationType = PensionSchemeAdministratorDeclarationType(box1 = true,
     box2 = true, box3 = true, box4 = true, Some(true), None, box7 = true, None)
-  val declarationSample2: PensionSchemeAdministratorDeclarationType = PensionSchemeAdministratorDeclarationType(box1 = true,
+  val declarationSampleTwo: PensionSchemeAdministratorDeclarationType = PensionSchemeAdministratorDeclarationType(box1 = true,
     box2 = true, box3 = true, box4 = true, Some(true), None, box7 = true, Some(pensionAdvisorDetail))
   val pensionSchemeAdministratorSample: PensionSchemeAdministrator = PensionSchemeAdministrator(customerType = "TestCustomer",
     legalStatus = "Limited Company",
@@ -89,13 +89,13 @@ trait Samples {
   val correspondenceCommonDetails: CorrespondenceCommonDetail = CorrespondenceCommonDetail(nonUkAddressSample, contactDetailsSample)
 
   def pensionSchemeAdministratorSampleTwo(personType: String): PensionSchemeAdministrator = {
-    val item1 = directorOrPartnerSample(personType) `copy` (previousAddressDetail = previousAddressDetailsSample2).toString
-    val item2 = item1.copy(firstName = "Paul", middleName = None, lastName = "Stephens", previousAddressDetail = previousAddressDetailsSample2)
+    val item1 = directorOrPartnerSample(personType).copy(previousAddressDetail = previousAddressDetailsSampleTwo)
+    val item2 = item1.copy(firstName = "Paul", middleName = None, lastName = "Stephens", previousAddressDetail = previousAddressDetailsSampleTwo)
     
     pensionSchemeAdministratorSample.copy(
       directorOrPartnerDetail = Some(List(item1, item2)
       ),
-      declaration = declarationSample2,
+      declaration = declarationSampleTwo,
       individualDetail = Some(individualSample))
   }
 
