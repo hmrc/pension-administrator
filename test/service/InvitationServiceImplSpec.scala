@@ -65,7 +65,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     invitationService.invitePSA(invitationJson(johnDoePsaId, johnDoe.individualDetails.value.name)).map {
       response =>
         verify(invitationsCacheRepository, times(1)).upsert(any())(using any())
-        response.value should equal(())
+        response.value.shouldEqual(())
     }
   }
 
@@ -80,7 +80,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
       response =>
-        response.value should equal(())
+        response.value.shouldEqual(())
     }
   }
 
@@ -89,7 +89,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
       response =>
         verify(invitationsCacheRepository, times(1)).upsert(any())(using any())
-        response.value should equal(())
+        response.value.shouldEqual(())
     }
   }
 
@@ -98,7 +98,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     invitationService.invitePSA(invitationJson(acmeLtdPsaId, acmeLtd.organisationName.value)).map {
       _ =>
         val i = invitation(acmeLtdPsaId, acmeLtd.organisationName.value)
-        fakeAuditService.verifySent(InvitationAuditEvent(i)) should equal(true)
+        fakeAuditService.verifySent(InvitationAuditEvent(i)).shouldEqual(true)
     }
   }
 
@@ -112,21 +112,21 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
   it should "throw ForbiddenException if the Invitation is for a PSA already associated to that scheme" in {
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(associatedPsaId, johnDoe.individualDetails.value.name)) map { response =>
-      response.left.value shouldBe a[ForbiddenException]
+      response.left.value.shouldBe(a[ForbiddenException])
     }
   }
 
   it should "throw InternalServerException if check for association is not a boolean" in {
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(invalidResponsePsaId, johnDoe.individualDetails.value.name)) map { response =>
-      response.left.value shouldBe a[InternalServerException]
+      response.left.value.shouldBe(a[InternalServerException])
     }
   }
 
   it should "relay HttpExceptions throw from SchemeConnector" in {
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(exceptionResponsePsaId, johnDoe.individualDetails.value.name)) map { response =>
-      response.left.value shouldBe a[NotFoundException]
+      response.left.value.shouldBe(a[NotFoundException])
     }
   }
 
@@ -135,8 +135,8 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     invitationService.invitePSA(invitationJson(notFoundPsaId, "")) map {
       response =>
         verify(invitationsCacheRepository, never).upsert(any())(using any())
-        response.left.value shouldBe a[NotFoundException]
-        response.left.value.message should include("NOT_FOUND")
+        response.left.value.shouldBe(a[NotFoundException])
+        response.left.value.message.should(include("NOT_FOUND"))
     }
   }
 
@@ -145,8 +145,8 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     invitationService.invitePSA(invitationJson(johnDoePsaId, "Wrong Name")) map {
       response =>
         verify(invitationsCacheRepository, never).upsert(any())(using any())
-        response.left.value shouldBe a[NotFoundException]
-        response.left.value.message should include("The name and PSA Id do not match")
+        response.left.value.shouldBe(a[NotFoundException])
+        response.left.value.message.should(include("The name and PSA Id do not match"))
     }
   }
 
@@ -155,8 +155,8 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     invitationService.invitePSA(invitationJson(acmeLtdPsaId, "Wrong Name")) map {
       response =>
         verify(invitationsCacheRepository, never).upsert(any())(using any())
-        response.left.value shouldBe a[NotFoundException]
-        response.left.value.message should include("The name and PSA Id do not match")
+        response.left.value.shouldBe(a[NotFoundException])
+        response.left.value.message.should(include("The name and PSA Id do not match"))
     }
   }
 
@@ -164,8 +164,8 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(associatedPsaId, johnDoe.individualDetails.value.name)) map {
       response =>
-        response.left.value shouldBe a[ForbiddenException]
-        response.left.value.message should include("The invitation is to a PSA already associated with this scheme")
+        response.left.value.shouldBe(a[ForbiddenException])
+        response.left.value.message.should(include("The invitation is to a PSA already associated with this scheme"))
     }
   }
 
@@ -173,8 +173,8 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
     invitationService.invitePSA(invitationJson(associatedPsaId, "waa")) map {
       response =>
-        response.left.value shouldBe a[NotFoundException]
-        response.left.value.message should include("The name and PSA Id do not match")
+        response.left.value.shouldBe(a[NotFoundException])
+        response.left.value.message.should(include("The name and PSA Id do not match"))
     }
   }
 
@@ -183,7 +183,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.fullName)) map {
       response =>
         verify(invitationsCacheRepository, times(1)).upsert(any())(using any())
-        response.value should equal(())
+        response.value.shouldEqual(())
     }
   }
 
@@ -192,7 +192,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     invitationService.invitePSA(invitationJson(johnDoePsaId, "John Paul Doe")) map {
       response =>
         verify(invitationsCacheRepository, times(1)).upsert(any())(using any())
-        response.value should equal(())
+        response.value.shouldEqual(())
     }
   }
 
@@ -201,7 +201,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.name)) map {
       response =>
         verify(invitationsCacheRepository, times(1)).upsert(any())(using any())
-        response.value should equal(())
+        response.value.shouldEqual(())
     }
   }
 
@@ -211,8 +211,8 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
     invitationService.invitePSA(invitationJson(joeBloggsPsaId, joeBloggs.individualDetails.value.name)) map {
       response =>
         verify(invitationsCacheRepository, times(1)).upsert(any())(using any())
-        response.left.value shouldBe a[MongoDBFailedException]
-        response.left.value.message should include("failed to perform DB operation")
+        response.left.value.shouldBe(a[MongoDBFailedException])
+        response.left.value.message.should(include("failed to perform DB operation"))
     }
   }
 
@@ -235,7 +235,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
 
     invitationService.invitePSA(invitationJson(johnDoePsaId, johnDoe.individualDetails.value.name)).map {
       _ =>
-        emailConnector.sentEmails should containEmail(expectedEmail)
+        emailConnector.sentEmails.should(containEmail(expectedEmail))
     }
   }
 

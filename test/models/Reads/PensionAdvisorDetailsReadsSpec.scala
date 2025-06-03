@@ -34,19 +34,19 @@ class PensionAdvisorDetailsReadsSpec extends AnyWordSpec with Matchers with Opti
       "We have a name" in {
         val result = input.as[Option[PensionAdvisorDetail]](using PensionAdvisorDetail.apiReads)
 
-        result.value.name mustBe pensionAdviserSample.name
+        result.value.name.mustBe(pensionAdviserSample.name)
       }
 
       "We have an address" in {
         val result = input.as[Option[PensionAdvisorDetail]](using PensionAdvisorDetail.apiReads)
 
-        result.value.addressDetail mustBe pensionAdviserSample.addressDetail
+        result.value.addressDetail.mustBe(pensionAdviserSample.addressDetail)
       }
 
       "We have adviser contact details" in {
         val result = input.as[Option[PensionAdvisorDetail]](using PensionAdvisorDetail.apiReads)
 
-        result.value.contactDetail mustBe pensionAdviserSample.contactDetail
+        result.value.contactDetail.mustBe(pensionAdviserSample.contactDetail)
       }
     }
   }

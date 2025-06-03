@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import uk.gov.hmrc.auth.core._
+import play.api.test.Helpers.*
+import uk.gov.hmrc.auth.core.*
 import utils.AuthUtils
 import utils.AuthUtils.FakeFailingAuthConnector
 
@@ -57,7 +57,7 @@ class NoEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
           val controller = new Harness(action)
           val result = controller.onPageLoad()(FakeRequest())
 
-          status(result) mustEqual OK
+          status(result).mustBe(OK)
         }
       }
     }
@@ -75,12 +75,11 @@ class NoEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
           val result = controller.onPageLoad()(FakeRequest())
 
           ScalaFutures.whenReady(result.failed) { e =>
-            e mustBe a[Exception]
-            e.getMessage mustBe retrievals.msg
+            e.mustBe(a[Exception])
+            e.getMessage.mustBe(retrievals.msg)
           }
         }
       }
     }
-
   }
 }

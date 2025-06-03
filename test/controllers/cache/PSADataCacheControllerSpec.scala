@@ -71,8 +71,8 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
         val result = controller.get("testId")(fakeRequest)
 
-        status(result) mustEqual OK
-        contentAsJson(result) mustEqual Json.obj("testId" -> "foo")
+        status(result).mustBe(OK)
+        contentAsJson(result).mustBe(Json.obj("testId" -> "foo"))
       }
 
       "return 404 when the data doesn't exist" in {
@@ -80,14 +80,16 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
         val result = controller.get("testId")(fakeRequest)
 
-        status(result) mustEqual NOT_FOUND
+        status(result).mustBe(NOT_FOUND)
       }
 
       "throw an exception when the repository call fails" in {
         when(repo.get(eqTo("testId"))(using any())).thenReturn(Future.failed(new Exception()))
 
         val result = controller.get("foo")(FakeRequest())
-        an[Exception] must be thrownBy status(result)
+        an[Exception].mustBe(thrownBy {
+          status(result)
+        })
       }
 
       "throw an exception when the call is not authorised" in {
@@ -95,7 +97,9 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
         when(authConnector.authorise[Unit](any(), any())(using any(), any())).thenReturn(Future.failed(new UnauthorizedException("")))
 
         val result = controller.get("foo")(FakeRequest())
-        an[UnauthorizedException] must be thrownBy status(result)
+        an[Exception].mustBe(thrownBy {
+          status(result)
+        })
       }
     }
 
@@ -106,7 +110,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
         val result = call(controller.save("testId"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
 
-        status(result) mustEqual OK
+        status(result).mustBe(OK)
       }
 
       "return REQUEST_ENTITY_TOO_LARGE when the request body cannot be parsed" in {
@@ -114,7 +118,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
         val result = call(controller.save(id = "testId"),
           FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
-        status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
+        status(result).mustBe(REQUEST_ENTITY_TOO_LARGE)
       }
 
     }
@@ -125,7 +129,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
         val result = controller.remove(id = "testId")(FakeRequest())
 
-        status(result) mustEqual OK
+        status(result).mustBe(OK)
       }
 
 
@@ -138,8 +142,8 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
         val result = controller.getSelf(fakeRequest)
 
-        status(result) mustEqual OK
-        contentAsJson(result) mustEqual Json.obj("testId" -> "foo")
+        status(result).mustBe(OK)
+        contentAsJson(result).mustEqual(Json.obj("testId" -> "foo"))
       }
 
       "return 404 when the data doesn't exist" in {
@@ -147,14 +151,16 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
         val result = controller.getSelf(fakeRequest)
 
-        status(result) mustEqual NOT_FOUND
+        status(result).mustBe(NOT_FOUND)
       }
 
       "throw an exception when the repository call fails" in {
         when(repo.get(eqTo(AuthUtils.externalId))(using any())).thenReturn(Future.failed(new Exception()))
 
         val result = controller.getSelf(FakeRequest())
-        an[Exception] must be thrownBy status(result)
+        an[Exception].mustBe(thrownBy {
+          status(result)
+        })
       }
 
       "throw an exception when the call is not authorised" in {
@@ -162,7 +168,9 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
         when(authConnector.authorise[Unit](any(), any())(using any(), any())).thenReturn(Future.failed(new UnauthorizedException("")))
 
         val result = controller.getSelf(FakeRequest())
-        an[UnauthorizedException] must be thrownBy status(result)
+        an[Exception].mustBe(thrownBy {
+          status(result)
+        })
       }
     }
 
@@ -173,7 +181,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
         val result = call(controller.saveSelf, FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
 
-        status(result) mustEqual OK
+        status(result).mustBe(OK)
       }
 
       "return REQUEST_ENTITY_TOO_LARGE when the request body cannot be parsed" in {
@@ -181,7 +189,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
         val result = call(controller.saveSelf,
           FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
-        status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
+        status(result).mustBe(REQUEST_ENTITY_TOO_LARGE)
       }
 
     }
@@ -192,7 +200,7 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
 
         val result = controller.removeSelf(FakeRequest())
 
-        status(result) mustEqual OK
+        status(result).mustBe(OK)
       }
     }
   }

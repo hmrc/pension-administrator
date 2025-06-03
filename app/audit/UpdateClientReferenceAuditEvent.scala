@@ -33,12 +33,7 @@ case class UpdateClientReferenceAuditEvent(updateClientReferenceRequest: UpdateC
       "clientReference" -> updateClientReferenceRequest.clientReference.getOrElse(""),
       "status" -> status.toString,
       "userAction" -> userAction.getOrElse(""),
-      "response" -> {
-        response match {
-          case Some(json) => Json.stringify(json)
-          case _ => ""
-        }
-      }
+      "response" -> response.map(Json.stringify).getOrElse("")
     )
 }
 

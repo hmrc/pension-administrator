@@ -31,7 +31,7 @@ class DirectorOrPartnerDetailTypeItemWritesSpec extends AnyWordSpec with Matcher
           val result = Json.toJson(directorOrPartnerSample(personType).copy(
             previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample))))(using DirectorOrPartnerDetailTypeItem.psaSubmissionWrites)
 
-          result.toString() must include("true,\"previousAddressDetail\":")
+          result.toString().must(include("true,\"previousAddressDetail\":"))
         }
       }
 

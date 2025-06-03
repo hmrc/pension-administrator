@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,48 +16,52 @@
 
 package utils
 
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.{JsValue, Json, OFormat}
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 
 // scalastyle:off magic.number
 
 class HttpResponseHelperSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockitoSugar {
 
-  import HttpResponseHelperSpec._
+  import HttpResponseHelperSpec.*
 
   "handleErrorResponse" should "transform Bad Request into UpstreamErrorResponse" in {
     val response = responseFor(BAD_REQUEST)
-    a[UpstreamErrorResponse] should be thrownBy fixture()(response)
+    a[UpstreamErrorResponse].shouldBe(thrownBy {
+      fixture()(response)
+    })
   }
 
   it should "transform Bad Request into HttpResponse if response contains the value defined" in {
     val response = responseFor(BAD_REQUEST, "Bad")
-    response shouldBe a[HttpResponse]
-    response.status shouldBe BAD_REQUEST
-    response.body shouldBe s"Message for Bad"
+    response.shouldBe(a[HttpResponse])
+    response.status.shouldBe(BAD_REQUEST)
+    response.body.shouldBe(s"Message for Bad")
   }
 
   it should "transform Not Found into HttpResponse" in {
     val response = responseFor(NOT_FOUND)
-    response shouldBe a[HttpResponse]
-    response.status shouldBe NOT_FOUND
+    response.shouldBe(a[HttpResponse])
+    response.status.shouldBe(NOT_FOUND)
   }
 
   it should "transform any other 4xx into UpstreamErrorResponse" in {
     val userErrors = for (n <- Gen.choose(400, 499) suchThat (n => n != 400 && n != 404)) yield n
     forAll(userErrors) {
       userError =>
-        val ex = the[UpstreamErrorResponse] thrownBy fixture()(responseFor(userError))
-        ex.reportAs shouldBe userError
-        ex.statusCode shouldBe userError
+        val ex = the[UpstreamErrorResponse].thrownBy {
+          fixture()(responseFor(userError))
+        }
+        ex.reportAs `shouldBe` userError
+        ex.statusCode.shouldBe(userError)
     }
   }
 
@@ -66,9 +70,11 @@ class HttpResponseHelperSpec extends AnyFlatSpec with Matchers with ScalaCheckDr
 
     forAll(serverErrors) {
       serverError =>
-        val ex = the[UpstreamErrorResponse] thrownBy fixture()(responseFor(serverError))
-        ex.reportAs shouldBe BAD_GATEWAY
-        ex.statusCode shouldBe serverError
+        val ex = the[UpstreamErrorResponse].thrownBy {
+          fixture()(responseFor(serverError))
+        }
+        ex.reportAs `shouldBe` BAD_GATEWAY
+        ex.statusCode.shouldBe(serverError)
     }
   }
 
@@ -77,7 +83,9 @@ class HttpResponseHelperSpec extends AnyFlatSpec with Matchers with ScalaCheckDr
 
     forAll(statuses) {
       status =>
-        an[UnrecognisedHttpResponseException] should be thrownBy fixture()(responseFor(status))
+        an[UnrecognisedHttpResponseException].shouldBe(thrownBy {
+          fixture()(responseFor(status))
+        })
     }
   }
 
@@ -87,10 +95,9 @@ class HttpResponseHelperSpec extends AnyFlatSpec with Matchers with ScalaCheckDr
 
   it should "throw BadGatewayException given a non-JSON string" in {
 
-    a[BadGatewayException] should be thrownBy {
+    a[BadGatewayException].shouldBe(thrownBy {
       fixture.parseJson("not-json", testMethod, testUrl)
-    }
-
+    })
   }
 
   "validateJson" should "return the correct object given valid JSON" in {
@@ -98,7 +105,7 @@ class HttpResponseHelperSpec extends AnyFlatSpec with Matchers with ScalaCheckDr
     val expected = Dummy("test-name")
     val json = Json.toJson(expected)
 
-    fixture.validateJson(json, testMethod, testUrl, _ => ()) shouldBe expected
+    fixture.validateJson(json, testMethod, testUrl, _ => ()).shouldBe(expected)
 
   }
 
@@ -106,9 +113,9 @@ class HttpResponseHelperSpec extends AnyFlatSpec with Matchers with ScalaCheckDr
 
     val json = Json.parse("{}")
 
-    a[BadGatewayException] shouldBe thrownBy {
+    a[BadGatewayException].shouldBe(thrownBy {
       fixture.validateJson(json, testMethod, testUrl, _ => ())
-    }
+    })
 
   }
 
@@ -117,11 +124,11 @@ class HttpResponseHelperSpec extends AnyFlatSpec with Matchers with ScalaCheckDr
     val json = Json.parse("{}")
     val onInvalid = mock[OnInvalidFunction]
 
-    doNothing.when(onInvalid).onInvalid(any())
+    doNothing().when(onInvalid).onInvalid(any())
 
-    a[BadGatewayException] shouldBe thrownBy {
+    a[BadGatewayException].shouldBe(thrownBy {
       fixture.validateJson(json, testMethod, testUrl, onInvalid.onInvalid)
-    }
+    })
 
     verify(onInvalid).onInvalid(any())
 

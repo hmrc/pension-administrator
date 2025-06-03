@@ -39,6 +39,6 @@ class EmailAuditEventSpec extends AnyFlatSpec with Matchers {
     )
 
     event.auditType.shouldBe(s"${JourneyType.PSA}EmailEvent")
-    event.details shouldBe expected
+    event.details.shouldBe(expected)
   }
 }

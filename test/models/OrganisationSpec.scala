@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ class OrganisationSpec extends AnyWordSpec with Matchers {
     "return Organisation" in {
       val json = Json.obj("organisationName" -> "Test Ltd", "organisationType" -> "Corporate Body")
 
-      json.as[Organisation] mustEqual Organisation("Test Ltd", OrganisationTypeEnum.CorporateBody)
+      json.as[Organisation].mustBe(Organisation("Test Ltd", OrganisationTypeEnum.CorporateBody))
     }
   }
 
@@ -35,7 +35,7 @@ class OrganisationSpec extends AnyWordSpec with Matchers {
       val org = Organisation("Test Ltd", OrganisationTypeEnum.CorporateBody)
 
       val jsonResult = Json.obj("organisationName" -> "Test Ltd", "organisationType" -> "Corporate Body")
-      Json.toJson[Organisation](org) mustEqual jsonResult
+      Json.toJson[Organisation](org).mustBe(jsonResult)
     }
   }
 }

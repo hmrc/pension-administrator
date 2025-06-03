@@ -49,9 +49,9 @@ class AuditServiceSpec extends AsyncFlatSpec with Matchers with Inside with Mock
 
     inside(sentEvent) {
       case DataEvent(auditSource, auditType, _, _, detail, _, _, _, None) =>
-        auditSource shouldBe appName
-        auditType shouldBe "TestAuditEvent"
-        detail should contain("payload" -> "test-audit-payload")
+        auditSource `shouldBe` appName
+        auditType `shouldBe` "TestAuditEvent"
+        detail.should(contain("payload" -> "test-audit-payload"))
     }
 
   }

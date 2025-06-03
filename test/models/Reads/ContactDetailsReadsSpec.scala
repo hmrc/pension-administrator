@@ -29,12 +29,12 @@ class ContactDetailsReadsSpec extends AnyWordSpec with Matchers with OptionValue
       val input = Json.obj("phone" -> "0758237281", "email" -> "test@test.com")
       "We have a telephone number" in {
         val result: ContactDetails = input.as[ContactDetails](using ContactDetails.apiReads)
-        result.telephone mustBe "0758237281"
+        result.telephone.mustBe("0758237281")
       }
 
       "We have an email address" in {
         val result: ContactDetails = input.as[ContactDetails](using ContactDetails.apiReads)
-        result.email mustBe "test@test.com"
+        result.email.mustBe("test@test.com")
       }
 
       "We have an isChanged flag" in {
@@ -42,7 +42,7 @@ class ContactDetailsReadsSpec extends AnyWordSpec with Matchers with OptionValue
 
         val result = modifiedContactDetails.as[ContactDetails](using ContactDetails.apiReads)
 
-        result.isChanged.value mustBe true
+        result.isChanged.value.mustBe(true)
       }
     }
   }

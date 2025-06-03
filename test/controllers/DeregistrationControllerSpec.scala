@@ -78,7 +78,7 @@ class DeregistrationControllerSpec
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
       status(result).mustBe(OK)
-      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false))
+      contentAsJson(result).mustEqual(Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false)))
     }
 
     "return OK and true when canDeregister called with psa ID having no scheme detail item at all" in {
@@ -88,7 +88,7 @@ class DeregistrationControllerSpec
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
       status(result).mustBe(OK)
-      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(true), "isOtherPsaAttached" -> JsBoolean(false))
+      contentAsJson(result).mustEqual(Json.obj("canDeregister" -> JsBoolean(true), "isOtherPsaAttached" -> JsBoolean(false)))
     }
 
     "return OK and true when canDeregister called with psa ID having only wound-up or rejected schemes" in {
@@ -98,7 +98,7 @@ class DeregistrationControllerSpec
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
       status(result).mustBe(OK)
-      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(true), "isOtherPsaAttached" -> JsBoolean(false))
+      contentAsJson(result).mustEqual(Json.obj("canDeregister" -> JsBoolean(true), "isOtherPsaAttached" -> JsBoolean(false)))
     }
 
     "return OK and false when canDeregister called with psa ID having both wound-up schemes and non-wound-up schemes and they are the only psa associated" in {
@@ -110,7 +110,7 @@ class DeregistrationControllerSpec
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
       status(result).mustBe(OK)
-      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false))
+      contentAsJson(result).mustEqual(Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false)))
     }
 
     "return OK and false when canDeregister called with psa ID having Open scheme and there are other PSAs associated" in {
@@ -122,7 +122,7 @@ class DeregistrationControllerSpec
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
       status(result).mustBe(OK)
-      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false))
+      contentAsJson(result).mustEqual(Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false)))
     }
 
     "return http exception when non OK httpresponse returned" in {
@@ -130,7 +130,7 @@ class DeregistrationControllerSpec
         .thenReturn(Future.successful(Left(new BadRequestException("bad request"))))
 
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
-      status(result) mustBe BAD_REQUEST
+      status(result).mustBe(BAD_REQUEST)
     }
   }
 }

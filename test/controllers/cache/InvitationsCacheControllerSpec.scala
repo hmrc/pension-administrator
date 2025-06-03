@@ -35,8 +35,8 @@ import repositories.*
 import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.BadRequestException
-import utils.{AuthUtils, RandomUtils}
 import utils.testhelpers.InvitationBuilder.*
+import utils.{AuthUtils, RandomUtils}
 
 import scala.concurrent.Future
 
@@ -68,7 +68,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
       when(repo.upsert(any())(using any())).thenReturn(Future.successful(()))
       AuthUtils.authStub(authConnector)
       val result = call(controller.add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation1)))
-      status(result) mustEqual CREATED
+      status(result).mustEqual(CREATED)
     }
 
     it should "return 400 when the request body cannot be parsed" in {
@@ -78,8 +78,8 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
       recoverToExceptionIf[BadRequestException](
         call(controller.add, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))).map {
         ex =>
-          ex.responseCode mustBe BAD_REQUEST
-          ex.message mustBe "Bad Request with no request body returned for PSA Invitation"
+          ex.responseCode `mustBe` BAD_REQUEST
+          ex.message.mustBe("Bad Request with no request body returned for PSA Invitation")
       }
     }
 
@@ -94,8 +94,8 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
       recoverToExceptionIf[BadRequestException](
         call(controller.add, FakeRequest().withJsonBody(badJson))).map {
         ex =>
-          ex.responseCode mustBe BAD_REQUEST
-          ex.message mustBe "not valid value for PSA Invitation"
+          ex.responseCode `mustBe` BAD_REQUEST
+          ex.message.mustBe("not valid value for PSA Invitation")
       }
     }
 
@@ -107,8 +107,8 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
       recoverToExceptionIf[MongoDBFailedException](
         call(controller.add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation1)))).map {
         ex =>
-          ex.responseCode mustBe INTERNAL_SERVER_ERROR
-          ex.message must include("mongo error")
+          ex.responseCode `mustBe` INTERNAL_SERVER_ERROR
+          ex.message.must(include("mongo error"))
       }
     }
   }
@@ -121,7 +121,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
       AuthUtils.authStub(authConnector)
       val result = testMethod()(FakeRequest().withHeaders(map.toSeq *))
       status(result).mustBe(OK)
-      contentAsString(result) mustEqual Json.toJson(invitationList).toString
+      contentAsString(result).mustEqual(Json.toJson(invitationList).toString)
     }
 
     it should "return 404 when the data doesn't exist" in {
@@ -130,7 +130,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
       })
       AuthUtils.authStub(authConnector)
       val result = testMethod()(FakeRequest().withHeaders(map.toSeq *))
-      status(result) mustEqual NOT_FOUND
+      status(result).mustBe(NOT_FOUND)
     }
 
     it should "throw an exception when the repository call fails" in {
@@ -139,7 +139,9 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
       })
       AuthUtils.authStub(authConnector)
       val result = testMethod()(FakeRequest().withHeaders(map.toSeq *))
-      an[Exception] must be thrownBy status(result)
+      an[Exception].mustBe(thrownBy {
+        status(result)
+      })
     }
   }
 
@@ -150,7 +152,7 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
 
       val result = controller.remove()(FakeRequest().withHeaders(mapBothKeys.toSeq *))
 
-      status(result) mustEqual OK
+      status(result).mustBe(OK)
     }
   }
 

@@ -72,8 +72,8 @@ class PensionAdministratorCacheControllerSpec
 
         val result = controller.getSelf(FakeRequest())
 
-        status(result) mustEqual OK
-        contentAsString(result) mustEqual "{}"
+        status(result).mustBe(OK)
+        contentAsString(result).mustEqual("{}")
       }
 
       "return 404 when the data doesn't exist" in {
@@ -84,7 +84,7 @@ class PensionAdministratorCacheControllerSpec
 
         val result = controller.getSelf(FakeRequest())
 
-        status(result) mustEqual NOT_FOUND
+        status(result).mustBe(NOT_FOUND)
       }
 
       "throw an exception when the repository call fails" in {
@@ -95,9 +95,9 @@ class PensionAdministratorCacheControllerSpec
 
         val result = controller.getSelf(FakeRequest())
 
-        an[Exception] mustBe thrownBy {
+        an[Exception].mustBe(thrownBy {
           status(result)
-        }
+        })
       }
 
       "throw an exception when the call is not authorised" in {
@@ -107,9 +107,9 @@ class PensionAdministratorCacheControllerSpec
 
         val result = controller.getSelf(FakeRequest())
 
-        an[UnauthorizedException] mustBe thrownBy {
+        an[UnauthorizedException].mustBe(thrownBy {
           status(result)
-        }
+        })
       }
     }
 
@@ -122,7 +122,7 @@ class PensionAdministratorCacheControllerSpec
 
         val result = call(controller.saveSelf, FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
 
-        status(result) mustEqual OK
+        status(result).mustBe(OK)
       }
 
       "return 413 when the request body cannot be parsed" in {
@@ -131,7 +131,7 @@ class PensionAdministratorCacheControllerSpec
 
         val result = call(controller.saveSelf, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
-        status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
+        status(result).mustBe(REQUEST_ENTITY_TOO_LARGE)
       }
 
       "throw an exception when the call is not authorised" in {
@@ -141,9 +141,9 @@ class PensionAdministratorCacheControllerSpec
 
         val result = call(controller.saveSelf, FakeRequest().withRawBody(ByteString("foo")))
 
-        an[UnauthorizedException] must be thrownBy {
+        an[UnauthorizedException].mustBe(thrownBy {
           status(result)
-        }
+        })
       }
     }
 
@@ -154,7 +154,7 @@ class PensionAdministratorCacheControllerSpec
 
         val result = controller.removeSelf(FakeRequest())
 
-        status(result) mustEqual OK
+        status(result).mustBe(OK)
       }
 
       "throw an exception when the call is not authorised" in {
@@ -164,9 +164,9 @@ class PensionAdministratorCacheControllerSpec
 
         val result = controller.removeSelf(FakeRequest())
 
-        an[UnauthorizedException] mustBe thrownBy {
+        an[UnauthorizedException].mustBe(thrownBy {
           status(result)
-        }
+        })
       }
     }
   }

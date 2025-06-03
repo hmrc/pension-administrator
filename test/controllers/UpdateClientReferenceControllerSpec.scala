@@ -96,7 +96,7 @@ class UpdateClientReferenceControllerSpec extends AnyWordSpec
 
         ScalaFutures.whenReady(result) { _ =>
           status(result).mustBe(OK)
-          contentAsJson(result) mustEqual Json.toJson(successResponse)
+          contentAsJson(result).mustBe(Json.toJson(successResponse))
         }
       }
     }

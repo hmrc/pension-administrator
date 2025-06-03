@@ -31,7 +31,7 @@ class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
 
     val actual = Json.toJson(fullAddressRequest)(using RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
 
-    actual shouldEqual expectedFullAddressJson
+    actual.shouldEqual(expectedFullAddressJson)
 
   }
 
@@ -40,7 +40,7 @@ class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
     val actual = Json.toJson(fullAddressRequest)(using RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
     val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json")(actual)
 
-    validationFailures shouldBe empty
+    validationFailures.shouldBe(empty)
 
   }
 
@@ -48,7 +48,7 @@ class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
 
     val actual = Json.toJson(minimalAddressRequest)(using RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
 
-    actual shouldEqual expectedMinimalAddressJson
+    actual.shouldEqual(expectedMinimalAddressJson)
 
   }
 
@@ -57,7 +57,7 @@ class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
     val actual = Json.toJson(minimalAddressRequest)(using RegistrationNoIdIndividualRequest.writesRegistrationNoIdIndividualRequest(acknowledgementReference))
     val validationFailures = invalidPayloadHandler.getFailures("/resources/schemas/1335_1336-registerWithoutId-RequestSchema-2.3.0.json")(actual)
 
-    validationFailures shouldBe empty
+    validationFailures.shouldBe(empty)
 
   }
 
@@ -72,7 +72,7 @@ class RegistrationNoIdIndividualRequestSpec extends AnyFlatSpec with Matchers {
           JsResultException(errors)
         )
       },
-      response => response shouldBe expectedResponse
+      response => response.shouldBe(expectedResponse)
     )
 
   }

@@ -29,12 +29,7 @@ case class PSADeEnrol(
   override def details: Map[String, String] = Map(
     "psaId" -> psaId,
     "status" -> status.toString,
-    "response" -> {
-      response match {
-        case Some(json) => Json.stringify(json)
-        case _ => ""
-      }
-    }
+    "response" -> response.map(Json.stringify).getOrElse("")
   )
 }
 

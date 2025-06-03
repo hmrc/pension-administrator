@@ -33,6 +33,6 @@ class EmailEventsSpec extends AnyFreeSpec with Matchers {
 
     val timestampAsInstant = LocalDateTime.parse("2024-04-15T11:41:45.419").atZone(ZoneId.of("UTC")).toInstant
 
-    Json.parse(emailBody).as[EmailEvent] shouldBe EmailEvent(Opened, timestampAsInstant)
+    Json.parse(emailBody).as[EmailEvent].shouldBe(EmailEvent(Opened, timestampAsInstant))
   }
 }

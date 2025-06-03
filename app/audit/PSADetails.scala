@@ -31,12 +31,7 @@ case class PSADetails(psaId: String,
       "PSAID" -> psaId,
       "PSAName" -> psaName.getOrElse(""),
       "status" -> status.toString,
-      "response" -> {
-        response match {
-          case Some(json) => Json.stringify(json)
-          case _ => ""
-        }
-      }
+      "response" -> response.map(Json.stringify).getOrElse("")
     )
 
 }

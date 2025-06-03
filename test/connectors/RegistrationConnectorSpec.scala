@@ -87,7 +87,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registerWithIdIndividual(testNino, externalId, testRegisterDataIndividual).map {
       response =>
-        response.value shouldBe registerIndividualResponse
+        response.value.shouldBe(registerIndividualResponse)
     }
 
   }
@@ -106,8 +106,8 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdIndividual(testNino, externalId, testRegisterDataIndividual)) map {
       ex =>
-        ex.statusCode shouldBe BAD_REQUEST
-        ex.message should include("INVALID_NINO")
+        ex.statusCode `shouldBe` BAD_REQUEST
+        ex.message.should(include("INVALID_NINO"))
     }
   }
 
@@ -122,7 +122,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdIndividual(testNino, externalId, testRegisterDataIndividual)) map {
       ex =>
-        ex.statusCode shouldBe CONFLICT
+        ex.statusCode `shouldBe` CONFLICT
     }
   }
 
@@ -156,7 +156,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = testRegisterDataIndividual,
             response = Some(registerIndividualResponse)
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -187,7 +187,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = testRegisterDataIndividual,
             response = Some(Json.obj("error" -> "Error sendPSARegistrationEvent", "message" -> ex.getMessage))
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -213,7 +213,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = testRegisterDataIndividual,
             response = None
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -249,7 +249,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registerWithIdOrganisation(testUtr, externalId, testRegisterDataOrganisation).map {
       response =>
-        response.value shouldBe registerOrganisationResponse
+        response.value.shouldBe(registerOrganisationResponse)
     }
 
   }
@@ -268,8 +268,8 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
     recoverToExceptionIf[UpstreamErrorResponse](connector.registerWithIdOrganisation(testUtr, externalId, testRegisterDataOrganisation)) map {
       ex =>
 
-        ex.statusCode shouldBe BAD_REQUEST
-        ex.message should include("INVALID_UTR")
+        ex.statusCode `shouldBe` BAD_REQUEST
+        ex.message.should(include("INVALID_UTR"))
     }
   }
 
@@ -303,7 +303,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = testRegisterDataOrganisation,
             response = Some(registerOrganisationResponse)
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -333,7 +333,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = testRegisterDataOrganisation,
             response = Some(Json.obj("error" -> "Error sendPSARegistrationEvent", "message" -> ex.getMessage))
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -359,7 +359,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = testRegisterDataOrganisation,
             response = None
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -396,7 +396,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdOrganisation(externalId, organisationRegistrant).map {
       response =>
-        response.value shouldBe registerWithoutIdResponseJson
+        response.value.shouldBe(registerWithoutIdResponseJson)
     }
   }
 
@@ -430,7 +430,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = testRegisterWithNoId,
             response = Some(registerWithoutIdResponseJson)
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -459,7 +459,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = testRegisterWithNoId,
             response = Some(Json.obj("error" -> "Error sendPSARegWithoutIdEvent", "message" -> ex.getMessage))
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -485,7 +485,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = testRegisterWithNoId,
             response = None
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -511,7 +511,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = testRegisterWithNoId,
             response = Some(Json.obj("error" -> "Error sendPSARegWithoutIdEvent", "message" -> ex.getMessage))
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -532,7 +532,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest) map {
       response =>
-        response.value shouldBe registerWithoutIdResponseJson
+        response.value.shouldBe(registerWithoutIdResponseJson)
     }
 
   }
@@ -551,8 +551,8 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest) map {
       response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_PAYLOAD")
+        response.left.value.shouldBe(a[BadRequestException])
+        response.left.value.message.should(include("INVALID_PAYLOAD"))
     }
 
   }
@@ -571,8 +571,8 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest) map {
       response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_SUBMISSION")
+        response.left.value.shouldBe(a[BadRequestException])
+        response.left.value.message.should(include("INVALID_SUBMISSION"))
     }
 
   }
@@ -590,7 +590,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest)) map {
       ex =>
-        ex.reportAs shouldBe BAD_GATEWAY
+        ex.reportAs.shouldBe(BAD_GATEWAY)
     }
 
   }
@@ -608,7 +608,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest)) map {
       ex =>
-        ex.reportAs shouldBe BAD_GATEWAY
+        ex.reportAs.shouldBe(BAD_GATEWAY)
     }
 
   }
@@ -641,7 +641,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = Json.toJson(registerIndividualWithoutIdRequest),
             response = Some(registerWithoutIdResponseJson)
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -673,7 +673,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = Json.toJson(registerIndividualWithoutIdRequest),
             response = Some(Json.obj("error" -> "Error sendPSARegWithoutIdEvent", "message" -> ex.getMessage))
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -690,7 +690,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[UpstreamErrorResponse](connector.registrationNoIdIndividual(externalId, registerIndividualWithoutIdRequest)) map {
       ex =>
-        ex.reportAs shouldBe BAD_GATEWAY
+        ex.reportAs `shouldBe` BAD_GATEWAY
         auditService.verifySent(
           PSARegistration(
             withId = false,
@@ -702,7 +702,7 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
             request = Json.toJson(registerIndividualWithoutIdRequest),
             response = Some(Json.obj("error" -> "Error sendPSARegWithoutIdEvent", "message" -> ex.getMessage))
           )
-        ) shouldBe true
+        ).shouldBe(true)
     }
   }
 
@@ -774,16 +774,6 @@ object RegistrationConnectorSpec {
     "1234567890",
     LocalDateTime.of(2024, 4, 3, 0, 0, 0)
   )
-
-
-//  val registerWithoutIdResponse: JsValue = Json.parse(
-//    """
-//      |{
-//      |  "safeId": "XE0001234567890",
-//      |  "sapNumber": "1234567890",
-//      |  "processingDate": "2024-04-03",
-//      |}
-//    """.stripMargin)
 
   val registerWithoutIdResponseJson: JsValue = Json.toJson(registerWithoutIdResponse)
 

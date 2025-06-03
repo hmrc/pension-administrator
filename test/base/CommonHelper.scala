@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ trait CommonHelper extends Matchers {
 
   def testElementValue(jsValue: JsValue, elementName: String, expectedValue: String): Unit = {
     jsValue \ elementName match {
-      case JsDefined(v) =>v.as[String] mustBe expectedValue
+      case JsDefined(v) =>v.as[String] `mustBe` expectedValue
       case _ =>
         throw new RuntimeException("Element does not exist")
     }
@@ -32,12 +32,9 @@ trait CommonHelper extends Matchers {
   def testElementValue(jsValue: JsValue, elementName: String, expectedValue: JsValue): Unit = {
     jsValue \ elementName match {
       case JsDefined(v) =>
-        v.toString() mustBe expectedValue.toString()
+        v.toString() `mustBe` expectedValue.toString()
       case _ =>
         throw new RuntimeException("Element does not exist")
-
     }
   }
-
-
 }

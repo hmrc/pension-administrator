@@ -31,31 +31,31 @@ class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
         val result = Json.toJson(address.asInstanceOf[Address])(using Address.updateWrites)
 
         "with address line 1 " in {
-          result.toString() must include("line1")
+          result.toString().must(include("line1"))
         }
 
         "with address line 2" in {
-          result.toString() must include("line2")
+          result.toString().must(include("line2"))
         }
 
         "with address line 3" in {
-          result.toString() must include("line3")
+          result.toString().must(include("line3"))
         }
 
         "with address line 4" in {
-          result.toString() must include("line4")
+          result.toString().must(include("line4"))
         }
 
         "with countrycode" in {
-          result.toString() must include("countryCode")
+          result.toString().must(include("countryCode"))
         }
 
         "with postalcode" in {
-          result.toString() must include("postalCode")
+          result.toString().must(include("postalCode"))
         }
 
         "we have a nonUkAddress flag" in {
-          (result \ "nonUKAddress").as[Boolean] mustBe false
+          (result \ "nonUKAddress").as[Boolean].mustBe(false)
         }
 
         "with an isUpdated flag" in {
@@ -63,7 +63,7 @@ class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
 
           val result = Json.toJson(address.asInstanceOf[Address])(using Address.updateWrites)
 
-          (result \ "changeFlag").asOpt[Boolean].value mustBe true
+          (result \ "changeFlag").asOpt[Boolean].value.mustBe(true)
         }
 
         "without an isUpdated flag" in {
@@ -71,7 +71,7 @@ class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
 
           val result = Json.toJson(address.asInstanceOf[Address])(using Address.updateWrites)
 
-          (result \ "changeFlag").asOpt[Boolean] mustBe None
+          (result \ "changeFlag").asOpt[Boolean].mustBe(None)
         }
       }
 
@@ -80,31 +80,31 @@ class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
         val result = Json.toJson(address.asInstanceOf[Address])(using Address.updateWrites)
 
         "with address line 1" in {
-          result.toString() must include("line1")
+          result.toString().must(include("line1"))
         }
 
         "with address line 2" in {
-          result.toString() must include("line2")
+          result.toString().must(include("line2"))
         }
 
         "with address line 3" in {
-          result.toString() must include("line3")
+          result.toString().must(include("line3"))
         }
 
         "with address line 4" in {
-          result.toString() must include("line4")
+          result.toString().must(include("line4"))
         }
 
         "with countrycode" in {
-          result.toString() must include("countryCode")
+          result.toString().must(include("countryCode"))
         }
 
         "with postalcode" in {
-          result.toString() must include("postalCode")
+          result.toString().must(include("postalCode"))
         }
 
         "we have a nonUkAddress flag" in {
-          (result \ "nonUKAddress").as[Boolean] mustBe true
+          (result \ "nonUKAddress").as[Boolean].mustBe(true)
         }
 
         "with an isUpdated flag" in {
@@ -112,7 +112,7 @@ class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
 
           val result = Json.toJson(address.asInstanceOf[Address])(using Address.updateWrites)
 
-          (result \ "changeFlag").asOpt[Boolean].value mustBe true
+          (result \ "changeFlag").asOpt[Boolean].value.mustBe(true)
         }
 
         "without an isUpdated flag" in {
@@ -120,7 +120,7 @@ class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
 
           val result = Json.toJson(address.asInstanceOf[Address])(using Address.updateWrites)
 
-          (result \ "changeFlag").asOpt[Boolean] mustBe None
+          (result \ "changeFlag").asOpt[Boolean].mustBe(None)
         }
       }
     }
@@ -133,31 +133,31 @@ class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
         val result = Json.toJson(address.asInstanceOf[Address])(using Address.updatePreviousAddressWrites)
 
         "with address line 1 " in {
-          result.toString() must include("line1")
+          result.toString().must(include("line1"))
         }
 
         "with address line 2" in {
-          result.toString() must include("line2")
+          result.toString().must(include("line2"))
         }
 
         "with address line 3" in {
-          result.toString() must include("line3")
+          result.toString().must(include("line3"))
         }
 
         "with address line 4" in {
-          result.toString() must include("line4")
+          result.toString().must(include("line4"))
         }
 
         "with countrycode" in {
-          result.toString() must include("countryCode")
+          result.toString().must(include("countryCode"))
         }
 
         "with postalcode" in {
-          result.toString() must include("postalCode")
+          result.toString().must(include("postalCode"))
         }
 
         "we have a nonUkAddress flag" in {
-          (result \ "nonUKAddress").as[Boolean] mustBe false
+          (result \ "nonUKAddress").as[Boolean].mustBe(false)
         }
 
         "we have no isUpdated flag" in {
@@ -165,7 +165,7 @@ class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
 
           val result = Json.toJson(address.asInstanceOf[Address])(using Address.updatePreviousAddressWrites)
 
-          (result \ "changeFlag").isDefined mustBe false
+          (result \ "changeFlag").isDefined.mustBe(false)
         }
       }
 
@@ -174,31 +174,31 @@ class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
         val result = Json.toJson(address.asInstanceOf[Address])(using Address.updatePreviousAddressWrites)
 
         "with address line 1" in {
-          result.toString() must include("line1")
+          result.toString().must(include("line1"))
         }
 
         "with address line 2" in {
-          result.toString() must include("line2")
+          result.toString().must(include("line2"))
         }
 
         "with address line 3" in {
-          result.toString() must include("line3")
+          result.toString().must(include("line3"))
         }
 
         "with address line 4" in {
-          result.toString() must include("line4")
+          result.toString().must(include("line4"))
         }
 
         "with countrycode" in {
-          result.toString() must include("countryCode")
+          result.toString().must(include("countryCode"))
         }
 
         "with postalcode" in {
-          result.toString() must include("postalCode")
+          result.toString().must(include("postalCode"))
         }
 
         "we have a nonUkAddress flag" in {
-          (result \ "nonUKAddress").as[Boolean] mustBe true
+          (result \ "nonUKAddress").as[Boolean].mustBe(true)
         }
 
         "we have no isUpdated flag" in {
@@ -206,7 +206,7 @@ class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
 
           val result = Json.toJson(address.asInstanceOf[Address])(using Address.updatePreviousAddressWrites)
 
-          (result \ "changeFlag").isDefined mustBe false
+          (result \ "changeFlag").isDefined.mustBe(false)
         }
       }
     }
@@ -219,31 +219,31 @@ class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
         val result = Json.toJson(address.asInstanceOf[Address])
 
         "with address line 1" in {
-          result.toString() must include("line1")
+          result.toString().must(include("line1"))
         }
 
         "with address line 2" in {
-          result.toString() must include("line2")
+          result.toString().must(include("line2"))
         }
 
         "with address line 3" in {
-          result.toString() must include("line3")
+          result.toString().must(include("line3"))
         }
 
         "with address line 4" in {
-          result.toString() must include("line4")
+          result.toString().must(include("line4"))
         }
 
         "with countrycode" in {
-          result.toString() must include("countryCode")
+          result.toString().must(include("countryCode"))
         }
 
         "with postalcode" in {
-          result.toString() must include("postalCode")
+          result.toString().must(include("postalCode"))
         }
 
         "with an address type of UK" in {
-          result.toString() must include("\"addressType\":\"UK\"")
+          result.toString().must(include("\"addressType\":\"UK\""))
         }
       }
 
@@ -252,31 +252,31 @@ class AddressWritesSpec extends AnyWordSpec with Matchers with OptionValues {
         val result = Json.toJson(address.asInstanceOf[Address])
 
         "with address line 1" in {
-          result.toString() must include("line1")
+          result.toString().must(include("line1"))
         }
 
         "with address line 2" in {
-          result.toString() must include("line2")
+          result.toString().must(include("line2"))
         }
 
         "with address line 3" in {
-          result.toString() must include("line3")
+          result.toString().must(include("line3"))
         }
 
         "with address line 4" in {
-          result.toString() must include("line4")
+          result.toString().must(include("line4"))
         }
 
         "with countrycode" in {
-          result.toString() must include("countryCode")
+          result.toString().must(include("countryCode"))
         }
 
         "with postalcode" in {
-          result.toString() must include("postalCode")
+          result.toString().must(include("postalCode"))
         }
 
         "with an address type of Non-UK" in {
-          result.toString() must include("\"addressType\":\"NON-UK\"")
+          result.toString().must(include("\"addressType\":\"NON-UK\""))
         }
       }
     }

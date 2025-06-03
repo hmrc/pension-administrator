@@ -30,7 +30,7 @@ class PreviousAddressDetailsWritesSpec extends AnyWordSpec with Matchers with Op
         val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
         val result = Json.toJson(previousAddress)(using PreviousAddressDetails.psaSubmissionWrites)
 
-        result.toString() must include("\"previousAddressDetail\":")
+        result.toString().must(include("\"previousAddressDetail\":"))
       }
     }
   }
@@ -41,25 +41,25 @@ class PreviousAddressDetailsWritesSpec extends AnyWordSpec with Matchers with Op
       val result = Json.toJson(previousAddress)(using PreviousAddressDetails.psaUpdateWrites)
 
       "we have an isPreviousAddressLast12Months flag" in {
-        (result \ "isPreviousAddressLast12Month").as[Boolean] mustBe previousAddress.isPreviousAddressLast12Month
+        (result \ "isPreviousAddressLast12Month").as[Boolean].mustBe(previousAddress.isPreviousAddressLast12Month)
       }
 
       "we have a previous address" in {
-        (result \ "previousAddressDetails" \ "line1").as[String] mustBe previousAddress.address.value.asInstanceOf[UkAddress].addressLine1
+        (result \ "previousAddressDetails" \ "line1").as[String].mustBe(previousAddress.address.value.asInstanceOf[UkAddress].addressLine1)
       }
 
       "we have an isChanged flag" in {
         val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample), Some(true))
         val result = Json.toJson(previousAddress)(using PreviousAddressDetails.psaUpdateWrites)
 
-        (result \ "changeFlag").asOpt[Boolean] mustBe Some(true)
+        (result \ "changeFlag").asOpt[Boolean].mustBe(Some(true))
       }
 
       "we don't require isChanged flag" in {
         val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample), Some(true))
         val result = Json.toJson(previousAddress)(using PreviousAddressDetails.psaUpdateWritesWithNoUpdateFlag)
 
-        (result \ "changeFlag").asOpt[Boolean] mustBe None
+        (result \ "changeFlag").asOpt[Boolean].mustBe(None)
       }
     }
   }

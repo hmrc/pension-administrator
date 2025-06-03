@@ -53,7 +53,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
     schemeService.registerPSA(psaJson).map {
       httpResponse =>
-        httpResponse.value shouldBe registerPsaResponseJson
+        httpResponse.value.shouldBe(registerPsaResponseJson)
     }
 
   }
@@ -75,7 +75,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
     schemeService.registerPSA(psaJson).map {
       httpResponse =>
-        fakeAuditService.lastEvent shouldBe
+        fakeAuditService.lastEvent.shouldBe(
           Some(
             PSASubscription(
               existingUser = false,
@@ -85,6 +85,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
               response = Some(httpResponse.value)
             )
           )
+        )
     }
 
   }
@@ -98,7 +99,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
     schemeService.registerPSA(psaJson).map {
       _ =>
-        fakeAuditService.lastEvent shouldBe
+        fakeAuditService.lastEvent.shouldBe(
           Some(
             PSASubscription(
               existingUser = false,
@@ -108,6 +109,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
               response = None
             )
           )
+        )
     }
 
   }
@@ -120,7 +122,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
     schemeService.updatePSA(psaId, psaJson).map {
       httpResponse =>
         verify(minimalDetailsCacheRepository, times(1)).remove(ArgumentMatchers.eq(psaId))(using any())
-        httpResponse.value shouldBe updatePsaResponseJson
+        httpResponse.value.shouldBe(updatePsaResponseJson)
     }
 
   }
@@ -148,7 +150,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
     schemeService.updatePSA(psaId, psaJson).map {
       httpResponse =>
         verify(minimalDetailsCacheRepository, times(1)).remove(ArgumentMatchers.eq(psaId))(using any())
-        fakeAuditService.lastEvent shouldBe
+        fakeAuditService.lastEvent.shouldBe(
           Some(
             PSAChanges(
               legalStatus = "test-legal-status",
@@ -157,6 +159,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
               response = Some(httpResponse.value)
             )
           )
+        )
     }
 
   }
@@ -171,7 +174,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
     schemeService.updatePSA(psaId, psaJson).map {
       _ =>
         verify(minimalDetailsCacheRepository, never()).remove(any())(using any())
-        fakeAuditService.lastEvent shouldBe
+        fakeAuditService.lastEvent.shouldBe(
           Some(
             PSAChanges(
               legalStatus = "test-legal-status",
@@ -180,10 +183,9 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
               response = None
             )
           )
+        )
     }
-
   }
-
 }
 
 object SchemeServiceImplSpec extends MockitoSugar {
@@ -248,4 +250,3 @@ object SchemeServiceImplSpec extends MockitoSugar {
   }
 
 }
-

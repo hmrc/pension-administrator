@@ -43,6 +43,6 @@ class PSADeEnrolSpec extends AnyFlatSpec with Matchers {
 
     event.auditType.shouldBe("PSADeEnrol")
 
-    event.details shouldBe expected
+    event.details.shouldBe(expected)
   }
 }

@@ -59,7 +59,7 @@ class PSARegistrationSpec extends AnyFlatSpec with Matchers {
 
     eventUK.auditType.shouldBe("PSARegistration")
 
-    eventUK.details shouldBe expected(withId = true, "individual")
+    eventUK.details.shouldBe(expected(withId = true, "individual"))
 
   }
 
@@ -67,7 +67,7 @@ class PSARegistrationSpec extends AnyFlatSpec with Matchers {
 
     eventUKOrg.auditType.shouldBe("PSARegistration")
 
-    eventUKOrg.details shouldBe expected(withId = true, "organisation")
+    eventUKOrg.details.shouldBe(expected(withId = true, "organisation"))
 
   }
 
@@ -75,7 +75,7 @@ class PSARegistrationSpec extends AnyFlatSpec with Matchers {
 
     eventNonUK.auditType.shouldBe("PSARegWithoutId")
 
-    eventNonUK.details shouldBe expected(withId = false, "individual")
+    eventNonUK.details.shouldBe(expected(withId = false, "individual"))
 
   }
 
@@ -83,7 +83,7 @@ class PSARegistrationSpec extends AnyFlatSpec with Matchers {
 
     eventNonUKOrg.auditType.shouldBe("PSARegWithoutId")
 
-    eventNonUKOrg.details shouldBe expected(withId = false, "organisation")
+    eventNonUKOrg.details.shouldBe(expected(withId = false, "organisation"))
 
   }
 

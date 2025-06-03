@@ -34,12 +34,7 @@ case class PSASubscription(
       "legalStatus" -> legalStatus,
       "status" -> status.toString,
       "request" -> Json.stringify(request),
-      "response" -> {
-        response match {
-          case Some(json) => Json.stringify(json)
-          case _ => ""
-        }
-      }
+      "response" -> response.map(Json.stringify).getOrElse("")
     )
 
 }

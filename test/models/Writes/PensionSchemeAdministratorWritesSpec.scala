@@ -34,14 +34,14 @@ class PensionSchemeAdministratorWritesSpec extends AnyWordSpec with Matchers wit
           val pensionSchemeAdministratorSampleTwo = pensionSchemeAdministratorSample.copy(declaration = declarationSampleTwo)
           val result = Json.toJson(pensionSchemeAdministratorSampleTwo)(using PensionSchemeAdministrator.psaSubmissionWrites)
 
-          result.toString() must include("\"pensionAdvisorDetail\":")
+          result.toString().must(include("\"pensionAdvisorDetail\":"))
         }
 
         "We are doing a PSA submission containing previous address at root level" in {
           val result = Json.toJson(pensionSchemeAdministratorSample.copy(previousAddressDetail = PreviousAddressDetails(true, Some(ukAddressSample))))(
             using PensionSchemeAdministrator.psaSubmissionWrites)
 
-          result.toString() must include("true,\"previousAddressDetail\":")
+          result.toString().must(include("true,\"previousAddressDetail\":"))
         }
 
         s"We are doing a PSA submission with ${personType}s that have previous address" in {
@@ -50,13 +50,13 @@ class PensionSchemeAdministratorWritesSpec extends AnyWordSpec with Matchers wit
           val result = Json.toJson(pensionSchemeAdministratorSample.copy(directorOrPartnerDetail = Some(List(directorWithPreviousAddress))))(
             using PensionSchemeAdministrator.psaSubmissionWrites)
 
-          result.toString() must include("true,\"previousAddressDetail\":")
+          result.toString().must(include("true,\"previousAddressDetail\":"))
         }
 
         s"We are checking the changeOfDirectorOrPartnerDetails flag is not included" in {
           val result = Json.toJson(pensionSchemeAdministratorSample)(using PensionSchemeAdministrator.psaSubmissionWrites)
 
-          (result \ "changeOfDirectorOrPartnerDetails").asOpt[Boolean] mustBe None
+          (result \ "changeOfDirectorOrPartnerDetails").asOpt[Boolean].mustBe(None)
         }
 
         //FAIL
@@ -66,7 +66,6 @@ class PensionSchemeAdministratorWritesSpec extends AnyWordSpec with Matchers wit
 
           result.mustBe(readJsonFromFile(s"/data/validPsaVariationRequest$personType.json"))
         }
-
       }
     }
   }
