@@ -25,8 +25,6 @@ object JourneyType extends Enumeration {
   val INVITE: Value = Value("PSAInvite")
   val VARIATION: Value = Value("Variation")
 
-  //implicit val journeyTypePathBinder: PathBindable[Name] = EnumPathBinder.pathBinder(this)
-  
-  implicit val journeyTypePathBinder: PathBindable[JourneyType.Value] =
+  implicit lazy val journeyTypePathBinder: PathBindable[JourneyType.Value] =
     new EnumPathBinder(JourneyType).pathBinder.asInstanceOf[PathBindable[JourneyType.Value]]
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,14 @@ package controllers
 
 import audit.{AuditService, EmailAuditEvent, StubSuccessfulAuditService}
 import base.SpecBase
-import models._
+import models.*
 import models.enumeration.JourneyType
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json.Json
-import play.api.test.Helpers._
-import repositories._
+import play.api.libs.json.{JsObject, Json}
+import play.api.test.Helpers.*
+import repositories.*
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
 import uk.gov.hmrc.domain.PsaId
@@ -35,7 +35,7 @@ import java.time.Instant
 
 class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
 
-  import EmailResponseControllerSpec._
+  import EmailResponseControllerSpec.*
 
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
@@ -62,10 +62,10 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
 
           val result = controller.retrieveStatus(eventType, encrypted)(fakeRequest.withBody(Json.toJson(emailEvents)))
 
-          status(result) mustBe OK
-          fakeAuditService.verifySent(EmailAuditEvent(psa, Sent, eventType)) mustBe true
-          fakeAuditService.verifySent(EmailAuditEvent(psa, Delivered, eventType)) mustBe true
-          fakeAuditService.verifySent(EmailAuditEvent(psa, Opened, eventType)) mustBe false
+          status(result).mustBe(OK)
+          fakeAuditService.verifySent(EmailAuditEvent(psa, Sent, eventType)).mustBe(true)
+          fakeAuditService.verifySent(EmailAuditEvent(psa, Delivered, eventType)).mustBe(true)
+          fakeAuditService.verifySent(EmailAuditEvent(psa, Opened, eventType)).mustBe(false)
 
         }
       }
@@ -82,8 +82,8 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
 
     val result = controller.retrieveStatus(JourneyType.PSA, encrypted)(fakeRequest.withBody(validJson))
 
-    status(result) mustBe BAD_REQUEST
-    fakeAuditService.verifyNothingSent() mustBe true
+    status(result).mustBe(BAD_REQUEST)
+    fakeAuditService.verifyNothingSent().mustBe(true)
   }
 
   "respond with FORBIDDEN" when {
@@ -98,9 +98,9 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
 
       val result = controller.retrieveStatus(JourneyType.PSA, psa)(fakeRequest.withBody(Json.toJson(emailEvents)))
 
-      status(result) mustBe FORBIDDEN
-      contentAsString(result) mustBe "Malformed PSAID"
-      fakeAuditService.verifyNothingSent() mustBe true
+      status(result).mustBe(FORBIDDEN)
+      contentAsString(result).mustBe("Malformed PSAID")
+      fakeAuditService.verifyNothingSent().mustBe(true)
 
     }
 
@@ -115,9 +115,9 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
 
       val result = controller.retrieveStatus(JourneyType.PSA, psa)(fakeRequest.withBody(Json.toJson(emailEvents)))
 
-      status(result) mustBe FORBIDDEN
-      contentAsString(result) mustBe "Malformed PSAID"
-      fakeAuditService.verifyNothingSent() mustBe true
+      status(result).mustBe(FORBIDDEN)
+      contentAsString(result).mustBe("Malformed PSAID")
+      fakeAuditService.verifyNothingSent().mustBe(true)
 
     }
   }
@@ -127,12 +127,12 @@ object EmailResponseControllerSpec {
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
 
-  val psa = PsaId("A7654321")
+  val psa: PsaId = PsaId("A7654321")
 
-  val emailEvents = EmailEvents(Seq(EmailEvent(Sent, Instant.now()), EmailEvent(Delivered, Instant.now()), EmailEvent(Opened, Instant.now())))
+  val emailEvents: EmailEvents = EmailEvents(Seq(EmailEvent(Sent, Instant.now()), EmailEvent(Delivered, Instant.now()), EmailEvent(Opened, Instant.now())))
 
   val fakeAuditService = new StubSuccessfulAuditService()
 
-  val validJson = Json.obj("name" -> "value")
+  val validJson: JsObject = Json.obj("name" -> "value")
 
 }
