@@ -26,8 +26,6 @@ import org.scalatest.{EitherValues, OptionValues, RecoverMethods}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.mvc.RequestHeader
-import play.api.test.FakeRequest
 import play.api.libs.json.*
 import repositories.*
 import uk.gov.hmrc.domain.PsaId

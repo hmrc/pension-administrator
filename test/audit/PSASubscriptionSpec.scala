@@ -44,9 +44,6 @@ class PSASubscriptionSpec extends AnyFlatSpec with Matchers {
       "request" -> Json.stringify(request),
       "response" -> Json.stringify(response)
     )
-
     event.details.shouldBe(expected)
-
   }
-
 }
