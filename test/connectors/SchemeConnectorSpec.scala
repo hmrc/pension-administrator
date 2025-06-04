@@ -26,9 +26,9 @@ import org.scalatest.{EitherValues, OptionValues, RecoverMethods}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json.*
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
+import play.api.libs.json.*
 import repositories.*
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, UpstreamErrorResponse}
@@ -98,15 +98,14 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     server.stubFor(
       get(urlEqualTo(listSchemesUrl))
         .withHeader("Content-Type", equalTo("application/json"))
-        .withHeader("idType", equalTo("psaid"))
-        .withHeader("idValue", equalTo(psaId.value))
+        .withHeader("idType", equalTo("PSA"))
         .willReturn(
           ok(Json.stringify(validListOfSchemeResponse))
             .withHeader("Content-Type", "application/json")
         )
     )
 
-    connector.listOfSchemes(psaId.id) map { response =>
+    connector.listOfSchemes map { response =>
       response.value.shouldBe(validListOfSchemeResponse)
     }
   }
@@ -120,7 +119,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     )
 
     recoverToSucceededIf[UpstreamErrorResponse] {
-      connector.listOfSchemes(psaId.id)
+      connector.listOfSchemes
     }
   }
 
@@ -131,8 +130,8 @@ class SchemeConnectorSpec extends AsyncFlatSpec
           notFound()
         )
     )
-
-    connector.listOfSchemes(psaId.id).map { response =>
+    
+    connector.listOfSchemes.map { response =>
       response.left.value.shouldBe(a[NotFoundException])
     }
   }
@@ -141,10 +140,9 @@ class SchemeConnectorSpec extends AsyncFlatSpec
 object SchemeConnectorSpec extends JsonFileReader {
   private val validListOfSchemeResponse = readJsonFromFile("/data/validListOfSchemesResponse.json")
   private implicit val hc: HeaderCarrier = HeaderCarrier()
-  private implicit val rh: RequestHeader = FakeRequest("", "")
 
   val checkForAssociationUrl = "/pensions-scheme/is-psa-associated"
-  val listSchemesUrl = "/pensions-scheme/list-of-schemes"
+  val listSchemesUrl = "/pensions-scheme/list-of-schemes-self"
   val srn: SchemeReferenceNumber = SchemeReferenceNumber("S0987654321")
   val psaId: PsaId = PsaId("A7654321")
 
