@@ -29,11 +29,11 @@ class NumberOfDirectorOrPartnersTypeWriteSpec extends AnyWordSpec with Matchers 
 
       val result = Json.toJson(numberOfDirectors)(using NumberOfDirectorOrPartnersType.psaUpdateWrites)
       "we have isMorethanTenDirectors flag" in {
-        (result \ "isMoreThanTenDirectors").asOpt[Boolean] mustBe numberOfDirectors.isMorethanTenDirectors
+        (result \ "isMoreThanTenDirectors").asOpt[Boolean].mustBe(numberOfDirectors.isMorethanTenDirectors)
       }
 
       "we have isMoreThanTenPartners flag" in {
-        (result \ "isMoreThanTenPartners").asOpt[Boolean] mustBe numberOfDirectors.isMorethanTenPartners
+        (result \ "isMoreThanTenPartners").asOpt[Boolean].mustBe(numberOfDirectors.isMorethanTenPartners)
       }
 
       "we have isChanged flag" in {
@@ -41,11 +41,11 @@ class NumberOfDirectorOrPartnersTypeWriteSpec extends AnyWordSpec with Matchers 
 
         val result = Json.toJson(numberOfDirectors)(using NumberOfDirectorOrPartnersType.psaUpdateWrites)
 
-        (result \ "changeFlag").asOpt[Boolean] mustBe numberOfDirectors.isChanged
+        (result \ "changeFlag").asOpt[Boolean].mustBe(numberOfDirectors.isChanged)
       }
 
       "we don't have the isChanged flag so we set it to false" in {
-        (result \ "changeFlag").asOpt[Boolean] mustBe Some(false)
+        (result \ "changeFlag").asOpt[Boolean].mustBe(Some(false))
       }
     }
   }

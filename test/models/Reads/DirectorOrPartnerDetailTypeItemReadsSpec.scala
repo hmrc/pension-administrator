@@ -35,77 +35,94 @@ class DirectorOrPartnerDetailTypeItemReadsSpec extends AnyWordSpec with Matchers
         val directorsOrPartners = JsArray(personDetails)
         s"We have $personType user details" when {
           s"We have a list of $personType" in {
-            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](using DirectorOrPartnerDetailTypeItem.apiReads(personType))
-            result.head.lastName mustBe directorOrPartnerSample(personType).lastName
+            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](
+              using DirectorOrPartnerDetailTypeItem.apiReads(personType)
+            )
+            result.head.lastName.mustBe(directorOrPartnerSample(personType).lastName)
           }
 
           "We have a sequence id" in {
-            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](using DirectorOrPartnerDetailTypeItem.apiReads(personType))
-            result.head.sequenceId mustBe directorOrPartnerSample(personType).sequenceId
+            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](
+              using DirectorOrPartnerDetailTypeItem.apiReads(personType)
+            )
+            result.head.sequenceId.mustBe(directorOrPartnerSample(personType).sequenceId)
           }
 
           "We have 10 directors" in {
             val directorsOrPartners = JsArray(Seq.tabulate(10)(_ => personDetails.head))
-            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](using DirectorOrPartnerDetailTypeItem.apiReads(personType))
-            result.last.sequenceId mustBe "009"
+            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](
+              using DirectorOrPartnerDetailTypeItem.apiReads(personType)
+            )
+            result.last.sequenceId.mustBe("009")
           }
 
           "We have 100 directors" in {
             val directorsOrPartners = JsArray(Seq.tabulate(100)(_ => personDetails.head))
-            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](using DirectorOrPartnerDetailTypeItem.apiReads(personType))
-            result.last.sequenceId mustBe "099"
+            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](
+              using DirectorOrPartnerDetailTypeItem.apiReads(personType)
+            )
+            result.last.sequenceId.mustBe("099")
           }
 
           "We have 101 directors" in {
             val directorsOrPartners = JsArray(Seq.tabulate(101)(_ => personDetails.head))
-            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](using DirectorOrPartnerDetailTypeItem.apiReads(personType))
-            result.last.sequenceId mustBe "100"
+            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](
+              using DirectorOrPartnerDetailTypeItem.apiReads(personType)
+            )
+            result.last.sequenceId.mustBe("100")
           }
 
           "We have individual details" in {
-            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](using DirectorOrPartnerDetailTypeItem.apiReads(personType))
-            result.head.firstName mustBe directorOrPartnerSample(personType).firstName
+            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](
+              using DirectorOrPartnerDetailTypeItem.apiReads(personType)
+            )
+            result.head.firstName.mustBe(directorOrPartnerSample(personType).firstName)
           }
         }
 
         s"We have $personType NINO details" when {
           s"We have a $personType nino and reason" in {
-            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](using DirectorOrPartnerDetailTypeItem.apiReads(personType))
-
-            result.head.referenceOrNino mustBe directorOrPartnerSample(personType).referenceOrNino
-            result.head.noNinoReason mustBe directorOrPartnerSample(personType).noNinoReason
+            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](
+              using DirectorOrPartnerDetailTypeItem.apiReads(personType)
+            )
+            result.head.referenceOrNino.mustBe(directorOrPartnerSample(personType).referenceOrNino)
+            result.head.noNinoReason.mustBe(directorOrPartnerSample(personType).noNinoReason)
           }
 
           "We don't have a nino or reason" in {
             val directorsNoNino = directorsOrPartners.value :+ (directorsOrPartners.head.as[JsObject] - "nino" - "noNinoReason")
-            val result = JsArray(directorsNoNino).as[List[DirectorOrPartnerDetailTypeItem]](using DirectorOrPartnerDetailTypeItem.apiReads(personType))
-
-            result.last.referenceOrNino mustBe None
-            result.last.noNinoReason mustBe None
+            val result = JsArray(directorsNoNino).as[List[DirectorOrPartnerDetailTypeItem]](
+              using DirectorOrPartnerDetailTypeItem.apiReads(personType)
+            )
+            result.last.referenceOrNino.mustBe(None)
+            result.last.noNinoReason.mustBe(None)
           }
         }
 
         s"We have $personType UTR details" when {
           s"We have a $personType utr and reason" in {
-            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](using DirectorOrPartnerDetailTypeItem.apiReads(personType))
-
-            result.head.utr mustBe Some("0123456789")
-            result.head.noUtrReason mustBe directorOrPartnerSample(personType).noUtrReason
+            val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](
+              using DirectorOrPartnerDetailTypeItem.apiReads(personType)
+            )
+            result.head.utr `mustBe` Some("0123456789")
+            result.head.noUtrReason.mustBe(directorOrPartnerSample(personType).noUtrReason)
           }
 
           "We don't have a utr or reason" in {
             val directorsNoUtr = directorsOrPartners.value :+ (directorsOrPartners.head.as[JsObject] - "utr" - "noUtrReason")
-            val result = JsArray(directorsNoUtr).as[List[DirectorOrPartnerDetailTypeItem]](using DirectorOrPartnerDetailTypeItem.apiReads(personType))
-
-            result.last.utr mustBe None
-            result.last.noUtrReason mustBe None
+            val result = JsArray(directorsNoUtr).as[List[DirectorOrPartnerDetailTypeItem]](
+              using DirectorOrPartnerDetailTypeItem.apiReads(personType)
+            )
+            result.last.utr `mustBe` None
+            result.last.noUtrReason.mustBe(None)
           }
         }
 
         s"We have entity type as $personType" in {
-          val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](using DirectorOrPartnerDetailTypeItem.apiReads(personType))
-
-          result.head.entityType mustBe directorOrPartnerSample(personType).entityType
+          val result = directorsOrPartners.as[List[DirectorOrPartnerDetailTypeItem]](
+            using DirectorOrPartnerDetailTypeItem.apiReads(personType)
+          )
+          result.head.entityType.mustBe(directorOrPartnerSample(personType).entityType)
         }
 
         s"We have a $personType previous address detail" in {
@@ -115,24 +132,30 @@ class DirectorOrPartnerDetailTypeItemReadsSpec extends AnyWordSpec with Matchers
               "addressLine2" -> JsString("line2"), "country" -> JsString("IT"))))
 
 
-          val result = JsArray(directorWithPreviousAddress).as[List[DirectorOrPartnerDetailTypeItem]](using DirectorOrPartnerDetailTypeItem.apiReads(personType))
+          val result = JsArray(directorWithPreviousAddress).as[List[DirectorOrPartnerDetailTypeItem]](
+            using DirectorOrPartnerDetailTypeItem.apiReads(personType)
+          )
           val expectedDirector = directorOrPartnerSample(personType).copy(previousAddressDetail =
-            PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(InternationalAddress("line1", Some("line2"), countryCode = "IT"))))
-
-          result.last.previousAddressDetail mustBe expectedDirector.previousAddressDetail
+            PreviousAddressDetails(isPreviousAddressLast12Month =
+              true,
+              Some(InternationalAddress("line1", Some("line2"),
+                countryCode = "IT")))
+          )
+          result.last.previousAddressDetail.mustBe(expectedDirector.previousAddressDetail)
         }
 
         s"We have a $personType correspondence common detail" in {
           val directorWithCorrespondenceCommonDetail = directorsOrPartners.value :+ (directorsOrPartners.head.as[JsObject] +
             (s"${personType}ContactDetails" -> Json.obj("email" -> "test@test.com", "phone" -> "07592113")) + (s"${personType}Address" ->
             Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"),
-              "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"), "postcode" -> JsString("NE1"), "country" -> JsString("IT"))))
-
+              "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"),
+              "postcode" -> JsString("NE1"), "country" -> JsString("IT")))
+            )
           val result = JsArray(directorWithCorrespondenceCommonDetail).as[List[DirectorOrPartnerDetailTypeItem]](
             using DirectorOrPartnerDetailTypeItem.apiReads(personType))
           val expectedDirector = directorOrPartnerSample(personType).copy(correspondenceCommonDetail = correspondenceCommonDetails)
 
-          result.last.correspondenceCommonDetail mustBe expectedDirector.correspondenceCommonDetail
+          result.last.correspondenceCommonDetail.mustBe(expectedDirector.correspondenceCommonDetail)
         }
       }
     }
@@ -143,7 +166,7 @@ object DirectorOrPartnerDetailTypeItemReadsSpec {
 
   private def directorOrPartner(personType: String): JsObject = Json.obj(
     s"${personType}Details" -> Json.obj("firstName" -> JsString("John"),
-    "lastName" -> JsString("Doe")),
+      "lastName" -> JsString("Doe")),
     "dateOfBirth" -> JsString("2019-01-31"),
     "nino" -> Json.obj("value" -> JsString("SL211111A")),
     "noNinoReason" -> JsString("he can't find it"),

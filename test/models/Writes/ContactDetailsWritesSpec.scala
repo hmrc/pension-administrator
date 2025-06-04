@@ -29,22 +29,22 @@ class ContactDetailsWritesSpec extends AnyWordSpec with Matchers with OptionValu
       val result = Json.toJson(contactDetails)(using ContactDetails.updateWrites)
 
       "we have a phone" in {
-        (result \ "telephone").as[String] mustBe contactDetails.telephone
+        (result \ "telephone").as[String].mustBe(contactDetails.telephone)
       }
 
       "we have an email" in {
-        (result \ "email").as[String] mustBe contactDetails.email
+        (result \ "email").as[String].mustBe(contactDetails.email)
       }
 
       "we don't have a change flag so we set to false" in {
-        (result \ "changeFlag").as[Boolean] mustBe false
+        (result \ "changeFlag").as[Boolean].mustBe(false)
       }
 
       "we have a change flag" in {
         val contactDetails = ContactDetails("16342346",None,None,"test@test.com",Some(true))
         val result = Json.toJson(contactDetails)(using ContactDetails.updateWrites)
 
-        (result \ "changeFlag").as[Boolean] mustBe contactDetails.isChanged.value
+        (result \ "changeFlag").as[Boolean].mustBe(contactDetails.isChanged.value)
       }
     }
   }

@@ -189,7 +189,7 @@ class PensionSchemeAdministratorReadsCompanySpec extends AnyWordSpec with Matche
         val existingPSA = "existingPSA" -> Json.obj("isExistingPSA" -> JsBoolean(true), "existingPSAId" -> JsString("TestId"))
         val result = Json.fromJson[PensionSchemeAdministrator](input() + existingPSA)(using PensionSchemeAdministrator.apiReads).asOpt.value
 
-        result.pensionSchemeAdministratorIdentifierStatus.existingPensionSchemaAdministratorReference mustBe Some("TestId")
+        result.pensionSchemeAdministratorIdentifierStatus.existingPensionSchemaAdministratorReference.mustBe(Some("TestId"))
       }
 
       "We have a declaration" in {

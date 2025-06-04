@@ -74,7 +74,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.size mustBe 1
+        documentsInDB.size.mustBe(1)
       }
     }
 
@@ -95,9 +95,9 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.size mustBe 1
-        documentsInDB.head.data mustBe record2._2
-        documentsInDB.head.data must not be record1._2
+        documentsInDB.size `mustBe` 1
+        documentsInDB.head.data.mustBe(record2._2)
+        documentsInDB.head.data.must(not) be record1._2
       }
     }
 
@@ -117,7 +117,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
 
@@ -136,7 +136,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -157,7 +157,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -177,7 +177,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
   }
@@ -197,7 +197,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
 
@@ -213,7 +213,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
   }
@@ -232,7 +232,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -241,7 +241,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -258,7 +258,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -267,7 +267,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
 
@@ -284,7 +284,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -294,7 +294,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
 
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -311,7 +311,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -320,7 +320,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
   }

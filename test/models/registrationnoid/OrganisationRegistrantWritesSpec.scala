@@ -55,9 +55,8 @@ class OrganisationRegistrantWritesSpec extends AnyWordSpec with Matchers {
 
         val result = Json.toJson(orgRegistrant)(using OrganisationRegistrant.writesOrganisationRegistrantRequest("test-correlation-id"))
 
-        result mustBe expectedJsValue
+        result.mustBe(expectedJsValue)
       }
     }
   }
-
 }

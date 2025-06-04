@@ -75,7 +75,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -98,9 +98,9 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
-          documentsInDB.head.expireAt mustBe record2.expireAt
-          documentsInDB.head.data mustBe Json.toJson(record2)
+          documentsInDB.size `mustBe` 1
+          documentsInDB.head.expireAt.mustBe(record2.expireAt)
+          documentsInDB.head.data.mustBe(Json.toJson(record2))
       }
     }
 
@@ -122,7 +122,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
 
@@ -144,7 +144,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
 
@@ -164,7 +164,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -187,8 +187,8 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
-          documentsInDB.head.expireAt mustBe record2.expireAt
+          documentsInDB.size `mustBe` 1
+          documentsInDB.head.expireAt.mustBe(record2.expireAt)
       }
     }
 
@@ -210,7 +210,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
 
@@ -232,7 +232,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
     "save expireAt value as a date" in {
@@ -254,8 +254,8 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
       }
 
       whenReady(ftr) { case (stringResults, dateResults) =>
-        stringResults.length mustBe 0
-        dateResults.length mustBe 1
+        stringResults.length `mustBe` 0
+        dateResults.length.mustBe(1)
       }
     }
   }
@@ -275,7 +275,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
 
@@ -293,7 +293,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
   }
@@ -314,7 +314,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -323,7 +323,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -342,7 +342,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -351,7 +351,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
 
@@ -370,7 +370,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -379,7 +379,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -398,7 +398,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
       val documentsInDB2 = for {
         _ <- invitationsCacheRepository.remove(Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr2"))
@@ -406,10 +406,9 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
-
   }
 }
 

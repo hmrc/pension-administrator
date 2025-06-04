@@ -37,7 +37,8 @@ object CodeCoverageSettings {
   private val implicitOFormatObjects: Seq[String] = Seq(
     ".*PSARegistration.*",
     ".*PSADetails.*",
-    //".*PSADeEnrol.*"
+    ".*PSADeEnrol.*",
+    ".*MinimalDetailsEvent.*"
   )
 
   val settings: Seq[Setting[?]] = Seq(

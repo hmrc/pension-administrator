@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import models.{CorrespondenceAddress, CorrespondenceDetails, PsaContactDetails}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.*
 
 
 class CorrespondenceDetailsReadsSpec extends AnyWordSpec with Matchers with OptionValues with PsaSubscriptionDetailsGenerators {
@@ -30,20 +30,20 @@ class CorrespondenceDetailsReadsSpec extends AnyWordSpec with Matchers with Opti
       "we have an address" in {
         forAll(correspondenceDetailsGenerator) {
           correspondence =>
-            correspondence.as[CorrespondenceDetails].address mustBe
+            correspondence.as[CorrespondenceDetails].address.mustBe(
               (correspondence \ "addressDetails").as[CorrespondenceAddress]
+            )
         }
       }
 
       "we have an optional contact details" in {
         forAll(correspondenceDetailsGenerator) {
           correspondence =>
-            correspondence.as[CorrespondenceDetails].contactDetails mustBe
+            correspondence.as[CorrespondenceDetails].contactDetails.mustBe(
               (correspondence \ "contactDetails").asOpt[PsaContactDetails]
+            )
         }
       }
     }
   }
 }
-
-

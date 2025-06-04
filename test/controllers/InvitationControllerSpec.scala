@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationControllerSpec extends AsyncFlatSpec with Matchers with BeforeAndAfterEach {
 
-  import InvitationControllerSpec._
+  import InvitationControllerSpec.*
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -51,7 +51,7 @@ class InvitationControllerSpec extends AsyncFlatSpec with Matchers with BeforeAn
   "invite" should "return Created when service returns successfully" in {
     val result = controller.invite()(fakeRequest.withJsonBody(invitation))
 
-    status(result) mustBe CREATED
+    status(result).mustBe(CREATED)
   }
 
   it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
@@ -61,8 +61,8 @@ class InvitationControllerSpec extends AsyncFlatSpec with Matchers with BeforeAn
 
     val result = controller.invite()(fakeRequest.withJsonBody(invitation))
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "bad request"
+    status(result).mustBe(BAD_REQUEST)
+    contentAsString(result).mustBe("bad request")
   }
 
   it should "return NOT_FOUND when service returns NOT_FOUND" in {
@@ -72,8 +72,8 @@ class InvitationControllerSpec extends AsyncFlatSpec with Matchers with BeforeAn
 
     val result = controller.invite()(fakeRequest.withJsonBody(invitation))
 
-    status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "not found"
+    status(result).mustBe(NOT_FOUND)
+    contentAsString(result).mustBe("not found")
   }
 
   it should "throw BadRequestException when no data received in the request" in {

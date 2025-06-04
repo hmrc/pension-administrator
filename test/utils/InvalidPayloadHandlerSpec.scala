@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package utils
 
-import com.networknt.schema._
+import com.networknt.schema.*
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.{JsNull, JsNumber, Json}
@@ -59,7 +59,7 @@ class InvalidPayloadHandlerSpec extends AnyWordSpec with Matchers {
     val format = arg.toLowerCase()
     format
   }
-  val mockMessage = mockValidationMessage("enum",
+  val mockMessage: ValidationMessage = mockValidationMessage("enum",
     "", new JsonNodePath(PathType.JSON_PATH), new SchemaLocation(new AbsoluteIri("abc")), new JsonNodePath(PathType.JSON_PATH),
     "abcde", Array(Json.obj()), new util.HashMap[String, Object](), new MessageFormat("abc"), "abc", () => "", "abc")
 
@@ -67,12 +67,12 @@ class InvalidPayloadHandlerSpec extends AnyWordSpec with Matchers {
         "return the correct value for a jsnull" in {
           val testJson = Json.obj("abc" -> JsNull)
           val result = InvalidPayloadHandlerImpl.valueFromJson(message = mockMessage, json = testJson)
-          result mustBe Some("null")
+          result.mustBe(Some("null"))
         }
         "return the correct value for a jsnumber" in {
           val testJson = Json.obj("abc" -> JsNumber(22))
           val result = InvalidPayloadHandlerImpl.valueFromJson(message = mockMessage, json = testJson)
-          result mustBe Some("99")
+          result.mustBe(Some("99"))
         }
 
         "return none for a non-valid type" in {
@@ -81,8 +81,7 @@ class InvalidPayloadHandlerSpec extends AnyWordSpec with Matchers {
             "abcde", Array(Json.obj()), new util.HashMap[String, Object](), new MessageFormat("abc"), "abc", () => "", "abc")
           val testJson = Json.obj("abc" -> JsNumber(22))
           val result = InvalidPayloadHandlerImpl.valueFromJson(message = mockMessage, json = testJson)
-          result mustBe None
+          result.mustBe(None)
         }
   }
 }
-

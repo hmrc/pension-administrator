@@ -32,36 +32,35 @@ class PsaMinimalDetailsReadsSpec extends AnyWordSpec with Matchers with OptionVa
 
       "we have an email" in {
         val output = individualDetailIFPayload.as[MinimalDetails](using MinimalDetails.minimalDetailsIFReads)
-        output.email mustBe psaMinimalDetailsUser.email
+        output.email.mustBe(psaMinimalDetailsUser.email)
       }
 
       "we have psaSuspensionFlag" in {
         val output = individualDetailIFPayload.as[MinimalDetails](using MinimalDetails.minimalDetailsIFReads)
-        output.isPsaSuspended mustBe psaMinimalDetailsUser.isPsaSuspended
+        output.isPsaSuspended.mustBe(psaMinimalDetailsUser.isPsaSuspended)
       }
 
       "we have minimal detail object with individual data" in {
         val output = individualDetailIFPayload.as[MinimalDetails](using MinimalDetails.minimalDetailsIFReads)
-        output.individualDetails mustBe psaMinimalDetailsUser.individualDetails
+        output.individualDetails.mustBe(psaMinimalDetailsUser.individualDetails)
       }
 
       "we have minimal detail object with organisation data" in {
         val output = orgIFPayload.as[MinimalDetails](using MinimalDetails.minimalDetailsIFReads)
-        output.organisationName mustBe psaMinimalDetailsUser.organisationName
+        output.organisationName.mustBe(psaMinimalDetailsUser.organisationName)
       }
 
       "we have rlsFlag" in {
         val output = individualDetailIFPayload.as[MinimalDetails](using MinimalDetails.minimalDetailsIFReads)
-        output.rlsFlag mustBe psaMinimalDetailsUser.rlsFlag
+        output.rlsFlag.mustBe(psaMinimalDetailsUser.rlsFlag)
       }
 
       "we have deceasedFlag" in {
         val output = individualDetailIFPayload.as[MinimalDetails](using MinimalDetails.minimalDetailsIFReads)
-        output.deceasedFlag mustBe psaMinimalDetailsUser.deceasedFlag
+        output.deceasedFlag.mustBe(psaMinimalDetailsUser.deceasedFlag)
       }
     }
   }
-
 }
 
 object PsaMinimalDetailsReadsSpec {
@@ -110,4 +109,3 @@ object PsaMinimalDetailsReadsSpec {
     deceasedFlag = true
   )
 }
-

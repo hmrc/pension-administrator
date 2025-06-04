@@ -38,27 +38,27 @@ class AddressReadsSpec extends AnyWordSpec with Matchers with OptionValues with 
         val result = address.as[CorrespondenceAddress]
 
         "with addressLine 1" in {
-          result.addressLine1 mustBe (address \ "line1").as[String]
+          result.addressLine1.mustBe((address \ "line1").as[String])
         }
 
         "with addressLine 2" in {
-          result.addressLine2 mustBe (address \ "line2").as[String]
+          result.addressLine2.mustBe((address \ "line2").as[String])
         }
 
         "with an optional addressLine 3" in {
-          result.addressLine3 mustBe (address \ "line3").asOpt[String]
+          result.addressLine3.mustBe((address \ "line3").asOpt[String])
         }
 
         "with an optional addressLine 4" in {
-          result.addressLine4 mustBe (address \ "line4").asOpt[String]
+          result.addressLine4.mustBe((address \ "line4").asOpt[String])
         }
 
         "with an optional postalCode" in {
-          result.postalCode mustBe (address \ "postalCode").asOpt[String]
+          result.postalCode.mustBe((address \ "postalCode").asOpt[String])
         }
 
         "with countryCode" in {
-          result.countryCode mustBe (address \ "countryCode").as[String]
+          result.countryCode.mustBe((address \ "countryCode").as[String])
         }
       }
 
@@ -68,40 +68,52 @@ class AddressReadsSpec extends AnyWordSpec with Matchers with OptionValues with 
 
       "We have common address elements" when {
         "with addressLine 1" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](using Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](
+            using Address.commonAddressElementsReads
+          )
 
-          result._1 mustBe ukAddressSample.addressLine1
+          result._1.mustBe(ukAddressSample.addressLine1)
         }
 
         "with addressLine 2" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](using Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](
+            using Address.commonAddressElementsReads
+          )
 
-          result._2 mustBe ukAddressSample.addressLine2
+          result._2.mustBe(ukAddressSample.addressLine2)
         }
 
         "with addressLine 3" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](using Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](
+            using Address.commonAddressElementsReads
+          )
 
-          result._3 mustBe ukAddressSample.addressLine3
+          result._3.mustBe(ukAddressSample.addressLine3)
         }
 
         "with addressLine 4" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](using Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](
+            using Address.commonAddressElementsReads
+          )
 
-          result._4 mustBe ukAddressSample.addressLine4
+          result._4.mustBe(ukAddressSample.addressLine4)
         }
 
         "with countryCode" in {
-          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](using Address.commonAddressElementsReads)
+          val result = address.as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](
+            using Address.commonAddressElementsReads
+          )
 
-          result._5 mustBe ukAddressSample.countryCode
+          result._5.mustBe(ukAddressSample.countryCode)
         }
 
         "with a countryCode defined as `country`" in {
           val result = (address - "countryCode" +
-            ("country" -> JsString("GB"))).as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](using Address.commonAddressElementsReads)
+            ("country" -> JsString("GB"))).as[(String, Option[String], Option[String], Option[String], String, Option[Boolean])](
+            using Address.commonAddressElementsReads
+          )
 
-          result._5 mustBe ukAddressSample.countryCode
+          result._5.mustBe(ukAddressSample.countryCode)
         }
       }
 
@@ -109,26 +121,26 @@ class AddressReadsSpec extends AnyWordSpec with Matchers with OptionValues with 
         "with postal code" in {
           val result = address.as[Address]
 
-          result.asInstanceOf[UkAddress].postalCode mustBe ukAddressSample.postalCode
+          result.asInstanceOf[UkAddress].postalCode.mustBe(ukAddressSample.postalCode)
         }
 
         "with postal code defined as `postcode`" in {
           val result = (address - "postalCode" + ("postcode" -> JsString("NE1"))).as[Address]
 
-          result.asInstanceOf[UkAddress].postalCode mustBe ukAddressSample.postalCode
+          result.asInstanceOf[UkAddress].postalCode.mustBe(ukAddressSample.postalCode)
         }
 
         "with isChanged flag" in {
           val modifiedAddress = address + ("isChanged" -> JsBoolean(true))
           val result = modifiedAddress.as[Address]
 
-          result.asInstanceOf[UkAddress].isChanged mustBe Some(true)
+          result.asInstanceOf[UkAddress].isChanged.mustBe(Some(true))
         }
 
         "with no isChanged flag" in {
           val result = address.as[Address]
 
-          result.asInstanceOf[UkAddress].isChanged mustBe None
+          result.asInstanceOf[UkAddress].isChanged.mustBe(None)
         }
       }
 
@@ -139,7 +151,7 @@ class AddressReadsSpec extends AnyWordSpec with Matchers with OptionValues with 
         "with no postal code" in {
           val result = address.as[Address]
 
-          result.asInstanceOf[InternationalAddress].postalCode mustBe None
+          result.asInstanceOf[InternationalAddress].postalCode.mustBe(None)
         }
 
         "with postal code" in {
@@ -147,7 +159,7 @@ class AddressReadsSpec extends AnyWordSpec with Matchers with OptionValues with 
 
           val result = input.as[Address]
 
-          result.asInstanceOf[InternationalAddress].postalCode mustBe nonUkAddressSample.postalCode
+          result.asInstanceOf[InternationalAddress].postalCode.mustBe(nonUkAddressSample.postalCode)
         }
 
         "with postal code defined as `postcode`" in {
@@ -155,7 +167,7 @@ class AddressReadsSpec extends AnyWordSpec with Matchers with OptionValues with 
 
           val result = input.as[Address]
 
-          result.asInstanceOf[InternationalAddress].postalCode mustBe nonUkAddressSample.postalCode
+          result.asInstanceOf[InternationalAddress].postalCode.mustBe(nonUkAddressSample.postalCode)
         }
 
         "with territory defined as country code" in {
@@ -163,7 +175,7 @@ class AddressReadsSpec extends AnyWordSpec with Matchers with OptionValues with 
 
           val result = input.as[Address]
 
-          result.asInstanceOf[InternationalAddress].countryCode mustBe nonUkAddressSample.countryCode
+          result.asInstanceOf[InternationalAddress].countryCode.mustBe(nonUkAddressSample.countryCode)
         }
 
         "with territory defined as country code with leading space" in {
@@ -171,20 +183,20 @@ class AddressReadsSpec extends AnyWordSpec with Matchers with OptionValues with 
 
           val result = input.as[Address]
 
-          result.asInstanceOf[InternationalAddress].countryCode mustBe nonUkAddressSample.countryCode
+          result.asInstanceOf[InternationalAddress].countryCode.mustBe(nonUkAddressSample.countryCode)
         }
 
         "with isChanged flag" in {
           val modifiedAddress = address + ("isChanged" -> JsBoolean(true))
           val result = modifiedAddress.as[Address]
 
-          result.asInstanceOf[InternationalAddress].isChanged mustBe Some(true)
+          result.asInstanceOf[InternationalAddress].isChanged.mustBe(Some(true))
         }
 
         "with no isChanged flag" in {
           val result = address.as[Address]
 
-          result.asInstanceOf[InternationalAddress].isChanged mustBe None
+          result.asInstanceOf[InternationalAddress].isChanged.mustBe(None)
         }
       }
     }

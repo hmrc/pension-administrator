@@ -28,19 +28,19 @@ class PensionAdvisorReadsSpec extends AnyWordSpec with Matchers with OptionValue
     "Map correctly to a Pension Advisor object" when {
       "We have a name" in {
         forAll(pensionAdvisorGenerator){
-          advisor => advisor.as[PensionAdvisor].name mustBe (advisor \ "name").as[String]
+          advisor => advisor.as[PensionAdvisor].name.mustBe((advisor \ "name").as[String])
         }
       }
 
       "we have an address" in {
         forAll(pensionAdvisorGenerator){
-          advisor => advisor.as[PensionAdvisor].address mustBe (advisor \ "addressDetails").as[CorrespondenceAddress]
+          advisor => advisor.as[PensionAdvisor].address.mustBe((advisor \ "addressDetails").as[CorrespondenceAddress])
         }
       }
 
       "we have an optional contact details" in {
         forAll(pensionAdvisorGenerator){
-          advisor => advisor.as[PensionAdvisor].contactDetails mustBe (advisor \ "contactDetails").asOpt[PsaContactDetails]
+          advisor => advisor.as[PensionAdvisor].contactDetails.mustBe((advisor \ "contactDetails").asOpt[PsaContactDetails])
         }
       }
     }

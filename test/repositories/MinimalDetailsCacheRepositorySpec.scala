@@ -75,7 +75,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -96,9 +96,9 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
-          documentsInDB.head.data mustBe record2._2
-          documentsInDB.head.data must not be record1._2
+          documentsInDB.size `mustBe` 1
+          documentsInDB.head.data.mustBe(record2._2)
+          documentsInDB.head.data.must(not) be record1._2
       }
     }
 
@@ -118,7 +118,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
 
@@ -137,7 +137,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -158,7 +158,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -178,7 +178,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
     "save lastUpdated value as a date" in {
@@ -198,8 +198,8 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       }
 
       whenReady(ftr) { case (stringResults, dateResults) =>
-        stringResults.length mustBe 0
-        dateResults.length mustBe 1
+        stringResults.length `mustBe` 0
+        dateResults.length.mustBe(1)
       }
     }
   }
@@ -218,7 +218,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
 
@@ -235,7 +235,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
   }
@@ -254,7 +254,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
 
@@ -271,7 +271,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
 
       }
     }
@@ -291,7 +291,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
       val documentsInDB2 = for {
         _ <- minimalDetailsCacheRepository.remove(record._1)
@@ -299,7 +299,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -316,7 +316,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -325,7 +325,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
 
@@ -342,7 +342,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -351,7 +351,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -368,7 +368,7 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -377,12 +377,11 @@ class MinimalDetailsCacheRepositorySpec extends AnyWordSpec
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
   }
 }
-
 
 object MinimalDetailsCacheRepositorySpec extends AnyWordSpec with MockitoSugar {
 

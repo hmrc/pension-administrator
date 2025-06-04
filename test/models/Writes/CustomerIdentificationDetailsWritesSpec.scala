@@ -30,19 +30,19 @@ class CustomerIdentificationDetailsWritesSpec extends AnyWordSpec with Matchers 
         val result =  Json.toJson(pensionSchemeAdministratorSample)(using PensionSchemeAdministrator.psaUpdateWrites)
 
         "we have a legalStatus" in {
-          (result \ "customerIdentificationDetails" \ "legalStatus").as[String] mustBe pensionSchemeAdministratorSample.legalStatus
+          (result \ "customerIdentificationDetails" \ "legalStatus").as[String].mustBe(pensionSchemeAdministratorSample.legalStatus)
         }
 
         "we have an idType" in {
-          (result \ "customerIdentificationDetails" \ "idType").asOpt[String].value mustBe pensionSchemeAdministratorSample.idType.value
+          (result \ "customerIdentificationDetails" \ "idType").asOpt[String].value.mustBe(pensionSchemeAdministratorSample.idType.value)
         }
 
         "we have an idNumber" in {
-          (result \ "customerIdentificationDetails" \ "idNumber").asOpt[String].value mustBe pensionSchemeAdministratorSample.idNumber.value
+          (result \ "customerIdentificationDetails" \ "idNumber").asOpt[String].value.mustBe(pensionSchemeAdministratorSample.idNumber.value)
         }
 
         "we have a noIdentifier" in {
-          (result \ "customerIdentificationDetails" \ "noIdentifier").as[Boolean] mustBe pensionSchemeAdministratorSample.noIdentifier
+          (result \ "customerIdentificationDetails" \ "noIdentifier").as[Boolean].mustBe(pensionSchemeAdministratorSample.noIdentifier)
         }
       }
     }

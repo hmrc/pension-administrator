@@ -19,8 +19,8 @@ package models.Reads.getPsaDetails
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.libs.json.Reads._
-import play.api.libs.json._
+import play.api.libs.json.*
+import play.api.libs.json.Reads.*
 import utils.JsonTransformations.{AddressTransformer, DirectorOrPartnerTransformer, LegalStatusTransformer}
 
 class DirectorsTransformationSpec extends AnyWordSpec with Matchers with OptionValues {
@@ -132,11 +132,11 @@ class DirectorsTransformationSpec extends AnyWordSpec with Matchers with OptionV
 
       "We have director details" when {
         "We have a name" in {
-          (transformedJson \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
+          (transformedJson \ "directorDetails" \ "firstName").as[String].mustBe((userAnswersDirector \ "directorDetails" \ "firstName").as[String])
         }
 
         "We have a middle name" in {
-          (transformedJson \ "directorDetails" \ "middleName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "middleName").as[String]
+          (transformedJson \ "directorDetails" \ "middleName").as[String].mustBe((userAnswersDirector \ "directorDetails" \ "middleName").as[String])
         }
 
         "We don't have a middle name" in {
@@ -144,74 +144,85 @@ class DirectorsTransformationSpec extends AnyWordSpec with Matchers with OptionV
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
 
-          (transformedJson \ "directorDetails" \ "middleName").asOpt[String] mustBe None
+          (transformedJson \ "directorDetails" \ "middleName").asOpt[String].mustBe(None)
         }
 
         "We have a last name" in {
-          (transformedJson \ "directorDetails" \ "lastName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "lastName").as[String]
+          (transformedJson \ "directorDetails" \ "lastName").as[String].mustBe((userAnswersDirector \ "directorDetails" \ "lastName").as[String])
         }
 
         "We have a DOB" in {
-          (transformedJson \ "dateOfBirth").as[String] mustBe (userAnswersDirector \ "dateOfBirth").as[String]
+          (transformedJson \ "dateOfBirth").as[String].mustBe((userAnswersDirector \ "dateOfBirth").as[String])
         }
 
         "We have a nino" in {
-          (transformedJson \ "hasNino").as[Boolean] mustBe (userAnswersDirector \ "hasNino").as[Boolean]
-          (transformedJson \ "nino" \ "value").as[String] mustBe (userAnswersDirector \ "nino" \ "value").as[String]
+          (transformedJson \ "hasNino").as[Boolean].mustBe((userAnswersDirector \ "hasNino").as[Boolean])
+          (transformedJson \ "nino" \ "value").as[String].mustBe((userAnswersDirector \ "nino" \ "value").as[String])
         }
 
         "We don't have nino but have a nino reason" in {
           val inputJson = desDirector.as[JsObject] - "nino"
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
-          (transformedJson \ "hasNino").as[Boolean] mustBe false
-          (transformedJson \ "noNinoReason").as[String] mustBe "test"
+          (transformedJson \ "hasNino").as[Boolean].mustBe(false)
+          (transformedJson \ "noNinoReason").as[String].mustBe("test")
         }
 
         "We have a utr" in {
-          (transformedJson \ "hasUtr").as[Boolean] mustBe (userAnswersDirector \ "hasUtr").as[Boolean]
-          (transformedJson \ "utr" \ "value").as[String] mustBe (userAnswersDirector \ "utr" \ "value").as[String]
+          (transformedJson \ "hasUtr").as[Boolean].mustBe((userAnswersDirector \ "hasUtr").as[Boolean])
+          (transformedJson \ "utr" \ "value").as[String].mustBe((userAnswersDirector \ "utr" \ "value").as[String])
         }
 
         "We don't have a utr but have a reason" in {
           val inputJson = desDirector.as[JsObject] - "utr"
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
-          (transformedJson \ "hasUtr").as[Boolean] mustBe false
-          (transformedJson \ "noUtrReason").as[String] mustBe "test"
+          (transformedJson \ "hasUtr").as[Boolean].mustBe(false)
+          (transformedJson \ "noUtrReason").as[String].mustBe("test")
         }
 
         //TODO: DES has director address details as not mandatory but we have it as mandatory in frontend (correspondenceCommonDetails wrapper). Potential issues.
         "We have an address" in {
-          (transformedJson \ "directorAddress" \ "addressLine1").asOpt[String].value mustBe (userAnswersDirector \ "directorAddress" \ "addressLine1").asOpt[String].value
+          (transformedJson \ "directorAddress" \ "addressLine1").asOpt[String].value.mustBe(
+            (userAnswersDirector \ "directorAddress" \ "addressLine1").asOpt[String].value
+          )
         }
 
         //TODO: Contact details is not mandatory in DES schema but mandatory in frontend. Potential issues.
         "We have a valid contact details" when {
           "with a telephone" in {
-            (transformedJson \ "directorContactDetails" \ "phone").asOpt[String].value mustBe (userAnswersDirector \ "directorContactDetails" \ "phone").asOpt[String].value
+            (transformedJson \ "directorContactDetails" \ "phone").asOpt[String].value.mustBe(
+              (userAnswersDirector \ "directorContactDetails" \ "phone").asOpt[String].value
+            )
           }
 
           "with an email" in {
-            (transformedJson \ "directorContactDetails" \ "email").asOpt[String].value mustBe (userAnswersDirector \ "directorContactDetails" \ "email").asOpt[String].value
+            (transformedJson \ "directorContactDetails" \ "email").asOpt[String].value.mustBe(
+              (userAnswersDirector \ "directorContactDetails" \ "email").asOpt[String].value
+            )
           }
         }
 
         "We have a previous address flag" in {
-          (transformedJson \ "directorAddressYears").asOpt[String].value mustBe (userAnswersDirector \ "directorAddressYears").asOpt[String].value
+          (transformedJson \ "directorAddressYears").asOpt[String].value.mustBe(
+            (userAnswersDirector \ "directorAddressYears").asOpt[String].value
+          )
         }
 
         "We have a previous address" in {
-          (transformedJson \ "directorPreviousAddress" \ "country").asOpt[String].value mustBe (userAnswersDirector \ "directorPreviousAddress" \ "country").asOpt[String].value
+          (transformedJson \ "directorPreviousAddress" \ "country").asOpt[String].value.mustBe(
+            (userAnswersDirector \ "directorPreviousAddress" \ "country").asOpt[String].value
+          )
         }
 
         "We have a previous address flag as false and no previous address" in {
-          val inputJson = desDirector.as[JsObject] - "previousAddressDetails" + ("previousAddressDetails" -> Json.obj("isPreviousAddressLast12Month" -> JsBoolean(false)))
+          val inputJson = desDirector.as[JsObject] - "previousAddressDetails" + ("previousAddressDetails" ->
+            Json.obj("isPreviousAddressLast12Month" -> JsBoolean(false)))
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("director")).asOpt.value
 
-          (transformedJson \ "directorAddressYears").asOpt[String].value mustBe "over_a_year"
-          (transformedJson \ "directorPreviousAddress").asOpt[JsObject] mustBe None
+          (transformedJson \ "directorAddressYears").asOpt[String].value.mustBe("over_a_year")
+          (transformedJson \ "directorPreviousAddress").asOpt[JsObject].mustBe(None)
         }
 
         "We have an array of directors" in {
@@ -219,10 +230,10 @@ class DirectorsTransformationSpec extends AnyWordSpec with Matchers with OptionV
 
           val transformedJson = directors.transform(directorOrPartnerTransformer.getDirectorsOrPartners("director")).asOpt.value
 
-          (transformedJson \ 0 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
-          (transformedJson \ 1 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
-          (transformedJson \ 2 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
-          (transformedJson \ 3 \ "directorDetails" \ "firstName").as[String] mustBe (userAnswersDirector \ "directorDetails" \ "firstName").as[String]
+          (transformedJson \ 0 \ "directorDetails" \ "firstName").as[String].mustBe((userAnswersDirector \ "directorDetails" \ "firstName").as[String])
+          (transformedJson \ 1 \ "directorDetails" \ "firstName").as[String].mustBe((userAnswersDirector \ "directorDetails" \ "firstName").as[String])
+          (transformedJson \ 2 \ "directorDetails" \ "firstName").as[String].mustBe((userAnswersDirector \ "directorDetails" \ "firstName").as[String])
+          (transformedJson \ 3 \ "directorDetails" \ "firstName").as[String].mustBe((userAnswersDirector \ "directorDetails" \ "firstName").as[String])
         }
 
         "We have more than 10 directors" in {
@@ -235,7 +246,7 @@ class DirectorsTransformationSpec extends AnyWordSpec with Matchers with OptionV
           )
 
           val transformedJson = partialPayload.transform(directorOrPartnerTransformer.getDirectorsOrPartners).asOpt.value
-          (transformedJson \ "moreThanTenDirectors").as[Boolean] mustBe true
+          (transformedJson \ "moreThanTenDirectors").as[Boolean].mustBe(true)
         }
       }
     }
