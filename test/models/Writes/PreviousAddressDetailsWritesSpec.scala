@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ import play.api.libs.json.Json
 class PreviousAddressDetailsWritesSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
 
   "A previous address details object" should {
-    "Map previosaddressdetails inner object as `previousaddresdetail`" when {
+    "Map previosaddressdetails inner object as `previousaddressdetail`" when {
       "required" in {
         val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
-        val result = Json.toJson(previousAddress)(PreviousAddressDetails.psaSubmissionWrites)
+        val result = Json.toJson(previousAddress)(using PreviousAddressDetails.psaSubmissionWrites)
 
-        result.toString() must include("\"previousAddressDetail\":")
+        result.toString().must(include("\"previousAddressDetail\":"))
       }
     }
   }
@@ -38,28 +38,28 @@ class PreviousAddressDetailsWritesSpec extends AnyWordSpec with Matchers with Op
   "An updated previous address details object" should {
     "serialize correctly into a valid DES payload" when {
       val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample))
-      val result = Json.toJson(previousAddress)(PreviousAddressDetails.psaUpdateWrites)
+      val result = Json.toJson(previousAddress)(using PreviousAddressDetails.psaUpdateWrites)
 
       "we have an isPreviousAddressLast12Months flag" in {
-        (result \ "isPreviousAddressLast12Month").as[Boolean] mustBe previousAddress.isPreviousAddressLast12Month
+        (result \ "isPreviousAddressLast12Month").as[Boolean].mustBe(previousAddress.isPreviousAddressLast12Month)
       }
 
       "we have a previous address" in {
-        (result \ "previousAddressDetails" \ "line1").as[String] mustBe previousAddress.address.value.asInstanceOf[UkAddress].addressLine1
+        (result \ "previousAddressDetails" \ "line1").as[String].mustBe(previousAddress.address.value.asInstanceOf[UkAddress].addressLine1)
       }
 
       "we have an isChanged flag" in {
         val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample), Some(true))
-        val result = Json.toJson(previousAddress)(PreviousAddressDetails.psaUpdateWrites)
+        val result = Json.toJson(previousAddress)(using PreviousAddressDetails.psaUpdateWrites)
 
-        (result \ "changeFlag").asOpt[Boolean] mustBe Some(true)
+        (result \ "changeFlag").asOpt[Boolean].mustBe(Some(true))
       }
 
       "we don't require isChanged flag" in {
         val previousAddress = PreviousAddressDetails(isPreviousAddressLast12Month = true, Some(ukAddressSample), Some(true))
-        val result = Json.toJson(previousAddress)(PreviousAddressDetails.psaUpdateWritesWithNoUpdateFlag)
+        val result = Json.toJson(previousAddress)(using PreviousAddressDetails.psaUpdateWritesWithNoUpdateFlag)
 
-        (result \ "changeFlag").asOpt[Boolean] mustBe None
+        (result \ "changeFlag").asOpt[Boolean].mustBe(None)
       }
     }
   }

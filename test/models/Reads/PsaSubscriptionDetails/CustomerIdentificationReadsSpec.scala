@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import models.CustomerIdentification
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.*
 
 
 class CustomerIdentificationReadsSpec extends AnyWordSpec with Matchers with OptionValues with PsaSubscriptionDetailsGenerators {
@@ -28,29 +28,27 @@ class CustomerIdentificationReadsSpec extends AnyWordSpec with Matchers with Opt
     "validate to a Customer Identification Details object" when {
       "we have a legal status" in {
         forAll(customerIdentificationDetailsGenerator) {
-          customerDetails => customerDetails.as[CustomerIdentification].legalStatus mustBe (customerDetails \ "legalStatus").as[String]
+          customerDetails => customerDetails.as[CustomerIdentification].legalStatus.mustBe((customerDetails \ "legalStatus").as[String])
         }
       }
 
       "we have an optional id type" in {
         forAll(customerIdentificationDetailsGenerator) {
-          customerDetails => customerDetails.as[CustomerIdentification].typeOfId mustBe (customerDetails \ "idType").asOpt[String]
+          customerDetails => customerDetails.as[CustomerIdentification].typeOfId.mustBe((customerDetails \ "idType").asOpt[String])
         }
       }
 
       "we have an optional id number" in {
         forAll(customerIdentificationDetailsGenerator) {
-          customerDetails => customerDetails.as[CustomerIdentification].number mustBe (customerDetails \ "idNumber").asOpt[String]
+          customerDetails => customerDetails.as[CustomerIdentification].number.mustBe((customerDetails \ "idNumber").asOpt[String])
         }
       }
 
       "we have a flag for noIdentifier" in {
         forAll(customerIdentificationDetailsGenerator) {
-          customerDetails => customerDetails.as[CustomerIdentification].isOverseasCustomer mustBe (customerDetails \ "noIdentifier").as[Boolean]
+          customerDetails => customerDetails.as[CustomerIdentification].isOverseasCustomer.mustBe((customerDetails \ "noIdentifier").as[Boolean])
         }
       }
     }
   }
 }
-
-

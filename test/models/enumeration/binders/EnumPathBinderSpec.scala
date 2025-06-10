@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,18 @@ class EnumPathBinderSpec extends AnyWordSpec with Matchers with EitherValues {
   "EnumPathBinder" must {
 
     "bind to correct Enumeration" in {
-      val actualResult = EnumPathBinder.pathBinder(DummyEnum).bind("test1", "test1")
-      actualResult.value mustEqual DummyEnum.test1
+      val actualResult = new EnumPathBinder(DummyEnum).pathBinder(DummyEnum).bind("test1", "test1")
+      actualResult.value.mustBe(DummyEnum.test1)
     }
 
-    "not bind for incorrect Enumumeration Value" in {
-      val actualResult = EnumPathBinder.pathBinder(DummyEnum).bind("unknown", "unknown")
+    "not bind for incorrect Enumeration Value" in {
+      val actualResult = new EnumPathBinder(DummyEnum).pathBinder(DummyEnum).bind("unknown", "unknown")
       actualResult.left.value must include("Unknown Enum Type")
     }
 
-    "unbind to the correct enumeration value" in {
-      val actualResult = EnumPathBinder.pathBinder(DummyEnum).unbind("test1", DummyEnum.test1)
-      actualResult mustEqual DummyEnum.test1.toString
+    "unbind to the correct Enumeration Value" in {
+      val actualResult: String = new EnumPathBinder[DummyEnum.type](DummyEnum).pathBinder(DummyEnum).unbind("test1", DummyEnum.test1)
+      actualResult.mustBe(DummyEnum.test1.toString)
     }
   }
 }

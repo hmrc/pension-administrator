@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.{JsResultException, Json, OFormat}
-import utils.ValidationUtils._
+import utils.ValidationUtils.*
 
 class ValidationUtilsSpec extends AnyWordSpec with Matchers with OptionValues {
 
@@ -46,7 +46,7 @@ class ValidationUtilsSpec extends AnyWordSpec with Matchers with OptionValues {
           "second" -> "optionalSecond"
         )
       )
-      json.convertTo[Test] mustEqual Test("first", "last", Some(TestDetails("dummyFirst", Some("optionalSecond"))))
+      json.convertTo[Test].mustEqual(Test("first", "last", Some(TestDetails("dummyFirst", Some("optionalSecond")))))
     }
 
     "throw the JsResultException if the jsValue cannot be converted to the required type" in {
@@ -69,7 +69,7 @@ class ValidationUtilsSpec extends AnyWordSpec with Matchers with OptionValues {
           "second" -> "optionalSecond"
         )
       )
-      (json \ "testDetails").convertAsOpt[TestDetails].value mustEqual TestDetails("dummyFirst", Some("optionalSecond"))
+      (json \ "testDetails").convertAsOpt[TestDetails].value.mustEqual(TestDetails("dummyFirst", Some("optionalSecond")))
     }
 
     "convert the jsLookupResult to None if not present" in {
@@ -77,7 +77,7 @@ class ValidationUtilsSpec extends AnyWordSpec with Matchers with OptionValues {
         "testFirst" -> "first",
         "testLast" -> "last"
       )
-      (json \ "testDetails").convertAsOpt[TestDetails] mustEqual None
+      (json \ "testDetails").convertAsOpt[TestDetails].mustBe(None)
     }
 
     "throw the JsResultException if the jsLookupResult cannot be converted to the appropriate type " in {

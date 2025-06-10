@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,29 +52,32 @@ class PsaSchemeActionSpec extends PlaySpec with MockitoSugar with BeforeAndAfter
   private def getResult = {
     new PsaSchemeAuthAction(mockSchemeConnector)
       .apply(srn)
-      .invokeBlock(authRequest, { _: PsaAuthRequest[AnyContent] => Future.successful(Ok("success")) })
+      .invokeBlock(authRequest, (_: PsaAuthRequest[AnyContent]) => Future.successful(Ok("success")))
   }
 
   private def mockCheckForAssociation = {
-    when(mockSchemeConnector.checkForAssociation(ArgumentMatchers.eq(Left(PsaId(AuthUtils.psaId))), ArgumentMatchers.eq(srn))(ArgumentMatchers.any(), ArgumentMatchers.any()))
+    when(mockSchemeConnector.checkForAssociation(ArgumentMatchers.eq(Left(PsaId(AuthUtils.psaId))),
+      ArgumentMatchers.eq(srn))(using ArgumentMatchers.any(), ArgumentMatchers.any()))
   }
 
   "PsaSchemeActionSpec" must {
     "return success response if pension scheme is associated with srn" in {
       mockCheckForAssociation.thenReturn(Future.successful(Right(true)))
       val result = getResult
-      status(result) mustBe OK
-      contentAsString(result) mustBe "success"
+      status(result).mustBe(OK)
+      contentAsString(result).mustBe("success")
     }
 
     "return Forbidden if pension scheme is not associated with srn" in {
       mockCheckForAssociation.thenReturn(Future.successful(Right(false)))
-      status(getResult) mustBe FORBIDDEN
+      status(getResult).mustBe(FORBIDDEN)
     }
 
     "return recover from error if association call fails" in {
       mockCheckForAssociation.thenReturn(Future.successful(Left(new HttpException("failed", 500))))
-      getResult.failed.map { _ mustBe new Exception("failed") }
+      getResult.failed.map {
+        _.mustBe(new Exception("failed"))
+      }
     }
   }
 }

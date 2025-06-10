@@ -41,7 +41,7 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
     implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
     convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
-      val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaSubmissionWrites)
+      val psaJsValue = Json.toJson(pensionSchemeAdministrator)(using PensionSchemeAdministrator.psaSubmissionWrites)
       logger.debug(s"[PSA-Registration-Outgoing-Payload]$psaJsValue")
       desConnector.registerPSA(psaJsValue) andThen
         schemeAuditService.sendPSASubscriptionEvent(pensionSchemeAdministrator, psaJsValue)(auditService.sendEvent)
@@ -54,7 +54,7 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
     logger.debug(s"[PSA-Variation-Incoming-Payload]$json")
 
     convertPensionSchemeAdministrator(json) { pensionSchemeAdministrator =>
-      val psaJsValue = Json.toJson(pensionSchemeAdministrator)(PensionSchemeAdministrator.psaUpdateWrites)
+      val psaJsValue = Json.toJson(pensionSchemeAdministrator)(using PensionSchemeAdministrator.psaUpdateWrites)
       logger.debug(s"[PSA-Variation-Outgoing-Payload]$psaJsValue")
       val result = for {
         apiCallResult <- desConnector.updatePSA(psaId, psaJsValue)
@@ -70,7 +70,7 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
   private def convertPensionSchemeAdministrator(json: JsValue)(
     block: PensionSchemeAdministrator => Future[Either[HttpException, JsValue]]): Future[Either[HttpException, JsValue]] = {
 
-    Try(json.convertTo[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)) match {
+    Try(json.convertTo[PensionSchemeAdministrator](using PensionSchemeAdministrator.apiReads)) match {
       case Success(pensionSchemeAdministrator) =>
         block(pensionSchemeAdministrator)
       case Failure(e) =>
@@ -79,4 +79,3 @@ class SchemeServiceImpl @Inject()(desConnector: DesConnector,
     }
   }
 }
-

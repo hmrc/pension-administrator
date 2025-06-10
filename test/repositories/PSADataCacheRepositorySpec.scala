@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@ package repositories
 
 import base.MongoConfig
 import com.typesafe.config.Config
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
+import org.mongodb.scala.{ObservableFuture, SingleObservableFuture}
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
@@ -35,12 +36,18 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter with
-  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures with MongoConfig { // scalastyle:off magic.number
+class PSADataCacheRepositorySpec extends AnyWordSpec
+                                          with MockitoSugar
+                                          with Matchers
+                                          with BeforeAndAfter
+                                          with BeforeAndAfterEach
+                                          with BeforeAndAfterAll
+                                          with ScalaFutures
+                                          with MongoConfig { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
-  import PSADataCacheRepositorySpec._
+  import PSADataCacheRepositorySpec.*
 
   private val idField: String = "id"
 
@@ -67,7 +74,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.size mustBe 1
+        documentsInDB.size.mustBe(1)
       }
     }
 
@@ -88,9 +95,9 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.size mustBe 1
-        documentsInDB.head.data mustBe record2._2
-        documentsInDB.head.data must not be record1._2
+        documentsInDB.size `mustBe` 1
+        documentsInDB.head.data.mustBe(record2._2)
+        documentsInDB.head.data.must(not) be record1._2
       }
     }
 
@@ -110,7 +117,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
 
@@ -129,7 +136,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -150,7 +157,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -170,7 +177,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
   }
@@ -190,7 +197,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
 
@@ -206,7 +213,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
   }
@@ -225,7 +232,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -234,7 +241,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -251,7 +258,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -260,7 +267,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
 
@@ -277,7 +284,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -287,7 +294,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
 
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -304,7 +311,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -313,7 +320,7 @@ class PSADataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matc
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
   }

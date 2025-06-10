@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package utils.JsonTransformations
 
 import com.google.inject.Inject
-import play.api.libs.functional.syntax._
-import play.api.libs.json.Reads._
-import play.api.libs.json._
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.*
+import play.api.libs.json.Reads.JsObjectReducer
 
 trait JsonTransformer {
   val doNothing: Reads[JsObject] = __.json.put(Json.obj())
@@ -56,10 +56,10 @@ class PSASubscriptionDetailsTransformer @Inject()(addressTransformer: AddressTra
   }
 
   private val getCrn: Reads[JsObject] = {
-    (__ \ Symbol("psaSubscriptionDetails") \ Symbol("organisationOrPartnerDetails")).read(__.read(readsCrn)).orElse(doNothing)
+    (__ \ Symbol("psaSubscriptionDetails") \ Symbol("organisationOrPartnerDetails")).read(using __.read(using readsCrn)).orElse(doNothing)
   }
 
-  def readsCrn: Reads[JsObject] = {
+  private def readsCrn: Reads[JsObject] = {
     (__ \ Symbol("crnNumber")).read[String].flatMap { _ =>
       ((__ \ Symbol("hasCrn")).json.put(JsBoolean(true)) and
         (__ \ "companyRegistrationNumber").json.copyFrom((__ \ Symbol("crnNumber")).json.pick)).reduce

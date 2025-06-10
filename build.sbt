@@ -22,16 +22,11 @@ import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
 
 val appName = "pension-administrator"
 
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := "3.7.0"
 ThisBuild / majorVersion := 0
 ThisBuild / scalacOptions ++= Seq(
   "-Wconf:src=routes/.*:s",
-  //"-Xfatal-warnings", //added for future-proofing; disabled temporarily until scala3 aspect of ticket
-  "-Wunused:params",
-  "-Wunused:implicits",
-  "-Wunused:imports",
-  //"-Xsource:3", //added to implement scala3 fixes within scala2; disabled temporarily
-  "-feature"
+  "-feature",
 )
 
 val root: Project = Project(appName, file("."))
@@ -40,6 +35,7 @@ val root: Project = Project(appName, file("."))
   .settings(scalaSettings *)
   .settings(defaultSettings() *)
   .settings(
+    scalacOptions := scalacOptions.value.distinct,
     CodeCoverageSettings.settings,
     retrieveManaged := true,
     libraryDependencies ++= AppDependencies(),

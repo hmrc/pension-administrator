@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,18 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.JsValue
 import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import service.InvitationService
-import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.http.{BadRequestException, _}
+import uk.gov.hmrc.auth.core.*
+import uk.gov.hmrc.http.{BadRequestException, *}
 import utils.AuthUtils
 
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
 class InvitationControllerSpec extends AsyncFlatSpec with Matchers with BeforeAndAfterEach {
 
-  import InvitationControllerSpec._
+  import InvitationControllerSpec.*
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -50,7 +51,7 @@ class InvitationControllerSpec extends AsyncFlatSpec with Matchers with BeforeAn
   "invite" should "return Created when service returns successfully" in {
     val result = controller.invite()(fakeRequest.withJsonBody(invitation))
 
-    status(result) mustBe CREATED
+    status(result).mustBe(CREATED)
   }
 
   it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
@@ -60,8 +61,8 @@ class InvitationControllerSpec extends AsyncFlatSpec with Matchers with BeforeAn
 
     val result = controller.invite()(fakeRequest.withJsonBody(invitation))
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "bad request"
+    status(result).mustBe(BAD_REQUEST)
+    contentAsString(result).mustBe("bad request")
   }
 
   it should "return NOT_FOUND when service returns NOT_FOUND" in {
@@ -71,8 +72,8 @@ class InvitationControllerSpec extends AsyncFlatSpec with Matchers with BeforeAn
 
     val result = controller.invite()(fakeRequest.withJsonBody(invitation))
 
-    status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "not found"
+    status(result).mustBe(NOT_FOUND)
+    contentAsString(result).mustBe("not found")
   }
 
   it should "throw BadRequestException when no data received in the request" in {
@@ -104,7 +105,7 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar {
 
   private val invitation = readJsonFromFile("/data/validInvitation.json")
 
-  val response = MinimalDetails("aaa@email.com", true, None, Some(IndividualDetails("John", Some("Doe"), "Doe")),
+  val response: MinimalDetails = MinimalDetails("aaa@email.com", true, None, Some(IndividualDetails("John", Some("Doe"), "Doe")),
     rlsFlag = true,
     deceasedFlag = true)
 
@@ -117,9 +118,12 @@ object InvitationControllerSpec extends JsonFileReader with MockitoSugar {
     def setInvitePsaResponse(response: Future[Either[HttpException, Unit]]): Unit = this.invitePsaResponse = response
 
     def invitePSA(jsValue: JsValue)
-                 (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] =
-      invitePsaResponse
+                 (implicit
+                  @unused headerCarrier: HeaderCarrier,
+                  @unused ec: ExecutionContext,
+                  @unused request: RequestHeader): Future[Either[HttpException, Unit]] = invitePsaResponse
   }
+
   val application: Application = GuiceApplicationBuilder()
     .configure(
       "metrics.jvm" -> false

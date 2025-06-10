@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@ package controllers.cache
 import com.mongodb.MongoException
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.ByteString
-import utils.RandomUtils
-import org.mockito.ArgumentMatchers.{eq => eqTo, _}
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.{eq as eqTo, *}
+import org.mockito.Mockito.*
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -31,13 +30,13 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import repositories._
+import play.api.test.Helpers.*
+import repositories.*
 import service.MongoDBFailedException
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.BadRequestException
-import utils.AuthUtils
-import utils.testhelpers.InvitationBuilder._
+import utils.testhelpers.InvitationBuilder.*
+import utils.{AuthUtils, RandomUtils}
 
 import scala.concurrent.Future
 
@@ -66,27 +65,27 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
 
     ".insert" should "return 201 when the request body can be parsed and passed to the repository successfully" in {
 
-      when(repo.upsert(any())(any())).thenReturn(Future.successful(()))
+      when(repo.upsert(any())(using any())).thenReturn(Future.successful(()))
       AuthUtils.authStub(authConnector)
       val result = call(controller.add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation1)))
-      status(result) mustEqual CREATED
+      status(result).mustEqual(CREATED)
     }
 
     it should "return 400 when the request body cannot be parsed" in {
 
-      when(repo.upsert(any())(any())).thenReturn(Future.successful(()))
+      when(repo.upsert(any())(using any())).thenReturn(Future.successful(()))
       AuthUtils.authStub(authConnector)
       recoverToExceptionIf[BadRequestException](
         call(controller.add, FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))).map {
         ex =>
-          ex.responseCode mustBe BAD_REQUEST
-          ex.message mustBe "Bad Request with no request body returned for PSA Invitation"
+          ex.responseCode `mustBe` BAD_REQUEST
+          ex.message.mustBe("Bad Request with no request body returned for PSA Invitation")
       }
     }
 
     it should "return 400 when the request body cannot be parsed as valid json" in {
 
-      when(repo.upsert(any())(any())).thenReturn(Future.successful(()))
+      when(repo.upsert(any())(using any())).thenReturn(Future.successful(()))
       AuthUtils.authStub(authConnector)
       val badJson = Json.obj(
         "abc" -> "def"
@@ -95,21 +94,21 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
       recoverToExceptionIf[BadRequestException](
         call(controller.add, FakeRequest().withJsonBody(badJson))).map {
         ex =>
-          ex.responseCode mustBe BAD_REQUEST
-          ex.message mustBe "not valid value for PSA Invitation"
+          ex.responseCode `mustBe` BAD_REQUEST
+          ex.message.mustBe("not valid value for PSA Invitation")
       }
     }
 
 
     it should "throw a MongoDBFailedException when the mongodb insert call is failed with DatabaseException" in {
-      when(repo.upsert(any())(any())).thenReturn(Future.failed(new MongoException(0, "mongo error")))
+      when(repo.upsert(any())(using any())).thenReturn(Future.failed(new MongoException(0, "mongo error")))
       AuthUtils.authStub(authConnector)
 
       recoverToExceptionIf[MongoDBFailedException](
         call(controller.add, FakeRequest("POST", "/").withJsonBody(Json.toJson(invitation1)))).map {
         ex =>
-          ex.responseCode mustBe INTERNAL_SERVER_ERROR
-          ex.message must include("mongo error")
+          ex.responseCode `mustBe` INTERNAL_SERVER_ERROR
+          ex.message.must(include("mongo error"))
       }
     }
   }
@@ -118,45 +117,43 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
 
   private def validCacheControllerWithGet(s: String, map: Map[String, String], testMethod: () => Action[AnyContent]): Unit = {
     s"$s should work for request with headers: $map" should "return 200 and the relevant data when it exists" in {
-      when(repo.getByKeys(eqTo(map))(any())) thenReturn Future.successful(Some(invitationList))
+      when(repo.getByKeys(eqTo(map))(using any())).thenReturn(Future.successful(Some(invitationList)))
       AuthUtils.authStub(authConnector)
-      val result = testMethod()(FakeRequest().withHeaders(map.toSeq: _*))
-      status(result) mustEqual OK
-      contentAsString(result) mustEqual Json.toJson(invitationList).toString
+      val result = testMethod()(FakeRequest().withHeaders(map.toSeq *))
+      status(result).mustBe(OK)
+      contentAsString(result).mustEqual(Json.toJson(invitationList).toString)
     }
 
     it should "return 404 when the data doesn't exist" in {
-      when(repo.getByKeys(eqTo(map))(any())) thenReturn Future.successful {
+      when(repo.getByKeys(eqTo(map))(using any())).thenReturn(Future.successful {
         None
-      }
+      })
       AuthUtils.authStub(authConnector)
-      val result = testMethod()(FakeRequest().withHeaders(map.toSeq: _*))
-      status(result) mustEqual NOT_FOUND
+      val result = testMethod()(FakeRequest().withHeaders(map.toSeq *))
+      status(result).mustBe(NOT_FOUND)
     }
 
     it should "throw an exception when the repository call fails" in {
-      when(repo.getByKeys(eqTo(map))(any())) thenReturn Future.failed {
+      when(repo.getByKeys(eqTo(map))(using any())).thenReturn(Future.failed {
         new Exception()
-      }
+      })
       AuthUtils.authStub(authConnector)
-      val result = testMethod()(FakeRequest().withHeaders(map.toSeq: _*))
-      an[Exception] must be thrownBy status(result)
+      val result = testMethod()(FakeRequest().withHeaders(map.toSeq *))
+      an[Exception].mustBe(thrownBy {
+        status(result)
+      })
     }
-
-
   }
-
 
   private def validCacheControllerWithRemove(s: String): Unit = {
     s"$s" should "return 200 when the data is removed successfully" in {
-      when(repo.remove(eqTo(mapBothKeys))(any())) thenReturn Future.successful(true)
+      when(repo.remove(eqTo(mapBothKeys))(using any())).thenReturn(Future.successful(true))
       AuthUtils.authStub(authConnector)
 
-      val result = controller.remove()(FakeRequest().withHeaders(mapBothKeys.toSeq: _*))
+      val result = controller.remove()(FakeRequest().withHeaders(mapBothKeys.toSeq *))
 
-      status(result) mustEqual OK
+      status(result).mustBe(OK)
     }
-
   }
 
   "InvitationsCacheController" should behave like validCacheControllerWithInsert()
@@ -165,4 +162,3 @@ class InvitationsCacheControllerSpec extends AsyncFlatSpec with Matchers with Mo
   it should behave like validCacheControllerWithGet("getForInvitee", mapInviteePsaId, () => controller.getForInvitee)
   it should behave like validCacheControllerWithRemove("remove")
 }
-

@@ -33,12 +33,7 @@ case class InvitationAcceptanceAuditEvent(acceptedInvitation: AcceptedInvitation
       "inviterPsaId" -> acceptedInvitation.inviterPsaId.id,
       "declaration" -> acceptedInvitation.declaration.toString,
       "declarationDuties" -> acceptedInvitation.declarationDuties.toString,
-      "response" -> {
-        response match {
-          case Some(json) => Json.stringify(json)
-          case _ => ""
-        }
-      }
+      "response" -> response.map(Json.stringify).getOrElse("")
     )
 }
 

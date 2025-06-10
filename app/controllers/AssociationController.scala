@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import connectors.AssociationConnector
 import models.{AcceptedInvitation, MinimalDetails, SchemeReferenceNumber}
 import play.api.Logger
 import play.api.libs.json.{JsError, JsSuccess, Json}
-import play.api.mvc._
+import play.api.mvc.*
 import repositories.MinimalDetailsCacheRepository
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
 
@@ -91,7 +91,7 @@ class AssociationController @Inject()(
     }
   }
 
-  private def getRequiredUserParametersFromRequest(implicit req: actions.PsaPspAuthRequest[_]):Either[String, (String, String, String)] = {
+  private def getRequiredUserParametersFromRequest(implicit req: actions.PsaPspAuthRequest[?]):Either[String, (String, String, String)] = {
     val loggedInAsPsaOpt = Try(req.headers.get("loggedInAsPsa").map(_.toBoolean)).toOption.flatten
     def process(loggedInAsPsa: Boolean) = {
 
@@ -161,7 +161,7 @@ class AssociationController @Inject()(
     implicit hc: HeaderCarrier, request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
             minimalDetailsCacheRepository.get(idValue).flatMap {
               case Some(response)=>
-                response.validate[MinimalDetails](MinimalDetails.defaultReads) match {
+                response.validate[MinimalDetails](using MinimalDetails.defaultReads) match {
                   case JsSuccess(value, _) => Future.successful(Right(value))
                   case JsError(_) => getAndCacheMinimalDetails(idValue, idType, regime)
                 }

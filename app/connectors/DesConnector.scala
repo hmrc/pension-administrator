@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,23 @@
 
 package connectors
 
-import audit._
+import audit.*
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import connectors.helper.HeaderUtils
 import models.{PsaSubscription, PsaToBeRemovedFromScheme}
 import play.api.Logger
-import play.api.http.Status._
-import play.api.libs.json._
+import play.api.http.Status.*
+import play.api.libs.json.*
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler, JSONPayloadSchemaValidator}
 
 import java.time.LocalDate
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
 
@@ -93,7 +95,8 @@ class DesConnectorImpl @Inject()(
                           (implicit
                            headerCarrier: HeaderCarrier,
                            ec: ExecutionContext,
-                           request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                           @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
     val psaSchema = "/resources/schemas/psaSubscription.json"
     val url = url"${config.schemeAdminRegistrationUrl}"
 
@@ -102,7 +105,7 @@ class DesConnectorImpl @Inject()(
       throw PSAValidationFailureException(s"Invalid payload when registerPSA :-\n${validationResult.mkString}")
     else
       httpV2Client.post(url)
-        .setHeader(headerUtils.desHeader: _*)
+        .setHeader(headerUtils.desHeader *)
         .withBody(registerData).execute[HttpResponse] map {
         handlePostResponse(_, url.toString)
       }
@@ -114,11 +117,10 @@ class DesConnectorImpl @Inject()(
                                          ec: ExecutionContext,
                                          request: RequestHeader): Future[Either[HttpException, JsValue]] = {
 
-
     val subscriptionDetailsUrl = url"${config.psaSubscriptionDetailsUrl.format(psaId)}"
 
     httpV2Client.get(subscriptionDetailsUrl)
-      .setHeader(headerUtils.desHeader: _*)
+      .setHeader(headerUtils.desHeader *)
       .execute[HttpResponse] map {
       handleGetResponse(_, subscriptionDetailsUrl.toString)
     } andThen schemeAuditService.sendPSADetailsEvent(psaId)(auditService.sendEvent) andThen
@@ -131,8 +133,8 @@ class DesConnectorImpl @Inject()(
                          headerCarrier: HeaderCarrier,
                          ec: ExecutionContext,
                          request: RequestHeader): Future[Either[HttpException, JsValue]] = {
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-      headerUtils.integrationFrameworkHeader)
+
+    implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headerUtils.integrationFrameworkHeader *)
     val url = url"${config.removePsaUrl.format(psaToBeRemoved.pstr)}"
     val data: JsValue = Json.obj(
       "ceaseIDType" -> "PSAID",
@@ -141,11 +143,17 @@ class DesConnectorImpl @Inject()(
       "initiatedIDNumber" -> psaToBeRemoved.psaId,
       "ceaseDate" -> psaToBeRemoved.removalDate.toString
     )
-    removePSAFromScheme(url, data, "/resources/schemas/ceaseFromScheme1461.json", psaToBeRemoved)(hc, implicitly, implicitly)
+    removePSAFromScheme(url, data, "/resources/schemas/ceaseFromScheme1461.json", psaToBeRemoved)(using hc, implicitly, implicitly)
   }
 
-  private def removePSAFromScheme(url: java.net.URL, data: JsValue, schema: String, psaToBeRemoved: PsaToBeRemovedFromScheme)
-                                 (implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+  private def removePSAFromScheme(url: java.net.URL,
+                                  data: JsValue,
+                                  schema: String,
+                                  psaToBeRemoved: PsaToBeRemovedFromScheme)
+                                 (implicit hc: HeaderCarrier,
+                                  ec: ExecutionContext,
+                                  request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
     val validationResult = jsonPayloadSchemaValidator.validateJsonPayload(schema, data)
 
     if (validationResult.nonEmpty)
@@ -162,19 +170,22 @@ class DesConnectorImpl @Inject()(
                              headerCarrier: HeaderCarrier,
                              ec: ExecutionContext,
                              request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
     val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-      headerUtils.integrationFrameworkHeader)
+    implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headerUtils.integrationFrameworkHeader *)
+
     deregisterAdministrator(
       url"${config.deregisterPsaUrl.format(psaId)}",
       data,
       "/resources/schemas/deregister1469.json",
-      psaId)(hc, implicitly, implicitly)
+      psaId)(using hc, implicitly, implicitly)
   }
 
   private def deregisterAdministrator(url: java.net.URL, data: JsValue, schema: String, psaId: String)
-                                     (implicit hc: HeaderCarrier, ec: ExecutionContext,
+                                     (implicit hc: HeaderCarrier,
+                                      ec: ExecutionContext,
                                       request: RequestHeader): Future[Either[HttpException, JsValue]] =
+
     httpV2Client.post(url).withBody(data).execute[HttpResponse] map {
       handlePostResponse(_, url.toString)
     } andThen
@@ -185,7 +196,8 @@ class DesConnectorImpl @Inject()(
                         (implicit
                          headerCarrier: HeaderCarrier,
                          ec: ExecutionContext,
-                         request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+                         @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = {
+
     val psaVariationSchema = "/resources/schemas/psaVariation.json"
 
     val url = url"${config.psaVariationDetailsUrl.format(psaId)}"
@@ -194,7 +206,7 @@ class DesConnectorImpl @Inject()(
     if (validationResult.nonEmpty)
       throw PSAValidationFailureException(s"Invalid payload when updatePSA :-\n${validationResult.mkString}")
     else
-      httpV2Client.post(url).setHeader(headerUtils.desHeader: _*).withBody(data).execute[HttpResponse] map {
+      httpV2Client.post(url).setHeader(headerUtils.desHeader *).withBody(data).execute[HttpResponse] map {
         handlePostResponse(_, url.toString)
       }
   }

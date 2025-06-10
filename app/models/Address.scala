@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package models
 
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.*
 
 sealed trait Address
 
@@ -85,7 +85,7 @@ object UkAddress {
   implicit val format: Reads[UkAddress] = Json.reads[UkAddress]
 
   implicit val writes: Writes[UkAddress] = (
-    JsPath.write(Address.commonAddressWrites) and
+    JsPath.write(using Address.commonAddressWrites) and
       (JsPath \ "countryCode").write[String] and
       (JsPath \ "postalCode").write[String] and
       (JsPath \ "addressType").write[String]
@@ -94,22 +94,22 @@ object UkAddress {
     ukAddress.postalCode,
     "UK"))
 
-  val commonUpdateWrites: Writes[(String, String, Boolean)] = (
+  private val commonUpdateWrites: Writes[(String, String, Boolean)] = (
     (JsPath \ "countryCode").write[String] and
       (JsPath \ "postalCode").write[String] and
       (JsPath \ "nonUKAddress").write[Boolean]) (elements => (elements._1, elements._2, elements._3))
 
   implicit val updateWrites: Writes[UkAddress] = (
-    JsPath.write(Address.commonAddressWrites) and
-      JsPath.write(commonUpdateWrites) and
+    JsPath.write(using Address.commonAddressWrites) and
+      JsPath.write(using commonUpdateWrites) and
       (JsPath \ "changeFlag").writeNullable[Boolean]
     ) (ukAddress => ((ukAddress.addressLine1, ukAddress.addressLine2, ukAddress.addressLine3, ukAddress.addressLine4),
     (ukAddress.countryCode,
       ukAddress.postalCode, false), ukAddress.isChanged))
 
   implicit val updatePreviousAddressWrites: Writes[UkAddress] = (
-    JsPath.write(Address.commonAddressWrites) and
-      JsPath.write(commonUpdateWrites)
+    JsPath.write(using Address.commonAddressWrites) and
+      JsPath.write(using commonUpdateWrites)
     ) (ukAddress => ((ukAddress.addressLine1, ukAddress.addressLine2, ukAddress.addressLine3, ukAddress.addressLine4),
     (ukAddress.countryCode,
       ukAddress.postalCode, false)))
@@ -117,7 +117,7 @@ object UkAddress {
   val defaultWrites: Writes[UkAddress] = Json.writes[UkAddress]
 
   val apiReads: Reads[UkAddress] = (
-    JsPath.read(Address.commonAddressElementsReads) and
+    JsPath.read(using Address.commonAddressElementsReads) and
       ((JsPath \ "postalCode").read[String] orElse (JsPath \ "postcode").read[String])
     ) ((common, postalCode) => UkAddress(common._1, common._2, common._3, common._4, common._5, postalCode, common._6))
 }
@@ -130,7 +130,7 @@ object InternationalAddress {
   implicit val format: Format[InternationalAddress] = Json.format[InternationalAddress]
 
   implicit val writes: Writes[InternationalAddress] = (
-    JsPath.write(Address.commonAddressWrites) and
+    JsPath.write(using Address.commonAddressWrites) and
       (JsPath \ "countryCode").write[String] and
       (JsPath \ "postalCode").writeNullable[String] and
       (JsPath \ "addressType").write[String]
@@ -138,22 +138,22 @@ object InternationalAddress {
     (ia.addressLine1, ia.addressLine2, ia.addressLine3, ia.addressLine4),
     ia.countryCode, ia.postalCode, "NON-UK"))
 
-  val commonUpdateWrites: Writes[(String, Option[String], Boolean)] = (
+  private val commonUpdateWrites: Writes[(String, Option[String], Boolean)] = (
     (JsPath \ "countryCode").write[String] and
       (JsPath \ "postalCode").writeNullable[String] and
       (JsPath \ "nonUKAddress").write[Boolean]) (elements => (elements._1, elements._2, elements._3))
 
   implicit val updateWrites: Writes[InternationalAddress] = (
-    JsPath.write(Address.commonAddressWrites) and
-      JsPath.write(commonUpdateWrites) and
+    JsPath.write(using Address.commonAddressWrites) and
+      JsPath.write(using commonUpdateWrites) and
       (JsPath \ "changeFlag").writeNullable[Boolean]
     ) (ia => (
     (ia.addressLine1, ia.addressLine2, ia.addressLine3, ia.addressLine4),
     (ia.countryCode, ia.postalCode, true), ia.isChanged))
 
   implicit val updatePreviousAddressWrites: Writes[InternationalAddress] = (
-    JsPath.write(Address.commonAddressWrites) and
-      JsPath.write(commonUpdateWrites)
+    JsPath.write(using Address.commonAddressWrites) and
+      JsPath.write(using commonUpdateWrites)
     ) (ia => (
     (ia.addressLine1, ia.addressLine2, ia.addressLine3, ia.addressLine4),
     (ia.countryCode, ia.postalCode, true)))
@@ -162,7 +162,7 @@ object InternationalAddress {
   val defaultWrites: Writes[InternationalAddress] = Json.writes[InternationalAddress]
 
   val apiReads: Reads[InternationalAddress] = (
-    JsPath.read(Address.commonAddressElementsReads) and
+    JsPath.read(using Address.commonAddressElementsReads) and
       (JsPath \ "postalCode").readNullable[String] and
       (JsPath \ "postcode").readNullable[String]
     ) ((common, postCodeFormat1, postCodeFormat2) => {

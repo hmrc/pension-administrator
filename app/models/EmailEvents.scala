@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package models
 
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.*
 import utils.{Enumerable, WithName}
 
 import java.time.Instant
@@ -29,7 +29,7 @@ object Event extends Enumerable.Implicits {
   override def toString: String = super.toString.toLowerCase
 
   implicit val enumerable: Enumerable[Event] = Enumerable(
-    Seq(Sent, Delivered, PermanentBounce, Opened, Complained).map(v => v.toString -> v): _*
+    Seq(Sent, Delivered, PermanentBounce, Opened, Complained).map(v => v.toString -> v) *
   )
 }
 
@@ -44,7 +44,7 @@ case class EmailEvent(event: Event, detected: Instant)
 object EmailEvent {
 
   implicit val read: Reads[EmailEvent] = {
-    ((JsPath \ "event").read[Event] and ((JsPath \ "detected").read[String] map Instant.parse))(EmailEvent.apply _)
+    ((JsPath \ "event").read[Event] and ((JsPath \ "detected").read[String] map Instant.parse))(EmailEvent.apply)
   }
 
   implicit val write: Writes[EmailEvent] = (

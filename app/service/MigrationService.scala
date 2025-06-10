@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@
 package service
 
 import com.google.inject.Inject
+import org.mongodb.scala.ObservableFuture
 import org.mongodb.scala.bson.{BsonDateTime, BsonDocument, BsonString}
 import org.mongodb.scala.model.{Filters, Updates}
 import play.api.Logging
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.lock.{LockService, MongoLockRepository}
+import org.mongodb.scala.documentToUntypedDocument
 
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -47,7 +49,6 @@ class MigrationService @Inject()(mongoLockRepository: MongoLockRepository,
       numberOfChanges
     }
   }
-
 
   lock withLock {
     for {

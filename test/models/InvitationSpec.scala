@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package models
 
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatestplus.play._
+import org.scalatestplus.play.*
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.{JsSuccess, Json}
 import uk.gov.hmrc.domain.PsaId
@@ -43,23 +43,17 @@ class InvitationSpec extends PlaySpec with GuiceOneAppPerSuite with ScalaFutures
       val json = Json.toJson(invitation)
       val result = json.validate[Invitation]
 
-      result mustBe a[JsSuccess[_]]
-      result.get mustBe invitation
+      result.mustBe(a[JsSuccess[?]])
+      result.get.mustBe(invitation)
     }
 
     "de-serialize correctly" in {
-
-        val json = """{"srn":{"id":"S2400000041"},"pstr":"24000041IN","schemeName":"Open Scheme Overview API Test 2",
+      val json = """{"srn":{"id":"S2400000041"},"pstr":"24000041IN","schemeName":"Open Scheme Overview API Test 2",
                   |"inviterPsaId":"A2100005","inviteePsaId":"A2100006",
                   |"inviteeName":"Richard Clarkson","expireAt":"2024-06-03T00:00:00"}""".stripMargin
+      val invitationFromJson: Invitation = Json.parse(json).as[Invitation]
 
-      val invitationFromJson = Json.parse(json).as[Invitation]
-
-      invitationFromJson mustBe invitation
-
+      invitationFromJson.mustBe(invitation)
     }
-
-
   }
 }
-

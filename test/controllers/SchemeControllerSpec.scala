@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,22 +30,23 @@ import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsResultException, JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, BodyParsers, RequestHeader}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import repositories._
+import play.api.test.Helpers.*
+import repositories.*
 import service.SchemeService
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http.{BadRequestException, _}
+import uk.gov.hmrc.http.{BadRequestException, *}
 import utils.FakeDesConnector.{deregisterPsaResponseJson, removePsaResponseJson}
-import utils.testhelpers.PsaSubscriptionBuilder._
+import utils.testhelpers.PsaSubscriptionBuilder.*
 import utils.{AuthUtils, FakeDesConnector, FakePsaSchemeAuthAction}
 
 import java.time.{LocalDate, ZoneId}
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
 class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers with BeforeAndAfterEach {
 
-  import SchemeControllerSpec._
+  import SchemeControllerSpec.*
 
   private val validRequestData = readJsonFromFile("/data/validPsaRequest.json")
 
@@ -71,8 +72,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
-    status(result) mustBe OK
-    contentAsJson(result) mustBe registerPsaResponseJson
+    status(result).mustBe(OK)
+    contentAsJson(result).mustBe(registerPsaResponseJson)
   }
 
   it should "return BAD_REQUEST when service returns BAD_REQUEST" in {
@@ -85,8 +86,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "bad request"
+    status(result).mustBe(BAD_REQUEST)
+    contentAsString(result).mustBe("bad request")
   }
 
   it should "return CONFLICT when service returns CONFLICT" in {
@@ -97,8 +98,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
-    status(result) mustBe CONFLICT
-    contentAsString(result) mustBe "conflict"
+    status(result).mustBe(CONFLICT)
+    contentAsString(result).mustBe("conflict")
   }
 
   it should "return NOT_FOUND when service returns NOT_FOUND" in {
@@ -109,8 +110,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
-    status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "not found"
+    status(result).mustBe(NOT_FOUND)
+    contentAsString(result).mustBe("not found")
   }
 
   it should "return Forbidden when service return Forbidden" in {
@@ -122,21 +123,23 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
-    status(result) mustBe FORBIDDEN
-    contentAsString(result) mustBe "forbidden"
+    status(result).mustBe(FORBIDDEN)
+    contentAsString(result).mustBe("forbidden")
   }
 
   it should "return Forbidden when service return invalid PsaId" in {
 
     fakeSchemeService.setRegisterPsaResponse(
-      Future.successful(Left(new ForbiddenException("INVALID_PSAID : The back end has indicated that PSAID is already de-limited and hence not valid.")))
+      Future.successful(Left(new ForbiddenException(
+        "INVALID_PSAID : The back end has indicated that PSAID is already de-limited and hence not valid."))
+      )
     )
     AuthUtils.noEnrolmentAuthStub(mockAuthConnector)
 
     val result = controller.registerPSA(fakeRequest.withJsonBody(validRequestData))
 
-    status(result) mustBe FORBIDDEN
-    contentAsString(result) mustBe "INVALID_PSAID"
+    status(result).mustBe(FORBIDDEN)
+    contentAsString(result).mustBe("INVALID_PSAID")
   }
 
   it should "throw BadRequestException when no data recieved in the request" in {
@@ -178,8 +181,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = controller.getPsaDetailsSelf(fakeRequest)
 
-    status(result) mustBe OK
-    contentAsJson(result) mustBe Json.toJson(psaSubscription)
+    status(result).mustBe(OK)
+    contentAsJson(result).mustBe(Json.toJson(psaSubscription))
   }
 
   it should "return bad request when connector returns BAD_REQUEST" in {
@@ -190,8 +193,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = controller.getPsaDetailsSelf(fakeRequest)
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "bad request"
+    status(result).mustBe(BAD_REQUEST)
+    contentAsString(result).mustBe("bad request")
   }
 
   it should "return not found when connector returns NOT_FOUND" in {
@@ -202,14 +205,14 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = controller.getPsaDetailsSelf(fakeRequest)
 
-    status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "not found"
+    status(result).mustBe(NOT_FOUND)
+    contentAsString(result).mustBe("not found")
   }
 
   "removePSA" should "return NO_CONTENT when service returns successfully" in {
 
     val result = call(controller.removePsa(srn), removePsaFakeRequest(removePsaJson))
-    status(result) mustBe NO_CONTENT
+    status(result).mustBe(NO_CONTENT)
 
   }
 
@@ -221,8 +224,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = call(controller.removePsa(srn), removePsaFakeRequest(removePsaJson))
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "bad request"
+    status(result).mustBe(BAD_REQUEST)
+    contentAsString(result).mustBe("bad request")
   }
 
   it should "return CONFLICT when service returns CONFLICT" in {
@@ -233,8 +236,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = call(controller.removePsa(srn), removePsaFakeRequest(removePsaJson))
 
-    status(result) mustBe CONFLICT
-    contentAsString(result) mustBe "conflict"
+    status(result).mustBe(CONFLICT)
+    contentAsString(result).mustBe("conflict")
   }
 
   it should "return NOT_FOUND when service returns NOT_FOUND" in {
@@ -245,8 +248,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = call(controller.removePsa(srn), removePsaFakeRequest(removePsaJson))
 
-    status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "not found"
+    status(result).mustBe(NOT_FOUND)
+    contentAsString(result).mustBe("not found")
   }
 
   it should "return Forbidden when service return Forbidden" in {
@@ -257,8 +260,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = call(controller.removePsa(srn), removePsaFakeRequest(removePsaJson))
 
-    status(result) mustBe FORBIDDEN
-    contentAsString(result) mustBe "forbidden"
+    status(result).mustBe(FORBIDDEN)
+    contentAsString(result).mustBe("forbidden")
   }
 
 
@@ -292,7 +295,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
   "deregisterPSASelf" should "return OK when service returns successfully" in {
 
     val result = call(controller.deregisterPsaSelf, deregisterPsaFakeRequest)
-    status(result) mustBe NO_CONTENT
+    status(result).mustBe(NO_CONTENT)
 
   }
 
@@ -304,8 +307,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = call(controller.deregisterPsaSelf, deregisterPsaFakeRequest)
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "bad request"
+    status(result).mustBe(BAD_REQUEST)
+    contentAsString(result).mustBe("bad request")
   }
 
   it should "return CONFLICT when service returns CONFLICT" in {
@@ -316,8 +319,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = call(controller.deregisterPsaSelf, deregisterPsaFakeRequest)
 
-    status(result) mustBe CONFLICT
-    contentAsString(result) mustBe "conflict"
+    status(result).mustBe(CONFLICT)
+    contentAsString(result).mustBe("conflict")
   }
 
   it should "return NOT_FOUND when service returns NOT_FOUND" in {
@@ -328,8 +331,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = call(controller.deregisterPsaSelf, deregisterPsaFakeRequest)
 
-    status(result) mustBe NOT_FOUND
-    contentAsString(result) mustBe "not found"
+    status(result).mustBe(NOT_FOUND)
+    contentAsString(result).mustBe("not found")
   }
 
   it should "return Forbidden when service return Forbidden" in {
@@ -340,11 +343,11 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = call(controller.deregisterPsaSelf, deregisterPsaFakeRequest)
 
-    status(result) mustBe FORBIDDEN
-    contentAsString(result) mustBe "forbidden"
+    status(result).mustBe(FORBIDDEN)
+    contentAsString(result).mustBe("forbidden")
   }
-
-
+  
+  
   it should "throw UpstreamErrorResponse when service throws UpstreamErrorResponse" in {
 
     fakeDesConnector.setDeregisterPsaResponse(Future.failed(UpstreamErrorResponse("Failed with 5XX", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
@@ -368,7 +371,7 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = controller.updatePsaSelf(fakeRequest.withJsonBody(psaVariationData))
 
-    status(result) mustBe OK
+    status(result).mustBe(OK)
   }
 
   it should "return INVALID_PSAID when service returns INVALID_PSAID" in {
@@ -379,8 +382,8 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
     val result = controller.updatePsaSelf(fakeRequest.withJsonBody(psaVariationData))
 
-    status(result) mustBe BAD_REQUEST
-    contentAsString(result) mustBe "INVALID_PSAID"
+    status(result).mustBe(BAD_REQUEST)
+    contentAsString(result).mustBe("INVALID_PSAID")
   }
 
   it should "throw BadRequestException when no data received in the request" in {
@@ -432,12 +435,15 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
     def setUpdatePsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.updatePsaResponse = response
 
-    override def registerPSA(json: JsValue)(implicit headerCarrier: HeaderCarrier,
-                                            ec: ExecutionContext,
-                                            request: RequestHeader): Future[Either[HttpException, JsValue]] = registerPsaResponse
+    override def registerPSA(json: JsValue)(implicit
+                                            @unused headerCarrier: HeaderCarrier,
+                                            @unused ec: ExecutionContext,
+                                            @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = registerPsaResponse
 
-    override def updatePSA(psaId: String, json: JsValue)(
-      implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, JsValue]] = updatePsaResponse
+    override def updatePSA(psaId: String, json: JsValue)(implicit
+                                                         @unused headerCarrier: HeaderCarrier,
+                                                         @unused ec: ExecutionContext,
+                                                         @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = updatePsaResponse
   }
 
   private val registerPsaResponseJson: JsValue =
@@ -451,7 +457,7 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   private val fakeSchemeService = new FakeSchemeService
   private val fakeDesConnector: FakeDesConnector = new FakeDesConnector()
-  val bodyParser = app.injector.instanceOf[BodyParsers.Default]
+  val bodyParser: BodyParsers.Default = app.injector.instanceOf[BodyParsers.Default]
   private val controller = new SchemeController(fakeSchemeService,
                                                 fakeDesConnector,
                                                 controllerComponents,

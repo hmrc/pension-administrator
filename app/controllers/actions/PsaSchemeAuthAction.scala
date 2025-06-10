@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class PsaSchemeActionImpl (srn:SchemeReferenceNumber, schemeConnector: SchemeCon
     val isAssociated = schemeConnector.checkForAssociation(
       Left(request.psaId),
       srn
-    )(hc(request), executionContext)
+    )(using hc(using request), executionContext)
 
     isAssociated.flatMap {
       case Right(true) => block(request)
@@ -50,9 +50,6 @@ class PsaSchemeActionImpl (srn:SchemeReferenceNumber, schemeConnector: SchemeCon
     }
   }
 }
-
-
-
 
 class PsaSchemeAuthAction @Inject()(schemeDetailsConnector: SchemeConnector)(implicit ec: ExecutionContext){
   def apply(srn: SchemeReferenceNumber): ActionFunction[PsaAuthRequest, PsaAuthRequest] =

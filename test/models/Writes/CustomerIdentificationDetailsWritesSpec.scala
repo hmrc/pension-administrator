@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,22 +27,22 @@ class CustomerIdentificationDetailsWritesSpec extends AnyWordSpec with Matchers 
   "A Pension Scheme Administrator" when {
     "Containing customer identification details" when {
       "Parse correctly to a valid customer identification details payload" when {
-        val result =  Json.toJson(pensionSchemeAdministratorSample)(PensionSchemeAdministrator.psaUpdateWrites)
+        val result =  Json.toJson(pensionSchemeAdministratorSample)(using PensionSchemeAdministrator.psaUpdateWrites)
 
         "we have a legalStatus" in {
-          (result \ "customerIdentificationDetails" \ "legalStatus").as[String] mustBe pensionSchemeAdministratorSample.legalStatus
+          (result \ "customerIdentificationDetails" \ "legalStatus").as[String].mustBe(pensionSchemeAdministratorSample.legalStatus)
         }
 
         "we have an idType" in {
-          (result \ "customerIdentificationDetails" \ "idType").asOpt[String].value mustBe pensionSchemeAdministratorSample.idType.value
+          (result \ "customerIdentificationDetails" \ "idType").asOpt[String].value.mustBe(pensionSchemeAdministratorSample.idType.value)
         }
 
         "we have an idNumber" in {
-          (result \ "customerIdentificationDetails" \ "idNumber").asOpt[String].value mustBe pensionSchemeAdministratorSample.idNumber.value
+          (result \ "customerIdentificationDetails" \ "idNumber").asOpt[String].value.mustBe(pensionSchemeAdministratorSample.idNumber.value)
         }
 
         "we have a noIdentifier" in {
-          (result \ "customerIdentificationDetails" \ "noIdentifier").as[Boolean] mustBe pensionSchemeAdministratorSample.noIdentifier
+          (result \ "customerIdentificationDetails" \ "noIdentifier").as[Boolean].mustBe(pensionSchemeAdministratorSample.noIdentifier)
         }
       }
     }

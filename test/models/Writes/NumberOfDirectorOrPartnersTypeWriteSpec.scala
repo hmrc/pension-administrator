@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,25 +27,25 @@ class NumberOfDirectorOrPartnersTypeWriteSpec extends AnyWordSpec with Matchers 
     "Correclty serialize to a valid DES payload" when {
       val numberOfDirectors = NumberOfDirectorOrPartnersType(Some(true),Some(false))
 
-      val result = Json.toJson(numberOfDirectors)(NumberOfDirectorOrPartnersType.psaUpdateWrites)
+      val result = Json.toJson(numberOfDirectors)(using NumberOfDirectorOrPartnersType.psaUpdateWrites)
       "we have isMorethanTenDirectors flag" in {
-        (result \ "isMoreThanTenDirectors").asOpt[Boolean] mustBe numberOfDirectors.isMorethanTenDirectors
+        (result \ "isMoreThanTenDirectors").asOpt[Boolean].mustBe(numberOfDirectors.isMorethanTenDirectors)
       }
 
       "we have isMoreThanTenPartners flag" in {
-        (result \ "isMoreThanTenPartners").asOpt[Boolean] mustBe numberOfDirectors.isMorethanTenPartners
+        (result \ "isMoreThanTenPartners").asOpt[Boolean].mustBe(numberOfDirectors.isMorethanTenPartners)
       }
 
       "we have isChanged flag" in {
         val numberOfDirectors = NumberOfDirectorOrPartnersType(Some(true),Some(false),Some(true))
 
-        val result = Json.toJson(numberOfDirectors)(NumberOfDirectorOrPartnersType.psaUpdateWrites)
+        val result = Json.toJson(numberOfDirectors)(using NumberOfDirectorOrPartnersType.psaUpdateWrites)
 
-        (result \ "changeFlag").asOpt[Boolean] mustBe numberOfDirectors.isChanged
+        (result \ "changeFlag").asOpt[Boolean].mustBe(numberOfDirectors.isChanged)
       }
 
       "we don't have the isChanged flag so we set it to false" in {
-        (result \ "changeFlag").asOpt[Boolean] mustBe Some(false)
+        (result \ "changeFlag").asOpt[Boolean].mustBe(Some(false))
       }
     }
   }

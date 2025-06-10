@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ class PSARemovalFromSchemeAuditEventSpec extends AnyFlatSpec with Matchers {
 
   "PSARemovalFromSchemeAuditEvent" should "return the correct audit data" in {
 
-    event.auditType shouldBe "PSARemoveFromScheme"
+    event.auditType.shouldBe("PSARemoveFromScheme")
 
-    event.details shouldBe expected
+    event.details.shouldBe(expected)
   }
 }

@@ -40,12 +40,7 @@ case class MinimalDetailsEvent(
       "rlsFlag" -> rlsFlag.fold("")(_.toString),
       "deceasedFlag" -> deceasedFlag.fold("")(_.toString),
       "status" -> status.toString,
-      "response" -> {
-        response match {
-          case Some(json) => Json.stringify(json)
-          case _ => ""
-        }
-      }
+      "response" -> response.map(Json.stringify).getOrElse("")
     )
 }
 

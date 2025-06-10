@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ package repositories
 import base.MongoConfig
 import com.typesafe.config.Config
 import models.{Invitation, SchemeReferenceNumber}
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
+import org.mongodb.scala.SingleObservableFuture
+import org.mongodb.scala.ObservableFuture
 import org.mongodb.scala.bson.{BsonDocument, BsonString}
 import org.mongodb.scala.model.Filters
 import org.scalatest.BeforeAndAfterAll
@@ -38,12 +40,16 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers
-  with BeforeAndAfterAll with ScalaFutures with MongoConfig { // scalastyle:off magic.number
+class InvitationsCacheRepositorySpec extends AnyWordSpec
+                                       with MockitoSugar
+                                       with Matchers
+                                       with BeforeAndAfterAll
+                                       with ScalaFutures
+                                       with MongoConfig { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(500, Seconds), Span(1, Millis))
 
-  import InvitationsCacheRepositorySpec._
+  import InvitationsCacheRepositorySpec.*
 
   override def beforeAll(): Unit = {
     when(mockAppConfig.underlying).thenReturn(mockConfig)
@@ -69,7 +75,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -92,9 +98,9 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
-          documentsInDB.head.expireAt mustBe record2.expireAt
-          documentsInDB.head.data mustBe Json.toJson(record2)
+          documentsInDB.size `mustBe` 1
+          documentsInDB.head.expireAt.mustBe(record2.expireAt)
+          documentsInDB.head.data.mustBe(Json.toJson(record2))
       }
     }
 
@@ -116,7 +122,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
 
@@ -138,7 +144,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
 
@@ -158,7 +164,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -181,8 +187,8 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
-          documentsInDB.head.expireAt mustBe record2.expireAt
+          documentsInDB.size `mustBe` 1
+          documentsInDB.head.expireAt.mustBe(record2.expireAt)
       }
     }
 
@@ -204,7 +210,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
 
@@ -226,7 +232,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
     "save expireAt value as a date" in {
@@ -248,8 +254,8 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       }
 
       whenReady(ftr) { case (stringResults, dateResults) =>
-        stringResults.length mustBe 0
-        dateResults.length mustBe 1
+        stringResults.length `mustBe` 0
+        dateResults.length.mustBe(1)
       }
     }
   }
@@ -269,7 +275,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
 
@@ -287,7 +293,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
   }
@@ -308,7 +314,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -317,7 +323,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -336,7 +342,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -345,7 +351,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
 
@@ -364,7 +370,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -373,7 +379,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -392,7 +398,7 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
       val documentsInDB2 = for {
         _ <- invitationsCacheRepository.remove(Map("inviteePsaId" -> "A2500002", "pstr" -> "pstr2"))
@@ -400,10 +406,9 @@ class InvitationsCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
-
   }
 }
 

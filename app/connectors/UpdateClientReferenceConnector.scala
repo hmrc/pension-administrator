@@ -27,6 +27,7 @@ import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.client.HttpClientV2
 import utils.{ErrorHandler, HttpResponseHelper, JSONPayloadSchemaValidator}
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -52,7 +53,7 @@ class UpdateClientReferenceConnector @Inject()(
       throw UpdateClientRefValidationFailureException(s"Invalid payload when updateClientReference :-\n${validationResult.mkString}")
     else
       httpClientV2.put(updateClientReferenceUrl)
-        .setHeader(headerUtils.integrationFrameworkHeader: _*)
+        .setHeader(headerUtils.integrationFrameworkHeader *)
         .withBody(jsValue).execute[HttpResponse] map {
         handlePostResponse(_, updateClientReferenceUrl.toString)
       } andThen sendClientReferenceEvent(updateClientReferenceRequest, userAction)(auditService.sendEvent(_))

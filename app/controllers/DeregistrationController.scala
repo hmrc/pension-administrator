@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.google.inject.Inject
 import connectors.SchemeConnector
 import controllers.actions.PsaEnrolmentAuthAction
 import models.{ListOfSchemes, SchemeDetails}
-import play.api.libs.json._
-import play.api.mvc._
+import play.api.libs.json.*
+import play.api.mvc.*
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
@@ -64,7 +64,7 @@ class DeregistrationController @Inject()(
       Future.sequence(schemes.filter(_.schemeStatus == "Open").map { scheme =>
         schemeConnector.getSchemeDetails("srn", scheme.referenceNumber, scheme.referenceNumber).map {
           case Right(jsValue) =>
-            (jsValue \ "psaDetails").as[Seq[PsaDetails]](Reads.seq[PsaDetails]).exists(_.id != psaId)
+            (jsValue \ "psaDetails").as[Seq[PsaDetails]](using Reads.seq[PsaDetails]).exists(_.id != psaId)
           case Left(_) => false
         }
       })

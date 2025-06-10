@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import connectors.{SchemeConnector, UpdateClientReferenceConnector}
 import controllers.actions.{PsaEnrolmentAuthAction, PsaSchemeAuthAction}
 import models.{SchemeReferenceNumber, UpdateClientReferenceRequest}
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc._
+import play.api.mvc.*
 import uk.gov.hmrc.domain.PspId
 import uk.gov.hmrc.http.HttpException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -52,7 +52,7 @@ class UpdateClientReferenceController @Inject()(
           case Left(e) => throw e
         }
       case (pspId, pstr) =>
-        def getMissingHeaderName(name: String, header: Option[_]) = if (header.isEmpty) name else ""
+        def getMissingHeaderName(name: String, header: Option[?]) = if (header.isEmpty) name else ""
 
         val missingHeadersMsg = "Required headers missing: " + Seq("pspId" -> pspId, "pstr" -> pstr)
           .map(x => getMissingHeaderName(x._1, x._2)).mkString(" ")

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 package connectors
 
-import audit._
-import com.github.tomakehurst.wiremock.client.WireMock._
+import audit.*
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import connectors.helper.ConnectorBehaviours
-import models._
+import models.*
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{EitherValues, OptionValues}
@@ -29,10 +29,10 @@ import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import repositories._
+import play.api.test.Helpers.*
+import repositories.*
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import utils.WireMockHelper
 
 class AssociationConnectorSpec extends AsyncFlatSpec
@@ -159,7 +159,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
 
     connector.acceptInvitation(invitation).map { response =>
-      response.value shouldBe()
+      response.value.shouldBe(())
     }
 
   }
@@ -175,7 +175,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
-      response.value shouldBe psaMinimalDetailsIndividualUser
+      response.value.shouldBe(psaMinimalDetailsIndividualUser)
     }
   }
 
@@ -190,8 +190,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
-      response.left.value shouldBe a[BadRequestException]
-      response.left.value.message shouldBe "INVALID PAYLOAD"
+      response.left.value.shouldBe(a[BadRequestException])
+      response.left.value.message.shouldBe("INVALID PAYLOAD")
     }
   }
 
@@ -210,8 +210,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
-      response.left.value shouldBe a[BadRequestException]
-      response.left.value.message shouldBe Json.parse(errorResponse).toString()
+      response.left.value.shouldBe(a[BadRequestException])
+      response.left.value.message.shouldBe(Json.parse(errorResponse).toString())
     }
   }
 
@@ -230,8 +230,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
-      response.left.value shouldBe a[BadRequestException]
-      response.left.value.message shouldBe Json.parse(errorResponse).toString()
+      response.left.value.shouldBe(a[BadRequestException])
+      response.left.value.message.shouldBe(Json.parse(errorResponse).toString())
     }
   }
 
@@ -250,8 +250,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
-      response.left.value shouldBe a[BadRequestException]
-      response.left.value.message shouldBe Json.parse(errorResponse).toString()
+      response.left.value.shouldBe(a[BadRequestException])
+      response.left.value.message.shouldBe(Json.parse(errorResponse).toString())
     }
   }
 
@@ -270,8 +270,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
     )
 
     connector.getMinimalDetails(psaId.id, psaType, psaRegime).map { response =>
-      response.left.value shouldBe a[BadRequestException]
-      response.left.value.message shouldBe Json.parse(errorResponse).toString()
+      response.left.value.shouldBe(a[BadRequestException])
+      response.left.value.message.shouldBe(Json.parse(errorResponse).toString())
     }
 
   }
@@ -296,10 +296,10 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType, psaRegime)) map {
       ex =>
-        ex.statusCode shouldBe INTERNAL_SERVER_ERROR
-        ex.getMessage should startWith("Minimal details")
-        ex.message should include(Json.parse(errorResponse).toString)
-        ex.reportAs shouldBe BAD_GATEWAY
+        ex.statusCode `shouldBe` INTERNAL_SERVER_ERROR
+        ex.getMessage.should(startWith("Minimal details"))
+        ex.message.should(include(Json.parse(errorResponse).toString))
+        ex.reportAs.shouldBe(BAD_GATEWAY)
     }
   }
 
@@ -313,8 +313,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[Exception](connector.getMinimalDetails(psaId.id, psaType, psaRegime)) map {
       ex =>
-        ex.getMessage should startWith("Minimal details")
-        ex.getMessage should include("failed with status")
+        ex.getMessage.should(startWith("Minimal details"))
+        ex.getMessage.should(include("failed with status"))
     }
   }
 
@@ -339,7 +339,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
           status = OK,
           response = Some(Json.toJson(psaMinimalDetailsIndividualUser))
         )
-      ) shouldBe true
+      ).shouldBe(true)
     }
   }
 
@@ -363,7 +363,7 @@ class AssociationConnectorSpec extends AsyncFlatSpec
           status = NOT_FOUND,
           response = None
         )
-      ) shouldBe true
+      ).shouldBe(true)
     }
   }
 
@@ -383,9 +383,8 @@ class AssociationConnectorSpec extends AsyncFlatSpec
 
     recoverToExceptionIf[UpstreamErrorResponse](connector.getMinimalDetails(psaId.id, psaType, psaRegime)) map {
       _ =>
-        auditService.verifyNothingSent() shouldBe true
+        auditService.verifyNothingSent().shouldBe(true)
     }
 
   }
 }
-

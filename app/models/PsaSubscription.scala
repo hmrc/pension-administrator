@@ -37,7 +37,7 @@ object CorrespondenceAddress {
       (JsPath \ "line4").readNullable[String] and
       (JsPath \ "countryCode").read[String] and
       (JsPath \ "postalCode").readNullable[String]
-    ) (CorrespondenceAddress.apply _)
+    ) (CorrespondenceAddress.apply)
 }
 
 case class CorrespondenceDetails(address: CorrespondenceAddress, contactDetails: Option[PsaContactDetails])
@@ -47,7 +47,7 @@ object CorrespondenceDetails {
   implicit val reads: Reads[CorrespondenceDetails] = (
     (JsPath \ "addressDetails").read[CorrespondenceAddress] and
       (JsPath \ "contactDetails").readNullable[PsaContactDetails]
-    ) (CorrespondenceDetails.apply _)
+    ) (CorrespondenceDetails.apply)
 }
 
 
@@ -59,7 +59,7 @@ object CustomerIdentification {
       (JsPath \ "idType").readNullable[String] and
       (JsPath \ "idNumber").readNullable[String] and
       (JsPath \ "noIdentifier").read[Boolean]
-    ) (CustomerIdentification.apply _)
+    ) (CustomerIdentification.apply)
   implicit val writes: Writes[CustomerIdentification] = Json.writes[CustomerIdentification]
 }
 
@@ -104,7 +104,7 @@ object OrganisationOrPartner {
       (JsPath \ "crnNumber").readNullable[String] and
       (JsPath \ "vatRegistrationNumber").readNullable[String] and
       (JsPath \ "payeReference").readNullable[String]
-    ) (OrganisationOrPartner.apply _)
+    ) (OrganisationOrPartner.apply)
 }
 
 case class PensionAdvisor(name: String, address: CorrespondenceAddress, contactDetails: Option[PsaContactDetails])
@@ -115,7 +115,7 @@ object PensionAdvisor {
     (JsPath \ "name").read[String] and
       (JsPath \ "addressDetails").read[CorrespondenceAddress] and
       (JsPath \ "contactDetails").readNullable[PsaContactDetails]
-    ) (PensionAdvisor.apply _)
+    ) (PensionAdvisor.apply)
 }
 
 
@@ -125,7 +125,7 @@ object PsaContactDetails {
   implicit val writes: Writes[PsaContactDetails] = Json.writes[PsaContactDetails]
   implicit val reads: Reads[PsaContactDetails] = (
     (JsPath \ "telephone").read[String] and
-      (JsPath \ "email").readNullable[String]) (PsaContactDetails.apply _)
+      (JsPath \ "email").readNullable[String]) (PsaContactDetails.apply)
 }
 
 

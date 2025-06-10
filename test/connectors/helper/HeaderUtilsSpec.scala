@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ import org.scalatestplus.mockito.MockitoSugar.mock
 import org.scalatestplus.play.PlaySpec
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import repositories._
+import repositories.*
 
 class HeaderUtilsSpec extends PlaySpec with Matchers with MockitoSugar {
 
-  import HeaderUtilsSpec._
+  import HeaderUtilsSpec.*
 
   "HeaderUtils" when {
 
@@ -38,23 +38,23 @@ class HeaderUtilsSpec extends PlaySpec with Matchers with MockitoSugar {
         result.filter {
           case ("CorrelationId", _) => false
           case _ => true
-        } mustEqual Seq("Environment" -> "local", "Authorization" -> "Bearer test-token",
-          "Content-Type" -> "application/json")
-        result.map(_._1).contains("CorrelationId") mustBe true
+        }.mustEqual(Seq("Environment" -> "local", "Authorization" -> "Bearer test-token",
+          "Content-Type" -> "application/json"))
+        result.map(_._1).contains("CorrelationId").mustBe(true)
       }
     }
 
     "call getCorrelationId" must {
       "return a CorrelationId of the correct size" in {
         val result = headerUtils.getCorrelationId
-        result.length mustEqual headerUtils.maxLengthCorrelationId
+        result.length.mustEqual(headerUtils.maxLengthCorrelationId)
       }
     }
 
     "call getCorrelationIdIF" must {
       "return a CorrelationId of the correct size" in {
         val result = headerUtils.getCorrelationIdIF
-        result.length mustEqual headerUtils.maxLengthCorrelationIdIF
+        result.length.mustEqual(headerUtils.maxLengthCorrelationIdIF)
       }
     }
   }

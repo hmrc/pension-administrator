@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 package connectors.helper
 
 import com.github.tomakehurst.wiremock.client.MappingBuilder
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import play.api.test.Helpers._
-import uk.gov.hmrc.http._
+import play.api.test.Helpers.*
+import uk.gov.hmrc.http.*
 import utils.WireMockHelper
 
 import scala.concurrent.Future
@@ -57,7 +57,7 @@ trait ConnectorBehaviours extends AsyncFlatSpec with WireMockHelper with EitherV
 
       recoverToExceptionIf[UpstreamErrorResponse](call) map {
         ex =>
-          ex.statusCode shouldBe INTERNAL_SERVER_ERROR
+          ex.statusCode.shouldBe(INTERNAL_SERVER_ERROR)
       }
     }
 
@@ -72,7 +72,7 @@ trait ConnectorBehaviours extends AsyncFlatSpec with WireMockHelper with EitherV
 
       recoverToExceptionIf[Exception] (call) map {
         ex =>
-          ex.getMessage should include("failed with status")
+          ex.getMessage.should(include("failed with status"))
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package controllers.cache
 
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.ByteString
-import org.mockito.ArgumentMatchers.{eq => eqTo, _}
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.{eq as eqTo, *}
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
@@ -28,12 +28,11 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import repositories._
+import play.api.test.Helpers.*
+import repositories.*
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.UnauthorizedException
-import utils.RandomUtils
-import utils.AuthUtils
+import utils.{AuthUtils, RandomUtils}
 
 import scala.concurrent.Future
 
@@ -68,46 +67,50 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
     s"on .get " must {
 
       "return 200 and the relevant data when it exists" in {
-        when(repo.get(eqTo("testId"))(any())) thenReturn Future.successful(Some(Json.obj("testId" -> "foo")))
+        when(repo.get(eqTo("testId"))(using any())).thenReturn(Future.successful(Some(Json.obj("testId" -> "foo"))))
 
         val result = controller.get("testId")(fakeRequest)
 
-        status(result) mustEqual OK
-        contentAsJson(result) mustEqual Json.obj("testId" -> "foo")
+        status(result).mustBe(OK)
+        contentAsJson(result).mustBe(Json.obj("testId" -> "foo"))
       }
 
       "return 404 when the data doesn't exist" in {
-        when(repo.get(eqTo("testId"))(any())) thenReturn Future.successful(None)
+        when(repo.get(eqTo("testId"))(using any())).thenReturn(Future.successful(None))
 
         val result = controller.get("testId")(fakeRequest)
 
-        status(result) mustEqual NOT_FOUND
+        status(result).mustBe(NOT_FOUND)
       }
 
       "throw an exception when the repository call fails" in {
-        when(repo.get(eqTo("testId"))(any())) thenReturn Future.failed(new Exception())
+        when(repo.get(eqTo("testId"))(using any())).thenReturn(Future.failed(new Exception()))
 
         val result = controller.get("foo")(FakeRequest())
-        an[Exception] must be thrownBy status(result)
+        an[Exception].mustBe(thrownBy {
+          status(result)
+        })
       }
 
       "throw an exception when the call is not authorised" in {
         reset(authConnector)
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed(new UnauthorizedException(""))
+        when(authConnector.authorise[Unit](any(), any())(using any(), any())).thenReturn(Future.failed(new UnauthorizedException("")))
 
         val result = controller.get("foo")(FakeRequest())
-        an[UnauthorizedException] must be thrownBy status(result)
+        an[Exception].mustBe(thrownBy {
+          status(result)
+        })
       }
     }
 
     s"on .save " must {
 
       "return 200 when the request body can be parsed and passed to the repository successfully" in {
-        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
+        when(repo.upsert(any(), any())(using any())).thenReturn(Future.successful(()))
 
         val result = call(controller.save("testId"), FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
 
-        status(result) mustEqual OK
+        status(result).mustBe(OK)
       }
 
       "return REQUEST_ENTITY_TOO_LARGE when the request body cannot be parsed" in {
@@ -115,18 +118,18 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
         val result = call(controller.save(id = "testId"),
           FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
-        status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
+        status(result).mustBe(REQUEST_ENTITY_TOO_LARGE)
       }
 
     }
 
     s"on .remove " must {
       "return 200 when the data is removed successfully" in {
-        when(repo.remove(eqTo("testId"))(any())) thenReturn Future.successful(true)
+        when(repo.remove(eqTo("testId"))(using any())).thenReturn(Future.successful(true))
 
         val result = controller.remove(id = "testId")(FakeRequest())
 
-        status(result) mustEqual OK
+        status(result).mustBe(OK)
       }
 
 
@@ -135,46 +138,50 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
     s"on .getSelf " must {
 
       "return 200 and the relevant data when it exists" in {
-        when(repo.get(eqTo(AuthUtils.externalId))(any())) thenReturn Future.successful(Some(Json.obj("testId" -> "foo")))
+        when(repo.get(eqTo(AuthUtils.externalId))(using any())).thenReturn(Future.successful(Some(Json.obj("testId" -> "foo"))))
 
         val result = controller.getSelf(fakeRequest)
 
-        status(result) mustEqual OK
-        contentAsJson(result) mustEqual Json.obj("testId" -> "foo")
+        status(result).mustBe(OK)
+        contentAsJson(result).mustEqual(Json.obj("testId" -> "foo"))
       }
 
       "return 404 when the data doesn't exist" in {
-        when(repo.get(eqTo(AuthUtils.externalId))(any())) thenReturn Future.successful(None)
+        when(repo.get(eqTo(AuthUtils.externalId))(using any())).thenReturn(Future.successful(None))
 
         val result = controller.getSelf(fakeRequest)
 
-        status(result) mustEqual NOT_FOUND
+        status(result).mustBe(NOT_FOUND)
       }
 
       "throw an exception when the repository call fails" in {
-        when(repo.get(eqTo(AuthUtils.externalId))(any())) thenReturn Future.failed(new Exception())
+        when(repo.get(eqTo(AuthUtils.externalId))(using any())).thenReturn(Future.failed(new Exception()))
 
         val result = controller.getSelf(FakeRequest())
-        an[Exception] must be thrownBy status(result)
+        an[Exception].mustBe(thrownBy {
+          status(result)
+        })
       }
 
       "throw an exception when the call is not authorised" in {
         reset(authConnector)
-        when(authConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed(new UnauthorizedException(""))
+        when(authConnector.authorise[Unit](any(), any())(using any(), any())).thenReturn(Future.failed(new UnauthorizedException("")))
 
         val result = controller.getSelf(FakeRequest())
-        an[UnauthorizedException] must be thrownBy status(result)
+        an[Exception].mustBe(thrownBy {
+          status(result)
+        })
       }
     }
 
     s"on .saveSelf " must {
 
       "return 200 when the request body can be parsed and passed to the repository successfully" in {
-        when(repo.upsert(any(), any())(any())) thenReturn Future.successful(())
+        when(repo.upsert(any(), any())(using any())).thenReturn(Future.successful(()))
 
         val result = call(controller.saveSelf, FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
 
-        status(result) mustEqual OK
+        status(result).mustBe(OK)
       }
 
       "return REQUEST_ENTITY_TOO_LARGE when the request body cannot be parsed" in {
@@ -182,21 +189,19 @@ class PSADataCacheControllerSpec extends AsyncWordSpec with Matchers with Mockit
         val result = call(controller.saveSelf,
           FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
-        status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
+        status(result).mustBe(REQUEST_ENTITY_TOO_LARGE)
       }
 
     }
 
     s"on .removeSelf " must {
       "return 200 when the data is removed successfully" in {
-        when(repo.remove(eqTo(AuthUtils.externalId))(any())) thenReturn Future.successful(true)
+        when(repo.remove(eqTo(AuthUtils.externalId))(using any())).thenReturn(Future.successful(true))
 
         val result = controller.removeSelf(FakeRequest())
 
-        status(result) mustEqual OK
+        status(result).mustBe(OK)
       }
-
-
     }
   }
 }

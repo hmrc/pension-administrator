@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,17 +28,17 @@ class PreviousAddressDetailReadsSpec extends AnyWordSpec with Matchers with Opti
       "we have a companyAddressYears flag as true" in {
         val input = Json.obj("companyAddressYears" -> JsString("under_a_year"))
 
-        val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("company"))
+        val result = input.as[PreviousAddressDetails](using PreviousAddressDetails.apiReads("company"))
 
-        result.isPreviousAddressLast12Month mustBe true
+        result.isPreviousAddressLast12Month.mustBe(true)
       }
 
       "we have a companyAddressYears flag as false" in {
         val input = Json.obj("companyAddressYears" -> JsString("over_a_year"))
 
-        val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("company"))
+        val result = input.as[PreviousAddressDetails](using PreviousAddressDetails.apiReads("company"))
 
-        result.isPreviousAddressLast12Month mustBe false
+        result.isPreviousAddressLast12Month.mustBe(false)
       }
 
       "set `isPreviousAddressLast12Month` to true when `companyAddressYears` is `under_a_year` and `companyTradingOverAYear` is `true`" in {
@@ -47,9 +47,9 @@ class PreviousAddressDetailReadsSpec extends AnyWordSpec with Matchers with Opti
           "companyTradingOverAYear" -> JsBoolean(true)
         )
 
-        val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("company"))
+        val result = input.as[PreviousAddressDetails](using PreviousAddressDetails.apiReads("company"))
 
-        result.isPreviousAddressLast12Month mustBe true
+        result.isPreviousAddressLast12Month.mustBe(true)
       }
 
       "set `isPreviousAddressLast12Month` to false when `companyAddressYears` is `under_a_year` and `companyTradingOverAYear` is `false`" in {
@@ -58,9 +58,9 @@ class PreviousAddressDetailReadsSpec extends AnyWordSpec with Matchers with Opti
           "companyTradingOverAYear" -> JsBoolean(false)
         )
 
-        val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("company"))
+        val result = input.as[PreviousAddressDetails](using PreviousAddressDetails.apiReads("company"))
 
-        result.isPreviousAddressLast12Month mustBe false
+        result.isPreviousAddressLast12Month.mustBe(false)
       }
 
       "set `isPreviousAddressLast12Month` to false when `companyAddressYears` is `over_a_year` and `companyTradingOverAYear` is `true`" in {
@@ -69,9 +69,9 @@ class PreviousAddressDetailReadsSpec extends AnyWordSpec with Matchers with Opti
           "companyTradingOverAYear" -> JsBoolean(true)
         )
 
-        val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("company"))
+        val result = input.as[PreviousAddressDetails](using PreviousAddressDetails.apiReads("company"))
 
-        result.isPreviousAddressLast12Month mustBe false
+        result.isPreviousAddressLast12Month.mustBe(false)
       }
 
       "set `isPreviousAddressLast12Month` to false when `companyAddressYears` is `over_a_year` and `companyTradingOverAYear` is `false`" in {
@@ -80,25 +80,25 @@ class PreviousAddressDetailReadsSpec extends AnyWordSpec with Matchers with Opti
           "companyTradingOverAYear" -> JsBoolean(false)
         )
 
-        val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("company"))
+        val result = input.as[PreviousAddressDetails](using PreviousAddressDetails.apiReads("company"))
 
-        result.isPreviousAddressLast12Month mustBe false
+        result.isPreviousAddressLast12Month.mustBe(false)
       }
 
       "set `isPreviousAddressLast12Month` to true when `individualAddressYears` is `under_a_year` and disregard trading time for individual" in {
         val input = Json.obj("individualAddressYears" -> "under_a_year")
 
-        val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("individual"))
+        val result = input.as[PreviousAddressDetails](using PreviousAddressDetails.apiReads("individual"))
 
-        result.isPreviousAddressLast12Month mustBe true
+        result.isPreviousAddressLast12Month.mustBe(true)
       }
 
       "set `isPreviousAddressLast12Month` to false when `individualAddressYears` is `over_a_year` and disregard trading time for individual" in {
         val input = Json.obj("individualAddressYears" -> "over_a_year")
 
-        val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("individual"))
+        val result = input.as[PreviousAddressDetails](using PreviousAddressDetails.apiReads("individual"))
 
-        result.isPreviousAddressLast12Month mustBe false
+        result.isPreviousAddressLast12Month.mustBe(false)
       }
 
       "we have a GB address" in {
@@ -106,9 +106,9 @@ class PreviousAddressDetailReadsSpec extends AnyWordSpec with Matchers with Opti
           "companyPreviousAddress" -> Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"),
           "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"), "postcode" -> JsString("NE1"), "country" -> JsString("GB")))
 
-        val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("company"))
+        val result = input.as[PreviousAddressDetails](using PreviousAddressDetails.apiReads("company"))
 
-        result.address.value.asInstanceOf[UkAddress].countryCode mustBe ukAddressSample.countryCode
+        result.address.value.asInstanceOf[UkAddress].countryCode.mustBe(ukAddressSample.countryCode)
       }
 
       "we have a non UK address with no postcode" in {
@@ -116,9 +116,9 @@ class PreviousAddressDetailReadsSpec extends AnyWordSpec with Matchers with Opti
           "companyPreviousAddress" -> Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"),
           "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"), "country" -> JsString("IT")))
 
-        val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("company"))
+        val result = input.as[PreviousAddressDetails](using PreviousAddressDetails.apiReads("company"))
 
-        result.address.value.asInstanceOf[InternationalAddress].postalCode mustBe None
+        result.address.value.asInstanceOf[InternationalAddress].postalCode.mustBe(None)
       }
 
       "we have an isChanged flag" in {
@@ -126,9 +126,9 @@ class PreviousAddressDetailReadsSpec extends AnyWordSpec with Matchers with Opti
           "companyPreviousAddress" -> Json.obj("addressLine1" -> JsString("line1"), "addressLine2" -> JsString("line2"),
             "addressLine3" -> JsString("line3"), "addressLine4" -> JsString("line4"), "country" -> JsString("IT")), "companyPreviousAddressIsChanged" -> JsBoolean(true))
 
-        val result = input.as[PreviousAddressDetails](PreviousAddressDetails.apiReads("company"))
+        val result = input.as[PreviousAddressDetails](using PreviousAddressDetails.apiReads("company"))
 
-        result.isChanged mustBe Some(true)
+        result.isChanged.mustBe(Some(true))
       }
     }
   }

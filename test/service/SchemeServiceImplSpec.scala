@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 
 package service
 
-import audit._
+import audit.*
 import connectors.DesConnector
 import models.PensionSchemeAdministrator
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
@@ -40,8 +40,8 @@ import scala.concurrent.Future
 
 class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with MockitoSugar with BeforeAndAfterEach {
 
-  import SchemeServiceImplSpec._
-  import utils.FakeDesConnector._
+  import SchemeServiceImplSpec.*
+  import utils.FakeDesConnector.*
 
   override def beforeEach(): Unit = {
     reset(minimalDetailsCacheRepository)
@@ -53,7 +53,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
     schemeService.registerPSA(psaJson).map {
       httpResponse =>
-        httpResponse.value shouldBe registerPsaResponseJson
+        httpResponse.value.shouldBe(registerPsaResponseJson)
     }
 
   }
@@ -75,7 +75,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
     schemeService.registerPSA(psaJson).map {
       httpResponse =>
-        fakeAuditService.lastEvent shouldBe
+        fakeAuditService.lastEvent.shouldBe(
           Some(
             PSASubscription(
               existingUser = false,
@@ -85,6 +85,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
               response = Some(httpResponse.value)
             )
           )
+        )
     }
 
   }
@@ -98,7 +99,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
     schemeService.registerPSA(psaJson).map {
       _ =>
-        fakeAuditService.lastEvent shouldBe
+        fakeAuditService.lastEvent.shouldBe(
           Some(
             PSASubscription(
               existingUser = false,
@@ -108,19 +109,20 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
               response = None
             )
           )
+        )
     }
 
   }
 
   "updatePSA" should "return the result from the connector" in {
-    when(minimalDetailsCacheRepository.remove(ArgumentMatchers.eq(psaId))(any())).thenReturn(Future.successful(true))
+    when(minimalDetailsCacheRepository.remove(ArgumentMatchers.eq(psaId))(using any())).thenReturn(Future.successful(true))
 
     val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
 
     schemeService.updatePSA(psaId, psaJson).map {
       httpResponse =>
-        verify(minimalDetailsCacheRepository, times(1)).remove(ArgumentMatchers.eq(psaId))(any())
-        httpResponse.value shouldBe updatePsaResponseJson
+        verify(minimalDetailsCacheRepository, times(1)).remove(ArgumentMatchers.eq(psaId))(using any())
+        httpResponse.value.shouldBe(updatePsaResponseJson)
     }
 
   }
@@ -131,7 +133,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
     recoverToExceptionIf[BadRequestException] {
       schemeService.updatePSA(psaId, Json.obj())
     }.map { _ =>
-      verify(minimalDetailsCacheRepository, never()).remove(any())(any())
+      verify(minimalDetailsCacheRepository, never()).remove(any())(using any())
       assert(true)
     }
 
@@ -139,7 +141,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
   it should "send an audit event on success" in {
 
-    when(minimalDetailsCacheRepository.remove(ArgumentMatchers.eq(psaId))(any())).thenReturn(Future.successful(true))
+    when(minimalDetailsCacheRepository.remove(ArgumentMatchers.eq(psaId))(using any())).thenReturn(Future.successful(true))
 
     val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
 
@@ -147,8 +149,8 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
     schemeService.updatePSA(psaId, psaJson).map {
       httpResponse =>
-        verify(minimalDetailsCacheRepository, times(1)).remove(ArgumentMatchers.eq(psaId))(any())
-        fakeAuditService.lastEvent shouldBe
+        verify(minimalDetailsCacheRepository, times(1)).remove(ArgumentMatchers.eq(psaId))(using any())
+        fakeAuditService.lastEvent.shouldBe(
           Some(
             PSAChanges(
               legalStatus = "test-legal-status",
@@ -157,6 +159,7 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
               response = Some(httpResponse.value)
             )
           )
+        )
     }
 
   }
@@ -170,8 +173,8 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
 
     schemeService.updatePSA(psaId, psaJson).map {
       _ =>
-        verify(minimalDetailsCacheRepository, never()).remove(any())(any())
-        fakeAuditService.lastEvent shouldBe
+        verify(minimalDetailsCacheRepository, never()).remove(any())(using any())
+        fakeAuditService.lastEvent.shouldBe(
           Some(
             PSAChanges(
               legalStatus = "test-legal-status",
@@ -180,10 +183,9 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
               response = None
             )
           )
+        )
     }
-
   }
-
 }
 
 object SchemeServiceImplSpec extends MockitoSugar {
@@ -236,16 +238,15 @@ object SchemeServiceImplSpec extends MockitoSugar {
   )
 
   def registerPsaRequestJson(userAnswersJson: JsValue): JsValue = {
-    val psa = userAnswersJson.as[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)
-    val requestJson = Json.toJson(psa)(PensionSchemeAdministrator.psaSubmissionWrites)
+    val psa = userAnswersJson.as[PensionSchemeAdministrator](using PensionSchemeAdministrator.apiReads)
+    val requestJson = Json.toJson(psa)(using PensionSchemeAdministrator.psaSubmissionWrites)
     requestJson
   }
 
   def updatePsaRequestJson(userAnswersJson: JsValue): JsValue = {
-    val psa = userAnswersJson.as[PensionSchemeAdministrator](PensionSchemeAdministrator.apiReads)
-    val requestJson = Json.toJson(psa)(PensionSchemeAdministrator.psaUpdateWrites)
+    val psa = userAnswersJson.as[PensionSchemeAdministrator](using PensionSchemeAdministrator.apiReads)
+    val requestJson = Json.toJson(psa)(using PensionSchemeAdministrator.psaUpdateWrites)
     requestJson
   }
 
 }
-

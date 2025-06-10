@@ -62,7 +62,7 @@ class PsaPspEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
           val controller = new Harness(action)
           val result = controller.onPageLoad()(FakeRequest())
 
-          status(result) mustEqual OK
+          status(result).mustBe(OK)
         }
       }
 
@@ -77,7 +77,7 @@ class PsaPspEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
           val controller = new Harness(action)
           val result = controller.onPageLoad()(FakeRequest())
 
-          status(result) mustEqual OK
+          status(result).mustBe(OK)
         }
       }
     }
@@ -89,14 +89,14 @@ class PsaPspEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
         running(app) {
           val bodyParsers = app.injector.instanceOf[BodyParsers.Default]
 
-          when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
+          when(mockAuthConnector.authorise[RetrievalsType](any(), any())(using any(), any()))
             .thenReturn(Future.successful(new~(Enrolments(Set.empty), Some("id"))))
 
           val action = new PsaPspEnrolmentAuthAction(mockAuthConnector, bodyParsers)
           val controller = new Harness(action)
           val result = controller.onPageLoad()(FakeRequest())
 
-          status(result) mustEqual FORBIDDEN
+          status(result).mustBe(FORBIDDEN)
         }
       }
     }
@@ -112,10 +112,9 @@ class PsaPspEnrolmentAuthActionSpec extends SpecBase with BeforeAndAfterEach {
           val controller = new Harness(authAction)
           val result = controller.onPageLoad()(FakeRequest())
 
-          status(result) mustBe UNAUTHORIZED
+          status(result).mustBe(UNAUTHORIZED)
         }
       }
     }
-
   }
 }

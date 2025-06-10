@@ -59,7 +59,7 @@ class InvitationServiceImpl @Inject()(
 
   override def invitePSA(jsValue: JsValue)
                         (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, rh: RequestHeader): Future[Either[HttpException, Unit]] = {
-    jsValue.validate[Invitation](Invitation.formats).fold(
+    jsValue.validate[Invitation](using Invitation.formats).fold(
       {
         errors =>
           logger.warn(s"Json contains bad data $errors")

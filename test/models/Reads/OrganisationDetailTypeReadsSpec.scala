@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import play.api.libs.json.{JsBoolean, JsString, JsValue, Json}
 
 class OrganisationDetailTypeReadsSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
 
-  import OrganisationDetailTypeReadsSpec._
+  import OrganisationDetailTypeReadsSpec.*
 
   "A JSON Payload containing organisation detials" must {
 
@@ -36,9 +36,9 @@ class OrganisationDetailTypeReadsSpec extends AnyWordSpec with Matchers with Opt
           "partnershipPaye" -> Json.obj("paye" -> JsString("PAYE11111"), "hasPaye" -> JsBoolean(true)),
           "businessName" -> JsString("Company Test"))
 
-        val result = partnershipDetailsWithoutOption.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
+        val result = partnershipDetailsWithoutOption.as[OrganisationDetailType](using OrganisationDetailType.partnershipApiReads)
 
-        result.vatRegistrationNumber mustBe None
+        result.vatRegistrationNumber.mustBe(None)
       }
 
       "We have optional parent and dont have VAT registration number" in {
@@ -47,15 +47,15 @@ class OrganisationDetailTypeReadsSpec extends AnyWordSpec with Matchers with Opt
           "partnershipVat" -> Json.obj("hasPaye" -> JsBoolean(false)),
           "partnershipPaye" -> Json.obj("paye" -> JsString("PAYE11111"), "hasPaye" -> JsBoolean(true)),
           "businessName" -> JsString("Company Test"))
-        val result = partnershipDetailsWithoutOption.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
+        val result = partnershipDetailsWithoutOption.as[OrganisationDetailType](using OrganisationDetailType.partnershipApiReads)
 
-        result.vatRegistrationNumber mustBe None
+        result.vatRegistrationNumber.mustBe(None)
       }
 
       "We have VAT registration number" in {
-        val result = partnershipDetails.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
+        val result = partnershipDetails.as[OrganisationDetailType](using OrganisationDetailType.partnershipApiReads)
 
-        result.vatRegistrationNumber mustBe companySample.vatRegistrationNumber
+        result.vatRegistrationNumber.mustBe(companySample.vatRegistrationNumber)
       }
 
     }
@@ -67,15 +67,15 @@ class OrganisationDetailTypeReadsSpec extends AnyWordSpec with Matchers with Opt
         val partnershipDetailsWithoutOption = Json.obj("partnershipVat" -> Json.obj("vat" -> JsString("VAT11111"), "hasVat" -> JsBoolean(true)),
           "businessName" -> JsString("Company Test"))
 
-        val result = partnershipDetailsWithoutOption.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
+        val result = partnershipDetailsWithoutOption.as[OrganisationDetailType](using OrganisationDetailType.partnershipApiReads)
 
-        result.payeReference mustBe None
+        result.payeReference.mustBe(None)
       }
 
       "We have Paye number" in {
-        val result = partnershipDetails.as[OrganisationDetailType](OrganisationDetailType.partnershipApiReads)
+        val result = partnershipDetails.as[OrganisationDetailType](using OrganisationDetailType.partnershipApiReads)
 
-        result.payeReference mustBe companySample.payeReference
+        result.payeReference.mustBe(companySample.payeReference)
       }
 
     }
@@ -86,43 +86,43 @@ class OrganisationDetailTypeReadsSpec extends AnyWordSpec with Matchers with Opt
         val apiReads = if (orgType == "Company") OrganisationDetailType.companyApiReads else OrganisationDetailType.partnershipApiReads
 
         "We have a name" in {
-          val result = orgData.as[OrganisationDetailType](apiReads)
+          val result = orgData.as[OrganisationDetailType](using apiReads)
 
-          result.name mustBe companySample.name
+          result.name.mustBe(companySample.name)
         }
 
         "We have VAT registration number" in {
-          val result = orgData.as[OrganisationDetailType](apiReads)
+          val result = orgData.as[OrganisationDetailType](using apiReads)
 
-          result.vatRegistrationNumber mustBe companySample.vatRegistrationNumber
+          result.vatRegistrationNumber.mustBe(companySample.vatRegistrationNumber)
         }
 
         "We have a PAYE employer reference number" in {
-          val result = orgData.as[OrganisationDetailType](apiReads)
+          val result = orgData.as[OrganisationDetailType](using apiReads)
 
-          result.payeReference mustBe companySample.payeReference
+          result.payeReference.mustBe(companySample.payeReference)
         }
 
         "We have a Company Registration Number" in {
-          val result = companyDetails.as[OrganisationDetailType](OrganisationDetailType.companyApiReads)
+          val result = companyDetails.as[OrganisationDetailType](using OrganisationDetailType.companyApiReads)
 
-          result.crnNumber mustBe companySample.crnNumber
+          result.crnNumber.mustBe(companySample.crnNumber)
         }
 
         "We have no VAT registration number" in {
           val companyDetails = orgDetailWithoutVat(orgType)
 
-          val result = companyDetails.as[OrganisationDetailType](apiReads)
+          val result = companyDetails.as[OrganisationDetailType](using apiReads)
 
-          result.vatRegistrationNumber mustBe None
+          result.vatRegistrationNumber.mustBe(None)
         }
 
         "We have no payeEmployerReferenceNumber" in {
           val companyDetails = orgDetailWithoutPaye(orgType)
 
-          val result = companyDetails.as[OrganisationDetailType](apiReads)
+          val result = companyDetails.as[OrganisationDetailType](using apiReads)
 
-          result.payeReference mustBe None
+          result.payeReference.mustBe(None)
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,16 @@ package controllers
 import base.{JsonFileReader, SpecBase}
 import connectors.SchemeConnector
 import org.apache.pekko.stream.Materializer
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfter
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json._
-import play.api.test.Helpers._
-import repositories._
+import play.api.libs.json.*
+import play.api.test.Helpers.*
+import repositories.*
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.BadRequestException
 import utils.AuthUtils
@@ -41,7 +41,8 @@ class DeregistrationControllerSpec
     with BeforeAndAfter
     with ScalaCheckDrivenPropertyChecks {
 
-  import DeregistrationControllerSpec._
+  import DeregistrationControllerSpec.*
+
   private val authConnector: AuthConnector = mock[AuthConnector]
 
   private val mockSchemeConnector = mock[SchemeConnector]
@@ -70,65 +71,65 @@ class DeregistrationControllerSpec
 
   "canDeregisterSelf" must {
     "return OK and false when canDeregister called with psa ID having some schemes" in {
-      when(mockSchemeConnector.listOfSchemes(any(), any()))
+      when(mockSchemeConnector.listOfSchemes(using any(), any()))
         .thenReturn(Future.successful(Right(validListSchemesResponse)))
 
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
-      status(result) mustBe OK
-      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false))
+      status(result).mustBe(OK)
+      contentAsJson(result).mustEqual(Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false)))
     }
 
     "return OK and true when canDeregister called with psa ID having no scheme detail item at all" in {
-      when(mockSchemeConnector.listOfSchemes(any(), any()))
+      when(mockSchemeConnector.listOfSchemes(using any(), any()))
         .thenReturn(Future.successful(Right(listSchemesResponseNoSchemeDetail)))
 
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
-      status(result) mustBe OK
-      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(true), "isOtherPsaAttached" -> JsBoolean(false))
+      status(result).mustBe(OK)
+      contentAsJson(result).mustEqual(Json.obj("canDeregister" -> JsBoolean(true), "isOtherPsaAttached" -> JsBoolean(false)))
     }
 
     "return OK and true when canDeregister called with psa ID having only wound-up or rejected schemes" in {
-      when(mockSchemeConnector.listOfSchemes(any(), any()))
+      when(mockSchemeConnector.listOfSchemes(using any(), any()))
         .thenReturn(Future.successful(Right(schemesWoundUpOrRejectedResponse)))
 
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
-      status(result) mustBe OK
-      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(true), "isOtherPsaAttached" -> JsBoolean(false))
+      status(result).mustBe(OK)
+      contentAsJson(result).mustEqual(Json.obj("canDeregister" -> JsBoolean(true), "isOtherPsaAttached" -> JsBoolean(false)))
     }
 
     "return OK and false when canDeregister called with psa ID having both wound-up schemes and non-wound-up schemes and they are the only psa associated" in {
-      when(mockSchemeConnector.listOfSchemes(any(), any()))
+      when(mockSchemeConnector.listOfSchemes(using any(), any()))
         .thenReturn(Future.successful(Right(validListSchemesIncWoundUpResponse)))
-      when(mockSchemeConnector.getSchemeDetails(any(), any(), any())(any(), any()))
+      when(mockSchemeConnector.getSchemeDetails(any(), any(), any())(using any(), any()))
         .thenReturn(Future.successful(Right(getSchemeDetails(Json.arr(psaObject(psaId))))))
 
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
-      status(result) mustBe OK
-      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false))
+      status(result).mustBe(OK)
+      contentAsJson(result).mustEqual(Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false)))
     }
 
     "return OK and false when canDeregister called with psa ID having Open scheme and there are other PSAs associated" in {
-      when(mockSchemeConnector.listOfSchemes(any(), any()))
+      when(mockSchemeConnector.listOfSchemes(using any(), any()))
         .thenReturn(Future.successful(Right(validListSchemesIncWoundUpResponse)))
-      when(mockSchemeConnector.getSchemeDetails(any(), any(), any())(any(), any()))
+      when(mockSchemeConnector.getSchemeDetails(any(), any(), any())(using any(), any()))
         .thenReturn(Future.successful(Right(getSchemeDetails(Json.arr(psaObject(psaId))))))
 
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
 
-      status(result) mustBe OK
-      contentAsJson(result) mustEqual Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false))
+      status(result).mustBe(OK)
+      contentAsJson(result).mustEqual(Json.obj("canDeregister" -> JsBoolean(false), "isOtherPsaAttached" -> JsBoolean(false)))
     }
 
     "return http exception when non OK httpresponse returned" in {
-      when(mockSchemeConnector.listOfSchemes(any(), any()))
+      when(mockSchemeConnector.listOfSchemes(using any(), any()))
         .thenReturn(Future.successful(Left(new BadRequestException("bad request"))))
 
       val result = deregistrationController.canDeregisterSelf(fakeRequest)
-      status(result) mustBe BAD_REQUEST
+      status(result).mustBe(BAD_REQUEST)
     }
   }
 }
@@ -152,7 +153,4 @@ object DeregistrationControllerSpec extends JsonFileReader {
     "id" -> psaId,
     "organisationOrPartnershipName" -> "partnership name"
   )
-
 }
-
-

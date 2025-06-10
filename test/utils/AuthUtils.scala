@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,12 @@ import models.SchemeReferenceNumber
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.mockito.stubbing.OngoingStubbing
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
-import uk.gov.hmrc.auth.core.{AuthConnector, Enrolment, EnrolmentIdentifier, Enrolments, InsufficientEnrolments}
 import uk.gov.hmrc.http.HeaderCarrier
 
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
 object AuthUtils {
@@ -36,10 +37,10 @@ object AuthUtils {
   val externalId = "externalId"
 
   def failedAuthStub(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Unit]] =
-    when(mockAuthConnector.authorise[Unit](any(), any())(any(), any())) thenReturn Future.failed(InsufficientEnrolments())
+    when(mockAuthConnector.authorise[Unit](any(), any())(using any(), any())).thenReturn(Future.failed(InsufficientEnrolments()))
 
   def authStub(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Enrolments ~ Option[String]]] =
-    when(mockAuthConnector.authorise[Enrolments ~ Option[String]](any(), any())(any(), any())) thenReturn Future.successful(AuthUtils.authResponse)
+    when(mockAuthConnector.authorise[Enrolments ~ Option[String]](any(), any())(using any(), any())).thenReturn(Future.successful(AuthUtils.authResponse))
   val authResponse = new ~(
     Enrolments(
       Set(
@@ -49,8 +50,7 @@ object AuthUtils {
   )
 
   def authStubPsp(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Enrolments ~ Option[String]]] =
-    when(mockAuthConnector.authorise[Enrolments ~ Option[String]](any(), any())(any(), any())) thenReturn
-      Future.successful(AuthUtils.authResponsePsp)
+    when(mockAuthConnector.authorise[Enrolments ~ Option[String]](any(), any())(using any(), any())).thenReturn(Future.successful(AuthUtils.authResponsePsp))
   val authResponsePsp = new ~(
     Enrolments(
       Set(
@@ -60,15 +60,16 @@ object AuthUtils {
   )
 
   def noEnrolmentAuthStub(mockAuthConnector: AuthConnector): OngoingStubbing[Future[Option[String]]] =
-    when(mockAuthConnector.authorise[Option[String]](any(), any())(any(), any())) thenReturn
-      Future.successful(AuthUtils.noEnrolmentAuthResponse)
+    when(mockAuthConnector.authorise[Option[String]](any(), any())(using any(), any())).thenReturn(Future.successful(AuthUtils.noEnrolmentAuthResponse))
 
   val noEnrolmentAuthResponse: Option[String] = Some(externalId)
 
   class FakeFailingAuthConnector @Inject()(exceptionToReturn: Throwable) extends AuthConnector {
     val serviceUrl: String = ""
 
-    override def authorise[A](predicate: Predicate, retrieval: Retrieval[A])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] =
+    override def authorise[A](predicate: Predicate, retrieval: Retrieval[A])(implicit
+                                                                             @unused hc: HeaderCarrier,
+                                                                             @unused ec: ExecutionContext): Future[A] =
       Future.failed(exceptionToReturn)
   }
 }

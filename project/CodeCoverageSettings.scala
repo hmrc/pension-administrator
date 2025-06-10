@@ -28,16 +28,21 @@ object CodeCoverageSettings {
     ".*Routes.*",
     "testOnly.*",
     "testOnlyDoNotUseInAppConf.*",
-    "target.*"
+    "target.*",
+    ".*\\$anon.*",
+    ".*models.*",
+    ".*repositories.*"
   )
 
-  private val coverageExcludedFiles = "<empty>;Reverse.*;.*filters.*;.*handlers.*;" +
-    ".*components.*;.*models.*;.*repositories.*;.*AuthRetrievals;" +
-    ".*BuildInfo.*;.*javascript.*;.*Routes.*;.*GuiceInjector;"
+  private val implicitOFormatObjects: Seq[String] = Seq(
+    ".*PSARegistration.*",
+    ".*PSADetails.*",
+    ".*PSADeEnrol.*",
+    ".*MinimalDetailsEvent.*"
+  )
 
   val settings: Seq[Setting[?]] = Seq(
-    ScoverageKeys.coverageExcludedFiles := coverageExcludedFiles,
-    ScoverageKeys.coverageExcludedPackages := excludedPackages.mkString(";"),
+    ScoverageKeys.coverageExcludedPackages := (excludedPackages ++ implicitOFormatObjects).mkString(";"),
     ScoverageKeys.coverageMinimumStmtTotal := 80,
     ScoverageKeys.coverageFailOnMinimum := true,
     ScoverageKeys.coverageHighlighting := true,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,14 @@ import audit.{AssociationAuditService, AuditService}
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
 import connectors.helper.HeaderUtils
-import models._
+import models.*
 import play.api.Logger
-import play.api.http.Status._
-import play.api.libs.json._
+import play.api.http.Status.*
+import play.api.libs.json.*
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{BadRequestException, _}
+import uk.gov.hmrc.http.{BadRequestException, *}
 import utils.{ErrorHandler, HttpResponseHelper, InvalidPayloadHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -62,7 +63,7 @@ class AssociationConnectorImpl @Inject()(
     with ErrorHandler
     with AssociationAuditService {
 
-  import AssociationConnectorImpl._
+  import AssociationConnectorImpl.*
 
   private val logger = Logger(classOf[AssociationConnector])
 
@@ -73,7 +74,7 @@ class AssociationConnectorImpl @Inject()(
                                  request: RequestHeader): Future[Either[HttpException, MinimalDetails]] = {
 
     val minimalDetailsUrl = url"${appConfig.psaMinimalDetailsUrl.format(regime, idType, idValue)}"
-    httpV2Client.get(minimalDetailsUrl).setHeader(headerUtils.integrationFrameworkHeader: _*).execute[HttpResponse] map {
+    httpV2Client.get(minimalDetailsUrl).setHeader(headerUtils.integrationFrameworkHeader *).execute[HttpResponse] map {
       handleResponseIF(_, minimalDetailsUrl.toString)
     } andThen sendGetMinimalDetailsEvent(idType, idValue)(auditService.sendEvent) andThen logWarning("IF PSA minimal details")
   }
@@ -92,7 +93,7 @@ class AssociationConnectorImpl @Inject()(
     response.status match {
       case OK =>
         logger.debug(s"Get minimal details from IF returned OK with response ${response.json}")
-        response.json.validate[MinimalDetails](MinimalDetails.minimalDetailsIFReads).fold(
+        response.json.validate[MinimalDetails](using MinimalDetails.minimalDetailsIFReads).fold(
           _ => {
             invalidPayloadHandler.logFailures("/resources/schemas/getMinDetails1442.json")(response.json)
             Left(new BadRequestException("INVALID PAYLOAD"))
@@ -147,13 +148,15 @@ class AssociationConnectorImpl @Inject()(
   }
 
   def acceptInvitation(acceptedInvitation: AcceptedInvitation)
-                      (implicit headerCarrier: HeaderCarrier, ec: ExecutionContext, request: RequestHeader): Future[Either[HttpException, Unit]] = {
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders =
-      headerUtils.integrationFrameworkHeader)
+                      (implicit headerCarrier: HeaderCarrier,
+                       ec: ExecutionContext,
+                       request: RequestHeader): Future[Either[HttpException, Unit]] = {
+
+    implicit val hc: HeaderCarrier = headerCarrier.withExtraHeaders(headerUtils.integrationFrameworkHeader *)
     val url = url"${appConfig.createPsaAssociationUrl.format(acceptedInvitation.pstr)}"
 
-    val data = Json.toJson(acceptedInvitation)(writesIFAcceptedInvitation)
-    association(url, data, acceptedInvitation, "createAssociationRequest1445.json", headerUtils.integrationFrameworkHeader)(hc, implicitly, implicitly)
+    val data = Json.toJson(acceptedInvitation)(using writesIFAcceptedInvitation)
+    association(url, data, acceptedInvitation, "createAssociationRequest1445.json", headerUtils.integrationFrameworkHeader)(using hc, implicitly, implicitly)
   }
 
   private def association(url: java.net.URL, data: JsValue, acceptedInvitation: AcceptedInvitation,
@@ -163,12 +166,12 @@ class AssociationConnectorImpl @Inject()(
                           request: RequestHeader): Future[Either[HttpException, Unit]] = {
     logger.debug(s"[Accept-Invitation-Outgoing-Payload] - ${data.toString()}")
     httpV2Client.post(url)
-      .setHeader(headers: _*)
+      .setHeader(headers *)
       .withBody(data).execute[HttpResponse] map (processResponse(acceptedInvitation, _, url.toString, schemaFile))
   }
 }
 
-object AssociationConnectorImpl {
+private object AssociationConnectorImpl {
 
   private def optional(key: String, value: Option[String]): Map[String, JsValue] = {
     value match {

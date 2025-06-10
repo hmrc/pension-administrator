@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package connectors
 
 import audit.{AuditService, StubSuccessfulAuditService, UpdateClientReferenceAuditEvent}
 import base.JsonFileReader
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import connectors.helper.{ConnectorBehaviours, HeaderUtils}
 import models.UpdateClientReferenceRequest
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -31,9 +31,9 @@ import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import repositories._
-import uk.gov.hmrc.http._
+import play.api.test.Helpers.*
+import repositories.*
+import uk.gov.hmrc.http.*
 import utils.WireMockHelper
 
 import java.time.LocalDate
@@ -46,7 +46,7 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
   with MockitoSugar
   with ConnectorBehaviours {
 
-  import UpdateClientReferenceConnectorSpec._
+  import UpdateClientReferenceConnectorSpec.*
 
   private val mockHeaderUtils = mock[HeaderUtils]
 
@@ -86,9 +86,9 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
 
     connector.updateClientReference(testUpdateClientReference, None).map {
       response =>
-        response.value shouldBe successResponse
+        response.value.shouldBe(successResponse)
         val expectedAuditEvent = UpdateClientReferenceAuditEvent(testUpdateClientReference, Some(successResponse), OK, None)
-        auditService.verifySent(expectedAuditEvent) shouldBe true
+        auditService.verifySent(expectedAuditEvent).shouldBe(true)
     }
 
   }
@@ -123,16 +123,14 @@ class UpdateClientReferenceConnectorSpec extends AsyncFlatSpec
             .withBody(errorResponse("INVALID_PSTR"))
         )
     )
-
-
+    
     recoverToExceptionIf[UpstreamErrorResponse](connector.updateClientReference(testUpdateClientReference, None)) map {
       ex =>
-        ex.statusCode shouldBe BAD_REQUEST
-        ex.message should include("INVALID_PSTR")
+        ex.statusCode `shouldBe` BAD_REQUEST
+        ex.message.should(include("INVALID_PSTR"))
     }
   }
-
-
+  
   it should behave like errorHandlerForPutApiFailures(
     connector.updateClientReference(testUpdateClientReference, None),
     updateClientReferenceUrl
@@ -170,6 +168,3 @@ object UpdateClientReferenceConnectorSpec {
     ).toString()
   }
 }
-
-
-

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,11 @@ package service
 
 import uk.gov.hmrc.http.HeaderCarrier
 
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeEnrolmentLoggingService extends EnrolmentLoggingService {
-  override def logEnrolments(clientId: Option[String])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] = Future.successful(())
+  override def logEnrolments(clientId: Option[String])(implicit
+                                                       @unused hc: HeaderCarrier,
+                                                       @unused ec: ExecutionContext): Future[Unit] = Future.successful(())
 }

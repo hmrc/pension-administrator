@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,8 @@ class UpdateClientReferenceAuditEventSpec extends AnyFlatSpec with Matchers {
       "response" -> Json.stringify(response.get)
     )
 
-    event.auditType shouldBe "UpdateClientReferenceAudit"
-    event.details shouldBe expected
+    event.auditType.shouldBe("UpdateClientReferenceAudit")
+    event.details.shouldBe(expected)
   }
 
   "UpdateClientReferenceAuditEvent" should "output the correct map of data when response None" in {
@@ -79,7 +79,7 @@ class UpdateClientReferenceAuditEventSpec extends AnyFlatSpec with Matchers {
       "response" -> ""
     )
 
-    event.auditType shouldBe "UpdateClientReferenceAudit"
-    event.details shouldBe expected
+    event.auditType.shouldBe("UpdateClientReferenceAudit")
+    event.details.shouldBe(expected)
   }
 }

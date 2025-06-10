@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,21 +28,21 @@ class ContactDetailsReadsSpec extends AnyWordSpec with Matchers with OptionValue
     "Map to a valid ContactDetails object" when {
       val input = Json.obj("phone" -> "0758237281", "email" -> "test@test.com")
       "We have a telephone number" in {
-        val result: ContactDetails = input.as[ContactDetails](ContactDetails.apiReads)
-        result.telephone mustBe "0758237281"
+        val result: ContactDetails = input.as[ContactDetails](using ContactDetails.apiReads)
+        result.telephone.mustBe("0758237281")
       }
 
       "We have an email address" in {
-        val result: ContactDetails = input.as[ContactDetails](ContactDetails.apiReads)
-        result.email mustBe "test@test.com"
+        val result: ContactDetails = input.as[ContactDetails](using ContactDetails.apiReads)
+        result.email.mustBe("test@test.com")
       }
 
       "We have an isChanged flag" in {
         val modifiedContactDetails = input + ("isChanged" -> JsBoolean(true))
 
-        val result = modifiedContactDetails.as[ContactDetails](ContactDetails.apiReads)
+        val result = modifiedContactDetails.as[ContactDetails](using ContactDetails.apiReads)
 
-        result.isChanged.value mustBe true
+        result.isChanged.value.mustBe(true)
       }
     }
   }

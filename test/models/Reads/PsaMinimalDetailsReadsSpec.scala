@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,48 +20,47 @@ import models.{IndividualDetails, MinimalDetails}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.libs.json._
+import play.api.libs.json.*
 
 class PsaMinimalDetailsReadsSpec extends AnyWordSpec with Matchers with OptionValues {
 
-  import PsaMinimalDetailsReadsSpec._
+  import PsaMinimalDetailsReadsSpec.*
 
   "A payload containing psa minimal details in IF format" should {
 
     "transform to a valid PSA Minimal Details model" when {
 
       "we have an email" in {
-        val output = individualDetailIFPayload.as[MinimalDetails](MinimalDetails.minimalDetailsIFReads)
-        output.email mustBe psaMinimalDetailsUser.email
+        val output = individualDetailIFPayload.as[MinimalDetails](using MinimalDetails.minimalDetailsIFReads)
+        output.email.mustBe(psaMinimalDetailsUser.email)
       }
 
       "we have psaSuspensionFlag" in {
-        val output = individualDetailIFPayload.as[MinimalDetails](MinimalDetails.minimalDetailsIFReads)
-        output.isPsaSuspended mustBe psaMinimalDetailsUser.isPsaSuspended
+        val output = individualDetailIFPayload.as[MinimalDetails](using MinimalDetails.minimalDetailsIFReads)
+        output.isPsaSuspended.mustBe(psaMinimalDetailsUser.isPsaSuspended)
       }
 
       "we have minimal detail object with individual data" in {
-        val output = individualDetailIFPayload.as[MinimalDetails](MinimalDetails.minimalDetailsIFReads)
-        output.individualDetails mustBe psaMinimalDetailsUser.individualDetails
+        val output = individualDetailIFPayload.as[MinimalDetails](using MinimalDetails.minimalDetailsIFReads)
+        output.individualDetails.mustBe(psaMinimalDetailsUser.individualDetails)
       }
 
       "we have minimal detail object with organisation data" in {
-        val output = orgIFPayload.as[MinimalDetails](MinimalDetails.minimalDetailsIFReads)
-        output.organisationName mustBe psaMinimalDetailsUser.organisationName
+        val output = orgIFPayload.as[MinimalDetails](using MinimalDetails.minimalDetailsIFReads)
+        output.organisationName.mustBe(psaMinimalDetailsUser.organisationName)
       }
 
       "we have rlsFlag" in {
-        val output = individualDetailIFPayload.as[MinimalDetails](MinimalDetails.minimalDetailsIFReads)
-        output.rlsFlag mustBe psaMinimalDetailsUser.rlsFlag
+        val output = individualDetailIFPayload.as[MinimalDetails](using MinimalDetails.minimalDetailsIFReads)
+        output.rlsFlag.mustBe(psaMinimalDetailsUser.rlsFlag)
       }
 
       "we have deceasedFlag" in {
-        val output = individualDetailIFPayload.as[MinimalDetails](MinimalDetails.minimalDetailsIFReads)
-        output.deceasedFlag mustBe psaMinimalDetailsUser.deceasedFlag
+        val output = individualDetailIFPayload.as[MinimalDetails](using MinimalDetails.minimalDetailsIFReads)
+        output.deceasedFlag.mustBe(psaMinimalDetailsUser.deceasedFlag)
       }
     }
   }
-
 }
 
 object PsaMinimalDetailsReadsSpec {
@@ -95,10 +94,9 @@ object PsaMinimalDetailsReadsSpec {
       |}
       |
     """.stripMargin
-
   )
 
-  val psaMinimalDetailsUser = MinimalDetails(
+  val psaMinimalDetailsUser: MinimalDetails = MinimalDetails(
     "test@email.com",
     isPsaSuspended = true,
     Some("test org name"),
@@ -111,4 +109,3 @@ object PsaMinimalDetailsReadsSpec {
     deceasedFlag = true
   )
 }
-

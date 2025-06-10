@@ -19,14 +19,14 @@ package utils
 import play.api.libs.json._
 import scala.language.implicitConversions
 
-object EnumUtils {
-  def enumReads[E <: Enumeration](`enum`: E): Reads[E#Value] = new Reads[E#Value] {
-    def reads(json: JsValue): JsResult[E#Value] = json match {
+class EnumUtils[E <: Enumeration](val en: E) {
+  private def enumReads: Reads[en.Value] = new Reads[en.Value] {
+    def reads(json: JsValue): JsResult[en.Value] = json match {
       case JsString(s) => {
         try {
-          JsSuccess(enum.withName(s))
+          JsSuccess(en.withName(s))
         } catch {
-          case _: NoSuchElementException => JsError(s"Enumeration expected of type: '${enum.getClass}'," +
+          case _: NoSuchElementException => JsError(s"Enumeration expected of type: '${en.getClass}'," +
             s"but it does not appear to contain the value: '$s'")
         }
       }
@@ -34,11 +34,11 @@ object EnumUtils {
     }
   }
 
-  implicit def enumWrites[E <: Enumeration]: Writes[E#Value] = new Writes[E#Value] {
-    def writes(v: E#Value): JsValue = JsString(v.toString)
+  implicit def enumWrites(): Writes[en.Value] = new Writes[en.Value] {
+    def writes(v: en.Value): JsValue = JsString(v.toString)
   }
 
-  implicit def enumFormat[E <: Enumeration](`enum`: E): Format[E#Value] = {
-    Format(enumReads(enum), enumWrites)
+  implicit def enumFormat(): Format[en.Value] = {
+    Format(enumReads, enumWrites())
   }
 }

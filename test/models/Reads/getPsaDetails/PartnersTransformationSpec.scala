@@ -25,6 +25,10 @@ import utils.JsonTransformations.{AddressTransformer, DirectorOrPartnerTransform
 
 class PartnersTransformationSpec extends AnyWordSpec with Matchers with OptionValues {
 
+  val legalStatusTransformer = new LegalStatusTransformer()
+  val addressTransformer = new AddressTransformer(legalStatusTransformer)
+  val directorOrPartnerTransformer = new DirectorOrPartnerTransformer(addressTransformer)
+
   "A payload containing a partner" must {
     "map correctly to a valid user answers partner" when {
 
@@ -32,7 +36,9 @@ class PartnersTransformationSpec extends AnyWordSpec with Matchers with OptionVa
 
       "We have partner details" when {
         "We have a name" in {
-          (transformedJson \ "partnerDetails" \ "firstName").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "firstName").as[String]
+          (transformedJson \ "partnerDetails" \ "firstName").as[String].mustBe(
+            (userAnswersPartner \ "partnerDetails" \ "firstName").as[String]
+          )
         }
 
         "We don't have a middle name" in {
@@ -40,20 +46,22 @@ class PartnersTransformationSpec extends AnyWordSpec with Matchers with OptionVa
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("partner")).asOpt.value
 
-          (transformedJson \ "partnerDetails" \ "middleName").asOpt[String] mustBe None
+          (transformedJson \ "partnerDetails" \ "middleName").asOpt[String].mustBe(None)
         }
 
         "We have a last name" in {
-          (transformedJson \ "partnerDetails" \ "lastName").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "lastName").as[String]
+          (transformedJson \ "partnerDetails" \ "lastName").as[String].mustBe(
+            (userAnswersPartner \ "partnerDetails" \ "lastName").as[String]
+          )
         }
 
         "We have a DOB" in {
-          (transformedJson \ "dateOfBirth").as[String] mustBe (userAnswersPartner \ "dateOfBirth").as[String]
+          (transformedJson \ "dateOfBirth").as[String].mustBe((userAnswersPartner \ "dateOfBirth").as[String])
         }
 
         "We have a nino" in {
-          (transformedJson \ "hasNino").as[Boolean] mustBe (userAnswersPartner \ "hasNino").as[Boolean]
-          (transformedJson \ "nino" \ "value").as[String] mustBe (userAnswersPartner \ "nino" \ "value").as[String]
+          (transformedJson \ "hasNino").as[Boolean].mustBe((userAnswersPartner \ "hasNino").as[Boolean])
+          (transformedJson \ "nino" \ "value").as[String].mustBe((userAnswersPartner \ "nino" \ "value").as[String])
         }
 
         "We don't have nino but have a nino reason" in {
@@ -61,13 +69,13 @@ class PartnersTransformationSpec extends AnyWordSpec with Matchers with OptionVa
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("partner")).asOpt.value
 
-          (transformedJson \ "hasNino").as[Boolean] mustBe false
-          (transformedJson \ "noNinoReason").as[String] mustBe "test"
+          (transformedJson \ "hasNino").as[Boolean].mustBe(false)
+          (transformedJson \ "noNinoReason").as[String].mustBe("test")
         }
 
         "We have a utr" in {
-          (transformedJson \ "hasUtr").as[Boolean] mustBe (userAnswersPartner \ "hasUtr").as[Boolean]
-          (transformedJson \ "utr" \ "value").as[String] mustBe (userAnswersPartner \ "utr" \ "value").as[String]
+          (transformedJson \ "hasUtr").as[Boolean].mustBe((userAnswersPartner \ "hasUtr").as[Boolean])
+          (transformedJson \ "utr" \ "value").as[String].mustBe((userAnswersPartner \ "utr" \ "value").as[String])
         }
 
         "We don't have utr but have a utr reason" in {
@@ -75,41 +83,53 @@ class PartnersTransformationSpec extends AnyWordSpec with Matchers with OptionVa
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("partner")).asOpt.value
 
-          (transformedJson \ "hasUtr").as[Boolean] mustBe false
-          (transformedJson \ "noUtrReason").as[String] mustBe "test"
+          (transformedJson \ "hasUtr").as[Boolean].mustBe(false)
+          (transformedJson \ "noUtrReason").as[String].mustBe("test")
         }
 
-        //TODO: DES has partner address details as not mandatory but we have it as mandatory in frontend (correspondenceCommonDetails wrapper). Potential issues.
+        //TODO: DES has partner address details as not mandatory but we have it as mandatory in frontend (correspondenceCommonDetails wrapper).
+        // Potential issues.
         "We have an address" in {
-          (transformedJson \ "partnerAddress" \ "addressLine1").asOpt[String].value mustBe (userAnswersPartner \ "partnerAddress" \ "addressLine1").asOpt[String].value
+          (transformedJson \ "partnerAddress" \ "addressLine1").asOpt[String].value.mustBe(
+            (userAnswersPartner \ "partnerAddress" \ "addressLine1").asOpt[String].value
+          )
         }
 
         //TODO: Contact details is not mandatory in DES schema but mandatory in frontend. Potential issues.
         "We have a valid contact details" when {
           "with a telephone" in {
-            (transformedJson \ "partnerContactDetails" \ "phone").asOpt[String].value mustBe (userAnswersPartner \ "partnerContactDetails" \ "phone").asOpt[String].value
+            (transformedJson \ "partnerContactDetails" \ "phone").asOpt[String].value.mustBe(
+              (userAnswersPartner \ "partnerContactDetails" \ "phone").asOpt[String].value
+            )
           }
 
           "with an email" in {
-            (transformedJson \ "partnerContactDetails" \ "email").asOpt[String].value mustBe (userAnswersPartner \ "partnerContactDetails" \ "email").asOpt[String].value
+            (transformedJson \ "partnerContactDetails" \ "email").asOpt[String].value.mustBe(
+              (userAnswersPartner \ "partnerContactDetails" \ "email").asOpt[String].value
+            )
           }
         }
 
         "We have a previous address flag" in {
-          (transformedJson \ "partnerAddressYears").asOpt[String].value mustBe (userAnswersPartner \ "partnerAddressYears" ).asOpt[String].value
+          (transformedJson \ "partnerAddressYears").asOpt[String].value.mustBe(
+            (userAnswersPartner \ "partnerAddressYears").asOpt[String].value
+          )
         }
 
         "We have a previous address" in {
-          (transformedJson \ "partnerPreviousAddress" \ "country").asOpt[String].value mustBe (userAnswersPartner \ "partnerPreviousAddress" \ "country" ).asOpt[String].value
+          (transformedJson \ "partnerPreviousAddress" \ "country").asOpt[String].value.mustBe(
+            (userAnswersPartner \ "partnerPreviousAddress" \ "country").asOpt[String].value
+          )
         }
 
         "We have a previous address flag as false and no previous address" in {
-          val inputJson = desPartner.as[JsObject] - "previousAddressDetails" + ("previousAddressDetails" -> Json.obj("isPreviousAddressLast12Month" -> JsBoolean(false)))
+          val inputJson = desPartner.as[JsObject] - "previousAddressDetails" + ("previousAddressDetails" ->
+            Json.obj("isPreviousAddressLast12Month" -> JsBoolean(false)))
 
           val transformedJson = inputJson.transform(directorOrPartnerTransformer.getDirectorOrPartner("partner")).asOpt.value
 
-          (transformedJson \ "partnerAddressYears").asOpt[String].value mustBe "over_a_year"
-          (transformedJson \ "partnerPreviousAddress").asOpt[JsObject] mustBe None
+          (transformedJson \ "partnerAddressYears").asOpt[String].value.mustBe("over_a_year")
+          (transformedJson \ "partnerPreviousAddress").asOpt[JsObject].mustBe(None)
         }
 
         "We have an array of directors" in {
@@ -117,10 +137,10 @@ class PartnersTransformationSpec extends AnyWordSpec with Matchers with OptionVa
 
           val transformedJson = directors.transform(directorOrPartnerTransformer.getDirectorsOrPartners("partner")).asOpt.value
 
-          (transformedJson \ 0 \ "partnerDetails" \ "firstName").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "firstName").as[String]
-          (transformedJson \ 1 \ "partnerDetails" \ "firstName").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "firstName").as[String]
-          (transformedJson \ 2 \ "partnerDetails" \ "firstName").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "firstName").as[String]
-          (transformedJson \ 3 \ "partnerDetails" \ "firstName").as[String] mustBe (userAnswersPartner \ "partnerDetails" \ "firstName").as[String]
+          (transformedJson \ 0 \ "partnerDetails" \ "firstName").as[String].mustBe((userAnswersPartner \ "partnerDetails" \ "firstName").as[String])
+          (transformedJson \ 1 \ "partnerDetails" \ "firstName").as[String].mustBe((userAnswersPartner \ "partnerDetails" \ "firstName").as[String])
+          (transformedJson \ 2 \ "partnerDetails" \ "firstName").as[String].mustBe((userAnswersPartner \ "partnerDetails" \ "firstName").as[String])
+          (transformedJson \ 3 \ "partnerDetails" \ "firstName").as[String].mustBe((userAnswersPartner \ "partnerDetails" \ "firstName").as[String])
         }
 
         "We have exactly than 10 directors" in {
@@ -133,17 +153,13 @@ class PartnersTransformationSpec extends AnyWordSpec with Matchers with OptionVa
           )
 
           val transformedJson = partialPayload.transform(directorOrPartnerTransformer.getDirectorsOrPartners).asOpt.value
-          (transformedJson \ "moreThanTenPartners").as[Boolean] mustBe false
+          (transformedJson \ "moreThanTenPartners").as[Boolean].mustBe(false)
         }
       }
     }
   }
 
-  val legalStatusTransformer = new LegalStatusTransformer()
-  val addressTransformer = new AddressTransformer(legalStatusTransformer)
-  val directorOrPartnerTransformer = new DirectorOrPartnerTransformer(addressTransformer)
-
-  val userAnswersPartner: JsValue = Json.parse(
+  lazy val userAnswersPartner: JsValue = Json.parse(
 """{
             "partnerDetails" : {
                      "firstName" : "Bruce",
@@ -183,7 +199,7 @@ class PartnersTransformationSpec extends AnyWordSpec with Matchers with OptionVa
                  "isPartnerComplete" : true
         }""")
 
-  val desPartner: JsValue = Json.parse(
+  lazy val desPartner: JsValue = Json.parse(
     """{
                "sequenceId":"000",
                "entityType":"Partner",
@@ -226,12 +242,12 @@ class PartnersTransformationSpec extends AnyWordSpec with Matchers with OptionVa
                }
             }""")
 
-  val moreThanTenFlag: JsValue = Json.parse(
+  lazy val moreThanTenFlag: JsValue = Json.parse(
     """{
                   "isMorethanTenPartners":false
               }""")
 
-  val legalStatus: JsValue = Json.parse(
+  lazy val legalStatus: JsValue = Json.parse(
     """{
                   "legalStatus":"Partnership",
                   "idType":"UTR",

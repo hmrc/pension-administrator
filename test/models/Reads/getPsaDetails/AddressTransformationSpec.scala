@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,71 +20,76 @@ import models.Reads.getPsaDetails.CustomerIdentificationDetailsTypeTransformatio
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.libs.json.Reads._
-import play.api.libs.json._
+import play.api.libs.json.*
+import play.api.libs.json.Reads.*
 import utils.JsonTransformations.{AddressTransformer, LegalStatusTransformer}
 
 
 class AddressTransformationSpec extends AnyWordSpec with Matchers with OptionValues {
 
+  val legalStatusTransformer = new LegalStatusTransformer()
+  val addressTransformer = new AddressTransformer(legalStatusTransformer)
+
+
   "A DES payload containing an address" must {
-    lazy val transformedJson = desAddress.transform(addressTransformer.getAddress(__ \ Symbol("testAddress"), __ \ Symbol("testAddressFromDes"))).asOpt.value
+    lazy val transformedJson = desAddress.transform(
+      addressTransformer.getAddress(__ \ Symbol("testAddress"), __ \ Symbol("testAddressFromDes"))).asOpt.value
 
     "Map correctly to a valid address" when {
       "We have line1" in {
-        (transformedJson \ "testAddress" \ "addressLine1").as[String] mustBe (expectedAddress \ "testAddress" \ "addressLine1").as[String]
+        (transformedJson \ "testAddress" \ "addressLine1").as[String].mustBe((expectedAddress \ "testAddress" \ "addressLine1").as[String])
       }
 
       "We have line2" in {
-        (transformedJson \ "testAddress" \ "addressLine2").as[String] mustBe (expectedAddress \ "testAddress" \ "addressLine2").as[String]
+        (transformedJson \ "testAddress" \ "addressLine2").as[String].mustBe((expectedAddress \ "testAddress" \ "addressLine2").as[String])
       }
 
       "We have line3" in {
         val inputJson = desAddress.transform(updateJson(__ \ Symbol("testAddressFromDes"), "line3", "York")).asOpt.value
 
-        val transformedJson = inputJson.transform(addressTransformer.getAddress(__ \ Symbol("testAddress"), __ \ Symbol("testAddressFromDes"))).asOpt.value
+        val transformedJson = inputJson.transform(
+          addressTransformer.getAddress(__ \ Symbol("testAddress"), __ \ Symbol("testAddressFromDes"))).asOpt.value
 
-        (transformedJson \ "testAddress" \ "addressLine3").as[String] mustBe (expectedAddress \ "testAddress" \ "addressLine3").as[String]
+        (transformedJson \ "testAddress" \ "addressLine3").as[String].mustBe((expectedAddress \ "testAddress" \ "addressLine3").as[String])
       }
 
       "We don't have address line 3" in {
-        (transformedJson \ "testAddress" \ "addressLine3").asOpt[String] mustBe None
+        (transformedJson \ "testAddress" \ "addressLine3").asOpt[String].mustBe(None)
       }
 
       "We have line4" in {
         val inputJson = desAddress.transform(updateJson(__ \ Symbol("testAddressFromDes"), "line4", "Yorkshire")).asOpt.value
 
-        val transformedJson = inputJson.transform(addressTransformer.getAddress(__ \ Symbol("testAddress"), __ \ Symbol("testAddressFromDes"))).asOpt.value
+        val transformedJson = inputJson.transform(
+          addressTransformer.getAddress(__ \ Symbol("testAddress"), __ \ Symbol("testAddressFromDes"))).asOpt.value
 
-        (transformedJson \ "testAddress" \ "addressLine4").as[String] mustBe (expectedAddress \ "testAddress" \ "addressLine4").as[String]
+        (transformedJson \ "testAddress" \ "addressLine4").as[String].mustBe((expectedAddress \ "testAddress" \ "addressLine4").as[String])
       }
 
       "We don't have address line 4" in {
-        (transformedJson \ "testAddress" \ "addressLine4").asOpt[String] mustBe None
+        (transformedJson \ "testAddress" \ "addressLine4").asOpt[String].mustBe(None)
       }
 
       "We have postal code" in {
         val inputJson = desAddress.transform(updateJson(__ \ Symbol("testAddressFromDes"), "postalCode", "YO1 9EX")).asOpt.value
 
-        val transformedJson = inputJson.transform(addressTransformer.getAddress(__ \ Symbol("testAddress"), __ \ Symbol("testAddressFromDes"))).asOpt.value
+        val transformedJson = inputJson.transform(
+          addressTransformer.getAddress(__ \ Symbol("testAddress"), __ \ Symbol("testAddressFromDes"))).asOpt.value
 
-        (transformedJson \ "testAddress" \ "postalCode").as[String] mustBe (expectedAddress \ "testAddress" \ "postalCode").as[String]
+        (transformedJson \ "testAddress" \ "postalCode").as[String].mustBe((expectedAddress \ "testAddress" \ "postalCode").as[String])
       }
 
       "We don't have a postal code" in {
-        (transformedJson \ "testAddress" \ "postalCode").asOpt[String] mustBe None
+        (transformedJson \ "testAddress" \ "postalCode").asOpt[String].mustBe(None)
       }
 
       "We have a country code" in {
-        (transformedJson \ "testAddress" \ "countryCode").as[String] mustBe (expectedAddress \ "testAddress" \ "countryCode").as[String]
+        (transformedJson \ "testAddress" \ "countryCode").as[String].mustBe((expectedAddress \ "testAddress" \ "countryCode").as[String])
       }
     }
   }
 
-  val legalStatusTransformer = new LegalStatusTransformer()
-  val addressTransformer = new AddressTransformer(legalStatusTransformer)
-
-  val expectedAddress: JsValue = Json.parse(
+  lazy val expectedAddress: JsValue = Json.parse(
     """{
                                                 "testAddress" : {
                                                     "addressLine1" : "1 Director Road",
@@ -96,7 +101,7 @@ class AddressTransformationSpec extends AnyWordSpec with Matchers with OptionVal
                                                 }
                                             }""")
 
-  val desAddress: JsValue = Json.parse(
+  lazy val desAddress: JsValue = Json.parse(
     """{
                                           "testAddressFromDes" : {
                                               "nonUKAddress":false,
@@ -105,5 +110,4 @@ class AddressTransformationSpec extends AnyWordSpec with Matchers with OptionVal
                                               "countryCode":"ES"
                                           }
                                         }""")
-
 }

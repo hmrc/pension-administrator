@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package models.registrationnoid
 
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.*
 
 case class OrganisationName(organisationName: String)
 
@@ -46,7 +46,7 @@ object OrganisationRegistrant {
   private val writesOrganisationRegistrant: Writes[OrganisationRegistrant] = {
     (
       (__ \ "organisation").write[OrganisationName] and
-        (__ \ "address").write[Address](writesAddress)
+        (__ \ "address").write[Address](using writesAddress)
       ) { o =>
       (
         o.organisation,
@@ -70,7 +70,7 @@ object OrganisationRegistrant {
             "faxNumber" -> JsNull,
             "emailAddress" -> JsNull
           )
-        ) ++ Json.toJson(registrant)(writesOrganisationRegistrant).as[JsObject]
+        ) ++ Json.toJson(registrant)(using writesOrganisationRegistrant).as[JsObject]
       }
     }
   }

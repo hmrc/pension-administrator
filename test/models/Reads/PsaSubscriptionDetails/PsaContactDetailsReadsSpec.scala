@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,20 +20,20 @@ import models.PsaContactDetails
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.*
 
 class PsaContactDetailsReadsSpec extends AnyWordSpec with Matchers with OptionValues with PsaSubscriptionDetailsGenerators {
   "A payload containing psa contact details" should {
     "parse to a valid tactDetails object" when {
       "we have a telephone number" in {
         forAll(psaContactDetailsGenerator){
-          contact => contact.as[PsaContactDetails].telephone mustBe (contact \ "telephone").as[String]
+          contact => contact.as[PsaContactDetails].telephone.mustBe((contact \ "telephone").as[String])
         }
       }
 
       "we have an optional email" in {
         forAll(psaContactDetailsGenerator){
-          contact => contact.as[PsaContactDetails].email mustBe (contact \ "email").asOpt[String]
+          contact => contact.as[PsaContactDetails].email.mustBe((contact \ "email").asOpt[String])
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,15 @@ package repositories
 import com.google.inject.{Inject, Singleton}
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import models.Invitation
+import org.mongodb.scala.{ObservableFuture, SingleObservableFuture}
 import org.mongodb.scala.bson.BsonBinary
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.*
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json._
+import play.api.libs.json.*
 import play.api.{Configuration, Logging}
+import repositories.InvitationsCacheEntry.*
 import repositories.InvitationsCacheEntry.InvitationsCacheEntryFormats.{expireAtKey, inviteePsaIdKey, pstrKey}
-import repositories.InvitationsCacheEntry._
 import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, PlainText, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
@@ -70,8 +71,8 @@ object InvitationsCacheEntry {
         (JsPath \ "inviteePsaId").read[String] and
           (JsPath \ "pstr").read[String] and
           (JsPath \ "data").read[BsonBinary] and
-          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now())) and
-          (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+          (JsPath \ "lastUpdated").read(using instantReads).orElse(Reads.pure(Instant.now())) and
+          (JsPath \ "expireAt").read(using instantReads).orElse(Reads.pure(Instant.now()))
         )((inviteePsaIdKey, pstr, data, lastUpdated, expireAt) =>
         DataEntry(inviteePsaIdKey, pstr, data, lastUpdated, expireAt)
       ).reads(json)
@@ -99,8 +100,8 @@ object InvitationsCacheEntry {
         (JsPath \ "inviteePsaId").read[String] and
           (JsPath \ "pstr").read[String] and
           (JsPath \ "data").read[JsValue] and
-          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now())) and
-          (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+          (JsPath \ "lastUpdated").read(using instantReads).orElse(Reads.pure(Instant.now())) and
+          (JsPath \ "expireAt").read(using instantReads).orElse(Reads.pure(Instant.now()))
         )((inviteePsaIdKey, pstr, data, lastUpdated, expireAt) =>
         JsonDataEntry(inviteePsaIdKey, pstr, data, lastUpdated, expireAt)
       ).reads(json)
@@ -149,11 +150,11 @@ class InvitationsCacheRepository @Inject()(
     )
   ) with Logging {
 
-  import InvitationsCacheEntryFormats._
+  import InvitationsCacheEntryFormats.*
 
   private val encryptionKey: String = "manage.json.encryption"
   private val encrypted: Boolean = config.getOptional[Boolean]("encrypted").getOrElse(true)
-  private val jsonCrypto: Encrypter with Decrypter = SymmetricCryptoFactory.aesCryptoFromConfig(baseConfigKey = encryptionKey, config.underlying)
+  private val jsonCrypto: Encrypter & Decrypter = SymmetricCryptoFactory.aesCryptoFromConfig(baseConfigKey = encryptionKey, config.underlying)
 
   def upsert(invitation: Invitation)(implicit ec: ExecutionContext): Future[Unit] = {
     if (encrypted) {
@@ -201,7 +202,7 @@ class InvitationsCacheRepository @Inject()(
         Filters.equal(key._1, encryptedValue)
       case key => Filters.equal(key._1, key._2)
     }.toList
-    Filters.and(filters: _*)
+    Filters.and(filters *)
   }
 
   def getByKeys(mapOfKeys: Map[String, String])(implicit ec: ExecutionContext): Future[Option[List[Invitation]]] = {
@@ -217,7 +218,7 @@ class InvitationsCacheRepository @Inject()(
       }
     } else {
       val filters = mapOfKeys.map(t => Filters.equal(t._1, t._2)).toList
-      collection.find[JsonDataEntry](Filters.and(filters: _*)).toFuture().map { res =>
+      collection.find[JsonDataEntry](Filters.and(filters *)).toFuture().map { res =>
         val listOfInvitationsJson = res.map {
           dataEntry =>
             dataEntry.data
@@ -246,7 +247,7 @@ class InvitationsCacheRepository @Inject()(
       filterEncryptKeys(mapOfKeys)
     } else {
       val filters = mapOfKeys.map(t => Filters.equal(t._1, t._2)).toList
-      Filters.and(filters: _*)
+      Filters.and(filters *)
     }
     collection.deleteOne(selector).toFuture().map { result =>
       logger.info(s"Removing row from collection $collectionName")

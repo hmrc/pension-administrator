@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,11 @@ package repositories
 
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
+import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.bson.BsonBinary
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.*
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json._
+import play.api.libs.json.*
 import play.api.{Configuration, Logging}
 import repositories.PSADataCacheEntry.{DataEntryWithoutEncryption, EncryptedDataEntry, PSADataCacheEntry, PSADataCacheEntryFormats}
 import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, PlainText, SymmetricCryptoFactory}
@@ -71,8 +72,8 @@ object PSADataCacheEntry {
       override def reads(json: JsValue): JsResult[EncryptedDataEntry] = (
         (JsPath \ "id").read[String] and
           (JsPath \ "data").read[BsonBinary] and
-          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now())) and
-          (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+          (JsPath \ "lastUpdated").read(using instantReads).orElse(Reads.pure(Instant.now())) and
+          (JsPath \ "expireAt").read(using instantReads).orElse(Reads.pure(Instant.now()))
         )((id, data, lastUpdated, expireAt) =>
         EncryptedDataEntry(id, data, lastUpdated, expireAt)
       ).reads(json)
@@ -95,8 +96,8 @@ object PSADataCacheEntry {
       override def reads(json: JsValue): JsResult[DataEntryWithoutEncryption] = (
         (JsPath \ "id").read[String] and
           (JsPath \ "data").read[JsValue] and
-          (JsPath \ "lastUpdated").read(instantReads).orElse(Reads.pure(Instant.now())) and
-          (JsPath \ "expireAt").read(instantReads).orElse(Reads.pure(Instant.now()))
+          (JsPath \ "lastUpdated").read(using instantReads).orElse(Reads.pure(Instant.now())) and
+          (JsPath \ "expireAt").read(using instantReads).orElse(Reads.pure(Instant.now()))
         )((id, data, lastUpdated, expireAt) =>
         DataEntryWithoutEncryption(id, data, lastUpdated, expireAt)
       ).reads(json)
@@ -136,7 +137,7 @@ class PSADataCacheRepository @Inject()(
   ) with Logging {
 
   private val encryptionKey = "psa.json.encryption"
-  private val jsonCrypto: Encrypter with Decrypter = SymmetricCryptoFactory.aesCryptoFromConfig(baseConfigKey = encryptionKey, configuration.underlying)
+  private val jsonCrypto: Encrypter & Decrypter = SymmetricCryptoFactory.aesCryptoFromConfig(baseConfigKey = encryptionKey, configuration.underlying)
   private val encrypted: Boolean = configuration.get[Boolean](path = "encrypted")
   private val expireInDays = configuration.get[Int](path = "mongodb.pension-administrator-cache.psa-data.timeToLiveInDays")
   private val idField: String = "id"

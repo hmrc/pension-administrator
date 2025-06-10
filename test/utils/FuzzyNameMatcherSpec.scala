@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import wolfendale.scalacheck.regexp.RegexpGen
 
 class FuzzyNameMatcherSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
-  import FuzzyNameMatcherSpec._
+  import FuzzyNameMatcherSpec.*
 
   "fuzzify" should "uppercase all names" in {
 
@@ -59,13 +59,13 @@ class FuzzyNameMatcherSpec extends AnyFlatSpec with Matchers with ScalaCheckDriv
 
   "matches" should "return true for two strings that fuzzify equally" in {
 
-    FuzzyNameMatcher.matches("Abc 123 co. ltd", "abc 123") shouldBe true
+    FuzzyNameMatcher.matches("Abc 123 co. ltd", "abc 123").shouldBe(true)
 
   }
 
   it should "return false for two strings that do not fuzzify equally" in {
 
-    FuzzyNameMatcher.matches("Abc 123 co. ltd", "def 123") shouldBe false
+    FuzzyNameMatcher.matches("Abc 123 co. ltd", "def 123").shouldBe(false)
 
   }
 
@@ -73,11 +73,9 @@ class FuzzyNameMatcherSpec extends AnyFlatSpec with Matchers with ScalaCheckDriv
 
     forAll(gen) {
       testCase =>
-        FuzzyNameMatcher.fuzzify(testCase.name) shouldBe testCase.fuzzified
+        FuzzyNameMatcher.fuzzify(testCase.name).shouldBe(testCase.fuzzified)
     }
-
   }
-
 }
 
 object FuzzyNameMatcherSpec {
@@ -106,5 +104,4 @@ object FuzzyNameMatcherSpec {
       keep.mkString.replaceAll("\\s", "").toUpperCase
     )
   }
-
 }

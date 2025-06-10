@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package repositories
 import base.MongoConfig
 import com.typesafe.config.Config
 import org.mockito.Mockito.when
+import org.mongodb.scala.{ObservableFuture, SingleObservableFuture}
 import org.mongodb.scala.bson.{BsonDocument, BsonString}
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.ScalaFutures
@@ -34,12 +35,18 @@ import uk.gov.hmrc.mongo.MongoComponent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter with
-  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures with MongoConfig { // scalastyle:off magic.number
+class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec
+                                              with MockitoSugar
+                                              with Matchers
+                                              with BeforeAndAfter
+                                              with BeforeAndAfterEach
+                                              with BeforeAndAfterAll
+                                              with ScalaFutures
+                                              with MongoConfig { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
-  import ManagePensionsDataCacheRepositorySpec._
+  import ManagePensionsDataCacheRepositorySpec.*
 
   private val idField: String = "id"
 
@@ -68,8 +75,8 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
-          documentsInDB.map(_.id mustBe "id-1")
+          documentsInDB.size `mustBe` 1
+          documentsInDB.map(_.id.mustBe("id-1"))
       }
     }
 
@@ -90,9 +97,9 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
-          documentsInDB.head.data mustBe record2._2
-          documentsInDB.head.data must not be record1._2
+          documentsInDB.size `mustBe` 1
+          documentsInDB.head.data.mustBe(record2._2)
+          documentsInDB.head.data.must(not) be record1._2
       }
     }
 
@@ -112,7 +119,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
 
@@ -131,7 +138,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -152,7 +159,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -172,7 +179,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
     "save lastUpdated value as a date" in {
@@ -192,8 +199,8 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       }
 
       whenReady(ftr) { case (stringResults, dateResults) =>
-        stringResults.length mustBe 0
-        dateResults.length mustBe 1
+        stringResults.length `mustBe` 0
+        dateResults.length.mustBe(1)
       }
     }
   }
@@ -212,7 +219,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
 
@@ -229,7 +236,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
   }
@@ -248,7 +255,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
 
@@ -265,8 +272,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
-
+        documentsInDB.isDefined.mustBe(true)
       }
     }
   }
@@ -284,7 +290,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -293,7 +299,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -310,7 +316,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -319,7 +325,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
 
@@ -336,7 +342,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -345,7 +351,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -362,7 +368,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -371,7 +377,7 @@ class ManagePensionsDataCacheRepositorySpec extends AnyWordSpec with MockitoSuga
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
   }

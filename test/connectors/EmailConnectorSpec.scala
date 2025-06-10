@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import models.SendEmailRequest
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers
@@ -25,13 +25,13 @@ import play.api.http.Status
 import play.api.inject.guice.GuiceableModule
 import play.api.inject.{Injector, bind}
 import play.api.libs.json.Json
-import repositories._
+import repositories.*
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.WireMockHelper
 
 class EmailConnectorSpec extends AsyncFlatSpec with Matchers with WireMockHelper with MockitoSugar {
 
-  import EmailConnectorSpec._
+  import EmailConnectorSpec.*
 
   override protected def bindings: Seq[GuiceableModule] =
     Seq(
@@ -57,7 +57,7 @@ class EmailConnectorSpec extends AsyncFlatSpec with Matchers with WireMockHelper
 
     connector(app.injector).sendEmail(email) map {
       response =>
-        response mustBe EmailSent
+        response.mustBe(EmailSent)
     }
 
   }
@@ -75,7 +75,7 @@ class EmailConnectorSpec extends AsyncFlatSpec with Matchers with WireMockHelper
 
     connector(app.injector).sendEmail(email) map {
       response =>
-        response mustBe EmailNotSent
+        response.mustBe(EmailNotSent)
     }
 
   }
@@ -93,7 +93,7 @@ class EmailConnectorSpec extends AsyncFlatSpec with Matchers with WireMockHelper
 
     connector(app.injector).sendEmail(email) map {
       response =>
-        response mustBe EmailNotSent
+        response.mustBe(EmailNotSent)
     }
 
   }

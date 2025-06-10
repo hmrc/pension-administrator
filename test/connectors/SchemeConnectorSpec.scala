@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package connectors
 
 import base.JsonFileReader
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import connectors.helper.ConnectorBehaviours
 import models.SchemeReferenceNumber
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -26,8 +26,8 @@ import org.scalatest.{EitherValues, OptionValues, RecoverMethods}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
-import play.api.libs.json._
-import repositories._
+import play.api.libs.json.*
+import repositories.*
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, NotFoundException, UpstreamErrorResponse}
 import utils.WireMockHelper
@@ -41,7 +41,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
   with EitherValues
   with ConnectorBehaviours {
 
-  import SchemeConnectorSpec._
+  import SchemeConnectorSpec.*
 
   override protected def portConfigKeys: String = "microservice.services.pensions-scheme.port"
 
@@ -70,7 +70,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     )
 
     connector.checkForAssociation(Left(psaId), srn) map { response =>
-      response.value shouldBe true
+      response.value.shouldBe(true)
     }
 
   }
@@ -87,7 +87,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     )
 
     connector.checkForAssociation(Left(psaId), srn) map { response =>
-      response.left.value shouldBe a[BadRequestException]
+      response.left.value.shouldBe(a[BadRequestException])
     }
 
   }
@@ -104,7 +104,7 @@ class SchemeConnectorSpec extends AsyncFlatSpec
     )
 
     connector.listOfSchemes map { response =>
-      response.value shouldBe validListOfSchemeResponse
+      response.value.shouldBe(validListOfSchemeResponse)
     }
   }
 
@@ -128,9 +128,9 @@ class SchemeConnectorSpec extends AsyncFlatSpec
           notFound()
         )
     )
-
+    
     connector.listOfSchemes.map { response =>
-      response.left.value shouldBe a[NotFoundException]
+      response.left.value.shouldBe(a[NotFoundException])
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
 import models.SchemeReferenceNumber
 import play.api.Logging
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.domain.{PsaId, PspId}
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import utils.{ErrorHandler, HttpResponseHelper}
 
@@ -59,10 +59,10 @@ class SchemeConnectorImpl @Inject()(httpV2Client: HttpClientV2, config: AppConfi
 
     val headers: Seq[(String, String)] = Seq(id, ("schemeReferenceNumber", srn), ("Content-Type", "application/json"))
     val url = url"${config.checkAssociationUrl}"
-
+                                    
     httpV2Client
       .get(url)
-      .setHeader(headers: _*)
+      .setHeader(headers *)
       .execute[HttpResponse]
       .map { response =>
         response.status match {
@@ -92,7 +92,7 @@ class SchemeConnectorImpl @Inject()(httpV2Client: HttpClientV2, config: AppConfi
 
     httpV2Client
       .get(url)
-      .setHeader(headers: _*)
+      .setHeader(headers *)
       .execute[HttpResponse]
       .map { response =>
         response.status match {
@@ -117,7 +117,7 @@ class SchemeConnectorImpl @Inject()(httpV2Client: HttpClientV2, config: AppConfi
 
     httpV2Client
       .get(url)
-      .setHeader(headers: _*)
+      .setHeader(headers *)
       .execute[HttpResponse]
       .map { response =>
         response.status match {

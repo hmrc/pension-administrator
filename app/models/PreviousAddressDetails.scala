@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package models
 
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.*
 
 case class PreviousAddressDetails(isPreviousAddressLast12Month: Boolean,
                                   address: Option[Address] = None,
@@ -33,13 +33,13 @@ object PreviousAddressDetails {
 
   val psaUpdateWrites: Writes[PreviousAddressDetails] = (
     (JsPath \ "isPreviousAddressLast12Month").write[Boolean] and
-      (JsPath \ "previousAddressDetails").writeNullable[Address](Address.updatePreviousAddressWrites) and
+      (JsPath \ "previousAddressDetails").writeNullable[Address](using Address.updatePreviousAddressWrites) and
       (JsPath \ "changeFlag").write[Boolean]
     ) (previousAddress => (previousAddress.isPreviousAddressLast12Month, previousAddress.address, previousAddress.isChanged.fold(false)(identity)))
 
   val psaUpdateWritesWithNoUpdateFlag: Writes[PreviousAddressDetails] = (
     (JsPath \ "isPreviousAddressLast12Month").write[Boolean] and
-      (JsPath \ "previousAddressDetails").writeNullable[Address](Address.updateWrites)
+      (JsPath \ "previousAddressDetails").writeNullable[Address](using Address.updateWrites)
     ) (previousAddress => (previousAddress.isPreviousAddressLast12Month, previousAddress.address))
 
   def apiReads(typeOfAddressDetail: String): Reads[PreviousAddressDetails] = (

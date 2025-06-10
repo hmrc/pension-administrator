@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import models.OrganisationOrPartner
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.*
 
 
 class OrganisationOrPartnerReadsSpec extends AnyWordSpec with Matchers with OptionValues with PsaSubscriptionDetailsGenerators {
@@ -28,25 +28,25 @@ class OrganisationOrPartnerReadsSpec extends AnyWordSpec with Matchers with Opti
     "validate to a Organisation or Partner Details object" when {
       "we have a name" in {
         forAll(orgOrPartnerDetailsGenerator){
-          orgOrPartner => orgOrPartner.as[OrganisationOrPartner].name mustBe (orgOrPartner \ "name").as[String]
+          orgOrPartner => orgOrPartner.as[OrganisationOrPartner].name.mustBe((orgOrPartner \ "name").as[String])
         }
       }
 
       "we have an optional crnNumber" in {
         forAll(orgOrPartnerDetailsGenerator){
-          orgOrPartner => orgOrPartner.as[OrganisationOrPartner].crn mustBe (orgOrPartner \ "crnNumber").asOpt[String]
+          orgOrPartner => orgOrPartner.as[OrganisationOrPartner].crn.mustBe((orgOrPartner \ "crnNumber").asOpt[String])
         }
       }
 
       "we have an optional vatRegistrationNumber" in {
         forAll(orgOrPartnerDetailsGenerator){
-          orgOrPartner => orgOrPartner.as[OrganisationOrPartner].vatRegistration mustBe (orgOrPartner \ "vatRegistrationNumber").asOpt[String]
+          orgOrPartner => orgOrPartner.as[OrganisationOrPartner].vatRegistration.mustBe((orgOrPartner \ "vatRegistrationNumber").asOpt[String])
         }
       }
 
       "we have an optional payeReference" in {
         forAll(orgOrPartnerDetailsGenerator){
-          orgOrPartner => orgOrPartner.as[OrganisationOrPartner].paye mustBe (orgOrPartner \ "payeReference").asOpt[String]
+          orgOrPartner => orgOrPartner.as[OrganisationOrPartner].paye.mustBe((orgOrPartner \ "payeReference").asOpt[String])
         }
       }
     }

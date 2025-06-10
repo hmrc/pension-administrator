@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@ package repositories
 
 import base.MongoConfig
 import com.typesafe.config.Config
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
+import org.mongodb.scala.{ObservableFuture, SingleObservableFuture}
 import org.mongodb.scala.bson.{BsonDocument, BsonString}
 import org.mongodb.scala.model.Filters
 import org.scalatest.concurrent.ScalaFutures
@@ -34,12 +35,18 @@ import uk.gov.hmrc.mongo.MongoComponent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with Matchers with BeforeAndAfter with
-  BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures with MongoConfig { // scalastyle:off magic.number
+class SessionDataCacheRepositorySpec extends AnyWordSpec
+                                      with MockitoSugar
+                                      with Matchers
+                                      with BeforeAndAfter
+                                      with BeforeAndAfterEach
+                                      with BeforeAndAfterAll
+                                      with ScalaFutures
+                                      with MongoConfig { // scalastyle:off magic.number
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(30, Seconds), Span(1, Millis))
 
-  import SessionDataCacheRepositorySpec._
+  import SessionDataCacheRepositorySpec.*
 
   private val idField: String = "id"
 
@@ -67,7 +74,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -88,9 +95,9 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
-          documentsInDB.head.data mustBe record2._2
-          documentsInDB.head.data must not be record1._2
+          documentsInDB.size `mustBe` 1
+          documentsInDB.head.data.mustBe(record2._2)
+          documentsInDB.head.data.must(not) be record1._2
       }
     }
 
@@ -110,7 +117,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
 
@@ -129,7 +136,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -150,7 +157,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 1
+          documentsInDB.size.mustBe(1)
       }
     }
 
@@ -170,7 +177,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
 
       whenReady(documentsInDB) {
         documentsInDB =>
-          documentsInDB.size mustBe 2
+          documentsInDB.size.mustBe(2)
       }
     }
     "save lastUpdated value as a date" in {
@@ -190,8 +197,8 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       }
 
       whenReady(ftr) { case (stringResults, dateResults) =>
-        stringResults.length mustBe 0
-        dateResults.length mustBe 1
+        stringResults.length `mustBe` 0
+        dateResults.length.mustBe(1)
       }
     }
   }
@@ -210,7 +217,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
 
@@ -227,7 +234,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
   }
@@ -246,7 +253,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
 
@@ -263,7 +270,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
     }
   }
@@ -282,7 +289,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -291,7 +298,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -308,7 +315,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -317,7 +324,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
 
@@ -334,7 +341,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -343,7 +350,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe false
+        documentsInDB2.isDefined.mustBe(false)
       }
     }
 
@@ -360,7 +367,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB
 
       whenReady(documentsInDB) { documentsInDB =>
-        documentsInDB.isDefined mustBe true
+        documentsInDB.isDefined.mustBe(true)
       }
 
       val documentsInDB2 = for {
@@ -369,7 +376,7 @@ class SessionDataCacheRepositorySpec extends AnyWordSpec with MockitoSugar with 
       } yield documentsInDB2
 
       whenReady(documentsInDB2) { documentsInDB2 =>
-        documentsInDB2.isDefined mustBe true
+        documentsInDB2.isDefined.mustBe(true)
       }
     }
   }

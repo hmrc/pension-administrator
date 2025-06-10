@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ object SchemeAuditService {
       case "Individual" =>
         Some(Seq((psaSubscription \ "individualDetails" \ "firstName").asOpt[String],
           (psaSubscription \ "individualDetails" \ "middleName").asOpt[String],
-          (psaSubscription \ "individualDetails" \ "lastName").asOpt[String]).flatten(s => s).mkString(" "))
+          (psaSubscription \ "individualDetails" \ "lastName").asOpt[String]).flatten(using s => s).mkString(" "))
       case "Partnership" => (psaSubscription \ "partnershipDetails" \ "companyName").asOpt[String]
       case "Limited Company" => (psaSubscription \ "businessDetails" \ "companyName").asOpt[String]
       case _ => None

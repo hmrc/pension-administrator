@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ package models.Reads.getPsaDetails
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.libs.json.Reads._
-import play.api.libs.json._
-import utils.JsonTransformations._
+import play.api.libs.json.*
+import play.api.libs.json.Reads.*
+import utils.JsonTransformations.*
 
 class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec with Matchers with OptionValues {
 
-  import CustomerIdentificationDetailsTypeTransformationSpec._
+  import CustomerIdentificationDetailsTypeTransformationSpec.*
 
   lazy val transformedJson: JsObject = individualInputJson.transform(transformer.transformToUserAnswers).asOpt.value
 
@@ -33,54 +33,54 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
     "map correctly into user answers" when {
 
       "we have legal status" in {
-        (transformedJson \ "registrationInfo" \ "legalStatus").as[String] mustBe "Individual"
+        (transformedJson \ "registrationInfo" \ "legalStatus").as[String].mustBe("Individual")
       }
 
       "we have customerType" in {
-        (transformedJson \ "registrationInfo" \ "customerType").as[String] mustBe "UK"
+        (transformedJson \ "registrationInfo" \ "customerType").as[String].mustBe("UK")
       }
 
       "we have idType" in {
-        (transformedJson \ "registrationInfo" \ "idType").as[String] mustBe "NINO"
+        (transformedJson \ "registrationInfo" \ "idType").as[String].mustBe("NINO")
       }
 
       "we don't have idType" in {
         val jsonUpdated = individualInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("customerIdentificationDetails")
           \ Symbol("idType")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "registrationInfo" \ "idType").asOpt[String] mustBe None
+        (transformedJson \ "registrationInfo" \ "idType").asOpt[String].mustBe(None)
       }
 
       "we have idNumber" in {
-        (transformedJson \ "registrationInfo" \ "idNumber").as[String] mustBe "AB123456C"
+        (transformedJson \ "registrationInfo" \ "idNumber").as[String].mustBe("AB123456C")
       }
 
       "we don't have idNumber" in {
         val jsonUpdated = individualInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("customerIdentificationDetails")
           \ Symbol("idNumber")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "registrationInfo" \ "idNumber").asOpt[String] mustBe None
+        (transformedJson \ "registrationInfo" \ "idNumber").asOpt[String].mustBe(None)
       }
     }
-
   }
+
   "individual" must {
     "map correctly into individual user answers" when {
 
       "we have nino" in {
-        (transformedJson \ "individualNino").as[String] mustBe "AB123456C"
+        (transformedJson \ "individualNino").as[String].mustBe("AB123456C")
       }
 
       "we have first name" in {
-        (transformedJson \ "individualDetails" \ "firstName").as[String] mustBe "John"
+        (transformedJson \ "individualDetails" \ "firstName").as[String].mustBe("John")
       }
 
       "we have last name" in {
-        (transformedJson \ "individualDetails" \ "lastName").as[String] mustBe "Doe"
+        (transformedJson \ "individualDetails" \ "lastName").as[String].mustBe("Doe")
       }
 
       "we have middle name" in {
-        (transformedJson \ "individualDetails" \ "middleName").as[String] mustBe "Robert"
+        (transformedJson \ "individualDetails" \ "middleName").as[String].mustBe("Robert")
       }
 
       "we don't have a middle name" in {
@@ -88,41 +88,41 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
           \ Symbol("middleName")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
 
-        (transformedJson \ "individualDetails" \ "middleName").asOpt[String] mustBe None
+        (transformedJson \ "individualDetails" \ "middleName").asOpt[String].mustBe(None)
       }
 
       "we have date of birth" in {
-        (transformedJson \ "individualDateOfBirth").as[String] mustBe "1947-03-29"
+        (transformedJson \ "individualDateOfBirth").as[String].mustBe("1947-03-29")
       }
 
       "we have address line 1" in {
-        (transformedJson \ "individualContactAddress" \ "addressLine1").as[String] mustBe "Flat 4"
+        (transformedJson \ "individualContactAddress" \ "addressLine1").as[String].mustBe("Flat 4")
       }
 
       "we have address line 2" in {
-        (transformedJson \ "individualContactAddress" \ "addressLine2").as[String] mustBe "Central Tower"
+        (transformedJson \ "individualContactAddress" \ "addressLine2").as[String].mustBe("Central Tower")
       }
 
       "we don't have address line 3" in {
         val jsonUpdated = individualInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceAddressDetails")
           \ Symbol("line3")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "individualContactAddress" \ "addressLine3").asOpt[String] mustBe None
+        (transformedJson \ "individualContactAddress" \ "addressLine3").asOpt[String].mustBe(None)
       }
 
       "we have address line 3" in {
-        (transformedJson \ "individualContactAddress" \ "addressLine3").as[String] mustBe "Telford"
+        (transformedJson \ "individualContactAddress" \ "addressLine3").as[String].mustBe("Telford")
       }
 
       "we don't have address line 4" in {
         val jsonUpdated = individualInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceAddressDetails")
           \ Symbol("line4")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "individualContactAddress" \ "addressLine4").asOpt[String] mustBe None
+        (transformedJson \ "individualContactAddress" \ "addressLine4").asOpt[String].mustBe(None)
       }
 
       "we have address line 4" in {
-        (transformedJson \ "individualContactAddress" \ "addressLine4").as[String] mustBe "Shropshire"
+        (transformedJson \ "individualContactAddress" \ "addressLine4").as[String].mustBe("Shropshire")
       }
 
       "we don't have address postal code" in {
@@ -130,38 +130,38 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
 
           \ Symbol("postalCode")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "individualContactAddress" \ "postalCode").asOpt[String] mustBe None
+        (transformedJson \ "individualContactAddress" \ "postalCode").asOpt[String].mustBe(None)
       }
 
       "we have address postal code" in {
-        (transformedJson \ "individualContactAddress" \ "postcode").as[String] mustBe "TF1 4ER"
+        (transformedJson \ "individualContactAddress" \ "postcode").as[String].mustBe("TF1 4ER")
       }
 
       "we have address country code" in {
-        (transformedJson \ "individualContactAddress" \ "country").as[String] mustBe "GB"
+        (transformedJson \ "individualContactAddress" \ "country").as[String].mustBe("GB")
       }
 
       "we have individual address years" in {
-        (transformedJson \ "individualAddressYears").as[String] mustBe "under_a_year"
+        (transformedJson \ "individualAddressYears").as[String].mustBe("under_a_year")
       }
 
       "we have previous address line 1" in {
-        (transformedJson \ "individualPreviousAddress" \ "addressLine1").as[String] mustBe "1 The Avenue"
+        (transformedJson \ "individualPreviousAddress" \ "addressLine1").as[String].mustBe("1 The Avenue")
       }
 
       "we have previous address line 2" in {
-        (transformedJson \ "individualPreviousAddress" \ "addressLine2").as[String] mustBe "Central Park"
+        (transformedJson \ "individualPreviousAddress" \ "addressLine2").as[String].mustBe("Central Park")
       }
 
       "we don't have previous address line 3" in {
         val jsonUpdated = individualInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("previousAddressDetails") \ Symbol("previousAddress")
           \ Symbol("line3")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "individualPreviousAddress" \ "addressLine3").asOpt[String] mustBe None
+        (transformedJson \ "individualPreviousAddress" \ "addressLine3").asOpt[String].mustBe(None)
       }
 
       "we have previous address line 3" in {
-        (transformedJson \ "individualPreviousAddress" \ "addressLine3").as[String] mustBe "Telford"
+        (transformedJson \ "individualPreviousAddress" \ "addressLine3").as[String].mustBe("Telford")
       }
 
       "we don't have previous address line 4" in {
@@ -169,11 +169,11 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
           individualInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("previousAddressDetails") \ Symbol("previousAddress")
             \ Symbol("line4")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "individualPreviousAddress" \ "addressLine4").asOpt[String] mustBe None
+        (transformedJson \ "individualPreviousAddress" \ "addressLine4").asOpt[String].mustBe(None)
       }
 
       "we have previous address line 4" in {
-        (transformedJson \ "individualPreviousAddress" \ "addressLine4").as[String] mustBe "Shrop"
+        (transformedJson \ "individualPreviousAddress" \ "addressLine4").as[String].mustBe("Shrop")
       }
 
       "we don't have previous address postal code" in {
@@ -181,34 +181,34 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
           individualInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("previousAddressDetails") \ Symbol("previousAddress")
             \ Symbol("postalCode")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "individualPreviousAddress" \ "postcode").asOpt[String] mustBe None
+        (transformedJson \ "individualPreviousAddress" \ "postcode").asOpt[String].mustBe(None)
       }
 
       "we have previous address postal code" in {
-        (transformedJson \ "individualPreviousAddress" \ "postcode").as[String] mustBe "TF3 4DC"
+        (transformedJson \ "individualPreviousAddress" \ "postcode").as[String].mustBe("TF3 4DC")
       }
 
       "we have previous address country code" in {
-        (transformedJson \ "individualPreviousAddress" \ "country").as[String] mustBe "GB"
+        (transformedJson \ "individualPreviousAddress" \ "country").as[String].mustBe("GB")
       }
 
       "we have telephone" in {
-        (transformedJson \ "individualContactDetails" \ "phone").as[String] mustBe "0151 6551234 "
+        (transformedJson \ "individualContactDetails" \ "phone").as[String].mustBe("0151 6551234 ")
       }
 
       "we have email" in {
-        (transformedJson \ "individualContactDetails" \ "email").as[String] mustBe "robert@test.com"
+        (transformedJson \ "individualContactDetails" \ "email").as[String].mustBe("robert@test.com")
       }
 
       "we don't have email" in {
         val jsonUpdated = individualInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceContactDetails")
           \ Symbol("email")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "individualContactDetails" \ "email").asOpt[String] mustBe None
+        (transformedJson \ "individualContactDetails" \ "email").asOpt[String].mustBe(None)
       }
 
       "transform the individual input json to user answers" in {
-        transformedJson mustBe expectedIndividualJson
+        transformedJson.mustBe(expectedIndividualJson)
       }
     }
   }
@@ -220,11 +220,11 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
       lazy val transformedJson = companyInputJson.transform(transformer.transformToUserAnswers).asOpt.value
 
       "we have company name" in {
-        (transformedJson \ "businessName").as[String] mustBe "Global Pensions Ltd"
+        (transformedJson \ "businessName").as[String].mustBe("Global Pensions Ltd")
       }
 
       "we have idType UTR we correctly map the UTR number" in {
-        (transformedJson \ "utr").asOpt[String] mustBe Some("0123456789")
+        (transformedJson \ "utr").asOpt[String].mustBe(Some("0123456789"))
       }
 
       "we don't have an idtype of UTR" in {
@@ -233,15 +233,15 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
 
         val idTransformJson = inputWithIdTypeNino.transform(transformer.transformToUserAnswers).asOpt.value
 
-        (idTransformJson \ "utr").asOpt[String] mustBe None
+        (idTransformJson \ "utr").asOpt[String].mustBe(None)
       }
 
       "we have a crn" in {
-        (transformedJson \ "companyRegistrationNumber").as[String] mustBe "AB123456"
+        (transformedJson \ "companyRegistrationNumber").as[String].mustBe("AB123456")
       }
 
       "we have vat" in {
-        (transformedJson \ "vat").as[String] mustBe "123456789"
+        (transformedJson \ "vat").as[String].mustBe("123456789")
       }
 
       "we don't have a vat" in {
@@ -250,83 +250,83 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
             \ Symbol("vatRegistrationNumber")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
 
-        (transformedJson \ "vat").asOpt[String] mustBe None
+        (transformedJson \ "vat").asOpt[String].mustBe(None)
       }
 
       "we have a paye" in {
-        (transformedJson \ "paye").as[String] mustBe "123AB45678"
+        (transformedJson \ "paye").as[String].mustBe("123AB45678")
       }
 
       "we have address line 1" in {
-        (transformedJson \ "companyContactAddress" \ "addressLine1").as[String] mustBe "Flat 4"
+        (transformedJson \ "companyContactAddress" \ "addressLine1").as[String].mustBe("Flat 4")
       }
 
       "we have address line 2" in {
-        (transformedJson \ "companyContactAddress" \ "addressLine2").as[String] mustBe "Central Tower"
+        (transformedJson \ "companyContactAddress" \ "addressLine2").as[String].mustBe("Central Tower")
       }
 
       "we don't have address line 3" in {
         val jsonUpdated = companyInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceAddressDetails")
           \ Symbol("line3")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "companyContactAddress" \ "addressLine3").asOpt[String] mustBe None
+        (transformedJson \ "companyContactAddress" \ "addressLine3").asOpt[String].mustBe(None)
       }
 
       "we have address line 3" in {
-        (transformedJson \ "companyContactAddress" \ "addressLine3").as[String] mustBe "Telford"
+        (transformedJson \ "companyContactAddress" \ "addressLine3").as[String].mustBe("Telford")
       }
 
       "we don't have address line 4" in {
         val jsonUpdated = companyInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceAddressDetails")
           \ Symbol("line4")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "companyContactAddress" \ "addressLine4").asOpt[String] mustBe None
+        (transformedJson \ "companyContactAddress" \ "addressLine4").asOpt[String].mustBe(None)
       }
 
       "we have address line 4" in {
-        (transformedJson \ "companyContactAddress" \ "addressLine4").as[String] mustBe "Shropshire"
+        (transformedJson \ "companyContactAddress" \ "addressLine4").as[String].mustBe("Shropshire")
       }
 
       "we don't have address postal code" in {
         val jsonUpdated = companyInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceAddressDetails")
           \ Symbol("postalCode")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "companyContactAddress" \ "postalCode").asOpt[String] mustBe None
+        (transformedJson \ "companyContactAddress" \ "postalCode").asOpt[String].mustBe(None)
       }
 
       "we have address postal code" in {
-        (transformedJson \ "companyContactAddress" \ "postcode").as[String] mustBe "TF1 4ER"
+        (transformedJson \ "companyContactAddress" \ "postcode").as[String].mustBe("TF1 4ER")
       }
 
       "we have address country code" in {
-        (transformedJson \ "companyContactAddress" \ "country").as[String] mustBe "GB"
+        (transformedJson \ "companyContactAddress" \ "country").as[String].mustBe("GB")
       }
 
       "we have telephone" in {
-        (transformedJson \ "contactDetails" \ "phone").as[String] mustBe "0191 644595 "
+        (transformedJson \ "contactDetails" \ "phone").as[String].mustBe("0191 644595 ")
       }
 
       "we have email" in {
-        (transformedJson \ "contactDetails" \ "email").as[String] mustBe "global.pensions@test.com"
+        (transformedJson \ "contactDetails" \ "email").as[String].mustBe("global.pensions@test.com")
       }
 
       "we don't have email" in {
         val jsonUpdated = companyInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceContactDetails")
           \ Symbol("email")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "contactDetails" \ "email").asOpt[String] mustBe None
+        (transformedJson \ "contactDetails" \ "email").asOpt[String].mustBe(None)
       }
 
       "we have company address years" in {
-        (transformedJson \ "companyAddressYears").as[String] mustBe "under_a_year"
+        (transformedJson \ "companyAddressYears").as[String].mustBe("under_a_year")
       }
 
       "we have previous address line 1" in {
-        (transformedJson \ "companyPreviousAddress" \ "addressLine1").as[String] mustBe "3 Other Place"
+        (transformedJson \ "companyPreviousAddress" \ "addressLine1").as[String].mustBe("3 Other Place")
       }
 
       "we have previous address line 2" in {
-        (transformedJson \ "companyPreviousAddress" \ "addressLine2").as[String] mustBe "Some District"
+        (transformedJson \ "companyPreviousAddress" \ "addressLine2").as[String].mustBe("Some District")
       }
 
       "we don't have previous address line 3" in {
@@ -334,22 +334,22 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
           companyInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("previousAddressDetails") \ Symbol("previousAddress")
             \ Symbol("line3")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "companyPreviousAddress" \ "addressLine3").asOpt[String] mustBe None
+        (transformedJson \ "companyPreviousAddress" \ "addressLine3").asOpt[String].mustBe(None)
       }
 
       "we have previous address line 3" in {
-        (transformedJson \ "companyPreviousAddress" \ "addressLine3").as[String] mustBe "Anytown"
+        (transformedJson \ "companyPreviousAddress" \ "addressLine3").as[String].mustBe("Anytown")
       }
 
       "we don't have previous address line 4" in {
         val jsonUpdated = companyInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("previousAddressDetails") \ Symbol("previousAddress")
           \ Symbol("line4")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "companyPreviousAddress" \ "addressLine4").asOpt[String] mustBe None
+        (transformedJson \ "companyPreviousAddress" \ "addressLine4").asOpt[String].mustBe(None)
       }
 
       "we have previous address line 4" in {
-        (transformedJson \ "companyPreviousAddress" \ "addressLine4").as[String] mustBe "Somerset"
+        (transformedJson \ "companyPreviousAddress" \ "addressLine4").as[String].mustBe("Somerset")
       }
 
       "we don't have previous address postal code" in {
@@ -357,24 +357,24 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
           companyInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("previousAddressDetails") \ Symbol("previousAddress")
             \ Symbol("postalCode")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "companyPreviousAddress" \ "postcode").asOpt[String] mustBe None
+        (transformedJson \ "companyPreviousAddress" \ "postcode").asOpt[String].mustBe(None)
       }
 
       "we have previous address postal code" in {
-        (transformedJson \ "companyPreviousAddress" \ "postcode").as[String] mustBe "MN21 EF"
+        (transformedJson \ "companyPreviousAddress" \ "postcode").as[String].mustBe("MN21 EF")
       }
 
       "we have previous address country code" in {
-        (transformedJson \ "companyPreviousAddress" \ "country").as[String] mustBe "GB"
+        (transformedJson \ "companyPreviousAddress" \ "country").as[String].mustBe("GB")
       }
 
       "we have directors" in {
-        (transformedJson \ "directors" \ 0 \ "directorDetails" \ "firstName").as[String] mustBe
-          (expectedCompanyJson \ "directors" \ 0 \ "directorDetails" \ "firstName").as[String]
+        (transformedJson \ "directors" \ 0 \ "directorDetails" \ "firstName")
+          .as[String].mustBe((expectedCompanyJson \ "directors" \ 0 \ "directorDetails" \ "firstName").as[String])
       }
 
       "transform the input json to user answers" in {
-        transformedJson mustBe expectedCompanyJson
+        transformedJson.mustBe(expectedCompanyJson)
       }
     }
   }
@@ -386,11 +386,11 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
       lazy val transformedJson = partnershipInputJson.transform(transformer.transformToUserAnswers).asOpt.value
 
       "we have partnership name" in {
-        (transformedJson \ "businessName").as[String] mustBe "Acme Partnership"
+        (transformedJson \ "businessName").as[String].mustBe("Acme Partnership")
       }
 
       "we have idType UTR we correctly map the UTR number" in {
-        (transformedJson \ "utr").asOpt[String] mustBe Some("0123456789")
+        (transformedJson \ "utr").asOpt[String].mustBe(Some("0123456789"))
       }
 
       "we don't have an idtype of UTR" in {
@@ -399,60 +399,60 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
 
         val idTransformJson = inputWithIdTypeNino.transform(transformer.transformToUserAnswers).asOpt.value
 
-        (idTransformJson \ "partnershipDetails" \ "uniqueTaxReferenceNumber").asOpt[String] mustBe None
+        (idTransformJson \ "partnershipDetails" \ "uniqueTaxReferenceNumber").asOpt[String].mustBe(None)
       }
 
       "we have a paye" in {
-        (transformedJson \ "paye").as[String] mustBe "123AB45678"
+        (transformedJson \ "paye").as[String].mustBe("123AB45678")
       }
 
       "we have address line 1" in {
-        (transformedJson \ "partnershipContactAddress" \ "addressLine1").as[String] mustBe "Flat 1"
+        (transformedJson \ "partnershipContactAddress" \ "addressLine1").as[String].mustBe("Flat 1")
       }
 
       "we have address line 2" in {
-        (transformedJson \ "partnershipContactAddress" \ "addressLine2").as[String] mustBe "Waterloo House"
+        (transformedJson \ "partnershipContactAddress" \ "addressLine2").as[String].mustBe("Waterloo House")
       }
 
       "we don't have address line 3" in {
         val jsonUpdated = partnershipInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceAddressDetails")
           \ Symbol("line3")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "partnershipContactAddress" \ "addressLine3").asOpt[String] mustBe None
+        (transformedJson \ "partnershipContactAddress" \ "addressLine3").asOpt[String].mustBe(None)
       }
 
       "we have address line 3" in {
-        (transformedJson \ "partnershipContactAddress" \ "addressLine3").as[String] mustBe "Newcastle"
+        (transformedJson \ "partnershipContactAddress" \ "addressLine3").as[String].mustBe("Newcastle")
       }
 
       "we don't have address line 4" in {
         val jsonUpdated = partnershipInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceAddressDetails")
           \ Symbol("line4")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "partnershipContactAddress" \ "addressLine4").asOpt[String] mustBe None
+        (transformedJson \ "partnershipContactAddress" \ "addressLine4").asOpt[String].mustBe(None)
       }
 
       "we have address line 4" in {
-        (transformedJson \ "partnershipContactAddress" \ "addressLine4").as[String] mustBe "Tyne and Wear"
+        (transformedJson \ "partnershipContactAddress" \ "addressLine4").as[String].mustBe("Tyne and Wear")
       }
 
       "we don't have address postal code" in {
         val jsonUpdated = partnershipInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceAddressDetails")
           \ Symbol("postalCode")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "partnershipContactAddress" \ "postalCode").asOpt[String] mustBe None
+        (transformedJson \ "partnershipContactAddress" \ "postalCode").asOpt[String].mustBe(None)
       }
 
       "we have address postal code" in {
-        (transformedJson \ "partnershipContactAddress" \ "postcode").as[String] mustBe "NE1 4ER"
+        (transformedJson \ "partnershipContactAddress" \ "postcode").as[String].mustBe("NE1 4ER")
       }
 
       "we have address country code" in {
-        (transformedJson \ "partnershipContactAddress" \ "country").as[String] mustBe "GB"
+        (transformedJson \ "partnershipContactAddress" \ "country").as[String].mustBe("GB")
       }
 
       "we have telephone" in {
-        (transformedJson \ "partnershipContactDetails" \ "phone").as[String] mustBe "0191 644595 "
+        (transformedJson \ "partnershipContactDetails" \ "phone").as[String].mustBe("0191 644595 ")
       }
 
       "we have email" in {
@@ -463,19 +463,19 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
         val jsonUpdated = partnershipInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("correspondenceContactDetails")
           \ Symbol("email")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "partnershipContactDetails" \ "email").asOpt[String] mustBe None
+        (transformedJson \ "partnershipContactDetails" \ "email").asOpt[String].mustBe(None)
       }
 
       "we have partnership address years" in {
-        (transformedJson \ "partnershipAddressYears").as[String] mustBe "under_a_year"
+        (transformedJson \ "partnershipAddressYears").as[String].mustBe("under_a_year")
       }
 
       "we have previous address line 1" in {
-        (transformedJson \ "partnershipPreviousAddress" \ "addressLine1").as[String] mustBe "3 Other Place"
+        (transformedJson \ "partnershipPreviousAddress" \ "addressLine1").as[String].mustBe("3 Other Place")
       }
 
       "we have previous address line 2" in {
-        (transformedJson \ "partnershipPreviousAddress" \ "addressLine2").as[String] mustBe "Some District"
+        (transformedJson \ "partnershipPreviousAddress" \ "addressLine2").as[String].mustBe("Some District")
       }
 
       "we don't have previous address line 3" in {
@@ -483,22 +483,22 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
           partnershipInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("previousAddressDetails")
             \ Symbol("previousAddress") \ Symbol("line3")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "partnershipPreviousAddress" \ "addressLine3").asOpt[String] mustBe None
+        (transformedJson \ "partnershipPreviousAddress" \ "addressLine3").asOpt[String].mustBe(None)
       }
 
       "we have previous address line 3" in {
-        (transformedJson \ "partnershipPreviousAddress" \ "addressLine3").as[String] mustBe "Anytown"
+        (transformedJson \ "partnershipPreviousAddress" \ "addressLine3").as[String].mustBe("Anytown")
       }
 
       "we don't have previous address line 4" in {
         val jsonUpdated = partnershipInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("previousAddressDetails")
           \ Symbol("previousAddress") \ Symbol("line4")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "partnershipPreviousAddress" \ "addressLine4").asOpt[String] mustBe None
+        (transformedJson \ "partnershipPreviousAddress" \ "addressLine4").asOpt[String].mustBe(None)
       }
 
       "we have previous address line 4" in {
-        (transformedJson \ "partnershipPreviousAddress" \ "addressLine4").as[String] mustBe "Somerset"
+        (transformedJson \ "partnershipPreviousAddress" \ "addressLine4").as[String].mustBe("Somerset")
       }
 
       "we don't have previous address postal code" in {
@@ -506,24 +506,25 @@ class CustomerIdentificationDetailsTypeTransformationSpec extends AnyWordSpec wi
           partnershipInputJson.transform((__ \ Symbol("psaSubscriptionDetails") \ Symbol("previousAddressDetails")
             \ Symbol("previousAddress") \ Symbol("postalCode")).json.prune).asOpt.value
         val transformedJson = jsonUpdated.transform(transformer.transformToUserAnswers).asOpt.value
-        (transformedJson \ "partnershipPreviousAddress" \ "postcode").asOpt[String] mustBe None
+        (transformedJson \ "partnershipPreviousAddress" \ "postcode").asOpt[String].mustBe(None)
       }
 
       "we have previous address postal code" in {
-        (transformedJson \ "partnershipPreviousAddress" \ "postcode").as[String] mustBe "MN21 EF"
+        (transformedJson \ "partnershipPreviousAddress" \ "postcode").as[String].mustBe("MN21 EF")
       }
 
       "we have previous address country code" in {
-        (transformedJson \ "partnershipPreviousAddress" \ "country").as[String] mustBe "GB"
+        (transformedJson \ "partnershipPreviousAddress" \ "country").as[String].mustBe("GB")
       }
 
       "we have partners" in {
-        (transformedJson \ "partners" \ 0 \ "partnerDetails" \ "firstName").as[String] mustBe
+        (transformedJson \ "partners" \ 0 \ "partnerDetails" \ "firstName").as[String].mustBe(
           (expectedPartnershipJson \ "partners" \ 0 \ "partnerDetails" \ "firstName").as[String]
+        )
       }
 
       "transform the input json to user answers" in {
-        transformedJson mustBe expectedPartnershipJson
+        transformedJson.mustBe(expectedPartnershipJson)
       }
     }
   }
@@ -546,7 +547,7 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
     adviserTransformer,
     individualTransformer)
 
-  val partnershipInputJson: JsValue = Json.parse(
+  lazy val partnershipInputJson: JsValue = Json.parse(
     """
       {
    "processingDate":"2001-12-17T09:30:47Z",
@@ -635,7 +636,7 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
     """
   )
 
-  val expectedPartnershipJson: JsValue = Json.parse(
+  lazy val expectedPartnershipJson: JsValue = Json.parse(
     """{
               "businessName" : "Acme Partnership",
               "utr" : "0123456789",
@@ -716,7 +717,7 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
           }"""
   )
 
-  val expectedCompanyJson: JsValue = Json.parse(
+  lazy val expectedCompanyJson: JsValue = Json.parse(
     """{
           "businessName" : "Global Pensions Ltd",
           "utr" : "0123456789",
@@ -791,7 +792,7 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
         }"""
   )
 
-  val companyInputJson: JsValue = Json.parse(
+  lazy val companyInputJson: JsValue = Json.parse(
     """{
         "processingDate": "2001-12-17T09:30:47Z",
         "psaSubscriptionDetails": {
@@ -872,7 +873,7 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
       }"""
   )
 
-  val individualInputJson: JsValue = Json.parse(
+  lazy val individualInputJson: JsValue = Json.parse(
     """{
         "processingDate": "2017-12-17T09:30:47Z",
         "psaSubscriptionDetails": {
@@ -945,7 +946,7 @@ object CustomerIdentificationDetailsTypeTransformationSpec {
       }
       """)
 
-  val expectedIndividualJson: JsValue = Json.parse(
+  lazy val expectedIndividualJson: JsValue = Json.parse(
     """
      {
      "areYouInUK" : true,

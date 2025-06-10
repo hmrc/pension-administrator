@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package models.Reads
 
-import models.{Samples, Reads => _, _}
+import models.{Samples, Reads as _, *}
 import org.scalatest.OptionValues
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.libs.json._
+import play.api.libs.json.*
 
 class PensionAdvisorDetailsReadsSpec extends AnyWordSpec with Matchers with OptionValues with Samples {
 
@@ -32,21 +32,21 @@ class PensionAdvisorDetailsReadsSpec extends AnyWordSpec with Matchers with Opti
           "postalCode" -> JsString("NE1"), "countryCode" -> JsString("GB")))
 
       "We have a name" in {
-        val result = input.as[Option[PensionAdvisorDetail]](PensionAdvisorDetail.apiReads)
+        val result = input.as[Option[PensionAdvisorDetail]](using PensionAdvisorDetail.apiReads)
 
-        result.value.name mustBe pensionAdviserSample.name
+        result.value.name.mustBe(pensionAdviserSample.name)
       }
 
       "We have an address" in {
-        val result = input.as[Option[PensionAdvisorDetail]](PensionAdvisorDetail.apiReads)
+        val result = input.as[Option[PensionAdvisorDetail]](using PensionAdvisorDetail.apiReads)
 
-        result.value.addressDetail mustBe pensionAdviserSample.addressDetail
+        result.value.addressDetail.mustBe(pensionAdviserSample.addressDetail)
       }
 
       "We have adviser contact details" in {
-        val result = input.as[Option[PensionAdvisorDetail]](PensionAdvisorDetail.apiReads)
+        val result = input.as[Option[PensionAdvisorDetail]](using PensionAdvisorDetail.apiReads)
 
-        result.value.contactDetail mustBe pensionAdviserSample.contactDetail
+        result.value.contactDetail.mustBe(pensionAdviserSample.contactDetail)
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ class DesConnectorSpec extends AsyncFlatSpec
         )
     )
     connector.registerPSA(PSASubscriptionFixture.registerPSAValidPayload).map {
-      _.value shouldBe registerPsaResponseJson
+      _.value.shouldBe(registerPsaResponseJson)
     }
   }
 
@@ -134,7 +134,7 @@ class DesConnectorSpec extends AsyncFlatSpec
         withRequestBody(equalToJson(Json.stringify(PSASubscriptionFixture.psaVariation))).
         willReturn(ok(Json.stringify(updatePSAResponse)).withHeader("Content-Type", "application/Json")))
     connector.updatePSA(psaId.id, PSASubscriptionFixture.psaVariation).map {
-      _.value shouldBe updatePSAResponse
+      _.value.shouldBe(updatePSAResponse)
     }
   }
 
@@ -161,11 +161,11 @@ class DesConnectorSpec extends AsyncFlatSpec
         )
     )
     connector.removePSA(removePsaDataModel).map { response =>
-      response.value shouldBe successResponse
+      response.value.shouldBe(successResponse)
 
       val expectedAuditEvent = PSARemovalFromSchemeAuditEvent(PsaToBeRemovedFromScheme(
         removePsaDataModel.psaId, removePsaDataModel.pstr, removePsaDataModel.removalDate))
-      auditService.verifySent(expectedAuditEvent) shouldBe true
+      auditService.verifySent(expectedAuditEvent).shouldBe(true)
 
     }
   }
@@ -181,8 +181,8 @@ class DesConnectorSpec extends AsyncFlatSpec
     )
     connector.removePSA(removePsaDataModel).map {
       response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_CORRELATION_ID")
+        response.left.value.shouldBe(a[BadRequestException])
+        response.left.value.message.should(include("INVALID_CORRELATION_ID"))
     }
   }
 
@@ -197,8 +197,8 @@ class DesConnectorSpec extends AsyncFlatSpec
     )
     connector.removePSA(removePsaDataModel).map {
       response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_PSTR")
+        response.left.value.shouldBe(a[BadRequestException])
+        response.left.value.message.should(include("INVALID_PSTR"))
     }
   }
 
@@ -213,8 +213,8 @@ class DesConnectorSpec extends AsyncFlatSpec
     )
     connector.removePSA(removePsaDataModel).map {
       response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_PSAID")
+        response.left.value.shouldBe(a[BadRequestException])
+        response.left.value.message.should(include("INVALID_PSAID"))
     }
   }
 
@@ -231,8 +231,8 @@ class DesConnectorSpec extends AsyncFlatSpec
 
     connector.removePSA(removePsaDataModel).map {
       response =>
-        response.left.value shouldBe a[BadRequestException]
-        response.left.value.message should include("INVALID_PAYLOAD")
+        response.left.value.shouldBe(a[BadRequestException])
+        response.left.value.message.should(include("INVALID_PAYLOAD"))
     }
   }
 
@@ -248,8 +248,8 @@ class DesConnectorSpec extends AsyncFlatSpec
 
     connector.removePSA(removePsaDataModel).map {
       response =>
-        response.left.value shouldBe a[ForbiddenException]
-        response.left.value.message should include("NO_RELATIONSHIP_EXISTS")
+        response.left.value.shouldBe(a[ForbiddenException])
+        response.left.value.message.should(include("NO_RELATIONSHIP_EXISTS"))
     }
   }
 
@@ -265,8 +265,8 @@ class DesConnectorSpec extends AsyncFlatSpec
 
     connector.removePSA(removePsaDataModel).map {
       response =>
-        response.left.value shouldBe a[ForbiddenException]
-        response.left.value.message should include("NO_OTHER_ASSOCIATED_PSA")
+        response.left.value.shouldBe(a[ForbiddenException])
+        response.left.value.message.should(include("NO_OTHER_ASSOCIATED_PSA"))
     }
   }
 
@@ -282,8 +282,8 @@ class DesConnectorSpec extends AsyncFlatSpec
 
     connector.removePSA(removePsaDataModel).map {
       response =>
-        response.left.value shouldBe a[ForbiddenException]
-        response.left.value.message should include("FUTURE_CEASE_DATE")
+        response.left.value.shouldBe(a[ForbiddenException])
+        response.left.value.message.should(include("FUTURE_CEASE_DATE"))
     }
   }
 
@@ -299,8 +299,8 @@ class DesConnectorSpec extends AsyncFlatSpec
 
     connector.removePSA(removePsaDataModel).map {
       response =>
-        response.left.value shouldBe a[ForbiddenException]
-        response.left.value.message should include("PSAID_NOT_ACTIVE")
+        response.left.value.shouldBe(a[ForbiddenException])
+        response.left.value.message.should(include("PSAID_NOT_ACTIVE"))
     }
   }
 
@@ -316,8 +316,8 @@ class DesConnectorSpec extends AsyncFlatSpec
     )
     connector.removePSA(removePsaDataModel).map {
       response =>
-        response.left.value shouldBe a[ConflictException]
-        response.left.value.message should include("DUPLICATE_SUBMISSION")
+        response.left.value.shouldBe(a[ConflictException])
+        response.left.value.message.should(include("DUPLICATE_SUBMISSION"))
     }
   }
 

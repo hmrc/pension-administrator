@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package utils.JsonTransformations
 
 import com.google.inject.Inject
 import play.api.libs.functional.syntax._
-import play.api.libs.json.Reads._
+import play.api.libs.json.Reads.JsObjectReducer
 import play.api.libs.json._
 
 import scala.language.postfixOps
@@ -66,16 +66,16 @@ class DirectorOrPartnerTransformer @Inject()(addressTransformer: AddressTransfor
     addressTransformer.getAddressYears(addressYearsPath = __ \ s"${directorOrPartner}AddressYears") and
     addressTransformer.getPreviousAddress(__ \ s"${directorOrPartner}PreviousAddress") reduce
 
-  def getDirectorsOrPartners(directorOrPartner: String): Reads[JsArray] = __.read(Reads.seq(getDirectorOrPartner(directorOrPartner))).map(JsArray(_))
+  def getDirectorsOrPartners(directorOrPartner: String): Reads[JsArray] = __.read(using Reads.seq(using getDirectorOrPartner(directorOrPartner))).map(JsArray(_))
 
   val getDirectorsOrPartners: Reads[JsObject] = {
     (__ \ "psaSubscriptionDetails" \ "customerIdentificationDetails" \ "legalStatus").read[String].flatMap {
       case "Limited Company" => (__ \ Symbol("directors")).json.copyFrom((__ \ Symbol("psaSubscriptionDetails") \ Symbol("directorOrPartnerDetails"))
-        .read(getDirectorsOrPartners("director"))) and
+        .read(using getDirectorsOrPartners("director"))) and
         ((__ \ Symbol("moreThanTenDirectors")).json
           .copyFrom((__ \ Symbol("psaSubscriptionDetails") \ Symbol("numberOfDirectorsOrPartnersDetails") \ Symbol("isMorethanTenDirectors")).json.pick) orElse doNothing) reduce
       case "Partnership" => (__ \ Symbol("partners")).json.copyFrom((__ \ Symbol("psaSubscriptionDetails") \ Symbol("directorOrPartnerDetails"))
-        .read(getDirectorsOrPartners("partner"))) and
+        .read(using getDirectorsOrPartners("partner"))) and
         ((__ \ Symbol("moreThanTenPartners")).json
           .copyFrom((__ \ Symbol("psaSubscriptionDetails") \ Symbol("numberOfDirectorsOrPartnersDetails") \ Symbol("isMorethanTenPartners")).json.pick) orElse doNothing) reduce
       case _ => doNothing
