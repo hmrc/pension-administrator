@@ -48,6 +48,8 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
     )
   private val authConnector: AuthConnector = mock[AuthConnector]
 
+  
+  
   "EmailResponseController" must {
 
     "respond OK when given EmailEvents" which {

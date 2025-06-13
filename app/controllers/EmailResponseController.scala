@@ -55,7 +55,8 @@ class EmailResponseController @Inject()(
             }
           )
 
-        case Left(result) => result
+        case Left(result) =>
+          result
       }
   }
 
