@@ -22,11 +22,16 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 import play.api.Application
 import play.api.inject.Injector
 import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
+import play.api.libs.ws.{WSClient, WSRequest}
 
 trait WireMockHelper extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
 
+  lazy val ws: WSClient = app.injector.instanceOf(classOf[WSClient])
+
   protected val server: WireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
+  
+  lazy val wireMockPort: Int = server.port
 
   protected def portConfigKeys: String
 
@@ -57,5 +62,9 @@ trait WireMockHelper extends BeforeAndAfterAll with BeforeAndAfterEach {
     super.afterAll()
     server.stop()
   }
+
+  def buildClient(uri: String, port: Int = server.port()): WSRequest = ws
+    .url(s"http://localhost:$port$uri")
+    .withFollowRedirects(false)
 
 }
