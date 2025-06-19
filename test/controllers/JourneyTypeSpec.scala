@@ -50,11 +50,16 @@ class JourneyTypeSpec
       binder.bind("journeyType", "invalid").mustBe(Left("Invalid JourneyType"))
     }
 
-    "unbind values correctly" in {
-      binder.unbind("journeyType", JourneyType.PSA).mustBe("PSA")
-      binder.unbind("journeyType", JourneyType.INVITE).mustBe("PSAInvite")
-      binder.unbind("journeyType", JourneyType.VARIATION).mustBe("Variation")
+    List(
+      ("PSA", JourneyType.PSA),
+      ("PSAInvite", JourneyType.INVITE),
+      ("Variation", JourneyType.VARIATION)
+    ).foreach {
+      (jtValue, jt) =>
+      s"unbind $jt correctly as $jtValue" in {
+        val result = binder.unbind("journeyType", jt)
+        result.mustBe(jtValue)
+      }
     }
   }
 }
-

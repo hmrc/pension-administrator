@@ -26,7 +26,7 @@ object JourneyType extends Enumeration {
 
   implicit val pathBindable: PathBindable[Name] = new PathBindable[Name] {
     override def bind(key: String, value: String): Either[String, Name] =
-      value.toUpperCase() match {
+      value.toUpperCase match {
         case "PSA" | "PSAID" => Right(PSA)
         case "PSAINVITE" => Right(INVITE)
         case "VARIATION" => Right(VARIATION)
