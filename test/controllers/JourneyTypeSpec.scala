@@ -48,6 +48,8 @@ class JourneyTypeSpec
 
       "unbind values correctly" in {
         binder.unbind("journeyType", JourneyType.PSA).mustBe("PSA")
+        binder.unbind("journeyType", JourneyType.INVITE).mustBe("PSAInvite")
+        binder.unbind("journeyType", JourneyType.VARIATION).mustBe("Variation")
       }
     }
 }
