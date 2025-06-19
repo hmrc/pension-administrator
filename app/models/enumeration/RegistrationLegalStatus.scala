@@ -20,8 +20,8 @@ object RegistrationLegalStatus extends Enumeration {
 
   sealed case class TypeValue(name: String) extends Val(name)
 
-  val Individual = TypeValue("Individual")
-  val Company = TypeValue("Limited Company")
-  val Partnership = TypeValue("Partnership")
+  val Individual: TypeValue = TypeValue("Individual")
+  val Company: TypeValue = TypeValue("Limited Company")
+  val Partnership: TypeValue = TypeValue("Partnership")
 
 }
