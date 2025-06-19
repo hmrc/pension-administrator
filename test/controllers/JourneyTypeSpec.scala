@@ -33,24 +33,28 @@ class JourneyTypeSpec
 
   val binder: PathBindable[JourneyType.Name] = implicitly
 
-    "JourneyType PathBindable" should {
-      "bind valid journey types" in {
-        binder.bind("journeyType", "PSA").mustBe(Right(JourneyType.PSA))
-        binder.bind("journeyType", "psa").mustBe(Right(JourneyType.PSA))
-        binder.bind("journeyType", "PSAid").mustBe(Right(JourneyType.PSA))
-        binder.bind("journeyType", "PSAInvite").mustBe(Right(JourneyType.INVITE))
-        binder.bind("journeyType", "variation").mustBe(Right(JourneyType.VARIATION))
-      }
-
-      "fail to bind invalid journey types" in {
-        binder.bind("journeyType", "invalid").mustBe(Left("Invalid JourneyType"))
-      }
-
-      "unbind values correctly" in {
-        binder.unbind("journeyType", JourneyType.PSA).mustBe("PSA")
-        binder.unbind("journeyType", JourneyType.INVITE).mustBe("PSAInvite")
-        binder.unbind("journeyType", JourneyType.VARIATION).mustBe("Variation")
-      }
+  "JourneyType PathBindable" should {
+    List(
+      ("PSA", JourneyType.PSA),
+      ("PSAid", JourneyType.PSA),
+      ("PSAInvite", JourneyType.INVITE),
+      ("variation", JourneyType.VARIATION)
+    ).foreach {
+      (jtValue, jt) =>
+        s"bind $jtValue to valid JourneyType - ${jt.toString}" in {
+          binder.bind("journeyType", s"$jtValue").mustBe(Right(jt))
+        }
     }
+
+    "fail to bind invalid journey types" in {
+      binder.bind("journeyType", "invalid").mustBe(Left("Invalid JourneyType"))
+    }
+
+    "unbind values correctly" in {
+      binder.unbind("journeyType", JourneyType.PSA).mustBe("PSA")
+      binder.unbind("journeyType", JourneyType.INVITE).mustBe("PSAInvite")
+      binder.unbind("journeyType", JourneyType.VARIATION).mustBe("Variation")
+    }
+  }
 }
 
