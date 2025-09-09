@@ -24,11 +24,10 @@ object AppDependencies {
 
   private val compile: Seq[ModuleID] = Seq(
     ws,
-    "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.19.0",
+    "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.20.0",
     "uk.gov.hmrc.mongo"             %% "hmrc-mongo-play-30"         % mongoVersion,
-    "com.typesafe.play"             %% "play-json"                  % "2.10.6",
     "uk.gov.hmrc"                   %% "bootstrap-backend-play-30"  % bootstrapVersion,
-    "com.networknt"                 %  "json-schema-validator"      % "1.5.7",
+    "com.networknt"                 %  "json-schema-validator"      % "1.5.8",
     "uk.gov.hmrc"                   %% "domain-play-30"             % "10.0.0"
   )
 
@@ -38,7 +37,7 @@ object AppDependencies {
     "org.scalatest"           %% "scalatest"                  % "3.2.19",
     "org.scalatestplus"       %% "scalacheck-1-17"            % "3.2.18.0",
     "org.scalatestplus"       %% "mockito-4-6"                % "3.2.15.0",
-    "org.scalatestplus.play"  %% "scalatestplus-play"         % "7.0.1",
+    "org.scalatestplus.play"  %% "scalatestplus-play"         % "7.0.2",
     "io.github.wolfendale"    %% "scalacheck-gen-regexp"      % "1.1.0"
   ).map(_ % Test)
 
