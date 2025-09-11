@@ -26,7 +26,7 @@ class Bindings extends Module {
 
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[?]] = {
     Seq(
-      bind[DropMongoCollections].toSelf,
+      bind[DropMongoCollections].toSelf.eagerly(),
       bind[ApplicationCrypto].toProvider[ApplicationCryptoProvider]
     )
   }

@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import play.api.{Configuration, Logging}
 import uk.gov.hmrc.mongo.MongoComponent
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class DropMongoCollections @Inject()(
   mongoComponent: MongoComponent,
@@ -28,45 +28,45 @@ class DropMongoCollections @Inject()(
 )(implicit ec: ExecutionContext)
   extends Logging {
 
-  private def collectionNamesToDrop: Seq[String] =
-    configuration.getOptional[Seq[String]]("mongodb.collections-to-drop").getOrElse(Seq.empty[String])
+  val collectionNamesToDrop: Seq[String] =
+    Seq("toggle-data", "admin-data")
 
-  private def filteredCollectionNames: Future[Seq[Option[String]]] =
-    if (collectionNamesToDrop.isEmpty) {
-      logger.info("collectionNamesToDrop empty")
+  if (configuration.getOptional[Boolean]("mongodb.drop-unused-collections").getOrElse(false)) {
+    logger.info("mongodb.drop-unused-collections: true")
 
-      Future.successful(Seq(None))
-    } else {
-      mongoComponent.database.listCollectionNames().collect().head().map {
-        existingCollectionNames =>
-          collectionNamesToDrop.map {
-            collectionNameToDrop =>
-              existingCollectionNames.find(p => p.equals(collectionNameToDrop))
-          }
-      }
-    }
+    mongoComponent
+      .database
+      .listCollectionNames()
+      .collect()
+      .head()
+      .map { existingCollectionNames =>
+        collectionNamesToDrop.flatMap {
+          collectionNameToDrop =>
+            existingCollectionNames.filter(_.equals(collectionNameToDrop))
+        }
+      }.map { filteredCollectionNames =>
+        logger.info(s"collections matched from listCollectionNames: ${
+          if (filteredCollectionNames.nonEmpty) filteredCollectionNames.mkString(", ") else "0"
+        }")
 
-  private def dropCollections: Future[Unit] =
-    filteredCollectionNames.map {
-      collectionNames =>
-        if (collectionNames.flatten.nonEmpty) {
-          logger.info(s"collections to drop: ${collectionNames.flatten.mkString(", ")}")
+        filteredCollectionNames.foreach {
+          collectionName =>
+            logger.info(s"dropping $collectionName...")
 
-          collectionNames.flatten.foreach {
-            collectionName =>
-              logger.info(s"dropping $collectionName...")
-
-              mongoComponent.database.getCollection(collectionName).drop().headOption().map {
+            mongoComponent
+              .database
+              .getCollection(collectionName)
+              .drop()
+              .headOption()
+              .map {
                 case Some(_) =>
                   logger.info(s"$collectionName dropped")
                 case _ =>
                   logger.info(s"$collectionName not dropped")
               }
-          }
-        } else {
-          Future.unit
         }
-    }
-
-  dropCollections
+      }
+  } else {
+    logger.info("mongodb.drop-unused-collections: false")
+  }
 }

@@ -19,7 +19,6 @@ package repositories
 import org.apache.pekko.util.Timeout
 import org.mockito.Mockito.when
 import org.mongodb.scala.SingleObservableFuture
-import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
@@ -37,8 +36,7 @@ class DropMongoCollectionsSpec
     with GuiceOneAppPerSuite
     with CleanMongoCollectionSupport
     with Matchers
-    with MockitoSugar
-    with IntegrationPatience {
+    with MockitoSugar {
 
   implicit val timeout: Timeout =
     Timeout(patienceConfig.timeout)
@@ -46,17 +44,18 @@ class DropMongoCollectionsSpec
   val mockConfig: Configuration =
     mock[Configuration]
 
-  val collectionsToDrop: Seq[String] =
-    Seq("col1", "col2", "not found col")
-
   def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .overrides(bind[DropMongoCollections].toInstance(new DropMongoCollections(mongoComponent, mockConfig)))
+    new GuiceApplicationBuilder().overrides(
+      bind[DropMongoCollections].toInstance(
+        new DropMongoCollections(mongoComponent, mockConfig) {
+          override val collectionNamesToDrop = Seq("col1", "col2", "not found col")
+        }
+      )
+    )
 
   "DropMongoCollections" must {
-    "only drop collections returned from config" in {
-      when(mockConfig.getOptional[Seq[String]]("mongodb.collections-to-drop"))
-        .thenReturn(Some(collectionsToDrop))
+    "drop only collections found in listCollectionNames when true returned from config" in {
+      when(mockConfig.getOptional[Boolean]("mongodb.drop-unused-collections")).thenReturn(Some(true))
 
       Seq("col1", "col2", "col3").foreach { collectionName =>
         mongoDatabase.createCollection(collectionName).toFuture().futureValue
@@ -81,31 +80,33 @@ class DropMongoCollectionsSpec
       }
     }
 
-    "not drop collections when nothing returned from config" in {
-      when(mockConfig.getOptional[Seq[String]]("mongodb.collections-to-drop"))
-        .thenReturn(None)
+    Seq(None, Some(false)).foreach { configValue =>
+      s"not drop collections when $configValue returned from config" in {
+        when(mockConfig.getOptional[Boolean]("mongodb.drop-unused-collections")).thenReturn(configValue)
 
-      Seq("col4", "col5", "col6").foreach { collectionName =>
-        mongoDatabase.createCollection(collectionName).toFuture().futureValue
-      }
+        Seq("col4", "col5", "col6").foreach { collectionName =>
+          mongoDatabase.createCollection(collectionName).toFuture().futureValue
+        }
 
-      mongoDatabase.listCollectionNames().collect().toFuture().map {
-        collectionNames =>
-          collectionNames.length mustBe 3
-          collectionNames.contains("col4") mustBe true
-          collectionNames.contains("col5") mustBe true
-          collectionNames.contains("col6") mustBe true
-      }
-
-      running(appBuilder.build()) {
-        whenReady(mongoDatabase.listCollectionNames().collect().toFuture()) {
+        mongoDatabase.listCollectionNames().collect().toFuture().map {
           collectionNames =>
             collectionNames.length mustBe 3
             collectionNames.contains("col4") mustBe true
             collectionNames.contains("col5") mustBe true
             collectionNames.contains("col6") mustBe true
         }
+
+        running(appBuilder.build()) {
+          whenReady(mongoDatabase.listCollectionNames().collect().toFuture()) {
+            collectionNames =>
+              collectionNames.length mustBe 3
+              collectionNames.contains("col4") mustBe true
+              collectionNames.contains("col5") mustBe true
+              collectionNames.contains("col6") mustBe true
+          }
+        }
       }
     }
+
   }
 }
