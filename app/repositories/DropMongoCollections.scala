@@ -40,11 +40,9 @@ class DropMongoCollections @Inject()(
       .collect()
       .head()
       .map { existingCollectionNames =>
-        collectionNamesToDrop.flatMap {
-          collectionNameToDrop =>
-            existingCollectionNames.filter(_.equals(collectionNameToDrop))
-        }
-      }.map { filteredCollectionNames =>
+        existingCollectionNames.filter(collectionNamesToDrop.contains)
+      }
+      .map { filteredCollectionNames =>
         logger.info(s"collections matched from listCollectionNames: ${
           if (filteredCollectionNames.nonEmpty) filteredCollectionNames.mkString(", ") else "0"
         }")
