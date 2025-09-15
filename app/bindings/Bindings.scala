@@ -19,15 +19,16 @@ package bindings
 import bindings.provider.ApplicationCryptoProvider
 import play.api.inject.{Binding, Module}
 import play.api.{Configuration, Environment}
+import repositories.DropMongoCollections
 import uk.gov.hmrc.crypto.ApplicationCrypto
 
 class Bindings extends Module {
-  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[?]] = {
 
+  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[?]] = {
     Seq(
+      bind[DropMongoCollections].toSelf.eagerly(),
       bind[ApplicationCrypto].toProvider[ApplicationCryptoProvider]
     )
-
   }
-
+  
 }
