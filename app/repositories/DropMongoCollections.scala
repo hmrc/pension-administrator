@@ -40,6 +40,7 @@ class DropMongoCollections @Inject()(
       .collect()
       .head()
       .map { existingCollectionNames =>
+        logger.info(s"listCollectionNames: ${existingCollectionNames.mkString(", ")}")
         existingCollectionNames.filter(collectionNamesToDrop.contains)
       }
       .map { filteredCollectionNames =>
