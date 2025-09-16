@@ -48,13 +48,13 @@ class DropMongoCollectionsSpec
     new GuiceApplicationBuilder().overrides(
       bind[DropMongoCollections].toInstance(
         new DropMongoCollections(mongoComponent, mockConfig) {
-          override val collectionNamesToDrop = Seq("col1", "col2", "not found col")
+          override lazy val collectionNamesToDrop = Seq("col1", "col2")
         }
       )
     )
 
   "DropMongoCollections" must {
-    "drop only collections found in listCollectionNames when true returned from config" in {
+    "drop collections when true returned from config" in {
       when(mockConfig.getOptional[Boolean]("mongodb.drop-unused-collections")).thenReturn(Some(true))
 
       Seq("col1", "col2", "col3").foreach { collectionName =>

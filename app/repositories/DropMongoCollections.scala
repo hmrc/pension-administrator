@@ -29,7 +29,7 @@ class DropMongoCollections @Inject()(
 )(implicit ec: ExecutionContext)
   extends Logging {
 
-  val collectionNamesToDrop: Seq[String] =
+  lazy val collectionNamesToDrop: Seq[String] =
     Seq("toggle-data", "admin-data")
 
   if (configuration.getOptional[Boolean]("mongodb.drop-unused-collections").getOrElse(false)) {
