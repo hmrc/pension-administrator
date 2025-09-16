@@ -16,55 +16,44 @@
 
 package repositories
 
-import com.google.inject.Inject
+import com.google.inject.{Inject, Singleton}
 import play.api.{Configuration, Logging}
 import uk.gov.hmrc.mongo.MongoComponent
 
 import scala.concurrent.ExecutionContext
 
+@Singleton
 class DropMongoCollections @Inject()(
   mongoComponent: MongoComponent,
   configuration: Configuration
 )(implicit ec: ExecutionContext)
   extends Logging {
 
-  val collectionNamesToDrop: Seq[String] =
+  lazy val collectionNamesToDrop: Seq[String] =
     Seq("toggle-data", "admin-data")
 
   if (configuration.getOptional[Boolean]("mongodb.drop-unused-collections").getOrElse(false)) {
     logger.info("mongodb.drop-unused-collections: true")
 
-    mongoComponent
-      .database
-      .listCollectionNames()
-      .collect()
-      .head()
-      .map { existingCollectionNames =>
-        logger.info(s"listCollectionNames: ${existingCollectionNames.mkString(", ")}")
-        existingCollectionNames.filter(collectionNamesToDrop.contains)
-      }
-      .map { filteredCollectionNames =>
-        logger.info(s"collections matched from listCollectionNames: ${
-          if (filteredCollectionNames.nonEmpty) filteredCollectionNames.mkString(", ") else "0"
-        }")
+    logger.info(s"collections to drop: ${collectionNamesToDrop.mkString(", ")}")
 
-        filteredCollectionNames.foreach {
-          collectionName =>
-            logger.info(s"dropping $collectionName...")
+    collectionNamesToDrop.foreach {
+      collectionName =>
+        logger.info(s"dropping $collectionName...")
 
-            mongoComponent
-              .database
-              .getCollection(collectionName)
-              .drop()
-              .headOption()
-              .map {
-                case Some(_) =>
-                  logger.info(s"$collectionName dropped")
-                case _ =>
-                  logger.info(s"$collectionName not dropped")
-              }
-        }
-      }
+        mongoComponent
+          .database
+          .getCollection(collectionName)
+          .drop()
+          .headOption()
+          .map {
+            case Some(_) =>
+              logger.info(s"$collectionName dropped")
+            case _ =>
+              logger.info(s"$collectionName not dropped")
+          }
+    }
+
   } else {
     logger.info("mongodb.drop-unused-collections: false")
   }
