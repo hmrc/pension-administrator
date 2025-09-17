@@ -35,24 +35,36 @@ class DropMongoCollections @Inject()(
   if (configuration.getOptional[Boolean]("mongodb.drop-unused-collections").getOrElse(false)) {
     logger.info("mongodb.drop-unused-collections: true")
 
-    logger.info(s"collections to drop: ${collectionNamesToDrop.mkString(", ")}")
+    mongoComponent
+      .database
+      .listCollectionNames()
+      .collect()
+      .head()
+      .map { existingCollectionNames =>
+        existingCollectionNames.filter(collectionNamesToDrop.contains)
+      }
+      .map { filteredCollectionNames =>
+        logger.info(s"collections matched from listCollectionNames: ${
+          if (filteredCollectionNames.nonEmpty) filteredCollectionNames.mkString(", ") else "0"
+        }")
 
-    collectionNamesToDrop.foreach {
-      collectionName =>
-        logger.info(s"dropping $collectionName...")
+        filteredCollectionNames.foreach {
+          collectionName =>
+            logger.info(s"dropping $collectionName...")
 
-        mongoComponent
-          .database
-          .getCollection(collectionName)
-          .drop()
-          .headOption()
-          .map {
-            case Some(_) =>
-              logger.info(s"$collectionName dropped")
-            case _ =>
-              logger.info(s"$collectionName not dropped")
-          }
-    }
+            mongoComponent
+              .database
+              .getCollection(collectionName)
+              .drop()
+              .headOption()
+              .map {
+                case Some(_) =>
+                  logger.info(s"$collectionName dropped")
+                case _ =>
+                  logger.info(s"$collectionName not dropped")
+              }
+        }
+      }
 
   } else {
     logger.info("mongodb.drop-unused-collections: false")

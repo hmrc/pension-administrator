@@ -48,7 +48,7 @@ class DropMongoCollectionsSpec
     new GuiceApplicationBuilder().overrides(
       bind[DropMongoCollections].toInstance(
         new DropMongoCollections(mongoComponent, mockConfig) {
-          override lazy val collectionNamesToDrop = Seq("col1", "col2")
+          override lazy val collectionNamesToDrop = Seq("col1", "col2", "not found col")
         }
       )
     )
