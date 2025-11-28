@@ -18,7 +18,6 @@ package repositories
 
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.bson.BsonBinary
 import org.mongodb.scala.model.*
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
