@@ -39,7 +39,7 @@ import utils.{AuthUtils, FakePsaSchemeAuthAction}
 import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
-class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers  with MockitoSugar with BeforeAndAfterEach {
+class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with Matchers with MockitoSugar with BeforeAndAfterEach {
 
   import AssociationControllerSpec.*
 
@@ -211,7 +211,7 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
   it should "return Forbidden with message for psaId not found in enrolments" in {
     reset(mockauthConnector)
     AuthUtils.failedAuthStub(mockauthConnector)
-    val result  = controller().getEmail(fakeRequest)
+    val result = controller().getEmail(fakeRequest)
     status(result).mustBe(FORBIDDEN)
   }
 
@@ -248,6 +248,24 @@ class AssociationControllerSpec extends AsyncFlatSpec with JsonFileReader with M
       "id" -> "psaId",
       "idType" -> "psaid",
       "name" -> psaMinimalDetailsIndividualUser.name.get
+    )
+
+    val result = controller().getEmailInvitation(AuthUtils.srn)(req)
+
+    status(result).mustBe(OK)
+    contentAsString(result).mustBe(psaMinimalDetailsIndividualUser.email)
+  }
+
+  "getEmailInvitation" should "return 200 if name is a partial match" in {
+    fakeAssociationConnector
+      .setPsaMinimalDetailsResponse(
+        Future.successful(Right(psaMinimalDetailsIndividualUser))
+      )
+
+    val req = fakeRequest.withHeaders(
+      "id" -> "psaId",
+      "idType" -> "psaid",
+      "name" -> "TESTFIRST testmiddle   testLast"
     )
 
     val result = controller().getEmailInvitation(AuthUtils.srn)(req)
@@ -371,6 +389,7 @@ object AssociationControllerSpec extends MockitoSugar {
       "metrics.jvm" -> false
     )
     .build()
+
   def controller(): AssociationController = {
     new AssociationController(fakeAssociationConnector, mockMinimalDetailsCacheRepository,
       new actions.PsaPspEnrolmentAuthAction(mockauthConnector, application.injector.instanceOf[BodyParsers.Default]),
