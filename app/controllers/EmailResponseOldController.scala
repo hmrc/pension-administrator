@@ -22,25 +22,23 @@ import models.enumeration.JourneyType
 import play.api.Logger
 import play.api.libs.json.JsValue
 import play.api.mvc.*
-import service.JsonCryptoService
-import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
+import uk.gov.hmrc.crypto.{ApplicationCrypto, Decrypter, Encrypter}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.ExecutionContext
 
-class EmailResponseController @Inject()(
-                                         val auditService: AuditService,
-                                         jsonCrypto: JsonCryptoService,
-                                         cc: ControllerComponents,
-                                         parser: PlayBodyParsers
-                                       )(implicit val ec: ExecutionContext) extends BackendController(cc) with AuditEmailStatus {
-
+class EmailResponseOldController @Inject()(
+                                            val auditService: AuditService,
+                                            applicationCrypto: ApplicationCrypto,
+                                            cc: ControllerComponents,
+                                            parser: PlayBodyParsers
+                                          )(implicit val ec: ExecutionContext) extends BackendController(cc) with AuditEmailStatus {
   override protected val logger = Logger(classOf[EmailResponseController])
-  override protected val crypto: Encrypter & Decrypter = jsonCrypto.jsonCrypto
+  override protected val crypto: Encrypter & Decrypter = applicationCrypto.QueryParameterCrypto
 
   def retrieveStatus(journeyType: JourneyType.Name, id: String): Action[JsValue] = Action(parser.tolerantJson) {
     implicit request =>
-      logger.warn("Json encrypted psaId email status parameter")
+      logger.warn("ApplicationCrypto encrypted psaId email status parameter")
       auditEmailStatus(id, journeyType)
   }
 }

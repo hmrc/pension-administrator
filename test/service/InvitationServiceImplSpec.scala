@@ -33,7 +33,8 @@ import play.api.libs.json.{Format, JsValue, Json, OWrites}
 import play.api.mvc.{AnyContentAsEmpty, RequestHeader}
 import play.api.test.FakeRequest
 import repositories.*
-import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
+import service.JsonCryptoService
+import uk.gov.hmrc.crypto.PlainText
 import uk.gov.hmrc.domain.{PsaId, PspId}
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpException, NotFoundException, *}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
@@ -218,7 +219,7 @@ class InvitationServiceImplSpec extends AsyncFlatSpec
 
   it should "send an email to the invitee" in {
     val invitationService: InvitationService = app.injector.instanceOf[InvitationService]
-    val encryptedPsaId = crypto.QueryParameterCrypto.encrypt(PlainText(johnDoePsaId.value)).value
+    val encryptedPsaId = crypto.jsonCrypto.encrypt(PlainText(johnDoePsaId.value)).value
 
     val expectedEmail =
       SendEmailRequest(
@@ -261,7 +262,8 @@ object InvitationServiceImplSpec extends MockitoSugar {
     )
     .build()
 
-  val crypto: ApplicationCrypto = app.injector.instanceOf[ApplicationCrypto]
+  val crypto: JsonCryptoService = app.injector.instanceOf[JsonCryptoService]
+  
   val config: AppConfig = app.injector.instanceOf[AppConfig]
 
   val testSchemeName = "test-scheme"

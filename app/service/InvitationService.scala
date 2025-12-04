@@ -19,17 +19,17 @@ package service
 import audit.{AuditService, InvitationAuditEvent}
 import com.google.inject.{ImplementedBy, Inject}
 import config.AppConfig
-import connectors._
-import models._
+import connectors.*
+import models.*
 import models.enumeration.JourneyType
 import play.api.Logger
 import play.api.http.Status.INTERNAL_SERVER_ERROR
-import play.api.libs.json._
+import play.api.libs.json.*
 import play.api.mvc.RequestHeader
 import repositories.InvitationsCacheRepository
-import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
+import uk.gov.hmrc.crypto.PlainText
 import uk.gov.hmrc.domain.PsaId
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import utils.{DateHelper, FuzzyNameMatcher}
 
 import scala.annotation.tailrec
@@ -52,7 +52,7 @@ class InvitationServiceImpl @Inject()(
                                        repository: InvitationsCacheRepository,
                                        auditService: AuditService,
                                        schemeConnector: SchemeConnector,
-                                       crypto: ApplicationCrypto
+                                       crypto: JsonCryptoService
                                      ) extends InvitationService {
 
   private val logger = Logger(classOf[InvitationServiceImpl])
@@ -201,7 +201,7 @@ class InvitationServiceImpl @Inject()(
   }
 
   private def callBackUrl(psaId: PsaId): String = {
-    val encryptedPsaId = crypto.QueryParameterCrypto.encrypt(PlainText(psaId.value)).value
+    val encryptedPsaId = crypto.jsonCrypto.encrypt(PlainText(psaId.value)).value
     config.invitationCallbackUrl.format(JourneyType.INVITE.toString, encryptedPsaId)
   }
 
