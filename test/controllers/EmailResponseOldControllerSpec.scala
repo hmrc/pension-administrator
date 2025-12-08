@@ -47,7 +47,7 @@ class EmailResponseOldControllerSpec extends SpecBase with MockitoSugar {
       EmailEvent(Opened, Instant.now())
     ))
   val crypto: ApplicationCrypto = app.injector.instanceOf[ApplicationCrypto]
-  val controller: EmailResponseController = app.injector.instanceOf[EmailResponseController]
+  val controller: EmailResponseOldController = app.injector.instanceOf[EmailResponseOldController]
 
 
   override protected def bindings: Seq[GuiceableModule] =
