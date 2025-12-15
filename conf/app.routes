@@ -1,22 +1,22 @@
 # microservice specific routes
 
-POST          /register-with-no-id/organisation         controllers.RegistrationController.registrationNoIdOrganisation
-POST          /register-with-id/individual              controllers.RegistrationController.registerWithIdIndividual
-POST          /register-with-id/organisation            controllers.RegistrationController.registerWithIdOrganisation
-POST          /register-with-no-id/individual           controllers.RegistrationController.registrationNoIdIndividual
+POST          /register-with-no-id/organisation          controllers.RegistrationController.registrationNoIdOrganisation
+POST          /register-with-id/individual               controllers.RegistrationController.registerWithIdIndividual
+POST          /register-with-id/organisation             controllers.RegistrationController.registerWithIdOrganisation
+POST          /register-with-no-id/individual            controllers.RegistrationController.registrationNoIdIndividual
 
-GET           /psa-subscription-details-self            controllers.SchemeController.getPsaDetailsSelf
-POST          /register-psa                             controllers.SchemeController.registerPSA
-POST          /remove-psa/:srn                          controllers.SchemeController.removePsa(srn: SchemeReferenceNumber)
-DELETE        /deregister-psa-self                      controllers.SchemeController.deregisterPsaSelf
-POST          /psa-variation-self                       controllers.SchemeController.updatePsaSelf
+GET           /psa-subscription-details-self             controllers.SchemeController.getPsaDetailsSelf
+POST          /register-psa                              controllers.SchemeController.registerPSA
+POST          /remove-psa/:srn                           controllers.SchemeController.removePsa(srn: SchemeReferenceNumber)
+DELETE        /deregister-psa-self                       controllers.SchemeController.deregisterPsaSelf
+POST          /psa-variation-self                        controllers.SchemeController.updatePsaSelf
 
-GET           /get-name                                 controllers.AssociationController.getName
-GET           /get-email                                controllers.AssociationController.getEmail
-GET           /get-minimal-details-self                 controllers.AssociationController.getMinimalDetailsSelf
-GET           /get-email-invitation/:srn                controllers.AssociationController.getEmailInvitation(srn: SchemeReferenceNumber)
+GET           /get-name                                  controllers.AssociationController.getName
+GET           /get-email                                 controllers.AssociationController.getEmail
+GET           /get-minimal-details-self                  controllers.AssociationController.getMinimalDetailsSelf
+GET           /get-email-invitation/:srn                 controllers.AssociationController.getEmailInvitation(srn: SchemeReferenceNumber)
 
-POST          /accept-invitation                        controllers.AssociationController.acceptInvitation
+POST          /accept-invitation                         controllers.AssociationController.acceptInvitation
 
 GET           /journey-cache/manage-pensions-self        controllers.cache.ManagePensionsCacheController.getSelf
 POST          /journey-cache/manage-pensions-self        controllers.cache.ManagePensionsCacheController.saveSelf
@@ -30,15 +30,17 @@ GET           /journey-cache/psa-data-self               controllers.cache.PSADa
 POST          /journey-cache/psa-data-self               controllers.cache.PSADataCacheController.saveSelf
 DELETE        /journey-cache/psa-data-self               controllers.cache.PSADataCacheController.removeSelf
 
-POST          /email-response/:journeyType/:id          controllers.EmailResponseController.retrieveStatus(journeyType: JourneyType.Name, id: String)
-POST          /invite                                   controllers.InvitationController.invite()
+POST          /email-response/:journeyType/:id           controllers.EmailResponseOldController.retrieveStatus(journeyType: JourneyType.Name, id: String)
+POST          /email-status-response/:journeyType/:id    controllers.EmailResponseController.retrieveStatus(journeyType: JourneyType.Name, id: String)
 
-GET           /invitation/get-for-scheme                controllers.cache.InvitationsCacheController.getForScheme
-GET           /invitation/get-for-invitee               controllers.cache.InvitationsCacheController.getForInvitee
-GET           /invitation/get                           controllers.cache.InvitationsCacheController.get
-POST          /invitation/add                           controllers.cache.InvitationsCacheController.add
-DELETE        /invitation                               controllers.cache.InvitationsCacheController.remove
+POST          /invite                                    controllers.InvitationController.invite()
 
-GET           /can-deregister-self                      controllers.DeregistrationController.canDeregisterSelf
+GET           /invitation/get-for-scheme                 controllers.cache.InvitationsCacheController.getForScheme
+GET           /invitation/get-for-invitee                controllers.cache.InvitationsCacheController.getForInvitee
+GET           /invitation/get                            controllers.cache.InvitationsCacheController.get
+POST          /invitation/add                            controllers.cache.InvitationsCacheController.add
+DELETE        /invitation                                controllers.cache.InvitationsCacheController.remove
 
-POST          /updateClientReference/:srn               controllers.UpdateClientReferenceController.updateClientReference(srn: SchemeReferenceNumber)
+GET           /can-deregister-self                       controllers.DeregistrationController.canDeregisterSelf
+
+POST          /updateClientReference/:srn                controllers.UpdateClientReferenceController.updateClientReference(srn: SchemeReferenceNumber)

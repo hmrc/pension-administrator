@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-package bindings
+package service
 
-import bindings.provider.ApplicationCryptoProvider
-import play.api.inject.{Binding, Module}
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.crypto.ApplicationCrypto
+import com.google.inject.Inject
+import play.api.Configuration
+import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, PlainContent, SymmetricCryptoFactory}
 
-class Bindings extends Module {
+class JsonCryptoService @Inject()(config: Configuration) {
 
-  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[?]] = {
-    Seq(
-      bind[ApplicationCrypto].toProvider[ApplicationCryptoProvider]
-    )
-  }
-  
+  val jsonCrypto: Encrypter & Decrypter =
+    SymmetricCryptoFactory.aesCryptoFromConfig(baseConfigKey = "queryParameter.encryption", config.underlying)
+
+  def encrypt(value: PlainContent): String = jsonCrypto.encrypt(value).value
+
+  def decrypt(value: Crypted): String = jsonCrypto.decrypt(value).value
 }

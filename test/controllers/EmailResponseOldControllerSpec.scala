@@ -26,15 +26,14 @@ import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.Helpers.*
 import repositories.*
-import service.JsonCryptoService
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.crypto.PlainText
+import uk.gov.hmrc.crypto.{ApplicationCrypto, PlainText}
 import uk.gov.hmrc.domain.PsaId
 import utils.AuthUtils
 
 import java.time.Instant
 
-class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
+class EmailResponseOldControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
 
@@ -47,8 +46,8 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
       EmailEvent(Delivered, Instant.now()),
       EmailEvent(Opened, Instant.now())
     ))
-  val crypto: JsonCryptoService = app.injector.instanceOf[JsonCryptoService]
-  val controller: EmailResponseController = app.injector.instanceOf[EmailResponseController]
+  val crypto: ApplicationCrypto = app.injector.instanceOf[ApplicationCrypto]
+  val controller: EmailResponseOldController = app.injector.instanceOf[EmailResponseOldController]
 
 
   override protected def bindings: Seq[GuiceableModule] =
@@ -71,9 +70,7 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
         s"will send events excluding Opened for ${eventType.toString} to audit service" in {
           AuthUtils.authStub(authConnector)
 
-          val encrypted = crypto.jsonCrypto.encrypt(PlainText(psa.id)).value
-
-          val controller = app.injector.instanceOf[EmailResponseController]
+          val encrypted = crypto.QueryParameterCrypto.encrypt(PlainText(psa.id)).value
 
           val result = controller.retrieveStatus(eventType, encrypted)(fakeRequest.withBody(Json.toJson(emailEvents)))
 
@@ -91,9 +88,7 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
     fakeAuditService.reset()
     AuthUtils.authStub(authConnector)
 
-    val encrypted = crypto.jsonCrypto.encrypt(PlainText(psa.id)).value
-
-    val controller = app.injector.instanceOf[EmailResponseController]
+    val encrypted = crypto.QueryParameterCrypto.encrypt(PlainText(psa.id)).value
 
     val result = controller.retrieveStatus(JourneyType.PSA, encrypted)(fakeRequest.withBody(validJson))
 
@@ -107,9 +102,7 @@ class EmailResponseControllerSpec extends SpecBase with MockitoSugar {
       fakeAuditService.reset()
       AuthUtils.authStub(authConnector)
 
-      val psa = crypto.jsonCrypto.encrypt(PlainText("psa")).value
-
-      val controller = app.injector.instanceOf[EmailResponseController]
+      val psa = crypto.QueryParameterCrypto.encrypt(PlainText("psa")).value
 
       val result = controller.retrieveStatus(JourneyType.PSA, psa)(fakeRequest.withBody(Json.toJson(emailEvents)))
 
