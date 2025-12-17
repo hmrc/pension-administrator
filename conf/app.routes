@@ -30,7 +30,6 @@ GET           /journey-cache/psa-data-self               controllers.cache.PSADa
 POST          /journey-cache/psa-data-self               controllers.cache.PSADataCacheController.saveSelf
 DELETE        /journey-cache/psa-data-self               controllers.cache.PSADataCacheController.removeSelf
 
-POST          /email-response/:journeyType/:id           controllers.EmailResponseOldController.retrieveStatus(journeyType: JourneyType.Name, id: String)
 POST          /email-status-response/:journeyType/:id    controllers.EmailResponseController.retrieveStatus(journeyType: JourneyType.Name, id: String)
 
 POST          /invite                                    controllers.InvitationController.invite()
