@@ -17,7 +17,10 @@
 package controllers
 
 import base.{JsonFileReader, SpecBase}
+import connectors.HipConnector
+import connectors.RegistrationConnectorSpec.request
 import models.PsaToBeRemovedFromScheme
+import models.admin.PsaRegHipMigrationToggle
 import org.apache.pekko.stream.Materializer
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
@@ -38,6 +41,8 @@ import service.SchemeService
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.{BadRequestException, *}
+import uk.gov.hmrc.mongoFeatureToggles.model.FeatureFlag
+import uk.gov.hmrc.mongoFeatureToggles.services.FeatureFlagService
 import utils.FakeDesConnector.{deregisterPsaResponseJson, removePsaResponseJson}
 import utils.testhelpers.PsaSubscriptionBuilder.*
 import utils.{AuthUtils, FakeDesConnector, FakePsaSchemeAuthAction}
@@ -55,15 +60,15 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    Mockito.reset(mockAuthConnector)
+    Mockito.reset(mockAuthConnector, mockFeatureFlagService, mockHipConnector)
     AuthUtils.authStub(mockAuthConnector)
     when(mockSchemeService.registerPSA(any())(using any(), any(), any()))
       .thenReturn(Future.successful(Right(registerPsaResponseJson)))
     when(mockSchemeService.updatePSA(any(), any())(using any(), any(), any()))
       .thenReturn(Future.successful(Right(registerPsaResponseJson)))
-    fakeDesConnector.setDeregisterPsaResponse(
-      Future.successful(Right(deregisterPsaResponseJson))
-    )
+    when(mockFeatureFlagService.get(PsaRegHipMigrationToggle))
+      .thenReturn(Future.successful(FeatureFlag(PsaRegHipMigrationToggle, isEnabled = false)))
+    fakeDesConnector.setDeregisterPsaResponse(Future.successful(Right(deregisterPsaResponseJson)))
     fakeDesConnector.setPsaDetailsResponse(Future.successful(Right(Json.toJson(psaSubscription))))
     fakeDesConnector.setRemovePsaResponse(Future.successful(Right(removePsaResponseJson)))
 
@@ -186,6 +191,18 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     contentAsJson(result).mustBe(Json.toJson(psaSubscription))
   }
 
+  it should "return OK when service returns successfully when PsaRegHipMigrationToggle is enabled" in {
+    when(mockFeatureFlagService.get(PsaRegHipMigrationToggle))
+      .thenReturn(Future.successful(FeatureFlag(PsaRegHipMigrationToggle, isEnabled = true)))
+    when(mockHipConnector.getPSASubscriptionDetails(any())(using any(), any()))
+      .thenReturn(Future.successful(Right(Json.toJson(psaSubscription))))
+
+    val result = controller.getPsaDetailsSelf(fakeRequest)
+
+    status(result).mustBe(OK)
+    contentAsJson(result).mustBe(Json.toJson(psaSubscription))
+  }
+
   it should "return bad request when connector returns BAD_REQUEST" in {
 
     fakeDesConnector.setPsaDetailsResponse(
@@ -198,11 +215,35 @@ class SchemeControllerSpec extends AsyncFlatSpec with JsonFileReader with Matche
     contentAsString(result).mustBe("bad request")
   }
 
+  it should "return bad request when connector returns BAD_REQUEST when PsaRegHipMigrationToggle is enabled" in {
+    when(mockFeatureFlagService.get(PsaRegHipMigrationToggle))
+      .thenReturn(Future.successful(FeatureFlag(PsaRegHipMigrationToggle, isEnabled = true)))
+    when(mockHipConnector.getPSASubscriptionDetails(any())(using any(), any()))
+      .thenReturn(Future.successful(Left(new BadRequestException("bad request"))))
+
+    val result = controller.getPsaDetailsSelf(fakeRequest)
+
+    status(result).mustBe(BAD_REQUEST)
+    contentAsString(result).mustBe("bad request")
+  }
+
   it should "return not found when connector returns NOT_FOUND" in {
 
     fakeDesConnector.setPsaDetailsResponse(
       Future.successful(Left(new NotFoundException("not found")))
     )
+
+    val result = controller.getPsaDetailsSelf(fakeRequest)
+
+    status(result).mustBe(NOT_FOUND)
+    contentAsString(result).mustBe("not found")
+  }
+
+  it should "return not found when connector returns NOT_FOUND when PsaRegHipMigrationToggle is enabled" in {
+    when(mockFeatureFlagService.get(PsaRegHipMigrationToggle))
+      .thenReturn(Future.successful(FeatureFlag(PsaRegHipMigrationToggle, isEnabled = true)))
+    when(mockHipConnector.getPSASubscriptionDetails(any())(using any(), any()))
+      .thenReturn(Future.successful(Left(new NotFoundException("not found"))))
 
     val result = controller.getPsaDetailsSelf(fakeRequest)
 
@@ -412,7 +453,9 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
   private val mockAuthConnector: AuthConnector = mock[AuthConnector]
+  private val mockHipConnector: HipConnector = mock[HipConnector]
   private val mockSchemeService = mock[SchemeService]
+  private val mockFeatureFlagService = mock[FeatureFlagService]
 
   implicit val mat: Materializer = app.materializer
 
@@ -424,30 +467,12 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
       bind[PSADataCacheRepository].toInstance(mock[PSADataCacheRepository]),
       bind[InvitationsCacheRepository].toInstance(mock[InvitationsCacheRepository]),
       bind[actions.PsaPspEnrolmentAuthAction].toInstance(mock[actions.PsaPspEnrolmentAuthAction]),
-      bind[SchemeService].toInstance(mockSchemeService)
+      bind[SchemeService].toInstance(mockSchemeService),
+      bind[HipConnector].toInstance(mockHipConnector),
+      bind[FeatureFlagService].toInstance(mockFeatureFlagService)
   )
 
   override def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
-
-//  class FakeSchemeService extends SchemeService {
-//
-//    private var registerPsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
-//    private var updatePsaResponse: Future[Either[HttpException, JsValue]] = Future.successful(Right(registerPsaResponseJson))
-//
-//    def setRegisterPsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.registerPsaResponse = response
-//
-//    def setUpdatePsaResponse(response: Future[Either[HttpException, JsValue]]): Unit = this.updatePsaResponse = response
-//
-//    override def registerPSA(json: JsValue)(implicit
-//                                            @unused headerCarrier: HeaderCarrier,
-//                                            @unused ec: ExecutionContext,
-//                                            @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = registerPsaResponse
-//
-//    override def updatePSA(psaId: String, json: JsValue)(implicit
-//                                                         @unused headerCarrier: HeaderCarrier,
-//                                                         @unused ec: ExecutionContext,
-//                                                         @unused request: RequestHeader): Future[Either[HttpException, JsValue]] = updatePsaResponse
-//  }
 
   private val registerPsaResponseJson: JsValue =
     Json.obj(
@@ -462,11 +487,14 @@ object SchemeControllerSpec extends SpecBase with MockitoSugar {
   val bodyParser: BodyParsers.Default = app.injector.instanceOf[BodyParsers.Default]
   private val controller = new SchemeController(mockSchemeService,
                                                 fakeDesConnector,
+                                                mockHipConnector,
                                                 controllerComponents,
     new actions.PsaPspEnrolmentAuthAction(mockAuthConnector, bodyParser),
     new actions.NoEnrolmentAuthAction(mockAuthConnector, bodyParser),
     new actions.PsaEnrolmentAuthAction(mockAuthConnector, bodyParser),
-    new FakePsaSchemeAuthAction())
+    new FakePsaSchemeAuthAction(),
+    mockFeatureFlagService
+  )
   private val psaId = PsaId("A7654321")
   private val pstr: String = "123456789AB"
   private val removeDate: LocalDate = LocalDate.parse("2018-02-01").atStartOfDay(ZoneId.of("UTC")).toLocalDate

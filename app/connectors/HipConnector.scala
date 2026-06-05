@@ -105,6 +105,8 @@ class HipConnector @Inject()(
         response.json \ "errors" \ "code" match {
           case JsDefined(code) if code.as[String] == "004" =>
             Left(ConflictException(response.body))
+          case JsDefined(code) if code.as[String] == "007" =>
+            Left(ForbiddenException("PSA_ACTIVE_RELATIONSHIP_EXISTS"))
           case _ =>
             Left(UnprocessableEntityException(response.body))
         }
@@ -117,14 +119,12 @@ class HipConnector @Inject()(
       case OK =>
         (response.json \ "success").validate[PsaSubscription] match {
           case JsSuccess(_, _) =>
-            Right(
-              (response.json \ "success").transform(psaSubscriptionDetailsTransformer.transformToUserAnswers) match {
-                case JsSuccess(value, _) =>
-                  value
-                case JsError(errors) =>
-                  throw JsResultException(errors)
-              }
-            )
+            (response.json \ "success").transform(psaSubscriptionDetailsTransformer.transformToUserAnswers) match {
+              case JsSuccess(value, _) =>
+                Right(value)
+              case JsError(errors) =>
+                throw JsResultException(errors)
+            }
           case JsError(errors) =>
             throw JsResultException(errors)
         }

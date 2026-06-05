@@ -35,7 +35,7 @@ import play.api.mvc.{ControllerComponents, RequestHeader}
 import play.api.test.FakeRequest
 import play.api.{Application, inject}
 import uk.gov.hmrc.http.test.WireMockSupport
-import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpException}
+import uk.gov.hmrc.http.{ConflictException, ForbiddenException, HeaderCarrier, HttpException, UnprocessableEntityException}
 
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
@@ -241,13 +241,26 @@ class HipConnectorSpec
           .withBody(Json.stringify(Json.obj("errors" -> Json.obj("code" -> "003")))))
     )
 
-    connector
-      .registerPSA(PSASubscriptionFixture.registerPSAValidPayload)
-      .futureValue
-      .left
-      .value
-      .responseCode
-      .shouldBe(UNPROCESSABLE_ENTITY)
+    val result = connector.registerPSA(PSASubscriptionFixture.registerPSAValidPayload).futureValue
+
+    result.left.value.shouldBe(a[UnprocessableEntityException])
+    result.left.value.responseCode.shouldBe(UNPROCESSABLE_ENTITY)
+  }
+
+  it should "return 403 FORBIDDEN for 422 from HIP with error code 007" in {
+    wireMockServer.stubFor(
+      post(urlEqualTo(hipPsaSubscriptionUrl))
+        .withRequestBody(equalToJson(Json.stringify(PSASubscriptionFixture.registerPSAValidPayload)))
+        .willReturn(aResponse()
+          .withStatus(UNPROCESSABLE_ENTITY)
+          .withBody(Json.stringify(Json.obj("errors" -> Json.obj("code" -> "007")))))
+    )
+
+    val result = connector.registerPSA(PSASubscriptionFixture.registerPSAValidPayload).futureValue
+
+    result.left.value.shouldBe(a[ForbiddenException])
+    result.left.value.responseCode.shouldBe(FORBIDDEN)
+    result.left.value.message.shouldBe("PSA_ACTIVE_RELATIONSHIP_EXISTS")
   }
 
   it should "return HttpException for any other error from HIP" in {
@@ -318,13 +331,26 @@ class HipConnectorSpec
           .withBody(Json.stringify(Json.obj("errors" -> Json.obj("code" -> "003")))))
     )
 
-    connector
-      .updatePSA("A123456", PSASubscriptionFixture.psaVariation)
-      .futureValue
-      .left
-      .value
-      .responseCode
-      .shouldBe(UNPROCESSABLE_ENTITY)
+    val result = connector.updatePSA("A123456", PSASubscriptionFixture.psaVariation).futureValue
+
+    result.left.value.shouldBe(a[UnprocessableEntityException])
+    result.left.value.responseCode.shouldBe(UNPROCESSABLE_ENTITY)
+  }
+
+  it should "return 403 FORBIDDEN for 422 from HIP with error code 007" in {
+    wireMockServer.stubFor(
+      put(urlEqualTo(s"$hipPsaSubscriptionUrl/A123456"))
+        .withRequestBody(equalToJson(Json.stringify(PSASubscriptionFixture.psaVariation)))
+        .willReturn(aResponse()
+          .withStatus(UNPROCESSABLE_ENTITY)
+          .withBody(Json.stringify(Json.obj("errors" -> Json.obj("code" -> "007")))))
+    )
+
+    val result = connector.updatePSA("A123456", PSASubscriptionFixture.psaVariation).futureValue
+
+    result.left.value.shouldBe(a[ForbiddenException])
+    result.left.value.responseCode.shouldBe(FORBIDDEN)
+    result.left.value.message.shouldBe("PSA_ACTIVE_RELATIONSHIP_EXISTS")
   }
 
   it should "return HttpException with response body and status for any other error from HIP" in {
