@@ -171,6 +171,7 @@ class HipConnectorSpec
     verify(mockSchemeAuditService, times(1)).sendPSADetailsEvent(any())(any())
 
     result.left.value.responseCode.shouldBe(BAD_REQUEST)
+    result.left.value.message.shouldBe("INVALID_PSAID")
   }
 
   it should "return HttpException for any other error from HIP" in {

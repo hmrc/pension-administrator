@@ -133,7 +133,7 @@ class HipConnector @Inject()(
           case JsDefined(code) if code.as[String] == "004" =>
             Left(ConflictException(response.body))
           case JsDefined(code) if code.as[String] == "046" =>
-            Left(BadRequestException(response.body))
+            Left(BadRequestException("INVALID_PSAID"))
           case _ =>
             Left(UnprocessableEntityException(response.body))
         }
