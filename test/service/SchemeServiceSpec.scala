@@ -17,8 +17,9 @@
 package service
 
 import audit.*
-import connectors.DesConnector
+import connectors.{DesConnector, HipConnector}
 import models.PensionSchemeAdministrator
+import models.admin.PsaRegHipMigrationToggle
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.*
@@ -34,22 +35,103 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import repositories.MinimalDetailsCacheRepository
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
+import uk.gov.hmrc.mongoFeatureToggles.model.FeatureFlag
+import uk.gov.hmrc.mongoFeatureToggles.services.FeatureFlagService
 import utils.FakeDesConnector
 
 import scala.concurrent.Future
 
-class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValues with MockitoSugar with BeforeAndAfterEach {
+class SchemeServiceSpec extends AsyncFlatSpec with Matchers with EitherValues with MockitoSugar with BeforeAndAfterEach {
 
-  import SchemeServiceImplSpec.*
+  val fakeSchemeConnector: FakeDesConnector = new FakeDesConnector()
+  val minimalDetailsCacheRepository: MinimalDetailsCacheRepository = mock[MinimalDetailsCacheRepository]
+  val mockFeatureFlagService: FeatureFlagService = mock[FeatureFlagService]
+  val mockHipConnector: HipConnector = mock[HipConnector]
+  val fakeAuditService: StubSuccessfulAuditService = new StubSuccessfulAuditService()
+
+  private val app = new GuiceApplicationBuilder()
+    .overrides(
+      bind[MinimalDetailsCacheRepository].toInstance(minimalDetailsCacheRepository),
+      bind[DesConnector].toInstance(fakeSchemeConnector),
+      bind[AuditService].toInstance(fakeAuditService),
+      bind[FeatureFlagService].toInstance(mockFeatureFlagService),
+      bind[HipConnector].toInstance(mockHipConnector),
+    )
+    .build()
+
+  implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
+
+  val psaId: String = "test-psa-id"
+
+  val psaJson: JsValue = Json.obj(
+    "registrationInfo" -> Json.obj(
+      "legalStatus" -> "test-legal-status",
+      "sapNumber" -> "test-sap-number",
+      "noIdentifier" -> false,
+      "customerType" -> "test-customer-type"
+    ),
+    "individualContactDetails" -> Json.obj(
+      "phone" -> "test-phone",
+      "email" -> "test-email"
+    ),
+    "individualContactAddress" -> Json.obj(
+      "addressLine1" -> "test-address-line-1",
+      "countryCode" -> "GB",
+      "postalCode" -> "test-postal-code"
+    ),
+    "individualAddressYears" -> "test-individual-address-years",
+    "existingPSA" -> Json.obj(
+      "isExistingPSA" -> false
+    ),
+    "individualDetails" -> Json.obj(
+      "firstName" -> "test-first-name",
+      "lastName" -> "test-last-name"
+    ),
+    "individualDateOfBirth" -> "2000-01-01",
+    "declaration" -> true,
+    "declarationWorkingKnowledge" -> "test-declaration-working-knowledge",
+    "declarationFitAndProper" -> true
+  )
+
+  def registerPsaRequestJson(userAnswersJson: JsValue): JsValue = {
+    val psa = userAnswersJson.as[PensionSchemeAdministrator](using PensionSchemeAdministrator.apiReads)
+    val requestJson = Json.toJson(psa)(using PensionSchemeAdministrator.psaSubmissionWrites)
+    requestJson
+  }
+
+  def updatePsaRequestJson(userAnswersJson: JsValue): JsValue = {
+    val psa = userAnswersJson.as[PensionSchemeAdministrator](using PensionSchemeAdministrator.apiReads)
+    val requestJson = Json.toJson(psa)(using PensionSchemeAdministrator.psaUpdateWrites)
+    requestJson
+  }
+  
   import utils.FakeDesConnector.*
 
   override def beforeEach(): Unit = {
-    reset(minimalDetailsCacheRepository)
+    reset(minimalDetailsCacheRepository, mockHipConnector, mockFeatureFlagService)
+    when(mockFeatureFlagService.get(PsaRegHipMigrationToggle))
+      .thenReturn(Future.successful(FeatureFlag(PsaRegHipMigrationToggle, isEnabled = false)))
   }
 
   "registerPSA" should "return the result from the connector" in {
 
-    val schemeService: SchemeService = app.injector.instanceOf[SchemeServiceImpl]
+    val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
+
+    schemeService.registerPSA(psaJson).map {
+      httpResponse =>
+        httpResponse.value.shouldBe(registerPsaResponseJson)
+    }
+
+  }
+
+  it should "return the result from the connector when PsaRegHipMigrationToggle is enabled" in {
+    when(mockFeatureFlagService.get(PsaRegHipMigrationToggle))
+      .thenReturn(Future.successful(FeatureFlag(PsaRegHipMigrationToggle, isEnabled = true)))
+    when(mockHipConnector.registerPSA(any())(using any()))
+      .thenReturn(Future.successful(Right(registerPsaResponseJson)))
+
+    val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
 
     schemeService.registerPSA(psaJson).map {
       httpResponse =>
@@ -96,6 +178,32 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
     val requestJson = registerPsaRequestJson(psaJson)
 
     fakeSchemeConnector.setRegisterPsaResponse(Future.successful(Left(new BadRequestException("bad request"))))
+
+    schemeService.registerPSA(psaJson).map {
+      _ =>
+        fakeAuditService.lastEvent.shouldBe(
+          Some(
+            PSASubscription(
+              existingUser = false,
+              legalStatus = "test-legal-status",
+              status = Status.BAD_REQUEST,
+              request = requestJson,
+              response = None
+            )
+          )
+        )
+    }
+
+  }
+
+  it should "send an audit event on failure when the PsaRegHipMigrationToggle is enabled" in {
+    when(mockFeatureFlagService.get(PsaRegHipMigrationToggle))
+      .thenReturn(Future.successful(FeatureFlag(PsaRegHipMigrationToggle, isEnabled = true)))
+    when(mockHipConnector.registerPSA(any())(using any()))
+      .thenReturn(Future.successful(Left(new BadRequestException("bad request"))))
+
+    val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
+    val requestJson = registerPsaRequestJson(psaJson)
 
     schemeService.registerPSA(psaJson).map {
       _ =>
@@ -186,67 +294,29 @@ class SchemeServiceImplSpec extends AsyncFlatSpec with Matchers with EitherValue
         )
     }
   }
-}
 
-object SchemeServiceImplSpec extends MockitoSugar {
+  it should "send an audit event on failure when the PsaRegHipMigrationToggle is enabled" in {
+    when(mockFeatureFlagService.get(PsaRegHipMigrationToggle))
+      .thenReturn(Future.successful(FeatureFlag(PsaRegHipMigrationToggle, isEnabled = true)))
+    when(mockHipConnector.updatePSA(any(), any())(using any()))
+      .thenReturn(Future.successful(Left(new BadRequestException("bad request"))))
 
-  val fakeSchemeConnector: FakeDesConnector = new FakeDesConnector()
-  val minimalDetailsCacheRepository: MinimalDetailsCacheRepository = mock[MinimalDetailsCacheRepository]
-  val fakeAuditService: StubSuccessfulAuditService = new StubSuccessfulAuditService()
+    val schemeService: SchemeService = app.injector.instanceOf[SchemeService]
+    val requestJson = updatePsaRequestJson(psaJson)
 
-  private val app = new GuiceApplicationBuilder()
-    .overrides(
-      bind[MinimalDetailsCacheRepository].toInstance(minimalDetailsCacheRepository),
-      bind[DesConnector].toInstance(fakeSchemeConnector),
-      bind[AuditService].toInstance(fakeAuditService)
-    )
-    .build()
-
-  implicit val hc: HeaderCarrier = HeaderCarrier()
-  implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
-
-  val psaId: String = "test-psa-id"
-
-  val psaJson: JsValue = Json.obj(
-    "registrationInfo" -> Json.obj(
-      "legalStatus" -> "test-legal-status",
-      "sapNumber" -> "test-sap-number",
-      "noIdentifier" -> false,
-      "customerType" -> "test-customer-type"
-    ),
-    "individualContactDetails" -> Json.obj(
-      "phone" -> "test-phone",
-      "email" -> "test-email"
-    ),
-    "individualContactAddress" -> Json.obj(
-      "addressLine1" -> "test-address-line-1",
-      "countryCode" -> "GB",
-      "postalCode" -> "test-postal-code"
-    ),
-    "individualAddressYears" -> "test-individual-address-years",
-    "existingPSA" -> Json.obj(
-      "isExistingPSA" -> false
-    ),
-    "individualDetails" -> Json.obj(
-      "firstName" -> "test-first-name",
-      "lastName" -> "test-last-name"
-    ),
-    "individualDateOfBirth" -> "2000-01-01",
-    "declaration" -> true,
-    "declarationWorkingKnowledge" -> "test-declaration-working-knowledge",
-    "declarationFitAndProper" -> true
-  )
-
-  def registerPsaRequestJson(userAnswersJson: JsValue): JsValue = {
-    val psa = userAnswersJson.as[PensionSchemeAdministrator](using PensionSchemeAdministrator.apiReads)
-    val requestJson = Json.toJson(psa)(using PensionSchemeAdministrator.psaSubmissionWrites)
-    requestJson
+    schemeService.updatePSA(psaId, psaJson).map {
+      _ =>
+        verify(minimalDetailsCacheRepository, never()).remove(any())(using any())
+        fakeAuditService.lastEvent.shouldBe(
+          Some(
+            PSAChanges(
+              legalStatus = "test-legal-status",
+              status = Status.BAD_REQUEST,
+              request = requestJson,
+              response = None
+            )
+          )
+        )
+    }
   }
-
-  def updatePsaRequestJson(userAnswersJson: JsValue): JsValue = {
-    val psa = userAnswersJson.as[PensionSchemeAdministrator](using PensionSchemeAdministrator.apiReads)
-    val requestJson = Json.toJson(psa)(using PensionSchemeAdministrator.psaUpdateWrites)
-    requestJson
-  }
-
 }

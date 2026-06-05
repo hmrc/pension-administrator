@@ -28,11 +28,6 @@ import play.api.{Application, Environment}
 trait SpecBase extends PlaySpec with GuiceOneAppPerSuite with JsonFileReader {
 
   override def fakeApplication(): Application = GuiceApplicationBuilder()
-    .configure(
-      //turn off metrics
-      "metrics.jvm" -> false,
-      "metrics.enabled" -> false
-    )
     .overrides(bindings *)
     .build()
 

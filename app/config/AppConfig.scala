@@ -27,11 +27,16 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, servicesConfig: S
 
   lazy val baseURL: String = servicesConfig.baseUrl("des-hod")
   lazy val ifURL: String = servicesConfig.baseUrl(serviceName = "if-hod")
+  lazy val hipURL: String = servicesConfig.baseUrl(serviceName = "hip-hod")
   lazy val baseUrlEmail: String = servicesConfig.baseUrl("email")
   lazy val baseUrlPensionsScheme: String = servicesConfig.baseUrl("pensions-scheme")
   lazy val baseUrlPensionAdministrator: String = servicesConfig.baseUrl("pension-administrator")
   val logInsufficientEnrolments: Boolean = runModeConfiguration.underlying.getBoolean("logInsufficientEnrolments")
 
+  lazy val hipPsaSubscriptionCreateUrl: String = s"$hipURL${runModeConfiguration.underlying.getString("serviceUrls.hip.psaSubscriptionCreate")}"
+  lazy val hipPsaSubscriptionDetailsUrl: String = s"$hipURL${runModeConfiguration.underlying.getString("serviceUrls.hip.psaSubscriptionDetails")}"
+  lazy val hipPsaVariationDetailsUrl: String = s"$hipURL${runModeConfiguration.underlying.getString("serviceUrls.hip.psaVariationDetails")}"
+  
   lazy val schemeAdminRegistrationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.scheme.administrator.register")}"
   lazy val registerWithoutIdOrganisationUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.register.without.id.organisation")}"
   lazy val registerWithoutIdIndividualUrl: String = s"$baseURL${runModeConfiguration.underlying.getString("serviceUrls.register.without.id.individual")}"
@@ -62,5 +67,8 @@ class AppConfig @Inject()(runModeConfiguration: Configuration, servicesConfig: S
 
   lazy val invitationCallbackUrl: String = s"$baseUrlPensionAdministrator${runModeConfiguration.underlying.getString("serviceUrls.invitation.callback")}"
   lazy val updateClientReferenceUrl: String = s"$ifURL${runModeConfiguration.underlying.getString("serviceUrls.if.updateClientReference")}"
+
+  lazy val hipClientId: String = servicesConfig.getConfString("hip-hod.clientId", "local")
+  lazy val hipClientSecret: String = servicesConfig.getConfString("hip-hod.clientSecret", "local")
 
 }
