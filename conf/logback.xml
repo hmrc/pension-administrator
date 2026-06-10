@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
+    <conversionRule conversionWord="coloredLevel" converterClass="play.api.libs.logback.ColoredLevel"/>
+
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>logs/pension-administrator.log</file>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
@@ -10,10 +12,9 @@
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%date{ISO8601} level=[%level] logger=[%logger] thread=[%thread] rid=[%X{X-Request-ID}] user=[%X{Authorization}] message=[%message] %replace(exception=[%xException]){'^exception=\[\]$',''}%n</pattern>
+            <pattern>%green(%date{ISO8601}) level=[%level] %coloredLevel %white(logger=[%yellow(%logger)]) %white(thread=[%yellow(%thread)]) %white(rid=[%yellow(%X{X-Request-ID})]) %white(user=[%yellow(%X{Authorization})]) %white(message=[%yellow(%message)]) %replace(exception=[%xException]){'^exception=\[\]$',''}%n</pattern>
         </encoder>
     </appender>
-
 
     <appender name="CONNECTOR_LOG_FILE" class="ch.qos.logback.core.FileAppender">
         <file>logs/connector.log</file>
@@ -22,11 +23,11 @@
         </encoder>
     </appender>
 
-
-
     <logger name="com.google.inject" level="INFO"/>
 
     <logger name="uk.gov" level="INFO"/>
+
+    <logger name="org.mongodb.driver" level="OFF"/>
 
     <logger name="application" level="DEBUG"/>
 

@@ -17,13 +17,15 @@
 package controllers
 
 import com.google.inject.Inject
-import connectors.DesConnector
+import connectors.{DesConnector, HipConnector}
+import models.admin.PsaRegHipMigrationToggle
 import models.{PsaToBeRemovedFromScheme, PsaToBeRemovedFromSchemeSelf}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import service.SchemeService
-import uk.gov.hmrc.http.{BadRequestException, _}
+import uk.gov.hmrc.http.{BadRequestException, *}
+import uk.gov.hmrc.mongoFeatureToggles.services.FeatureFlagService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandler
 
@@ -32,11 +34,13 @@ import scala.concurrent.{ExecutionContext, Future}
 class SchemeController @Inject()(
                                   schemeService: SchemeService,
                                   desConnector: DesConnector,
+                                  hipConnector: HipConnector,
                                   cc: ControllerComponents,
                                   authAction: actions.PsaPspEnrolmentAuthAction,
                                   noEnrolmentAuthAction: actions.NoEnrolmentAuthAction,
                                   psaAuthAction: actions.PsaEnrolmentAuthAction,
-                                  psaSchemeAuthAction: actions.PsaSchemeAuthAction
+                                  psaSchemeAuthAction: actions.PsaSchemeAuthAction,
+                                  featureFlagService: FeatureFlagService
                                 )(implicit val ec: ExecutionContext)
   extends BackendController(cc) with ErrorHandler {
 
@@ -62,9 +66,18 @@ class SchemeController @Inject()(
 
   def getPsaDetailsSelf: Action[AnyContent] = psaAuthAction.async {
     implicit request =>
-      desConnector.getPSASubscriptionDetails(request.psaId.id).map {
-        case Right(psaDetails) => Ok(Json.toJson(psaDetails))
-        case Left(e) => result(e)
+      featureFlagService.get(PsaRegHipMigrationToggle).flatMap { toggle =>
+        if (toggle.isEnabled) {
+          hipConnector.getPSASubscriptionDetails(request.psaId.id).map {
+            case Right(psaDetails) => Ok(Json.toJson(psaDetails))
+            case Left(e) => result(e)
+          }
+        } else {
+          desConnector.getPSASubscriptionDetails(request.psaId.id).map {
+            case Right(psaDetails) => Ok(Json.toJson(psaDetails))
+            case Left(e) => result(e)
+          }
+        }
       }
   }
 
