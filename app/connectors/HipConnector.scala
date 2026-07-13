@@ -31,8 +31,9 @@ import utils.JsonTransformations.PSASubscriptionDetailsTransformer
 import utils.{ErrorHandler, HttpResponseHelper}
 
 import java.nio.charset.StandardCharsets
-import java.text.SimpleDateFormat
-import java.util.{Base64, Date, UUID}
+import java.time.format.DateTimeFormatter
+import java.time.{LocalDateTime, ZoneOffset}
+import java.util.{Base64, UUID}
 import scala.concurrent.{ExecutionContext, Future}
 
 class HipConnector @Inject()(
@@ -55,7 +56,7 @@ class HipConnector @Inject()(
     Seq(
       "X-Transmitting-System" -> "HIP",
       "X-Originating-System"  -> "PSA",
-      "X-Receipt-Date"        -> new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(new Date()),
+      "X-Receipt-Date"        -> s"${LocalDateTime.now().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT)}",
       "correlationid"         -> UUID.randomUUID().toString,
       "Authorization"         -> s"Basic $token"
     )
