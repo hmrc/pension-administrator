@@ -32,7 +32,7 @@ import utils.{ErrorHandler, HttpResponseHelper}
 
 import java.nio.charset.StandardCharsets
 import java.time.format.DateTimeFormatter
-import java.time.{LocalDateTime, ZoneOffset}
+import java.time.{Instant, ZoneId, ZonedDateTime}
 import java.util.{Base64, UUID}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -52,11 +52,17 @@ class HipConnector @Inject()(
       .getEncoder
       .encodeToString(s"${config.hipClientId}:${config.hipClientSecret}".getBytes(StandardCharsets.UTF_8))
 
+  private val xReceiptDate: String =
+    ZonedDateTime
+      .ofInstant(Instant.now(), ZoneId.of("UTC"))
+      .withNano(0)
+      .format(DateTimeFormatter.ISO_INSTANT)
+
   private def headers: Seq[(String, String)] =
     Seq(
       "X-Transmitting-System" -> "HIP",
       "X-Originating-System"  -> "PSA",
-      "X-Receipt-Date"        -> s"${LocalDateTime.now().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT)}",
+      "X-Receipt-Date"        -> xReceiptDate,
       "correlationid"         -> UUID.randomUUID().toString,
       "Authorization"         -> s"Basic $token"
     )

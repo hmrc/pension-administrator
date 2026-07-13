@@ -63,8 +63,8 @@ class HipConnectorSpec
       .overrides(bind[SchemeAuditService].toInstance(mockSchemeAuditService))
       .build()
 
-  val hipPsaSubscriptionUrl = "/etmp/RESTAdapter/psa/subscription"
-
+  private val hipPsaSubscriptionUrl: String = "/etmp/RESTAdapter/psa/subscription"
+  private val dateRegex: String = "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val rh: RequestHeader = FakeRequest("", "")
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ControllerComponents].executionContext
@@ -103,7 +103,7 @@ class HipConnectorSpec
 
     WireMock.verify(
       getRequestedFor(urlEqualTo(s"$hipPsaSubscriptionUrl/A123456"))
-        .withHeader("X-Receipt-Date", matching("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6}Z$"))
+        .withHeader("X-Receipt-Date", matching(dateRegex))
         .withHeader("X-Transmitting-System", equalTo("HIP"))
         .withHeader("X-Originating-System", equalTo("PSA"))
         .withHeader("Authorization", equalTo("Basic Y2xpZW50SWQ6Y2xpZW50U2VjcmV0"))
@@ -224,7 +224,7 @@ class HipConnectorSpec
 
     WireMock.verify(
       postRequestedFor(urlEqualTo(hipPsaSubscriptionUrl))
-        .withHeader("X-Receipt-Date", matching("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6}Z$"))
+        .withHeader("X-Receipt-Date", matching(dateRegex))
         .withHeader("X-Transmitting-System", equalTo("HIP"))
         .withHeader("X-Originating-System", equalTo("PSA"))
         .withHeader("Authorization", equalTo("Basic Y2xpZW50SWQ6Y2xpZW50U2VjcmV0"))
@@ -322,7 +322,7 @@ class HipConnectorSpec
 
     WireMock.verify(
       putRequestedFor(urlEqualTo(s"$hipPsaSubscriptionUrl/A123456"))
-        .withHeader("X-Receipt-Date", matching("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6}Z$"))
+        .withHeader("X-Receipt-Date", matching(dateRegex))
         .withHeader("X-Transmitting-System", equalTo("HIP"))
         .withHeader("X-Originating-System", equalTo("PSA"))
         .withHeader("Authorization", equalTo("Basic Y2xpZW50SWQ6Y2xpZW50U2VjcmV0"))
