@@ -383,6 +383,48 @@ class RegistrationConnectorSpec extends AsyncFlatSpec
 
   }
 
+  it should "successful validate response with Corporate Body organisationType" in {
+
+    val corporateBodyResponse = Json.parse(
+      """{
+        |  "safeId": "XE0001234567890",
+        |  "isEditable": false,
+        |  "sapNumber": "1234567890",
+        |  "isAnIndividual": false,
+        |  "isAnAgent": false,
+        |  "organisation": {
+        |    "organisationName": "ABC LIMITED",
+        |    "isAGroup": false,
+        |    "organisationType": "Corporate Body"
+        |  },
+        |  "address": {
+        |    "addressLine1": "100 Sutton Street",
+        |    "addressLine2": "Wokingham",
+        |    "addressLine3": "Surrey",
+        |    "addressLine4": "London",
+        |    "postalCode": "AE14EJ",
+        |    "countryCode": "GB"
+        |  },
+        |  "contactDetails": {}
+        |}
+        """.stripMargin)
+
+    server.stubFor(
+      post(urlEqualTo(registerOrganisationWithIdUrl))
+        .willReturn(
+          ok
+            .withHeader("Content-Type", "application/json")
+            .withBody(corporateBodyResponse.toString())
+        )
+    )
+
+    connector.registerWithIdOrganisation(testUtr, externalId, testRegisterDataOrganisation).map {
+      response =>
+        response.value `shouldBe` corporateBodyResponse
+        (response.value \ "organisation" \ "organisationType").as[String] `shouldBe` "Corporate Body"
+    }
+  }
+
   "registrationNoIdOrganisation" should "handle OK (200)" in {
 
     server.stubFor(
