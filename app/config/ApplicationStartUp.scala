@@ -17,10 +17,12 @@
 package config
 
 import javax.inject.Singleton
-import models.admin.PsaRegHipMigrationToggle
+import models.admin.{PsaDeRegHipMigrationToggle, PsaRegHipMigrationToggle}
 import uk.gov.hmrc.mongoFeatureToggles.model.FeatureFlagNamesLibrary
 
 @Singleton
 class ApplicationStartUp {
   FeatureFlagNamesLibrary.addFlags(List(PsaRegHipMigrationToggle))
+  FeatureFlagNamesLibrary.addFlags(List(PsaDeRegHipMigrationToggle))
+
 }

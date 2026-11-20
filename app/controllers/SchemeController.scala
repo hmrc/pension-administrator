@@ -18,11 +18,11 @@ package controllers
 
 import com.google.inject.Inject
 import connectors.{DesConnector, HipConnector}
-import models.admin.PsaRegHipMigrationToggle
+import models.admin.{PsaDeRegHipMigrationToggle, PsaRegHipMigrationToggle}
 import models.{PsaToBeRemovedFromScheme, PsaToBeRemovedFromSchemeSelf}
 import play.api.Logger
-import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, RequestHeader}
 import service.SchemeService
 import uk.gov.hmrc.http.{BadRequestException, *}
 import uk.gov.hmrc.mongoFeatureToggles.services.FeatureFlagService
@@ -93,15 +93,16 @@ class SchemeController @Inject()(
 
   def deregisterPsa(psaId: String): Action[AnyContent] = authAction.async {
     implicit request =>
-      desConnector.deregisterPSA(psaId).map {
+      deregisterPSA(psaId).map {
         case Right(_) => NoContent
         case Left(e) => result(e)
       }
   }
+  
 
   def deregisterPsaSelf: Action[AnyContent] = psaAuthAction.async {
     implicit request =>
-      desConnector.deregisterPSA(request.psaId.id).map {
+      deregisterPSA(request.psaId.id).map {
         case Right(_) => NoContent
         case Left(e) => result(e)
       }
@@ -119,4 +120,14 @@ class SchemeController @Inject()(
         case _ => Future.failed(new BadRequestException("No PSA variation details in the header for psa update/variatiosn"))
       }
   }
+  
+  private def deregisterPSA(psaId: String)(implicit request: RequestHeader): Future[Either[HttpException, JsValue]] =
+    featureFlagService.get(PsaDeRegHipMigrationToggle).flatMap { toggle =>
+      val response = if (toggle.isEnabled) {
+        hipConnector.deregisterPSA(psaId)
+      } else {
+        desConnector.deregisterPSA(psaId)
+      }
+    }
+
 }

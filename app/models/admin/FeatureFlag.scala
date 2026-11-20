@@ -22,3 +22,8 @@ case object PsaRegHipMigrationToggle extends FeatureFlagName {
   override val name: String = "psa-reg-hip-migration-toggle"
   override val description: Option[String] = Some("Migrate PSA registration to HIP")
 }
+
+case object PsaDeRegHipMigrationToggle extends FeatureFlagName {
+  override val name: String = "psa-dereg-hip-migration-toggle"
+  override val description: Option[String] = Some("Migrate PSA de-registration to HIP")
+}
