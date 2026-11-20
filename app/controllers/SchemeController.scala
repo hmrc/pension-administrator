@@ -123,11 +123,10 @@ class SchemeController @Inject()(
   
   private def deregisterPSA(psaId: String)(implicit request: RequestHeader): Future[Either[HttpException, JsValue]] =
     featureFlagService.get(PsaDeRegHipMigrationToggle).flatMap { toggle =>
-      val response = if (toggle.isEnabled) {
+      if (toggle.isEnabled) {
         hipConnector.deregisterPSA(psaId)
       } else {
         desConnector.deregisterPSA(psaId)
       }
     }
-
 }

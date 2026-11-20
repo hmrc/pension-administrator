@@ -25,7 +25,6 @@ import play.api.http.Status.*
 import play.api.libs.json.*
 import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.domain.PsaId
 import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import utils.JsonTransformations.PSASubscriptionDetailsTransformer
@@ -148,42 +147,43 @@ class HipConnector @Inject()(
       case _ =>
         Left(HttpException(response.body, response.status))
     }
-    
-    def deregisterPSA(psaId: String)(implicit headerCarrier: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
-      val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
-      
-      val url = url"${config.deregisterPsaUrl.format(psaId)}"
-      
-      http.post(url)
-        .withBody(data)
-        .execute[HttpResponse]
-        .map(handleDeregistrationResponse)
-    }
-    
-     private def handleDeregistrationResponse(response: HttpResponse): Either[HttpException, JsValue] = {
-      response.status match {
-        case CREATED =>
-          (response.json \ "success").toOption match {
-            case Some(value) =>
-              Right(value)
-            case None =>
-              Left(HttpException(response.body, BAD_GATEWAY))
-          }
 
-        case UNPROCESSABLE_ENTITY => 
-          val errorCode = (response.json \ "error" \ "code").asOpt[String]
-          errorCode match {
-            case Some("004") =>
-              Left(ConflictException(response.body))
-            case Some("065") =>
-              Left(ForbiddenException("PSA_ACTIVE_RELATIONSHIP_EXISTS"))
-            case Some("066") =>
-              Left(ForbiddenException("ALREADY_DEREGISTERED"))
-            case _ =>
-              Left(UnprocessableEntityException(response.body))
-          }
-        case _ =>
-         Left(HttpException(response.body, response.status))
-      }
+  def deregisterPSA(psaId: String)(implicit headerCarrier: HeaderCarrier): Future[Either[HttpException, JsValue]] = {
+    val data: JsValue = Json.obj("deregistrationDate" -> LocalDate.now().toString, "reason" -> "1")
+
+    val url = url"${config.deregisterPsaUrl.format(psaId)}"
+
+    http.post(url)
+      .setHeader(headers *)
+      .withBody(data)
+      .execute[HttpResponse]
+      .map(handleDeregistrationResponse)
+  }
+
+   private def handleDeregistrationResponse(response: HttpResponse): Either[HttpException, JsValue] = {
+    response.status match {
+      case CREATED =>
+        (response.json \ "success").toOption match {
+          case Some(value) =>
+            Right(value)
+          case None =>
+            Left(HttpException(response.body, BAD_GATEWAY))
+        }
+
+      case UNPROCESSABLE_ENTITY =>
+        val errorCode = (response.json \ "error" \ "code").asOpt[String]
+        errorCode match {
+          case Some("004") =>
+            Left(ConflictException(response.body))
+          case Some("065") =>
+            Left(ForbiddenException("PSA_ACTIVE_RELATIONSHIP_EXISTS"))
+          case Some("066") =>
+            Left(ForbiddenException("ALREADY_DEREGISTERED"))
+          case _ =>
+            Left(UnprocessableEntityException(response.body))
+        }
+      case _ =>
+       Left(HttpException(response.body, response.status))
     }
+  }
 }
